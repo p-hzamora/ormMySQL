@@ -13,7 +13,7 @@ from orm.table.table import Table
 CONDITIONS = Literal["=", "<", ">", "<=", ">=", "REGEXP"]
 
 
-class ModelBase[T](ABC):
+class ModelBase[T:Table](ABC):
     """
     Clase base de las clases Model.
 
@@ -21,8 +21,8 @@ class ModelBase[T](ABC):
     """
 
     # region Constructor
-    def __init__(self, model: Table, *, repository: IRepositoryBase):
-        self._model: Table = model
+    def __init__(self, model: T, *, repository: IRepositoryBase):
+        self._model: T = model
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
             # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
