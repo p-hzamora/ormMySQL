@@ -1,19 +1,15 @@
 # Standard libraries
-import sys
-from typing import Any
-
 # Third party libraries
 import unittest
 import pandas as pd
 
 from pathlib import Path
 from datetime import datetime
-from mysql.connector import errorcode, errors
+from mysql.connector import errors
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "stc_project"].pop())
 
 # Custom libraries
-from stc.common.scripts.repository import MySQLRepository
+from orm import MySQLRepository
 
 
 TDDBB_name = "__test_ddbb__"
@@ -41,19 +37,31 @@ class Test_my_sql(unittest.TestCase):
         class test_table(object):
             __slots__ = ("_factura", "_amount", "_fecha")
 
-            def __init__(self, date: datetime, num_fac: str, amount: float = None) -> None:
+            def __init__(
+                self, date: datetime, num_fac: str, amount: float = None
+            ) -> None:
                 self._factura = num_fac
                 self._amount = amount
                 self._fecha = date
 
             @property
             def to_dict(self):
-                return {var_name.removeprefix("_"): getattr(self, var_name) for var_name in self.__slots__}
+                return {
+                    var_name.removeprefix("_"): getattr(self, var_name)
+                    for var_name in self.__slots__
+                }
 
         tbl_name = TTABLE_name
 
         TABLE = {}
-        TABLE[tbl_name] = f"CREATE TABLE {tbl_name}(" "   id INT AUTO_INCREMENT PRIMARY KEY" "   ,factura CHAR(8) NOT NULL" "   ,amount DECIMAL(5,2)" "   ,fecha DATE NOT NULL" ")"
+        TABLE[tbl_name] = (
+            f"CREATE TABLE {tbl_name}("
+            "   id INT AUTO_INCREMENT PRIMARY KEY"
+            "   ,factura CHAR(8) NOT NULL"
+            "   ,amount DECIMAL(5,2)"
+            "   ,fecha DATE NOT NULL"
+            ")"
+        )
 
         values: list[test_table] = [
             test_table(datetime.now(), "23/00001", 499.99).to_dict,
@@ -110,11 +118,43 @@ class Test_my_sql(unittest.TestCase):
 
         result_all = ddbb.read_sql(f"SELECT * FROM {TTABLE_name}")
         result_col = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name}")
-        result_unic = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044")
-        result_row_dicc = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "dict")
-        result_row_tuple = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "tuple")
+        result_unic = ddbb.read_sql(
+            f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044"
+        )
+        result_row_dicc = ddbb.read_sql(
+            f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "dict"
+        )
+        result_row_tuple = ddbb.read_sql(
+            f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "tuple"
+        )
 
-        tuple = (6623, 94092, 38900, 92190, 16993, 39016, 11457, 32841, 60624, 29787, 12890, 45305, 53506, 30572, 50837, 86671, 16190, 17628, 37027, 11625, 13731, 99635, 87378, 49801, 83170)
+        tuple = (
+            6623,
+            94092,
+            38900,
+            92190,
+            16993,
+            39016,
+            11457,
+            32841,
+            60624,
+            29787,
+            12890,
+            45305,
+            53506,
+            30572,
+            50837,
+            86671,
+            16190,
+            17628,
+            37027,
+            11625,
+            13731,
+            99635,
+            87378,
+            49801,
+            83170,
+        )
 
         dicc = {
             "Col1": 6623,
@@ -155,10 +195,24 @@ class Test_my_sql(unittest.TestCase):
         values = [
             {"id_unique": 100, "col1": 1, "col2": 2, "col3": 3, "col4": 4, "col5": 5},
             {"id_unique": 200, "col1": 7, "col2": 8, "col3": 9, "col4": 10, "col5": 11},
-            {"id_unique": 300, "col1": 13, "col2": 14, "col3": 15, "col4": 16, "col5": 17},
+            {
+                "id_unique": 300,
+                "col1": 13,
+                "col2": 14,
+                "col3": 15,
+                "col4": 16,
+                "col5": 17,
+            },
         ]
 
-        new_val_100 = {"id_unique": 100, "col1": 111, "col2": 222, "col3": 333, "col4": 444, "col5": 555}
+        new_val_100 = {
+            "id_unique": 100,
+            "col1": 111,
+            "col2": 222,
+            "col3": 333,
+            "col4": 444,
+            "col5": 555,
+        }
 
         query = (
             f"CREATE TABLE {TTABLE_name}("
@@ -187,13 +241,35 @@ class Test_my_sql(unittest.TestCase):
         self.assertDictEqual(prev_dicc, values[0])
 
         # update values currently in empty table
-        ddbb.upsert(TTABLE_name, {"id_unique": 100, "col1": 111, "col2": 222, "col3": 333, "col4": 444, "col5": 555})
-        current_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100", "dict")
+        ddbb.upsert(
+            TTABLE_name,
+            {
+                "id_unique": 100,
+                "col1": 111,
+                "col2": 222,
+                "col3": 333,
+                "col4": 444,
+                "col5": 555,
+            },
+        )
+        current_dicc = ddbb.read_sql(
+            f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100", "dict"
+        )
         self.assertDictEqual(current_dicc, new_val_100)
 
         # insert news values
         ddbb.upsert(TTABLE_name, {"id_unique": 101})
-        ddbb.upsert(TTABLE_name, {"id_unique": 101, "col1": 101, "col2": 101, "col3": 101, "col4": 101, "col5": 101})
+        ddbb.upsert(
+            TTABLE_name,
+            {
+                "id_unique": 101,
+                "col1": 101,
+                "col2": 101,
+                "col3": 101,
+                "col4": 101,
+                "col5": 101,
+            },
+        )
 
         ddbb.drop_database(TDDBB_name)
 

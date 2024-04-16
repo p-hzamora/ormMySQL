@@ -7,15 +7,27 @@ class Table(ABC):
     __table_name__: str = ...
 
     def __repr__(self) -> str:
-        params = ", ".join([f"{x}={getattr(self,x)}" for x, y in self.__class__.__dict__.items() if isinstance(y, property)])
+        params = ", ".join(
+            [
+                f"{x}={getattr(self,x)}"
+                for x, y in self.__class__.__dict__.items()
+                if isinstance(y, property)
+            ]
+        )
         return f"{self.__class__.__name__}({params})"
 
     def __str__(self) -> str:
-        params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
+        params = {
+            x: getattr(self, x)
+            for x, y in self.__class__.__dict__.items()
+            if isinstance(y, property)
+        }
         return json.dumps(params, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def __swap_dicc_values[TKey, TValue](dicc: dict[TKey, TValue], key: TKey, default_key: TKey = None) -> Optional[TValue]:
+    def __swap_dicc_values[TKey, TValue](
+        dicc: dict[TKey, TValue], key: TKey, default_key: TKey = None
+    ) -> Optional[TValue]:
         if key is None:
             return None
 

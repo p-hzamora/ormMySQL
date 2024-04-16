@@ -18,7 +18,14 @@ type_exists = Literal["fail", "replace", "append"]
 
 
 class MySQLRepository(IRepositoryBase):
-    def __init__(self, user: str, password: str, database: str = None, port: str = "3306", host: str = "localhost") -> None:
+    def __init__(
+        self,
+        user: str,
+        password: str,
+        database: str = None,
+        port: str = "3306",
+        host: str = "localhost",
+    ) -> None:
         self._user = user
         self._password = password
         self._database = database
@@ -39,21 +46,31 @@ class MySQLRepository(IRepositoryBase):
 
         return wrapper
 
-    def connect(self)->"MySQLRepository":
-        self._connection = connection.MySQLConnection(user=self._user, password=self._password, database=self._database, port=self._port, host=self._host)
+    def connect(self) -> "MySQLRepository":
+        self._connection = connection.MySQLConnection(
+            user=self._user,
+            password=self._password,
+            database=self._database,
+            port=self._port,
+            host=self._host,
+        )
         return self
 
-    def close_connection(self)-> None:
+    def close_connection(self) -> None:
         if self._connection.is_connected():
             self._connection.close()
         return None
 
     @is_connected
-    def create_database(self, db_name: str, if_exists: Literal["fail", "replace"] = "fail")->None:
+    def create_database(
+        self, db_name: str, if_exists: Literal["fail", "replace"] = "fail"
+    ) -> None:
         self._database = db_name
         with self._connection.cursor() as cursor:
             try:
-                cursor.execute(f"CREATE DATABASE {db_name} DEFAULT CHARACTER SET 'utf8'")
+                cursor.execute(
+                    f"CREATE DATABASE {db_name} DEFAULT CHARACTER SET 'utf8'"
+                )
             except Error as err:
                 if err.errno == errorcode.ER_DB_CREATE_EXISTS and if_exists != "fail":
                     print(err)
@@ -90,7 +107,12 @@ class MySQLRepository(IRepositoryBase):
                 print("OK")
 
     @is_connected
-    def create_table(self, data: str | pd.DataFrame, name: str = None, if_exists: type_exists = "fail") -> bool:
+    def create_table(
+        self,
+        data: str | pd.DataFrame,
+        name: str = None,
+        if_exists: type_exists = "fail",
+    ) -> bool:
         def translate_dtypes(series: pd.Series):
             dtypes = {"float64": "DOUBLE"}
 
@@ -205,7 +227,9 @@ class MySQLRepository(IRepositoryBase):
         return res
 
     @is_connected
-    def upsert(self, table: str, changes: dict[str, Any] | list[dict[str, Any]] | pd.DataFrame):
+    def upsert(
+        self, table: str, changes: dict[str, Any] | list[dict[str, Any]] | pd.DataFrame
+    ):
         """
         Esta funcion se enfoca para trabajar con listas, aunque el argumneto changes sea un unico diccionario.
 
@@ -235,7 +259,9 @@ class MySQLRepository(IRepositoryBase):
         """
         valid_types = (dict, list, pd.DataFrame)
         if not isinstance(changes, valid_types):
-            raise ValueError(f"El tipo de dato de changes es {type(changes)}.\nSe esperaba {valid_types}")
+            raise ValueError(
+                f"El tipo de dato de changes es {type(changes)}.\nSe esperaba {valid_types}"
+            )
 
         if isinstance(changes, dict):
             return self.upsert(table, changes=(changes,))
@@ -247,7 +273,12 @@ class MySQLRepository(IRepositoryBase):
         columns = ", ".join([f"{x}" for x in changes[0].keys()])
         position_mark = ", ".join(["%s" for _ in changes[0].values()])
         alternative = ", ".join([f"{col} = {alias}.{col}" for col in changes[0]])
-        query = f"INSERT INTO {table} ({columns})" f"   VALUES ({position_mark}) as {alias}" f"   ON DUPLICATE KEY UPDATE" f"   {alternative};"
+        query = (
+            f"INSERT INTO {table} ({columns})"
+            f"   VALUES ({position_mark}) as {alias}"
+            f"   ON DUPLICATE KEY UPDATE"
+            f"   {alternative};"
+        )
 
         with self._connection.cursor(buffered=True) as cursor:
             cursor.executemany(query, self._clean_data(changes))
@@ -268,7 +299,9 @@ class MySQLRepository(IRepositoryBase):
             return None
 
         else:
-            raise ValueError(f"Se esperaba una lista de diccionarios o un DataFrame no {type(values)}")
+            raise ValueError(
+                f"Se esperaba una lista de diccionarios o un DataFrame no {type(values)}"
+            )
 
         query = f"INSERT INTO {table} {f'({col})'} VALUES {row}"
         with self._connection.cursor(buffered=True) as cursor:

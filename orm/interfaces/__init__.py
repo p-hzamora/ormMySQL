@@ -1,1 +1,1 @@
-from .IRepositoryBase import IRepositoryBase
+from .IRepositoryBase import IRepositoryBase  # noqa: F401
