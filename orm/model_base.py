@@ -5,9 +5,9 @@ from typing import Any, Callable, Literal, Self, overload
 import dis
 from queue import Queue
 
-from stc.common.scripts.repository.interfaces import IRepositoryBase
-from stc.common.scripts.repository.table.column_info import ColumnInfo
-from stc.common.scripts.repository.table.table import Table
+from orm.interfaces import IRepositoryBase
+from orm.table.column_info import Column
+from orm.table.table import Table
 # endregion
 
 CONDITIONS = Literal["=", "<", ">", "<=", ">=", "REGEXP"]
