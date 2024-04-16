@@ -94,7 +94,7 @@ class ModelBase[T](ABC):
         Inserta valores en la bbdd parseando los datos a diccionarios
         """
 
-        def is_valid(column: ColumnInfo) -> bool:
+        def is_valid(column: Column) -> bool:
             """
             Validamos si la columna la debemos eliminar o no a la hora de insertar o actualizar valores.
 
@@ -126,7 +126,7 @@ class ModelBase[T](ABC):
             if issubclass(values.__class__, Table):
                 dicc: dict = {}
                 for col in values.__dict__.values():
-                    if isinstance(col, ColumnInfo) and is_valid(col):
+                    if isinstance(col, Column) and is_valid(col):
                         dicc.update({col.column_name: col.column_value})
                 lista.append(dicc)
 
@@ -168,7 +168,7 @@ class ModelBase[T](ABC):
         Actualizar valores ya existentes en la bbdd parseando los datos a diccionarios. En caso de que existan, los inserta
         """
 
-        def is_valid(column: ColumnInfo) -> bool:
+        def is_valid(column: Column) -> bool:
             """
             Eliminamos aquellas columnas autogeneradas y dejamos aquellas columnas unicas para que la consulta falle y realice un upsert
 
@@ -196,7 +196,7 @@ class ModelBase[T](ABC):
             if issubclass(values.__class__, Table):
                 dicc: dict = {}
                 for col in values.__dict__.values():
-                    if isinstance(col, ColumnInfo) and is_valid(col):
+                    if isinstance(col, Column) and is_valid(col):
                         dicc.update({col.column_name: col.column_value})
                 lista.append(dicc)
 
@@ -537,9 +537,9 @@ class ModelBase[T](ABC):
         ...
 
     def delete(self, instance: T | list[T] = None) -> None:
-        def get_pk(instance: T | list[T]) -> ColumnInfo:
+        def get_pk(instance: T | list[T]) -> Column:
             for col in instance.__dict__.values():
-                if isinstance(col, ColumnInfo) and col.primary_key:
+                if isinstance(col, Column) and col.primary_key:
                     # utilizamos la columna que sea primary key si no la encuentra, dara error
                     break
             if not col.primary_key:

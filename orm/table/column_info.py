@@ -1,4 +1,4 @@
-class ColumnInfo:
+class Column:
     def __init__(
         self,
         column_name,
