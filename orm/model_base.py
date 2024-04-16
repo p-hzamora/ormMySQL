@@ -46,7 +46,7 @@ class ModelBase[T](ABC):
     def __add_condition[TValue](
         self,
         col: Callable[[T], None | bool],
-        value: [TValue],
+        value: TValue,
         condition: CONDITIONS,
         _restriction: str,
     ) -> Self:
