@@ -6,7 +6,7 @@ import dis
 from queue import Queue
 
 from orm.interfaces import IRepositoryBase
-from orm.table.column_info import Column
+from app.extesions.repository.orm.table.column import Column
 from orm.table.table import Table
 # endregion
 
