@@ -5,9 +5,9 @@ from typing import Any, Callable, Literal, Self, overload
 import dis
 from queue import Queue
 
-from orm.interfaces import IRepositoryBase
-from app.extesions.repository.orm.table.column import Column
-from orm.table.table import Table
+from .interfaces import IRepositoryBase
+from .table.column import Column
+from .table.table import Table
 # endregion
 
 CONDITIONS = Literal["=", "<", ">", "<=", ">=", "REGEXP"]
