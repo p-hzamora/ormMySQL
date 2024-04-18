@@ -6,8 +6,7 @@ import dis
 from queue import Queue
 
 from .interfaces import IRepositoryBase
-from .table.column import Column
-from .table.table import Table
+from .orm_objects import Column, Table
 # endregion
 
 CONDITIONS = Literal["=", "<", ">", "<=", ">=", "REGEXP"]
