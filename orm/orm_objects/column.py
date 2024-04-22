@@ -30,14 +30,3 @@ class Column[T]:
     def __repr__(self) -> str:
         return f"<Column: {self.column_name}>"
 
-
-
-if __name__ == "__main__":
-
-    class Model:
-        id: Column[int] = Column(234, is_auto_increment=True)
-
-    my_class = Model()
-
-    assert my_class.id.column_value == 234
-    assert my_class.id.column_name == "id"
