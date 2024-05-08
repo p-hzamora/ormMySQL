@@ -1,6 +1,11 @@
 # Standard libraries
 # Third party libraries
 import unittest
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+
 import pandas as pd
 
 from pathlib import Path
@@ -15,7 +20,7 @@ from orm import MySQLRepository
 TDDBB_name = "__test_ddbb__"
 TTABLE_name = "__test_table__"
 
-data_config = {"user": "admin", "password": "1234", "host": "192.168.1.84"}
+data_config = {"user": "root", "password": "1234"}
 
 
 class Test_my_sql(unittest.TestCase):
