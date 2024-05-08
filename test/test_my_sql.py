@@ -42,31 +42,19 @@ class Test_my_sql(unittest.TestCase):
         class test_table(object):
             __slots__ = ("_factura", "_amount", "_fecha")
 
-            def __init__(
-                self, date: datetime, num_fac: str, amount: float = None
-            ) -> None:
+            def __init__(self, date: datetime, num_fac: str, amount: float = None) -> None:
                 self._factura = num_fac
                 self._amount = amount
                 self._fecha = date
 
             @property
             def to_dict(self):
-                return {
-                    var_name.removeprefix("_"): getattr(self, var_name)
-                    for var_name in self.__slots__
-                }
+                return {var_name.removeprefix("_"): getattr(self, var_name) for var_name in self.__slots__}
 
         tbl_name = TTABLE_name
 
         TABLE = {}
-        TABLE[tbl_name] = (
-            f"CREATE TABLE {tbl_name}("
-            "   id INT AUTO_INCREMENT PRIMARY KEY"
-            "   ,factura CHAR(8) NOT NULL"
-            "   ,amount DECIMAL(5,2)"
-            "   ,fecha DATE NOT NULL"
-            ")"
-        )
+        TABLE[tbl_name] = f"CREATE TABLE {tbl_name}(" "   id INT AUTO_INCREMENT PRIMARY KEY" "   ,factura CHAR(8) NOT NULL" "   ,amount DECIMAL(5,2)" "   ,fecha DATE NOT NULL" ")"
 
         values: list[test_table] = [
             test_table(datetime.now(), "23/00001", 499.99).to_dict,
@@ -123,15 +111,9 @@ class Test_my_sql(unittest.TestCase):
 
         result_all = ddbb.read_sql(f"SELECT * FROM {TTABLE_name}")
         result_col = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name}")
-        result_unic = ddbb.read_sql(
-            f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044"
-        )
-        result_row_dicc = ddbb.read_sql(
-            f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "dict"
-        )
-        result_row_tuple = ddbb.read_sql(
-            f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "tuple"
-        )
+        result_unic = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044")
+        result_row_dicc = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "dict")
+        result_row_tuple = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "tuple")
 
         tuple = (
             6623,
@@ -257,9 +239,7 @@ class Test_my_sql(unittest.TestCase):
                 "col5": 555,
             },
         )
-        current_dicc = ddbb.read_sql(
-            f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100", "dict"
-        )
+        current_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100", "dict")
         self.assertDictEqual(current_dicc, new_val_100)
 
         # insert news values

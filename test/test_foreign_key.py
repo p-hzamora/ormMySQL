@@ -54,7 +54,7 @@ class Person(Table):
         self._content: Column[int] = Column(nameof(content), content)
         self._dni_list: Column[list] = Column(nameof(dni_list), str(dni_list))
         self._fk_city: Column[list] = Column(nameof(fk_city), str(fk_city))
-        
+
         self.city: ForeignKey[City] = ForeignKey(nameof(City.pk_city), nameof(fk_city), str(fk_city), modelbase="common")
 
     @property

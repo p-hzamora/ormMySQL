@@ -1,7 +1,7 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Literal, Self, overload
+from typing import Any, Callable, Literal, Optional, Self, overload
 import dis
 from queue import Queue
 
@@ -12,7 +12,7 @@ from .orm_objects import Column, Table
 CONDITIONS = Literal["=", "<", ">", "<=", ">=", "REGEXP"]
 
 
-class ModelBase[T:Table](ABC):
+class ModelBase[T: Table](ABC):
     """
     Clase base de las clases Model.
 
@@ -29,11 +29,9 @@ class ModelBase[T:Table](ABC):
             raise Exception(f"La clase '{model}' no hereda de Table")
 
         if model.__table_name__ is Ellipsis:
-            raise Exception(
-                f"Se debe declarar la variabnle '__table_name__' en la clase '{model.__name__}'"
-            )
+            raise Exception(f"Se debe declarar la variabnle '__table_name__' en la clase '{model.__name__}'")
 
-        self._repository = repository
+        self._repository: IRepositoryBase = repository
         self._conditions: defaultdict[Queue] = defaultdict(lambda: Queue())
 
     # endregion
@@ -52,12 +50,8 @@ class ModelBase[T:Table](ABC):
         attr = {x.opname: x.argval for x in dis.Bytecode(col)}
 
         if value is None:
-            attr["COMPARE_OP"] = (
-                "=" if attr["COMPARE_OP"] == "==" else attr["COMPARE_OP"]
-            )
-            self._conditions[_restriction].put(
-                f"{attr["LOAD_ATTR"]} {attr["COMPARE_OP"]} '{attr["LOAD_CONST"]}'"
-            )
+            attr["COMPARE_OP"] = "=" if attr["COMPARE_OP"] == "==" else attr["COMPARE_OP"]
+            self._conditions[_restriction].put(f"{attr["LOAD_ATTR"]} {attr["COMPARE_OP"]} '{attr["LOAD_CONST"]}'")
             return self
 
         # if isinstance(value, list):
@@ -106,11 +100,7 @@ class ModelBase[T:Table](ABC):
             - False -> Eliminamos la columna
             """
             # en el caso de tener un valor
-            cond_2 = (
-                column.auto_increment
-                and column.column_value is None
-                and column.primary_key
-            )
+            cond_2 = column.auto_increment and column.column_value is None and column.is_primary_key
 
             if column.auto_generated or cond_2:
                 return False
@@ -180,9 +170,7 @@ class ModelBase[T:Table](ABC):
             - True  -> No eliminamos la columna de la consulta
             - False -> Eliminamos la columna
             """
-            if (
-                column.auto_increment and not column.primary_key
-            ) or column.auto_generated:
+            if (column.auto_increment and not column.is_primary_key) or column.auto_generated:
                 return False
             return True
 
@@ -214,8 +202,10 @@ class ModelBase[T:Table](ABC):
 
     # region all
     @overload
-    def all(self) -> list[T]:
-        ...
+    def all(self) -> list[T]: ...
+
+    @overload
+    def all[TValue](self, flavour: Optional[TValue]) -> TValue: ...
 
     @overload
     def all[TValue](self, limit: Optional[int]) -> TValue: ...
@@ -232,10 +222,7 @@ class ModelBase[T:Table](ABC):
 
     # region get
     @overload
-    def get[TValue](
-        self, col: Callable[[T], None], flavour: TValue
-    ) -> TValue | list[TValue] | None:
-        ...
+    def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
 
     @overload
     def get(self, col: Callable[[T], None]) -> list[T] | None:
@@ -259,9 +246,7 @@ class ModelBase[T:Table](ABC):
         ...
 
     @overload
-    def get[TValue](
-        self, col: list[Callable[[T], None]], flavour: TValue
-    ) -> list[TValue] | None:
+    def get[TValue](self, col: list[Callable[[T], None]], flavour: TValue) -> list[TValue] | None:
         """
         PARAMS
         ------
@@ -301,40 +286,27 @@ class ModelBase[T:Table](ABC):
         flavour: Any = None,
     ) -> T | list[T] | None:
         if (iconditions := len(self._conditions)) == 0:
-            raise Exception(
-                "You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'"
-            )
+            raise Exception("You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'")
 
         is_col_method: bool = False
         if isinstance(col, list):
-            col = ", ".join(
-                [
-                    {x.opname: x.argval for x in dis.Bytecode(i)}["LOAD_ATTR"]
-                    for i in col
-                ]
-            )
+            col = ", ".join([{x.opname: x.argval for x in dis.Bytecode(i)}["LOAD_ATTR"] for i in col])
 
         elif callable(col):
             is_col_method = True
             col = {x.opname: x.argval for x in dis.Bytecode(col)}["LOAD_ATTR"]
 
-        query_res: str = (
-            f"SELECT {col if col else '*'} FROM {self._model.__table_name__}"
-        )
+        query_res: str = f"SELECT {col if col else '*'} FROM {self._model.__table_name__}"
 
         # region recorre las queue creando la query
         conditions = []
-        _tuple = tuple(
-            self._conditions.items()
-        )  # ej, ((" AND ",<Queue() object>),(" OR ",<Queue() object>))
+        _tuple = tuple(self._conditions.items())  # ej, ((" AND ",<Queue() object>),(" OR ",<Queue() object>))
         for i in range(1, iconditions + 1):
             str_cond: str = _tuple[i - 1][0]
             value_cond: Queue = _tuple[i - 1][1]
 
             # concateno todos los valores de la cola y los agrupo dentro de parentesis (<conditions>)
-            condition = str_cond.join(
-                [value_cond.get() for _ in range(value_cond.qsize())]
-            )
+            condition = str_cond.join([value_cond.get() for _ in range(value_cond.qsize())])
             conditions.append(f"({condition})")
             # forma dinamica para agregar a la lista el tipo de condicion con el grupo siguiente
             #
@@ -349,9 +321,7 @@ class ModelBase[T:Table](ABC):
         if is_col_method:
             # if 'is_col_method' True means that you are trying to return one column so to avoid list[tuple[Any]] we iterate through res var to get tuple[Any]
 
-            res = self._repository.read_sql(
-                query_res, flavour=flavour if flavour else tuple
-            )
+            res = self._repository.read_sql(query_res, flavour=flavour if flavour else tuple)
             if isinstance(res[0], tuple):
                 res = tuple([x[0] for x in res[::]]) if res else None
             return res
@@ -367,10 +337,7 @@ class ModelBase[T:Table](ABC):
 
     # region first
     @overload
-    def first[TValue](
-        self, col: Callable[[T], None], flavour: TValue
-    ) -> TValue | list[TValue] | None:
-        ...
+    def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
 
     @overload
     def first(self, col: Callable[[T], None]) -> list[T] | None:
@@ -470,9 +437,7 @@ class ModelBase[T:Table](ABC):
         ...
 
     @overload
-    def filter_by(
-        self, col: Callable[[T], None], value: int | float | str, condition: CONDITIONS
-    ) -> Self:
+    def filter_by(self, col: Callable[[T], None], value: int | float | str, condition: CONDITIONS) -> Self:
         """
         Specifies "REGEXP" in "condition" arg to makes regular expression match
         """
@@ -491,12 +456,10 @@ class ModelBase[T:Table](ABC):
 
     # region where
     @overload
-    def where(self, col: Callable[[T], bool]) -> Self:
-        ...
+    def where(self, col: Callable[[T], bool]) -> Self: ...
 
     @overload
-    def where[TValue](self, col: Callable[[T], str], value: TValue) -> Self:
-        ...
+    def where[TValue](self, col: Callable[[T], str], value: TValue) -> Self: ...
 
     @overload
     def where[TValue](
@@ -504,8 +467,7 @@ class ModelBase[T:Table](ABC):
         col: Callable[[T], str],
         value: list[TValue] | TValue,
         condition: CONDITIONS,
-    ) -> Self:
-        ...
+    ) -> Self: ...
 
     def where[TValue](
         self,
@@ -520,27 +482,22 @@ class ModelBase[T:Table](ABC):
 
     # region delete
     @overload
-    def delete(self) -> None:
-        ...
+    def delete(self) -> None: ...
 
     @overload
-    def delete(self, instance: T) -> None:
-        ...
+    def delete(self, instance: T) -> None: ...
 
     @overload
-    def delete(self, instance: list[T]) -> None:
-        ...
+    def delete(self, instance: list[T]) -> None: ...
 
     def delete(self, instance: T | list[T] = None) -> None:
         def get_pk(instance: T | list[T]) -> Column:
             for col in instance.__dict__.values():
-                if isinstance(col, Column) and col.primary_key:
+                if isinstance(col, Column) and col.is_primary_key:
                     # utilizamos la columna que sea primary key si no la encuentra, dara error
                     break
-            if not col.primary_key:
-                raise Exception(
-                    f"La tabla '{self._model.__table_name__}' no tiene primary key"
-                )
+            if not col.is_primary_key:
+                raise Exception(f"La tabla '{self._model.__table_name__}' no tiene primary key")
             return col
 
         col: str
@@ -550,9 +507,7 @@ class ModelBase[T:Table](ABC):
         elif issubclass(instance.__class__, Table):
             pk = get_pk(instance)
             if pk.column_value is None:
-                raise Exception(
-                    f"No se puede realizar la petición 'DELETE' sin establecer un valor único para la primary key '{pk.column_name}'"
-                )
+                raise Exception(f"No se puede realizar la petición 'DELETE' sin establecer un valor único para la primary key '{pk.column_name}'")
             col = pk.column_name
             value = str(pk.column_value)
 

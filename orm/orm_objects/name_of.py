@@ -1,6 +1,7 @@
 import inspect
 import re
 
+
 def nameof(_, full_name=False) -> str:
     """
     Return the name of the variable passed as argument

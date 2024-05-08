@@ -36,14 +36,10 @@ def instr_dispatch(instr: dis.Instruction, iterator: Iterator[dis.Instruction]):
     if instr.opname in valid_opname:  # (co_cellvars++co_freevars)
         return instr.argval
     if valid_opname == "UNPACK_SEQUENCE":
-        return tuple(
-            instr_dispatch(instr, iterator) for instr in take(iterator, instr.arg)
-        )
+        return tuple(instr_dispatch(instr, iterator) for instr in take(iterator, instr.arg))
     if valid_opname == "UNPACK_EX":
         return (
-            *tuple(
-                instr_dispatch(instr, iterator) for instr in take(iterator, instr.arg)
-            ),
+            *tuple(instr_dispatch(instr, iterator) for instr in take(iterator, instr.arg)),
             Ellipsis,
         )
     # Note: 'STORE_SUBSCR' and 'STORE_ATTR' should not be possible here.
@@ -66,9 +62,7 @@ def instr_dispatch(instr: dis.Instruction, iterator: Iterator[dis.Instruction]):
         "LOAD_NAME",
     }:
         return instr.argval + "." + ".".join(instr_dispatch_for_load(instr, iterator))
-    raise NotImplementedError(
-        "assignment could not be parsed: " "instruction {} not understood".format(instr)
-    )
+    raise NotImplementedError("assignment could not be parsed: " "instruction {} not understood".format(instr))
 
 
 def take(iterator: Iterator[dis.Instruction], count):
@@ -92,8 +86,4 @@ def instr_dispatch_for_load(instr, iterator):
     elif opname == "STORE_ATTR":
         yield instr.argval
     else:
-        raise NotImplementedError(
-            "assignment could not be parsed: " "instruction {} not understood".format(
-                instr
-            )
-        )
+        raise NotImplementedError("assignment could not be parsed: " "instruction {} not understood".format(instr))
