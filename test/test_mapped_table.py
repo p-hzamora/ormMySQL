@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 from orm import Table, Column
-from app.extesions.orm.orm import nameof
+from orm import nameof
 
 
 class Person(Table):
