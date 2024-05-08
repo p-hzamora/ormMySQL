@@ -1,6 +1,6 @@
 # Standard libraries
 from functools import wraps
-from typing import Any, Iterator, Literal, TypeVar
+from typing import Any, Iterator, Literal
 
 # Third party libraries
 import pandas as pd
@@ -11,8 +11,6 @@ from mysql.connector import errorcode
 # Custom libraries
 from .interfaces import IRepositoryBase
 
-
-TMySQL = TypeVar("TMySQL", bound="MySQLRepository")
 
 type_exists = Literal["fail", "replace", "append"]
 
@@ -36,7 +34,7 @@ class MySQLRepository(IRepositoryBase):
 
     def is_connected(func):
         @wraps(func)
-        def wrapper(self: TMySQL, *args, **kwargs):
+        def wrapper(self: "MySQLRepository", *args, **kwargs):
             if not self._connection.is_connected():
                 self.connect()
 
