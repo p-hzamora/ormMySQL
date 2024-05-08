@@ -218,19 +218,15 @@ class ModelBase[T:Table](ABC):
         ...
 
     @overload
-    def all[TValue](self, flavour: TValue) -> TValue:
-        ...
+    def all[TValue](self, limit: Optional[int]) -> TValue: ...
 
-    def all[TValue](self, flavour: TValue = None) -> list[T] | TValue:
+    def all[TValue](self, flavour: Optional[TValue] = None, limit: Optional[int] = None) -> list[T] | TValue:
+        LIMIT = "" if not limit else f"LIMIT {limit}"
         if flavour is None:
-            query_res = self._repository.read_sql(
-                f"SELECT * FROM {self._model.__table_name__}", flavour=dict
-            )
+            query_res = self._repository.read_sql(f"SELECT * FROM {self._repository.database}.{self._model.__table_name__} {LIMIT}", flavour=dict)
             return [self._model(**x) for x in query_res]
 
-        return self._repository.read_sql(
-            f"SELECT * FROM {self._model.__table_name__}", flavour=flavour
-        )
+        return self._repository.read_sql(f"SELECT * FROM {self._model.__table_name__} {LIMIT}", flavour=flavour)
 
     # endregion
 
