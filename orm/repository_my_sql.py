@@ -1,6 +1,6 @@
 # Standard libraries
 from functools import wraps
-from typing import Any, Iterator, Literal
+from typing import Any, Iterator, Literal, override
 
 # Third party libraries
 import pandas as pd
@@ -31,6 +31,21 @@ class MySQLRepository(IRepositoryBase):
         self._host = host
 
         self._connection: connection.MySQLConnection = None
+
+    @property
+    @override
+    def database(self) -> str:
+        return self._database
+
+    @property
+    @override
+    def port(self) -> str:
+        return self._port
+
+    @property
+    @override
+    def host(self) -> str:
+        return self._host
 
     def is_connected(func):
         @wraps(func)

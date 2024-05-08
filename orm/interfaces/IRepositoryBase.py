@@ -8,13 +8,23 @@ type_exists = Literal["fail", "replace", "append"]
 
 
 class IRepositoryBase(ABC):
+    @property
     @abstractmethod
-    def connect(self) -> Self:
-        ...
+    def database(self)->str: ...
+    
+    @property
+    @abstractmethod
+    def host(self)->str: ...
+    
+    @property
+    @abstractmethod
+    def port(self)->str: ...
 
     @abstractmethod
-    def close_connection(self) -> None:
-        ...
+    def connect(self) -> Self: ...
+
+    @abstractmethod
+    def close_connection(self) -> None: ...
 
     @abstractmethod
     def create_database(self, db_name: str, if_exists: type_exists = "fail") -> bool:
