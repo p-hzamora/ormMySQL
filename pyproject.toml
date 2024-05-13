@@ -12,6 +12,7 @@ readme = "README.md"
 python = "^3.12"
 pandas = "^2.2.2"
 mysql-connector = "^2.2.9"
+python-dotenv = "^1.0.1"
 
 
 [build-system]
