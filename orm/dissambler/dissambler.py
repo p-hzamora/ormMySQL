@@ -1,5 +1,5 @@
 import dis
-from typing import Any, Callable, Generator, overload
+from typing import Any, Callable, overload
 from queue import Queue
 from collections import defaultdict
 import inspect
@@ -45,7 +45,7 @@ class Dissambler[TProp1, TProp2: Any]:
 
     def __init__(self, function: Callable[[], bool] | Callable[[TProp1], bool] | Callable[[TProp1, TProp2], bool]) -> None:
         self._function: Callable[[], bool] | Callable[[TProp1], bool] | Callable[[TProp1, TProp2], bool] = function
-        self._bytecode_function: Generator[dis.Instruction] = dis.get_instructions(function)
+        self._bytecode_function: list[dis.Instruction] = list(dis.Bytecode(function))
 
         self.__init_custom__()
 
