@@ -8,7 +8,7 @@ from orm.orm_objects.queries import (
     SelectQuery,
     JoinSelector,
     JoinType,
-    Condition,
+    WhereCondition,
 )
 from models.city import City
 from models.country import Country
@@ -88,14 +88,14 @@ class A:
 
 
 class TestCondition(unittest.TestCase):
-    COND_1 = Condition[City, Country](lambda x, y: x.last_update != y.country_id)
-    COND_2 = Condition[Address, City](lambda a, c: a.address2 <= c.city_id)
-    COND_3 = Condition[A, B](lambda a, b: a.b.value == b.c.data)
+    COND_1 = WhereCondition[City, Country](lambda x, y: x.last_update != y.country_id)
+    COND_2 = WhereCondition[Address, City](lambda a, c: a.address2 <= c.city_id)
+    COND_3 = WhereCondition[A, B](lambda a, b: a.b.value == b.c.data)
 
     def test_condition_constructor(self):
-        self.assertIsInstance(self.COND_1, Condition)
-        self.assertIsInstance(self.COND_2, Condition)
-        self.assertIsInstance(self.COND_3, Condition)
+        self.assertIsInstance(self.COND_1, WhereCondition)
+        self.assertIsInstance(self.COND_2, WhereCondition)
+        self.assertIsInstance(self.COND_3, WhereCondition)
 
     def test_to_query_cond_1(self):
         self.assertEqual(self.COND_1.to_query(), "WHERE last_update != country_id")
@@ -107,26 +107,27 @@ class TestCondition(unittest.TestCase):
         self.assertEqual(self.COND_3.to_query(), "WHERE value = data")
 
     def test_join_condition_restrictive_false(self):
-        joins = Condition.join_condition(self.COND_1, self.COND_2, self.COND_3, restrictive=False)
+        joins = WhereCondition.join_condition(self.COND_1, self.COND_2, self.COND_3, restrictive=False)
         self.assertEqual(joins, "WHERE (last_update != country_id) OR (address2 <= city_id) OR (value = data)")
 
     def test_join_condition_restrictive_true(self):
-        joins = Condition.join_condition(self.COND_1, self.COND_2, self.COND_3, restrictive=True)
+        joins = WhereCondition.join_condition(self.COND_1, self.COND_2, self.COND_3, restrictive=True)
         self.assertEqual(joins, "WHERE (last_update != country_id) AND (address2 <= city_id) AND (value = data)")
 
 
 if __name__ == "__main__":
-    cond = 2
-    select = SelectQuery[City](City, where=lambda x: x.city_id >= cond).query
+    # cond = 2
+    # select = SelectQuery[City](City, where=lambda x: x.city_id >= cond).query
 
     innerjoin = JoinSelector[City, Country](
         table_left=City,
-        col_left=lambda c: c.country_id,
         table_right=Country,
+        col_left=lambda c: c.country_id,
         col_right=lambda c: c.country_id,
         by=JoinType.INNER_JOIN,
-        select_list=lambda x: x.city,
+        select_list=lambda c: [c.city_id, c.last_update, c.country],
         where=lambda c, x: c.country_id == x.country_id,
-    ).load()
+    )
+    query = innerjoin.load()
 
     unittest.main()
