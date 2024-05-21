@@ -110,12 +110,12 @@ class Test_my_sql(unittest.TestCase):
         ddbb.create_table(data=df.head(), name=TTABLE_name)
 
         result_all = ddbb.read_sql(f"SELECT * FROM {TTABLE_name}")
-        result_col = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name}")
-        result_unic = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044")
-        result_row_dicc = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "dict")
-        result_row_tuple = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", "tuple")
+        result_col = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name}",tuple)
+        result_unic = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044",tuple)
+        result_row_dicc = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", dict)
+        result_row_tuple = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", tuple)
 
-        tuple = (
+        my_tuple = (
             6623,
             94092,
             38900,
@@ -172,10 +172,10 @@ class Test_my_sql(unittest.TestCase):
         }
 
         self.assertAlmostEqual(type(result_all), pd.DataFrame)
-        self.assertAlmostEqual(result_col, (77642, 93631, 58778, 94092, 16228))
-        self.assertAlmostEqual(result_unic, 93631)
-        self.assertAlmostEqual(result_row_dicc, dicc)
-        self.assertAlmostEqual(result_row_tuple, tuple)
+        self.assertAlmostEqual([x[0] for x in result_col], [77642, 93631, 58778, 94092, 16228])
+        self.assertAlmostEqual(result_unic[0][0], 93631)
+        self.assertAlmostEqual(result_row_dicc[0], dicc)
+        self.assertAlmostEqual(result_row_tuple[0], my_tuple)
         ddbb.drop_database(TDDBB_name)
 
     def test_upsert(self):
@@ -224,8 +224,8 @@ class Test_my_sql(unittest.TestCase):
 
         # insert in empty table
         ddbb.upsert(TTABLE_name, values)
-        prev_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} LIMIT 1", "dict")
-        self.assertDictEqual(prev_dicc, values[0])
+        prev_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} LIMIT 1",dict)
+        self.assertDictEqual(prev_dicc[0], values[0])
 
         # update values currently in empty table
         ddbb.upsert(
@@ -239,8 +239,8 @@ class Test_my_sql(unittest.TestCase):
                 "col5": 555,
             },
         )
-        current_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100", "dict")
-        self.assertDictEqual(current_dicc, new_val_100)
+        current_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100",dict)
+        self.assertDictEqual(current_dicc[0], new_val_100)
 
         # insert news values
         ddbb.upsert(TTABLE_name, {"id_unique": 101})

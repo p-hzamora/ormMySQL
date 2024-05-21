@@ -264,7 +264,7 @@ class MySQLRepository(IRepositoryBase):
         COL2 = _val.COL2;
 
         """
-        valid_types = (dict, list, pd.DataFrame)
+        valid_types = (dict, list, pd.DataFrame,tuple)
         if not isinstance(changes, valid_types):
             raise ValueError(f"El tipo de dato de changes es {type(changes)}.\nSe esperaba {valid_types}")
 
