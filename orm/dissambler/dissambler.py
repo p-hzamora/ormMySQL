@@ -2,22 +2,36 @@ import dis
 from typing import Any, Callable, Generator, overload
 from queue import Queue
 from collections import defaultdict
-from .dis_types import OpName
 import inspect
 
 from orm.condition_types import ConditionType
 
+from .dis_types import OpName
+from .nested_element import NestedElement
 
 
 class Dissambler[TProp1, TProp2: Any]:
+    """
+    class to dissambler lambda function to detach information from left to right of compare symbol.
+
+    >>> dis = Dissambler[DtoC, None](lambda d: d.c.b.b_data == "asdf")
+
+    >>> dis.cond_1.name # b_data
+    >>> dis.cond_1.parent.parent.parent.name # d
+    >>> dis.cond_1.parent.parent.name # c
+
+    >>> dis.cond_2.name, "asdf"
+
+    >>> dis.compare_op, "="
+
+    """
+
     __slots__ = (
         "_function",
         "_bytecode_function",
         "_cond_1",
         "_cond_2",
         "_compare_op",
-        "_all_string_cond_1",
-        "_all_string_cond_2",
     )
 
     @overload
@@ -32,8 +46,7 @@ class Dissambler[TProp1, TProp2: Any]:
     def __init__(self, function: Callable[[], bool] | Callable[[TProp1], bool] | Callable[[TProp1, TProp2], bool]) -> None:
         self._function: Callable[[], bool] | Callable[[TProp1], bool] | Callable[[TProp1, TProp2], bool] = function
         self._bytecode_function: Generator[dis.Instruction] = dis.get_instructions(function)
-        self._all_string_cond_1:list[str] = []
-        self._all_string_cond_2:list[str] = []
+
         self.__init_custom__()
 
     def __init_custom__(self):
@@ -62,8 +75,8 @@ class Dissambler[TProp1, TProp2: Any]:
             if OpName(x.opname) == OpName.COMPARE_OP:
                 self._compare_op: str = self._transform__compare_op(ConditionType(x.argval))
 
-        self._cond_1 = load_const_queue.get_nowait()
-        self._cond_2 = load_const_queue.get_nowait()
+        self._cond_1: NestedElement[TProp1] = NestedElement[TProp1](load_const_queue.get_nowait())
+        self._cond_2: NestedElement[TProp2] = NestedElement[TProp2](load_const_queue.get_nowait())
         return None
 
     def __init__one_attr(self) -> None:
@@ -76,7 +89,7 @@ class Dissambler[TProp1, TProp2: Any]:
             OpName.LOAD_GLOBAL,
         )
 
-        CONST_NAME = "const"
+        CONST_NAME = "@@const@@"
         for x in self._bytecode_function:
             op_name: OpName = OpName(x.opname)
             self.__valid__compare_op(n_compare, x)
@@ -87,7 +100,7 @@ class Dissambler[TProp1, TProp2: Any]:
 
             if op_name == OpName.LOAD_FAST:
                 fast_var.append(x.argval)
-                load_fast[x.argval]
+                load_fast[x.argval].append(x.argval)
 
             if op_name == OpName.LOAD_ATTR:
                 load_fast[fast_var[-1]].append(x.argval)
@@ -95,9 +108,10 @@ class Dissambler[TProp1, TProp2: Any]:
             if op_name == OpName.COMPARE_OP:
                 self._compare_op: str = self._transform__compare_op(ConditionType(x.argval))
 
+        self._cond_1: NestedElement[TProp1] = NestedElement[TProp1](load_fast.pop(fast_var[0]))
+        
+        self._cond_2: NestedElement[TProp2] = NestedElement[TProp2](load_fast.pop(fast_var[1]))
 
-        self._cond_1: TProp1 = load_fast.pop(fast_var[0])[-1]
-        self._cond_2: TProp2 = load_fast.pop(fast_var[1])[-1]
         return None
 
     def __init__two_attr(self) -> None:
@@ -122,17 +136,13 @@ class Dissambler[TProp1, TProp2: Any]:
         return dicc_symbols.get(compare_sybmol, compare_sybmol.value)
 
     @property
-    def cond_1(self) -> Any:
+    def cond_1(self) -> NestedElement[str]:
         return self._cond_1
 
     @property
-    def cond_2(self) -> Any:
+    def cond_2(self) -> NestedElement[str]:
         return self._cond_2
 
     @property
     def compare_op(self) -> str:
         return self._compare_op
-
-    # @property
-    # def parent(self):
-    #     self._all_
