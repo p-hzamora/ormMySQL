@@ -5,17 +5,14 @@ from typing import Callable, overload, Optional
 from orm.dissambler import Dissambler
 
 
-class Condition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
+class WhereCondition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
     WHERE: str = "WHERE"
-    __slots__ = (
+    __slots__ = [
         "_function",
         "_conditions",
         "_table_cond_1",
         "_table_cond_2",
-        "_cond_1",
-        "_cond_2",
-        "_compare_op",
-    )
+    ] + list(Dissambler.__slots__)
 
     @overload
     def __init__(self, lambda_function: Callable[[TProp1], bool]) -> None: ...
@@ -43,14 +40,6 @@ class Condition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
         super().__init__(lambda_function)
 
     @property
-    def cond_1(self) -> str:
-        return self._cond_1
-
-    @property
-    def cond_2(self) -> str:
-        return self._cond_2
-
-    @property
     def table_cond_1(self) -> str:
         return self._table_cond_1 if self._table_cond_1 else ""
 
@@ -58,23 +47,19 @@ class Condition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
     def table_cond_2(self) -> str:
         return self._table_cond_2 if self._table_cond_2 else ""
 
-    @property
-    def compare_symbol(self) -> str:
-        return self._compare_op
-
     def to_query(self) -> str:
-        return f"{self.WHERE} {self.cond_1} {self.compare_symbol} {self.cond_2}"
+        return f"{self.WHERE} {self.cond_1.name} {self.compare_op} {self.cond_2.name}"
 
     @classmethod
-    def join_condition(cls, *args: "Condition", restrictive=False) -> "Condition":
+    def join_condition(cls, *args: "WhereCondition", restrictive=False) -> "WhereCondition":
         BY: str = "AND" if restrictive else "OR"
         query = f"{cls.WHERE}"
 
         n = len(args)
-        for index in range(n):
-            condition = args[index]
-            query += f" ({condition.cond_1} {condition.compare_symbol} {condition.cond_2})"
-            if index != n - 1:
+        for i in range(n):
+            condition = args[i]
+            query += f" ({condition.cond_1.name} {condition.compare_op} {condition.cond_2.name})"
+            if i != n - 1:
                 query += f" {BY}"
 
         return query
