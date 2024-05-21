@@ -11,22 +11,27 @@ from datetime import datetime
 
 from .country import Country
 
+
 class City(Table):
     __table_name__ = "city"
 
-    def __init__(self, city_id: int, city: str, country_id: int, last_update: datetime) -> None:
+    def __init__(
+        self,
+        city: str,
+        country_id: int,
+        city_id: int = None,
+        last_update: datetime = None,
+    ) -> None:
         self._city_id: Column[int] = Column(nameof(city_id), city_id, is_primary_key=True)
         self._city: Column[str] = Column(nameof(city), city)
         self._country_id: Column[str] = Column(nameof(country_id), country_id)
         self._last_update: Column[datetime] = Column(nameof(last_update), last_update)
 
-        self.country: ForeignKey = ForeignKey(
+        self.country: ForeignKey[City,Country] = ForeignKey[City,Country](
             orig_table=City,
-            orig_column=nameof(City.country_id),
             referenced_table=Country,
-            referenced_column=nameof(Country.country_id),
+            relationship= lambda ci,co: ci.country_id == co.country_id
         )
-
 
     @property
     def city_id(self) -> int:

@@ -1,41 +1,24 @@
 import unittest
 import sys
+import os
 from pathlib import Path
+import dotenv
 
 
-sys.path.append(str(Path(__file__).parent.parent))
-from orm import Table, Column, ForeignKey
-from orm import ModelBase
-from orm import nameof
-from orm import MySQLRepository, IRepositoryBase
+sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 
-class City(Table):
-    __table_name__: str = "city"
+from orm import Table, Column, ForeignKey  # noqa: E402
+from orm import ModelBase  # noqa: E402
+from orm import nameof  # noqa: E402
+from orm import MySQLRepository, IRepositoryBase  # noqa: E402
+from test.models import City  # noqa: E402
 
-    def __init__(
-        self,
-        pk_city: int,
-        literal: str,
-    ) -> None:
-        self._pk_city: Column[int] = Column(nameof(pk_city), pk_city, is_primary_key=True)
-        self._literal: Column[int] = Column(nameof(literal), literal, is_unique=True)
+dotenv.load_dotenv()
 
-    @property
-    def pk_city(self):
-        return self._pk_city.column_value
 
-    @pk_city.setter
-    def pk_city(self, value):
-        self._pk_city.column_value = value
-
-    @property
-    def literal(self):
-        return self._literal.column_value
-
-    @literal.setter
-    def literal(self, value):
-        self._literal.column_value = value
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
 
 
 class Person(Table):
@@ -43,19 +26,24 @@ class Person(Table):
 
     def __init__(
         self,
-        id: int,
-        title: int,
-        content: int,
+        title: str,
+        content: str,
         dni_list: list,
-        fk_city: City,
+        fk_city: int,
+        id: int = None,
     ) -> None:
-        self._id: Column[int] = Column(nameof(id), id, is_primary_key=True)
-        self._title: Column[int] = Column(nameof(title), title)
-        self._content: Column[int] = Column(nameof(content), content)
+        self._id: Column[int] = Column(nameof(id), id, is_primary_key=True, is_auto_increment=True)
+        self._title: Column[str] = Column(nameof(title), title)
+        self._content: Column[str] = Column(nameof(content), content)
         self._dni_list: Column[list] = Column(nameof(dni_list), str(dni_list))
-        self._fk_city: Column[list] = Column(nameof(fk_city), str(fk_city))
+        self._fk_city: Column[int] = Column(nameof(fk_city), str(fk_city))
 
-        self.city: ForeignKey[City] = ForeignKey(nameof(City.pk_city), nameof(fk_city), str(fk_city), modelbase="common")
+        self.city: ForeignKey[Person,City] = ForeignKey[Person,City](
+            orig_table=Person,
+            referenced_table=City,
+            relationship= lambda p,c: p.fk_city == c.city_id,
+            # referenced_database="common",
+        )
 
     @property
     def id(self):
@@ -106,13 +94,13 @@ class PersonModelBase(ModelBase[Person]):
 class TestSQLMapping(unittest.TestCase):
     PERSON_INSTANCE: Person = Person(1, "titleCustom", "contentCustom", [1, 2, 3, 4, 5, 6], "Cantabria")
 
-    def __init__(self, methodName: str = "SQLMapping") -> None:
-        super().__init__(methodName)
 
     def test_create_orm(self):
-        mysql = MySQLRepository("root", "1234", "db").connect()
-        model = PersonModelBase(mysql)
-        model.first().fk_city.literal
+        mysql = MySQLRepository(USERNAME, PASSWORD, "sakila").connect()
+        person = Person("titulo", "contenido", [1, 2, 3, 4], 2)
+        person_model = PersonModelBase(mysql)
+        city = person_model.filter_by(person).first(lambda x: x.city)
+        city
 
 
 if "__main__" == __name__:

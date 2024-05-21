@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm.orm_objects.queries.dissambler import Dissambler
+from orm.dissambler import Dissambler
 from datetime import datetime
 
 
