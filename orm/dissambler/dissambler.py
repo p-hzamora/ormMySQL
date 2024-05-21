@@ -67,7 +67,7 @@ class Dissambler[TProp1, TProp2: Any]:
 
         n_compare: list[int] = []
         for x in self._bytecode_function:
-            self.__valid__compare_op(n_compare, x)
+            self.__return_number_of_compare_op(n_compare, x)
 
             if OpName(x.opname) == OpName.LOAD_CONST:
                 load_const_queue.put(x.argval)
@@ -92,7 +92,7 @@ class Dissambler[TProp1, TProp2: Any]:
         CONST_NAME = "@@const@@"
         for x in self._bytecode_function:
             op_name: OpName = OpName(x.opname)
-            self.__valid__compare_op(n_compare, x)
+            self.__return_number_of_compare_op(n_compare, x)
 
             if op_name in load_consts:
                 fast_var.append(CONST_NAME)
@@ -122,7 +122,7 @@ class Dissambler[TProp1, TProp2: Any]:
         return f"<{self.__class__.__name__}>: {self._cond_1} {self._cond_2} {self._compare_op} "
 
     @staticmethod
-    def __valid__compare_op(n_compare: list[int], instruction: dis.Instruction) -> None:
+    def __return_number_of_compare_op(n_compare: list[int], instruction: dis.Instruction) -> None:
         if OpName(instruction.opname) == OpName.COMPARE_OP:
             n_compare.append(1)
         if len(n_compare) > 1:
