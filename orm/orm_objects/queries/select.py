@@ -2,7 +2,7 @@ from typing import Callable, overload, Iterable, Optional
 
 from ..table import Table
 from .query import QuerySelector
-from .condition import Condition
+from .where_condition import WhereCondition
 
 
 class SelectQuery[T](QuerySelector[T]):
@@ -35,7 +35,7 @@ class SelectQuery[T](QuerySelector[T]):
     ) -> None:
         super().__init__(table, select_list, where=where)
 
-        self._where: Optional[Condition[T, T2]] = Condition[T, T2](where) if where else None
+        self._where: Optional[WhereCondition[T, T2]] = WhereCondition[T, T2](where) if where else None
 
     @property
     def query(self) -> str:
@@ -43,4 +43,3 @@ class SelectQuery[T](QuerySelector[T]):
         if self._where:
             query += f" {self._where.to_query()}"
         return query
-

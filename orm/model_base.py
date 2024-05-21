@@ -9,7 +9,7 @@ from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
 from orm.orm_objects.foreign_key import RelationShip
 
-from .orm_objects.queries.condition import Condition  # noqa: F401
+from .orm_objects.queries.where_condition import WhereCondition  # noqa: F401
 from .condition_types import ConditionType
 # endregion
 
@@ -39,7 +39,7 @@ class ModelBase[T: Table](ABC):
             raise Exception(f"Se debe declarar la variabnle '__table_name__' en la clase '{model.__name__}'")
 
         self._repository: IRepositoryBase = repository
-        self._conditions: Queue[Condition] = Queue()
+        self._conditions: Queue[WhereCondition] = Queue()
 
     # endregion
 
@@ -445,7 +445,6 @@ class ModelBase[T: Table](ABC):
         value: int | float | str = None,
         condition: ConditionType = "=",
     ) -> Self:
-        
         # self._conditions.put(Condition(lambda x: x.))
         self.__add_condition(col, value, condition, " AND ")
         return self
