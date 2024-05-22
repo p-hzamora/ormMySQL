@@ -6,6 +6,9 @@ class NestedElement[T]:
         self._cond: T = cond
         self._parent_list: list[str] = self._create_parent_list(cond)
 
+    def __repr__(self) -> str:
+        return f"{NestedElement.__name__}: {'.'.join(self._parent_list)}"
+
     @property
     def name(self) -> T:
         if self._parent_list:
@@ -19,6 +22,10 @@ class NestedElement[T]:
             raise ValueError(f"Attribute '{self._cond}' has not parent values")
         new_cond = self._parent_list[:-1]
         return self.__get_parent(new_cond)
+
+    @property
+    def parents(self) -> list[T]:
+        return self._parent_list
 
     def _create_parent_list(self, condition: T) -> Iterable[str]:
         if isinstance(condition, Iterable) and not isinstance(condition, str):
