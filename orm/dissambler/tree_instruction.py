@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Self, Optional, Literal
+from typing import Any, NamedTuple, Self, Optional, Literal
 from dis import Instruction, Bytecode
 from .dis_types import OpName
 from .nested_element import NestedElement
@@ -23,6 +23,11 @@ DTypes = Literal[
 ]
 
 
+class TupleInstruction(NamedTuple):
+    var: str
+    nested_element: NestedElement[str]
+
+
 class TreeInstruction:
     _FIRST_LEVEL: tuple[OpName] = (
         OpName.LOAD_FAST,
@@ -42,6 +47,8 @@ class TreeInstruction:
         self._root: Node[Instruction] = Node[Instruction](None)
         self._bytecode: Bytecode = byte_code
         self._dtype: OpName = self._valid_dtype(dtype)
+        self._compare_op: Optional[str] = None
+        self._set_root()
 
     def __repr__(self) -> str:
         return f"{TreeInstruction.__name__} < at {hex(id(self))}>"
@@ -52,20 +59,19 @@ class TreeInstruction:
             if dtype in values:
                 return key
 
-    def create(self) -> dict[str, list[NestedElement[str]]]:
+    def _set_root(self) -> None:
         for x in self._bytecode:
+            if OpName(x.opname) == OpName.COMPARE_OP:
+                self._compare_op = x.argval
             self._raise_error_if_not_valid(x)
             self.add_instruction(x)
 
-        dicc: dict[str, list[NestedElement[str]]] = defaultdict(list)
+    def to_dict(self) -> dict[str, list[NestedElement[str]]]:
+        _dict: dict[str, list[NestedElement[str]]] = defaultdict(list)
         for node in self.root.children:
-            lista = self.get_all_nodes_of(node)
-
-            # We just want to retrieve argval not Instruction object itself
-            argval_list = [x.data.argval for x in lista]
-            dicc[node.data.argval].append(NestedElement[str](argval_list))
-
-        return dicc
+            argval = self._join_data_attributes_from_node(node)
+            _dict[node.data.argval].append(NestedElement[str](argval))
+        return _dict
 
     def _raise_error_if_not_valid(self, ins: Instruction) -> bool:
         if self._dtype != OpName.COMPARE_OP and OpName(ins.opname) == OpName.COMPARE_OP:
@@ -102,6 +108,25 @@ class TreeInstruction:
         get_all_nodes(node, lista)
         return lista
 
+    def to_list(self) -> list[TupleInstruction]:
+        _list: list[list[NestedElement[str]]] = []
+        for node in self.root.children:
+            argval = self._join_data_attributes_from_node(node)
+            _list.append(TupleInstruction(node.data.argval, NestedElement[str](argval)))
+        return _list
+
+    def _join_data_attributes_from_node(self, _node: Node[Instruction]) -> list[Any]:
+        lista = self.get_all_nodes_of(_node)
+        if not lista:
+            return _node.data.argval
+        else:
+            # We just want to retrieve argval not Instruction object itself
+            return [_node.data.argval] + [x.data.argval for x in lista]
+
     @property
     def root(self) -> Node[Instruction]:
         return self._root
+
+    @property
+    def compare_op(self) -> Optional[str]:
+        return self._compare_op
