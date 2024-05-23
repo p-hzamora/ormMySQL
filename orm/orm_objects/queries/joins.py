@@ -3,7 +3,7 @@ from enum import Enum
 
 from ..table import Table
 
-from .query import Query
+from .query import IQuery
 from orm.dissambler import Dissambler
 
 
@@ -17,7 +17,7 @@ class JoinType(Enum):
     INNER_JOIN = "INNER JOIN"
 
 
-class JoinSelector[TLeft, TRight](Query):
+class JoinSelector[TLeft, TRight](IQuery):
     @overload
     def __init__(
         self,

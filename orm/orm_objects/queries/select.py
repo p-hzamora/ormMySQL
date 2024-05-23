@@ -1,11 +1,11 @@
 from typing import Callable, overload, Iterable, Optional
 
 from ..table import Table
-from .query import QuerySelector
+from .query import IQuery
 from .where_condition import WhereCondition
 
 
-class SelectQuery[T](QuerySelector[T]):
+class SelectQuery[T](IQuery):
     @overload
     def __init__(
         self,
