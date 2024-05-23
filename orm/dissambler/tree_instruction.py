@@ -46,7 +46,7 @@ class TreeInstruction:
     def __init__(self, byte_code: Bytecode, dtype: object | DTypes):
         self._root: Node[Instruction] = Node[Instruction](None)
         self._bytecode: Bytecode = byte_code
-        self._dtype: OpName = self._valid_dtype(dtype)
+        self._dtype: list[object | DTypes] = self._valid_dtype(dtype)
         self._compare_op: Optional[str] = None
         self._set_root()
 
@@ -54,12 +54,15 @@ class TreeInstruction:
         return f"{TreeInstruction.__name__} < at {hex(id(self))}>"
 
     @classmethod
-    def _valid_dtype(cls, dtype: object) -> OpName:
+    def _valid_dtype(cls, dtype: list[object | DTypes]) -> OpName:
         for key, values in cls._VALID_DTYPES.items():
             if dtype in values:
                 return key
 
     def _set_root(self) -> None:
+        """
+        add instructions into self._root
+        """
         for x in self._bytecode:
             if OpName(x.opname) == OpName.COMPARE_OP:
                 self._compare_op = x.argval
@@ -75,7 +78,7 @@ class TreeInstruction:
 
     def _raise_error_if_not_valid(self, ins: Instruction) -> bool:
         if self._dtype != OpName.COMPARE_OP and OpName(ins.opname) == OpName.COMPARE_OP:
-            raise ValueError(f"Comparable symbols does not expected when '{self._dtype}' is specified.\nTry passing 'COMPARABLE' as type parameter")
+            raise ValueError(f"Comparable symbols does not expected when '{self._dtype}' is specified.\nTry passing '{self._VALID_DTYPES[OpName.COMPARE_OP]}' as type parameter")
 
     def add_instruction(self, ins: Instruction) -> None:
         opname = OpName(ins.opname)
