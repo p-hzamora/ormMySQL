@@ -7,8 +7,10 @@ from orm import (
     nameof,
     ModelBase,
     IRepositoryBase,
+    ForeignKey,
 )
 
+from .city import City
 
 
 class Point(NamedTuple):
@@ -41,6 +43,7 @@ class Address(Table):
         self._location: Column[datetime] = Column(nameof(location), location)
         self._last_update: Column[datetime] = Column(nameof(last_update), last_update)
 
+        self.city: City = ForeignKey[Address, City](Address, City, lambda a, c: a.city_id == c.city_id)
 
     @property
     def address_id(self) -> int:

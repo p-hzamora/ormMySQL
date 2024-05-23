@@ -27,7 +27,7 @@ class City(Table):
         self._country_id: Column[str] = Column(nameof(country_id), country_id)
         self._last_update: Column[datetime] = Column(nameof(last_update), last_update)
 
-        self.country: ForeignKey[City,Country] = ForeignKey[City,Country](
+        self.country: Country = ForeignKey[City,Country](
             orig_table=City,
             referenced_table=Country,
             relationship= lambda ci,co: ci.country_id == co.country_id
