@@ -1,11 +1,11 @@
-from typing import Any, override, Callable, overload, Iterable, Optional
+from typing import override, Callable, overload, Optional
 from enum import Enum
 
 from ..table import Table
 
-from .query import QuerySelector
-from .select import SelectQuery
+from .query import Query
 from orm.dissambler import Dissambler
+
 
 class JoinType(Enum):
     RIGHT_INCLUSIVE = "RIGHT JOIN"
@@ -17,81 +17,24 @@ class JoinType(Enum):
     INNER_JOIN = "INNER JOIN"
 
 
-class JoinSelector[TLeft, TRight](QuerySelector[TLeft]):
+class JoinSelector[TLeft, TRight](Query):
     @overload
     def __init__(
         self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
+        table_left: TLeft,
+        table_right: TRight,
+        col_left: str,
+        col_right: str,
         by: JoinType,
     ) -> None: ...
 
     @overload
     def __init__(
         self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
+        table_left: TLeft,
+        table_right: TRight,
         by: JoinType,
-        select_list: Optional[Callable[[TLeft], None]] = None,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
-        by: JoinType,
-        select_list: Optional[Iterable[Callable[[TLeft], None]]] = None,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
-        by: JoinType,
-        where: Optional[Callable[[TLeft, TRight], bool]] = None,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
-        by: JoinType,
-        where: Optional[Iterable[Callable[[TLeft, TRight], bool]]] = None,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
-        by: JoinType,
-        where: Optional[Callable[[TLeft, Any], bool]] = None,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table_left: Table,
-        col_left: Callable[[TLeft], None],
-        table_right: Table,
-        col_right: Callable[[TRight], None],
-        by: JoinType,
-        where: Optional[Iterable[Callable[[TLeft, Any], bool]]] = None,
+        where: Callable[[TLeft, TRight], bool],
     ) -> None: ...
 
     def __init__(
@@ -99,18 +42,41 @@ class JoinSelector[TLeft, TRight](QuerySelector[TLeft]):
         table_left: Table,
         table_right: Table,
         by: JoinType,
-        select_list: Optional[Callable[[TLeft], None]]= None,
+        col_left: Optional[str] = None,
+        col_right: Optional[str] = None,
         where: Optional[Callable[[TLeft, TRight], bool]] = None,
     ) -> None:
-        super().__init__(table_left, select_list, where=where)
+        self._orig_table: Table = table_left
         self._table_right: Table = table_right
         self._by: JoinType = by
 
-        self._dis:Dissambler[TLeft,TRight] = Dissambler[TLeft,TRight](where)
+        if all(x is None for x in (col_left, col_right, where)):
+            raise ValueError("You must specify at least 'where' clausule or ('_left_col',_right_col')")
+
+        if where is None:
+            self._left_col:str = col_left
+            self._right_col:str = col_right
+            self._compareop:str = "="
+        else:
+            _dis: Dissambler[TLeft, TRight] = Dissambler[TLeft, TRight](where)
+            self._left_col:str = _dis.cond_1.name
+            self._right_col:str = _dis.cond_2.name
+            self._compareop:str = _dis.compare_op
 
     @property
     @override
     def query(self) -> str:
-        select = SelectQuery[TLeft](self._orig_table, self._select_list)
+        # {inner join} table_name on
+        #   table_name.first col = table_name.second_col
 
-        return f"{select.query} {self._by.value} {self._table_right.__table_name__} ON {self._orig_table.__table_name__}.{self._dis.cond_1.name} {self._dis.compare_op} {self._table_right.__table_name__}.{self._dis.cond_2.name}"
+        left_col = f"{self._orig_table.__table_name__}.{self._left_col}"
+        right_col = f"{self._table_right.__table_name__}.{self._right_col}"
+        list_ = [
+            self._by.value,  # inner join
+            self._table_right.__table_name__,  # table_name
+            "ON",
+            left_col,  # first_col
+            self._compareop,  # =
+            right_col,  # second_col
+        ]
+        return " ".join(list_)
