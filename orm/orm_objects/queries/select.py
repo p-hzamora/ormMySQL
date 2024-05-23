@@ -1,8 +1,10 @@
-from typing import Callable, overload, Iterable, Optional
+from typing import Callable, overload, Optional, Iterable
+import dis
 
 from ..table import Table
 from .query import IQuery
 from .where_condition import WhereCondition
+from orm.dissambler import TreeInstruction
 
 
 class SelectQuery[T](IQuery):
@@ -17,29 +19,33 @@ class SelectQuery[T](IQuery):
     def __init__(
         self,
         table: Table,
-        select_list: Iterable[Callable[[T], None]],
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table: Table,
         where: Optional[Callable[[T], None]] = None,
     ) -> None: ...
 
     def __init__[T2](
         self,
         table: Table,
-        select_list: Optional[Callable[[T], None] | Iterable[Callable[[T], None]]] = None,
+        select_list: Optional[Callable[[T], None]] = lambda: None,
         where: Optional[Callable[[T, T2], bool]] = None,
     ) -> None:
-        super().__init__(table, select_list, where=where)
-
+        self._table:Table = table
         self._where: Optional[WhereCondition[T, T2]] = WhereCondition[T, T2](where) if where else None
+        self._select_list: Iterable[str] = self._make_column_list(select_list)
+
+    @staticmethod
+    def _make_column_list(select_list: Optional[Callable[[T], None]]) -> Iterable[str]:
+        _dis = TreeInstruction(dis.Bytecode(select_list), list).to_list()
+        return [x.nested_element.name for x in _dis]
+
+    @staticmethod
+    def _convert_select_list(select_list: Callable[[T], None] | Iterable[Callable[[T], None]]) -> str:
+        if not select_list:
+            return "*"
+        else:
+            return ", ".join(select_list)
 
     @property
     def query(self) -> str:
-        query = f"SELECT {self._select_str} FROM {self._orig_table.__table_name__}"
-        if self._where:
-            query += f" {self._where.to_query()}"
+        select_str = self._convert_select_list(self._select_list)
+        query = f"SELECT {select_str} FROM {self._table.__table_name__}"
         return query
