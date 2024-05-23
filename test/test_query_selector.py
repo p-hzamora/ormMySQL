@@ -122,8 +122,6 @@ if __name__ == "__main__":
     innerjoin = JoinSelector[City, Country](
         table_left=City,
         table_right=Country,
-        col_left=lambda c: c.country_id,
-        col_right=lambda c: c.country_id,
         by=JoinType.INNER_JOIN,
         select_list=lambda c: [c.city_id, c.last_update, c.country],
         where=lambda c, x: c.country_id == x.country_id,
