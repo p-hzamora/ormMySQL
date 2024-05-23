@@ -46,7 +46,7 @@ class TreeInstruction:
     def __init__(self, byte_code: Bytecode, dtype: object | DTypes):
         self._root: Node[Instruction] = Node[Instruction](None)
         self._bytecode: Bytecode = byte_code
-        self._dtype: list[object | DTypes] = self._valid_dtype(dtype)
+        self._dtype: OpName = self._valid_dtype(dtype)
         self._compare_op: Optional[str] = None
         self._set_root()
 
@@ -54,7 +54,7 @@ class TreeInstruction:
         return f"{TreeInstruction.__name__} < at {hex(id(self))}>"
 
     @classmethod
-    def _valid_dtype(cls, dtype: list[object | DTypes]) -> OpName:
+    def _valid_dtype(cls, dtype: object | DTypes) -> OpName:
         for key, values in cls._VALID_DTYPES.items():
             if dtype in values:
                 return key
