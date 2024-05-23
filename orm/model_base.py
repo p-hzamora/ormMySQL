@@ -23,7 +23,6 @@ class ModelBase[T: Table](ABC):
 
     # region Constructor
     def __init__(self, model: T, *, repository: IRepositoryBase):
-        model.__database_name__ = repository.database
         self._model: T = model
 
         if not issubclass(self._model, Table):
@@ -31,9 +30,6 @@ class ModelBase[T: Table](ABC):
             # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
 
             raise Exception(f"La clase '{model}' no hereda de Table")
-
-        if model.__database_name__ is Ellipsis:
-            raise Exception(f"Se debe declarar la variabnle '__database_name__' en la clase '{model.__name__}'")
 
         if model.__table_name__ is Ellipsis:
             raise Exception(f"Se debe declarar la variabnle '__table_name__' en la clase '{model.__name__}'")

@@ -5,7 +5,6 @@ import json
 
 class Table(ABC):
     __table_name__: str = ...
-    __database_name__: str = ...
 
     # foreign_key: ForeignKey = ForeignKey
 
