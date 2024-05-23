@@ -5,8 +5,7 @@ from ..table import Table
 
 from .query import QuerySelector
 from .select import SelectQuery
-from .query import get_var_from_lambda
-
+from orm.dissambler import Dissambler
 
 class JoinType(Enum):
     RIGHT_INCLUSIVE = "RIGHT JOIN"
@@ -98,22 +97,20 @@ class JoinSelector[TLeft, TRight](QuerySelector[TLeft]):
     def __init__(
         self,
         table_left: Table,
-        col_left: Callable[[TLeft], None],
         table_right: Table,
-        col_right: Callable[[TRight], None],
         by: JoinType,
-        select_list: Optional[Callable[[TLeft], None] | Iterable[Callable[[TLeft], None]]] = None,
-        where: Optional[Callable[[TLeft, TRight], bool] | Iterable[Callable[[TLeft, TRight], bool]]] = None,
+        select_list: Optional[Callable[[TLeft], None]]= None,
+        where: Optional[Callable[[TLeft, TRight], bool]] = None,
     ) -> None:
         super().__init__(table_left, select_list, where=where)
         self._table_right: Table = table_right
         self._by: JoinType = by
-        self._col_left: str = get_var_from_lambda(col_left)
-        self._col_right: str = get_var_from_lambda(col_right)
+
+        self._dis:Dissambler[TLeft,TRight] = Dissambler[TLeft,TRight](where)
 
     @property
     @override
     def query(self) -> str:
         select = SelectQuery[TLeft](self._orig_table, self._select_list)
 
-        return f"{select.query} {self._by.value} {self._table_right.__table_name__} ON {self._orig_table.__table_name__}.{self._col_left} = {self._table_right.__table_name__}.{self._col_right}"
+        return f"{select.query} {self._by.value} {self._table_right.__table_name__} ON {self._orig_table.__table_name__}.{self._dis.cond_1.name} {self._dis.compare_op} {self._table_right.__table_name__}.{self._dis.cond_2.name}"
