@@ -7,7 +7,6 @@ from queue import Queue
 
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
-from orm.orm_objects.foreign_key import RelationShip
 
 from .orm_objects.queries.where_condition import WhereCondition  # noqa: F401
 from .condition_types import ConditionType
@@ -277,7 +276,7 @@ class ModelBase[T: Table](ABC):
             col = {x.opname: x.argval for x in dis.Bytecode(col)}["LOAD_ATTR"]
 
         query_res: str = f"SELECT {col if col else '*'} FROM {self._model.__table_name__}"
-        rs: dict[str, RelationShip] = self._fk_mapped.MAPPED[self._model.__table_name__][0]
+        rs: dict = self._fk_mapped.MAPPED[self._model.__table_name__][0]
 
         fk = list(rs.keys())[0]
         col, object = rs[fk]
