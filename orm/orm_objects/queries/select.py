@@ -37,15 +37,14 @@ class SelectQuery[T](IQuery):
         _dis = TreeInstruction(dis.Bytecode(select_list), list).to_list()
         return [x.nested_element.name for x in _dis]
 
-    @staticmethod
-    def _convert_select_list(select_list: Callable[[T], None] | Iterable[Callable[[T], None]]) -> str:
-        if not select_list:
+    def _convert_select_list(self) -> str:
+        if not self._select_list:
             return "*"
         else:
-            return ", ".join(select_list)
+            return ", ".join(self._select_list)
 
     @property
     def query(self) -> str:
-        select_str = self._convert_select_list(self._select_list)
+        select_str = self._convert_select_list()
         query = f"SELECT {select_str} FROM {self._table.__table_name__}"
         return query
