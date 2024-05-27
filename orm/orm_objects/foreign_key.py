@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import NamedTuple, Callable
+from typing import Callable, NamedTuple
 
 from orm.dissambler import Dissambler
 from .table import Table
@@ -7,30 +7,31 @@ from .table import Table
 
 class RelationShip[T: Table](NamedTuple):
     col: str
-    object: Table
+    object: T
 
 
-class ForeignKey[Tbl1: Table, Tbl2: Table]:
-    MAPPED: dict[str, list[dict[str, RelationShip]]] = defaultdict(dict)
+class ForeignKey[Tbl1, Tbl2]:
+    MAPPED: dict[str, dict[str, RelationShip]] = defaultdict(dict)
 
-    def __init__(
-        self,
-        orig_table: Table,
-        referenced_table: Table,
+    def __new__(
+        cls,
+        orig_table: str,
+        referenced_table,
         relationship: Callable[[Tbl1, Tbl2], bool],
-    ) -> None:
-        self._orig_table: Tbl1 = orig_table
-        self._referenced_table: Tbl2 = referenced_table
-        self._dissambler_functions: Dissambler[Tbl1, Tbl2] = Dissambler[Tbl1, Tbl2](relationship)
+    )->Tbl2:
+        dissambler_functions: Dissambler[Tbl1, Tbl2] = Dissambler[Tbl1, Tbl2](relationship)
 
-        rs: RelationShip = RelationShip[Tbl2](self._dissambler_functions.cond_2, referenced_table)
-        self._add_fk(self._orig_table.__table_name__, self._dissambler_functions.cond_1.name, rs)
+        cls.add_foreign_key(orig_table, referenced_table, dissambler_functions)
 
-    def __repr__(self) -> str:
-        return f"<{ForeignKey.__name__}>: {self._orig_table.__name__}.{self._dissambler_functions.cond_1} {self._dissambler_functions.compare_op} {self._referenced_table.__name__}.{self._dissambler_functions.cond_2}>"
+        return referenced_table
 
     @classmethod
-    def _add_fk(cls, orig_table: str, fk_orig_table: str, relationship: RelationShip) -> None:
+    def add_foreign_key(cls, orig_table: str, referenced_table: str, relationship: Dissambler[Tbl1, Tbl2]) -> None:
+        fk_orig_table = relationship.cond_1.name
+        referenced_column = relationship.cond_2.name
+
         if fk_orig_table in cls.MAPPED[orig_table]:
             raise KeyError(f"'{fk_orig_table}' already in '{orig_table}' table as foregin key")
-        cls.MAPPED[orig_table][fk_orig_table] = relationship
+
+        cls.MAPPED[orig_table][fk_orig_table] = RelationShip(referenced_column, referenced_table)
+        return None
