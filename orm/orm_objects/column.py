@@ -13,10 +13,10 @@ class Column[T]:
         column_name,
         column_value,
         *,
-        is_primary_key=False,
-        is_auto_generated=False,
-        is_auto_increment=False,
-        is_unique=False,
+        is_primary_key: bool = False,
+        is_auto_generated: bool = False,
+        is_auto_increment: bool = False,
+        is_unique: bool = False,
     ) -> None:
         self.column_name: str = column_name
         self.column_value: T = column_value
