@@ -5,19 +5,19 @@ from typing import Iterator
 
 class GestAssignedName():
     @staticmethod
-    def take1(iterator):
+    def take1(iterator:Iterator)->dis.Instruction:
         try:
             return next(iterator)
         except StopIteration:
             raise Exception("missing bytecode instruction") from None
 
-
-    def take(self, iterator, count):
+    @classmethod
+    def take(cls, iterator:Iterator, count:int):
         for x in range(count):
-            yield self.take1(iterator)
+            yield cls.take1(iterator)
 
-
-    def get(self, frame):
+    @classmethod
+    def get(cls, frame):
         """Takes a frame and returns a description of the name(s) to which the
         currently executing CALL_FUNCTION instruction's value will be assigned.
 
@@ -34,13 +34,13 @@ class GestAssignedName():
         else:
             assert False, "bytecode instruction missing"
         assert instr.opname.startswith("CALL")
-        instr = self.take1(iterator)
+        instr = cls.take1(iterator)
         if instr.opname == "POP_TOP":
             raise ValueError("not assigned to variable")
-        return self.instr_dispatch(instr, iterator)
+        return cls.instr_dispatch(instr, iterator)
 
-
-    def instr_dispatch(self, instr:dis.Instruction, iterator:Iterator):
+    @classmethod
+    def instr_dispatch(cls, instr:dis.Instruction, iterator:Iterator):
         opname = instr.opname
         if (
             opname == "STORE_FAST"  # (co_varnames)
@@ -50,9 +50,9 @@ class GestAssignedName():
         ):  # (co_cellvars++co_freevars)
             return instr.argval
         if opname == "UNPACK_SEQUENCE":
-            return tuple(self.instr_dispatch(instr, iterator) for instr in self.take(iterator, instr.arg))
+            return tuple(cls.instr_dispatch(instr, iterator) for instr in cls.take(iterator, instr.arg))
         if opname == "UNPACK_EX":
-            return (*tuple(self.instr_dispatch(instr, iterator) for instr in self.take(iterator, instr.arg)), Ellipsis)
+            return (*tuple(cls.instr_dispatch(instr, iterator) for instr in cls.take(iterator, instr.arg)), Ellipsis)
         # Note: 'STORE_SUBSCR' and 'STORE_ATTR' should not be possible here.
         # `lhs = rhs` in Python will evaluate `lhs` after `rhs`.
         # Thus `x.attr = rhs` will first evalute `rhs` then load `a` and finally
@@ -66,16 +66,17 @@ class GestAssignedName():
         # and a arbitary number of LOAD_ATTR calls before the final STORE_ATTR.
         # We will represents simply a string like `my_var.loaded.loaded.assigned`
         if opname in {"LOAD_CONST", "LOAD_DEREF", "LOAD_FAST", "LOAD_GLOBAL", "LOAD_NAME"}:
-            return instr.argval + "." + ".".join(self.instr_dispatch_for_load(instr, iterator))
+            return instr.argval + "." + ".".join(cls.instr_dispatch_for_load(instr, iterator))
         raise NotImplementedError("assignment could not be parsed: " "instruction {} not understood".format(instr))
 
 
-    def instr_dispatch_for_load(self, instr, iterator):
-        instr = self.take1(iterator)
+    @classmethod
+    def instr_dispatch_for_load(cls, instr, iterator):
+        instr = cls.take1(iterator)
         opname = instr.opname
         if opname == "LOAD_ATTR":
             yield instr.argval
-            yield from self.instr_dispatch_for_load(instr, iterator)
+            yield from cls.instr_dispatch_for_load(instr, iterator)
         elif opname == "STORE_ATTR":
             yield instr.argval
         else:
