@@ -35,8 +35,8 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(q.load(), "SELECT city, last_update, country_id FROM city;")
 
     def test_select_cols_from_foreign_keys(self):
-        q = SelectQuery[Address](City, lambda a: (a.city.city_id))
-        self.assertEqual(q.query, "SELECT city.city_id, last_update, country_id FROM city")
+        q = SelectQuery[Address](Address, lambda a: (a.city.country.country))
+        self.assertEqual(q.query, "SELECT city.city_id, address.last_update, address.country_id FROM address")
 
 
 if "__main__" == __name__:
