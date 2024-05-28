@@ -10,7 +10,6 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 from orm import Table, Column, ForeignKey  # noqa: E402
 from orm import ModelBase  # noqa: E402
-from orm import nameof  # noqa: E402
 from orm import MySQLRepository, IRepositoryBase  # noqa: E402
 from test.models import City  # noqa: E402
 
@@ -32,16 +31,16 @@ class Person(Table):
         fk_city: int,
         id: int = None,
     ) -> None:
-        self._id: Column[int] = Column(nameof(id), id, is_primary_key=True, is_auto_increment=True)
-        self._title: Column[str] = Column(nameof(title), title)
-        self._content: Column[str] = Column(nameof(content), content)
-        self._dni_list: Column[list] = Column(nameof(dni_list), str(dni_list))
-        self._fk_city: Column[int] = Column(nameof(fk_city), str(fk_city))
+        self._id: int = Column[int](id, is_primary_key=True, is_auto_increment=True)
+        self._title: str = Column[str](title)
+        self._content: str = Column[str](content)
+        self._dni_list: list = Column[list](str(dni_list))
+        self._fk_city: int = Column[int](str(fk_city))
 
-        self.city: ForeignKey[Person,City] = ForeignKey[Person,City](
+        self.city: ForeignKey[Person, City] = ForeignKey[Person, City](
             orig_table=Person,
             referenced_table=City,
-            relationship= lambda p,c: p.fk_city == c.city_id,
+            relationship=lambda p, c: p.fk_city == c.city_id,
             # referenced_database="common",
         )
 
@@ -93,7 +92,6 @@ class PersonModelBase(ModelBase[Person]):
 
 class TestSQLMapping(unittest.TestCase):
     PERSON_INSTANCE: Person = Person(1, "titleCustom", "contentCustom", [1, 2, 3, 4, 5, 6], "Cantabria")
-
 
     def test_create_orm(self):
         mysql = MySQLRepository(USERNAME, PASSWORD, "sakila").connect()
