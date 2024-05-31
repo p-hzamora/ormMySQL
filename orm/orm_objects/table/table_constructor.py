@@ -20,7 +20,7 @@ class Field:
 
     @property
     def init_arg(self) -> str:
-        default = f"={self.default_name}" if self.has_default else ""
+        default = f"={self.default_name if self.has_default else None}" 
 
         return f"{self.name}: {self.type_name}{default}"
 
@@ -43,12 +43,16 @@ def get_fields[T](cls: Type[T]) -> Iterable[Field]:
     fields = []
     for name, type_ in annotations.items():
         # type_ must by Column object
-        if type_.__origin__ is not Column:
-            raise Exception(f"'{type_}' is not {Column.__name__}")
+        field_type = type_
+        if hasattr(type_, "__origin__") and type_.__origin__ is Column:  # __origin__ to get type of Generic value
+            field_type = type_.__args__[0]
+
 
         default = getattr(cls, name, MISSING)
-        fields.append(Field(name, type_.__args__[0], default))
+        fields.append(Field(name, field_type, default))
 
+        # Update __annotations__ to create Columns
+        cls.__annotations__[name] = Column[field_type]
     return fields
 
 
@@ -63,9 +67,11 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
             locals_[field.type_name] = field.type_
 
             init_args.append(field.init_arg)
-            if field.has_default:
-                # set Column Object
-                locals_[field.default_name] = field.default.__to_string__(field.name, field.name)
+            # if field.has_default:
+            #     # set Column Object
+            #     
+            locals_[field.default_name] = field.default.__to_string__(field.name, field.name)
+            __create_properties(cls, field.name)
 
     wrapper_fn = "\n".join(
         [
@@ -83,34 +89,21 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
 
     setattr(cls, "__init__", init_fn)
 
-    setattr(
-        cls,
-        "age",
-        property(fget=lambda self: self._age.column_value, fset=lambda self, value: self._age.__setattr__(self, "column_value", value)),
-    )
-
-    setattr(
-        cls,
-        "name",
-        property(fget=lambda self: self._name.column_value, fset=lambda self, value: self._name.__setattr__(self, "column_value", value)),
-    )
-
-    # for field in fields:
-    #      __create_properties(cls, field.name)
-
     return cls
 
 
-# def __create_properties[T](cls: Type[T], pname: str) -> None:
-#     if hasattr(cls, pname):
-#         private_attr: Column[T] = setattr(cls, f"_{pname}",Column())
-#         prop = property(
-#             fget=lambda self: private_attr.column_value,
-#             fset=lambda self, value: setattr(private_attr, "column_value", value),
-#         )
-#         # set property in public name
-#         setattr(cls, pname, prop)
-#     return None
+def __create_properties[T](cls: Type[T], prop_name: str) -> property:
+    _name: str = f"_{prop_name}"
+
+    # we need to get Table attributes (Column class) and then called __getattribute__ or __setattr__ to make changes inside of Column
+    prop = property(
+        fget=lambda _obj: getattr(_obj, _name).__getattribute__("column_value"),
+        fset=lambda _obj, value: getattr(_obj, _name).__setattr__("column_value", value),
+    )
+
+    # set property in public name
+    setattr(cls, prop_name, prop)
+    return None
 
 
 @dataclass_transform()
@@ -131,3 +124,6 @@ class Table(metaclass=TableMeta):
     def __str__(self) -> str:
         params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
         return json.dumps(params, ensure_ascii=False, indent=2)
+
+    def __getattr__[T](self, __name: str) -> Column[T]:
+        return self.__dict__.get(__name)
