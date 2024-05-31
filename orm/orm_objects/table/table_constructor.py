@@ -1,5 +1,5 @@
-from typing import Iterable, Type, dataclass_transform
-
+from typing import Any, Iterable, Type, dataclass_transform
+import json
 from .column import Column
 
 MISSING = Column()
@@ -114,10 +114,20 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
 
 
 @dataclass_transform()
-class MetaBase(type):
-    def __new__[T](cls: T, n, b, dct) -> Type[T]:
-        cls_object = super().__new__(cls, n, b, dct)
+class TableMeta(type):
+    def __new__[T](cls, name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
+        cls_object = super().__new__(cls, name, bases, dct)
         return __init_constructor__(cls_object)
 
 
-class Base(metaclass=MetaBase): ...
+@dataclass_transform(eq_default=False)
+class Table(metaclass=TableMeta):
+    __table_name__ = ...
+
+    def __repr__(self) -> str:
+        params = ", ".join([f"{x}={getattr(self,x)}" for x, y in self.__class__.__dict__.items() if isinstance(y, property)])
+        return f"{self.__class__.__name__}({params})"
+
+    def __str__(self) -> str:
+        params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
+        return json.dumps(params, ensure_ascii=False, indent=2)
