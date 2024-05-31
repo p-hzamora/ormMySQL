@@ -16,9 +16,9 @@ class City(Table):
     __table_name__ = "city"
 
     city_id: int = Column[int](is_primary_key=True)
-    city: str = Column[str]()
-    country_id: str = Column[str]()
-    last_update: datetime = Column[datetime]()
+    city: str
+    country_id: str
+    last_update: datetime
 
     country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
 

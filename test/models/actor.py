@@ -12,9 +12,9 @@ class Actor(Table):
     __table_name__ = "actor"
 
     actor_id: int = Column[int](is_primary_key=True)
-    first_name: str = Column[str]()
-    last_name: str = Column[str]()
-    last_update: datetime = Column[datetime]()
+    first_name: str
+    last_name: str
+    last_update: datetime
 
 
 class ActorModel(ModelBase[Actor]):

@@ -21,14 +21,14 @@ class Address(Table):
     __table_name__ = "address"
 
     address_id: int = Column[int](is_primary_key=True)
-    address: str = Column[str]()
-    address2: str = Column[str]()
-    district: str = Column[str]()
-    city_id: int = Column[int]()
-    postal_code: datetime = Column[datetime]()
-    phone: str = Column[str]()
-    location: datetime = Column[datetime]()
-    last_update: datetime = Column[datetime]()
+    address: str
+    address2: str
+    district: str
+    city_id: int
+    postal_code: datetime
+    phone: str
+    location: datetime
+    last_update: datetime
 
     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
@@ -37,5 +37,3 @@ class Address(Table):
 class AddressModel(ModelBase[Address]):
     def __init__(self, repository: IRepositoryBase):
         super().__init__(Address, repository=repository)
-
-
