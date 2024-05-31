@@ -1,6 +1,6 @@
 from typing import Iterable, Type, dataclass_transform
 
-from orm.orm_objects.column import Column
+from .column import Column
 
 MISSING = Column()
 

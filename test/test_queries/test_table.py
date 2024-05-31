@@ -3,7 +3,7 @@ import unittest
 from orm.orm_objects import Table, Column
 from typing import get_type_hints
 
-from orm.orm_objects.table_constructor.table_constructor import __init_constructor__, Base
+from orm.orm_objects.table.table_constructor import __init_constructor__, Base
 
 
 @__init_constructor__

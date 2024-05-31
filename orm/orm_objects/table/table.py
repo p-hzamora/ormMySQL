@@ -1,6 +1,6 @@
 import json
 from typing import Any, dataclass_transform
-from .table_constructor.table_constructor import __init_constructor__
+from .table_constructor import __init_constructor__
 
 @dataclass_transform()
 class TableMeta(type):
