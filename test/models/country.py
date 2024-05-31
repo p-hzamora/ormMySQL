@@ -12,8 +12,8 @@ class Country(Table):
     __table_name__ = "country"
 
     country_id: int = Column[int](is_primary_key=True)
-    country: str = Column[str]()
-    last_update: datetime = Column[datetime]()
+    country: str
+    last_update: datetime
 
 
 class CountryModel(ModelBase[Country]):
