@@ -1,28 +1,42 @@
+import sys
+from pathlib import Path
 import unittest
 
-from orm.orm_objects import Table, Column
-from typing import get_type_hints
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.orm_objects.table.table_constructor import __init_constructor__, Base
+from orm.orm_objects import Table, Column  # noqa: E402
+from typing import Type, get_type_hints  # noqa: E402
+
+from orm.orm_objects.table.table_constructor import __init_constructor__  # noqa: E402
 
 
 @__init_constructor__
 class PetDecorator:
-    name: Column[str] = Column[str](is_primary_key=True)
-    age: Column[int] = Column[int]()
-    sound: Column[str] = Column[str]()
+    name: str = Column[str](is_unique=True)
+    age: int = Column[int](is_auto_increment=True)
+    sound: str
+    id_pet: int = Column[int](is_primary_key=True)
 
 
-class PetHeritage(Base):
-    name: Column[str] = Column[str](is_primary_key=True)
-    age: Column[int] = Column[int]()
-    sound: Column[str] = Column[str]()
+class PetHeritage(Table):
+    name: str = Column[str](is_unique=True)
+    age: int = Column[int](is_auto_increment=True)
+    sound: str
+    id_pet: int = Column[int](is_primary_key=True)
 
 
-class PersonInit:
-    def __init__(self, age: int, name: str) -> None:
-        self._age: Column[int] = Column[int]("age", age, is_auto_increment=True)
-        self._name: Column[str] = Column[str]("name", name)
+class PetInit:
+    def __init__(
+        self,
+        name: str = None,
+        age: int = None,
+        sound: str = None,
+        id_pet: int = None,
+    ) -> None:
+        self._name: str = Column[str]("name", name)
+        self._age: int = Column[int]("age", age, is_auto_increment=True)
+        self._sound: str = Column[str]("sound", sound)
+        self._id_pet: int = Column[int]("id_pet", id_pet, is_primary_key=True)
 
     @property
     def age(self) -> int:
@@ -41,36 +55,78 @@ class PersonInit:
         self._name.column_value = value
 
 
-class Person(Table):
-    age: Column[int] = Column[int](is_auto_increment=True)
-    name: Column[str] = Column[str]()
+TypePet = PetDecorator | PetHeritage | PetInit
 
 
 class TestTableConstructor(unittest.TestCase):
-    PERSON = Person(25, "pablo")
+    PetClasses: tuple[Type[TypePet]] = (
+        PetDecorator,
+        PetHeritage,
+        PetInit,
+    )
 
-    def test_constructor(self):
-        self.assertEqual(self.PERSON._age.column_value, 25)
-        self.assertEqual(self.PERSON._age.is_primary_key, False)
-        self.assertEqual(self.PERSON._age.is_auto_increment, True)
-        self.assertEqual(self.PERSON._name.column_value, "pablo")
+    def __init__(self, methodName: str = "runTest") -> None:
+        super().__init__(methodName)
 
-        self.assertIsInstance(self.PERSON._age, Column)
-        self.assertIsInstance(self.PERSON._name, Column)
+    def _test_constructor(self, obj: TypePet):
+        self.assertEqual(obj._age.column_value, 25)
+        self.assertEqual(obj._age.is_primary_key, False)
+        self.assertEqual(obj._age.is_auto_increment, True)
+        self.assertEqual(obj._name.column_value, "pablo")
 
-        self.assertEqual(self.PERSON.age, 25)
-        self.assertEqual(self.PERSON.name, "pablo")
+        self.assertIsInstance(obj._age, Column)
+        self.assertIsInstance(obj._name, Column)
 
-    def test_update_property(self):
-        self.assertEqual(self.PERSON.age, 25)
-        self.assertEqual(self.PERSON.name, "pablo")
+        self.assertEqual(obj.age, 25)
+        self.assertEqual(obj.name, "pablo")
 
-        self.PERSON.age = 10
-        self.PERSON.name = "marcos"
-        self.assertEqual(self.PERSON.age, 10)
-        self.assertEqual(self.PERSON.name, "marcos")
-        self.assertEqual(self.PERSON._age.column_value, 10)
-        self.assertEqual(self.PERSON._name.column_value, "marcos")
+    def _test_update_property(self, obj: TypePet):
+        self.assertEqual(obj.age, 25)
+        self.assertEqual(obj.name, "pablo")
+
+        obj.age = 10
+        obj.name = "marcos"
+        self.assertEqual(obj.age, 10)
+        self.assertEqual(obj.name, "marcos")
+        self.assertEqual(obj._age.column_value, 10)
+        self.assertEqual(obj._name.column_value, "marcos")
+
+    def _test_column_class_values(self, obj:TypePet):
+        self.assertEqual(obj._name.is_primary_key,False)
+        self.assertEqual(obj._name.is_auto_generated,False)
+        self.assertEqual(obj._name.is_auto_increment,False)
+        self.assertEqual(obj._name.is_unique,True)
+
+
+
+
+_age.is_primary_key
+_age.is_auto_generated
+_age.is_auto_increment
+_age.is_unique
+
+.is_primary_key
+.is_auto_generated
+.is_auto_increment
+.is_unique
+
+.is_primary_key
+.is_auto_generated
+.is_auto_increment
+.is_unique
+
+.is_primary_key
+.is_auto_generated
+.is_auto_increment
+.is_unique
+
+
+
+    def test_TableConstructor(self):
+        for pet_class in self.PetClasses:
+            instance = pet_class("pablo", 25)
+            self._test_constructor(instance)
+            self._test_update_property(instance)
 
 
 class TestCustomDataclass(unittest.TestCase):
@@ -78,26 +134,31 @@ class TestCustomDataclass(unittest.TestCase):
         self.assertTrue(hasattr(PetDecorator, "__init__"))
         self.assertEqual(
             get_type_hints(PetDecorator),
-            {"age": Column[int], "name": Column[str], "sound": Column[str]},
+            {
+                "name": Column[str],
+                "age": Column[int],
+                "sound": Column[str],
+                "id_pet": Column[int],
+            },
         )
-
-    def __check_properties(self, obj: PetDecorator | PetHeritage):
-        self.assertEqual(obj.name.column_value, "fido")
-        self.assertEqual(obj.age.column_value, 3)
-        self.assertEqual(obj.sound.column_value, "woof")
 
     def test_check_that_properties_were_assigned(self):
         self.__check_properties(PetDecorator("fido", 3))
         self.__check_properties(PetHeritage("fido", 3))
 
-    def __check_if_default_can_be_overridden(self, obj: PetDecorator | PetHeritage):
-        self.assertEqual(obj.name.column_value, "rover")
-        self.assertEqual(obj.age.column_value, 5)
-        self.assertEqual(obj.sound.column_value, "bark")
+    def __check_properties(self, obj: PetDecorator | PetHeritage):
+        self.assertEqual(obj.name, "fido")
+        self.assertEqual(obj.age, 3)
+        self.assertEqual(obj.sound, None)
 
     def test_check_that_the_default_can_be_overridden(self):
         self.__check_if_default_can_be_overridden(PetDecorator("rover", 5, "bark"))
         self.__check_if_default_can_be_overridden(PetHeritage("rover", 5, "bark"))
+
+    def __check_if_default_can_be_overridden(self, obj: PetDecorator | PetHeritage):
+        self.assertEqual(obj.name, "rover")
+        self.assertEqual(obj.age, 5)
+        self.assertEqual(obj.sound, "bark")
 
 
 if __name__ == "__main__":
