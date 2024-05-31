@@ -27,3 +27,16 @@ class Column[T]:
 
     def __repr__(self) -> str:
         return f"<Column: {self.column_name}>"
+
+    def __to_string__(self, name: str, value: T):
+        dicc: dict = {
+            "column_name": f"'{name}'",
+            "column_value": value,
+        }
+        exec_str: str = f"{Column.__name__}("
+        for x in self.__slots__:
+            self_value = getattr(self, x)
+
+            exec_str += f"  {x}={dicc.get(x,self_value)},\n"
+        exec_str += ")"
+        return exec_str
