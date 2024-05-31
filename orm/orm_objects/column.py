@@ -11,6 +11,7 @@ class Column[T]:
     def __init__(
         self,
         column_name: str = None,
+        column_value: T = None,
         *,
         is_primary_key: bool = False,
         is_auto_generated: bool = False,
@@ -18,7 +19,7 @@ class Column[T]:
         is_unique: bool = False,
     ) -> None:
         self.column_name = column_name
-        self.column_value: T = None
+        self.column_value: T = column_value
         self.is_primary_key: bool = is_primary_key
         self.is_auto_generated: bool = is_auto_generated
         self.is_auto_increment: bool = is_auto_increment
