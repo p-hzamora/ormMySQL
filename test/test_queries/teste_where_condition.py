@@ -2,13 +2,10 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.orm_objects.queries import WhereCondition
-from models.city import City
-from models.country import Country
-from models.address import Address
-
+from orm.orm_objects.queries import WhereCondition  # noqa: E402
+from test.models import City, Country, Address  # noqa: E402
 
 class C:
     c: str
