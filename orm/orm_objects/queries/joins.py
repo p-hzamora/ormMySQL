@@ -63,6 +63,10 @@ class JoinSelector[TLeft, TRight](IQuery):
             self._right_col:str = _dis.cond_2.name
             self._compareop:str = _dis.compare_op
 
+    @classmethod
+    def join_selectors(cls, *args:"JoinSelector")->str:
+        return "\n".join([x.query for x in args])
+    
     @property
     @override
     def query(self) -> str:
