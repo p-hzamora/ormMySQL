@@ -77,7 +77,7 @@ class JoinSelector[TLeft, TRight](IQuery):
         right_col = f"{self._table_right.__table_name__}.{self._right_col}"
         list_ = [
             self._by.value,  # inner join
-            self._table_right.__table_name__,  # table_name
+            self._orig_table.__table_name__,  # table_name
             "ON",
             left_col,  # first_col
             self._compareop,  # =
