@@ -28,7 +28,7 @@ class Address(Table):
     postal_code: datetime
     phone: str
     location: datetime
-    last_update: datetime
+    last_update: datetime = Column[datetime](is_auto_generated=True)
 
     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
