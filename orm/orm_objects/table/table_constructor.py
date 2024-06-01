@@ -47,8 +47,6 @@ def get_fields[T](cls: Type[T]) -> Iterable[Field]:
         field_type = type_
         if hasattr(type_, "__origin__") and type_.__origin__ is Column:  # __origin__ to get type of Generic value
             field_type = type_.__args__[0]
-
-
         default = getattr(cls, name, MISSING)
         fields.append(Field(name, field_type, default))
 
