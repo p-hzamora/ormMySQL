@@ -31,6 +31,7 @@ class ForeignKey[Tbl1, Tbl2]:
         referenced_column = relationship.cond_2.name
 
         if fk_orig_table in cls.MAPPED[orig_table]:
+            return None
             raise KeyError(f"'{fk_orig_table}' already in '{orig_table}' table as foregin key")
 
         cls.MAPPED[orig_table][fk_orig_table] = RelationShip(referenced_column, referenced_table)
