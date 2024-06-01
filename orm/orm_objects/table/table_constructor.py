@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Type, dataclass_transform
+from typing import Any, Iterable, Optional, Type, dataclass_transform
 import json
 from .column import Column
 
@@ -121,5 +121,5 @@ class Table(metaclass=TableMeta):
         params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
         return json.dumps(params, ensure_ascii=False, indent=2)
 
-    def __getattr__[T](self, __name: str) -> Column[T]:
+    def __getattr__[T](self, __name: str) -> Optional[Column[T]]:
         return self.__dict__.get(__name)
