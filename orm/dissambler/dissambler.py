@@ -50,7 +50,7 @@ class Dissambler[TProp1, TProp2: Any]:
     def __init_custom__(self):
         tree = TreeInstruction(dis.Bytecode(self._function), "COMPARABLE")
         dicc = tree.to_list()
-        self._compare_op = self._transform__compare_op(ConditionType(tree.compare_op))
+        self._compare_op:str = self._transform__compare_op(ConditionType(tree.compare_op))
 
         self._cond_1: NestedElement[TProp1] = dicc[0].nested_element
         self._cond_2: NestedElement[TProp2] = dicc[1].nested_element
