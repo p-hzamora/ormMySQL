@@ -38,9 +38,16 @@ class Field:
         return f"self._{self.name} = {self.default.__to_string__(self.name,self.name)}"
 
 
+def delete_special_variables(dicc:dict[str,object])->None:
+    keys = tuple(dicc.keys())
+    for key in keys:
+        if key.startswith("__"):
+            del dicc[key]
+
 def get_fields[T](cls: Type[T]) -> Iterable[Field]:
     annotations = getattr(cls, "__annotations__", {})
 
+    delete_special_variables(annotations)
     fields = []
     for name, type_ in annotations.items():
         # type_ must by Column object
@@ -111,7 +118,7 @@ class TableMeta(type):
 
 @dataclass_transform(eq_default=False)
 class Table(metaclass=TableMeta):
-    __table_name__ = ...
+    __table_name__:str = ...
 
     def __repr__(self) -> str:
         params = ", ".join([f"{x}={getattr(self,x)}" for x, y in self.__class__.__dict__.items() if isinstance(y, property)])
