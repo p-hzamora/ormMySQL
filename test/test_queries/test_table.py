@@ -14,26 +14,29 @@ from test.models import City  # noqa: E402
 
 @__init_constructor__
 class PersonDecorator:
-    __table_name__ = "person"
+    __table_name__: str = "person"
     name: str = Column[str](is_unique=True)
     age: int = Column[int](is_auto_increment=True)
     sound: str
     id_person: int = Column[int](is_primary_key=True)
-    fk_city:int
+    fk_city: int
 
-    city = ForeignKey[Self,City](__table_name__,City,lambda p,c:p.fk_city == c.city_id)
+    city = ForeignKey[Self, City](__table_name__, City, lambda p, c: p.fk_city == c.city_id)
+
 
 class PersonHeritage(Table):
-    __table_name__ = "person"
+    __table_name__: str = "person"
     name: str = Column[str](is_unique=True)
     age: int = Column[int](is_auto_increment=True)
     sound: str
     id_person: int = Column[int](is_primary_key=True)
-    fk_city:int
+    fk_city: int
 
-    city = ForeignKey[Self,City](__table_name__,City,lambda p,c:p.fk_city == c.city_id)
+    city = ForeignKey[Self, City](__table_name__, City, lambda p, c: p.fk_city == c.city_id)
+
 
 class PersonInit:
+    # we don't added type-hint because this class hasn't the hability to deleted special variables from __annotations__ and failed in '_test_type_hints'
     __table_name__ = "person"
 
     name: Column[str]
@@ -42,7 +45,7 @@ class PersonInit:
     id_person: Column[int]
     fk_city: Column[int]
 
-    city = ForeignKey[Self,City](__table_name__,City,lambda p,c:p.fk_city == c.city_id)
+    city = ForeignKey[Self, City](__table_name__, City, lambda p, c: p.fk_city == c.city_id)
 
     def __init__(
         self,
@@ -151,6 +154,14 @@ class TestTableConstructor(unittest.TestCase):
 
     def _test___init__creation(self, obj: TypePerson):
         self.assertTrue(hasattr(obj, "__init__"))
+
+    def _test_properties_creation(self, obj: TypePerson):
+        self.assertIsInstance(obj.__class__.name, property)
+        self.assertIsInstance(obj.__class__.age, property)
+        self.assertIsInstance(obj.__class__.sound, property)
+        self.assertIsInstance(obj.__class__.id_person, property)
+
+    def _test_type_hints(self, obj: TypePerson):
         self.assertEqual(
             get_type_hints(obj),
             {
@@ -161,12 +172,6 @@ class TestTableConstructor(unittest.TestCase):
                 "fk_city": Column[int],
             },
         )
-
-    def _test_properties_creation(self, obj: TypePerson):
-        self.assertIsInstance(obj.__class__.name, property)
-        self.assertIsInstance(obj.__class__.age, property)
-        self.assertIsInstance(obj.__class__.sound, property)
-        self.assertIsInstance(obj.__class__.id_person, property)
 
     def test_TableConstructor(self):
         for person_class in self.PersonClasses:
@@ -179,6 +184,7 @@ class TestTableConstructor(unittest.TestCase):
             self._test_column_class_id_person(instance)
             self._test___init__creation(instance)
             self._test_properties_creation(instance)
+            self._test_type_hints(instance)
 
 
 if __name__ == "__main__":
