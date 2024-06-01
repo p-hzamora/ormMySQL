@@ -20,7 +20,8 @@ class Field:
 
     @property
     def init_arg(self) -> str:
-        default = f"={self.default_name if self.has_default else None}" 
+        # default = f"={self.default_name if self.has_default else None}"
+        default = f"={None}"
 
         return f"{self.name}: {self.type_name}{default}"
 
@@ -67,10 +68,7 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
             locals_[field.type_name] = field.type_
 
             init_args.append(field.init_arg)
-            # if field.has_default:
-            #     # set Column Object
-            #     
-            locals_[field.default_name] = field.default.__to_string__(field.name, field.name)
+            locals_[field.default_name] = None  # field.default.column_value
             __create_properties(cls, field.name)
 
     wrapper_fn = "\n".join(
