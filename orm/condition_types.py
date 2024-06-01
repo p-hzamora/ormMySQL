@@ -9,3 +9,6 @@ class ConditionType(Enum):
     GREATER_THAN_OR_EQUAL = ">="
     NOT_EQUAL = "!="
     REGEXP = "REGEXP"
+    BETWEEN = "BETWEEN"
+    LIKE = "LIKE"
+    IN = "IN"
