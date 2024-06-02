@@ -5,55 +5,40 @@ from typing import Callable, overload, Optional
 from orm.dissambler import Dissambler
 
 
+
 class WhereCondition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
     WHERE: str = "WHERE"
     __slots__ = [
+        "_instance_tbl_1",
+        "_instance_tbl_2",
         "_function",
-        "_conditions",
-        "_table_cond_1",
-        "_table_cond_2",
     ] + list(Dissambler.__slots__)
-
-    @overload
-    def __init__(self, lambda_function: Callable[[TProp1], bool]) -> None: ...
-
-    @overload
-    def __init__(self, lambda_function: Callable[[TProp1], bool], table_cond_1: Optional[str]) -> None: ...
-
-    @overload
-    def __init__(self, lambda_function: Callable[[TProp1, TProp2], bool]) -> None: ...
 
     @overload
     def __init__(self, lambda_function: Callable[[TProp1, TProp2], bool], table_cond_2: Optional[str]) -> None: ...
 
     def __init__(
         self,
+        instance_tbl_1:TProp1,
+        instance_tbl_2:TProp2,
         lambda_function: Callable[[TProp1], bool] | Callable[[TProp1, TProp2], bool],
-        table_cond_1: Optional[str] = None,
-        table_cond_2: Optional[str] = None,
     ) -> None:
+        
+        self._instance_tbl_1:TProp1 = instance_tbl_1
+        self._instance_tbl_2:TProp2 = instance_tbl_2
         self._function: Callable[[TProp1, TProp2], bool] = lambda_function
-        self._table_cond_1: str = table_cond_1
-        self._table_cond_2: str = table_cond_2
+
         self._conditions: dict[str, Queue] = defaultdict(Queue)
 
         super().__init__(lambda_function)
 
-    @property
-    def table_cond_1(self) -> str:
-        return self._table_cond_1 if self._table_cond_1 else ""
-
-    @property
-    def table_cond_2(self) -> str:
-        return self._table_cond_2 if self._table_cond_2 else ""
-
     def to_query(self) -> str:
-        return f"{self.WHERE} {self.cond_1.name} {self.compare_op} {self.cond_2.name}"
+        return f"{self.WHERE} {self.cond_1.name} {self.compare_op} {getattr(self._instance_tbl_2,self.cond_2.name)}"
 
     @classmethod
-    def join_condition(cls, *args: "WhereCondition", restrictive=False) -> "WhereCondition":
+    def join_condition(cls, *args: "WhereCondition", restrictive=False) -> str:
         BY: str = "AND" if restrictive else "OR"
-        query = f"{cls.WHERE}"
+        query:str = f"{cls.WHERE}"
 
         n = len(args)
         for i in range(n):
