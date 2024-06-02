@@ -23,6 +23,13 @@ class A:
     b: B
 
 
+address = Address(1, "panizo", None, "tetuan", 28900, 26039, "617128992", "Madrid")
+address = Address(200, "Calle Cristo de la victoria", None, None, 1, "28026", "617128992", "Usera", None)
+city = City(1, "Madrid", 50)
+country = Country(50, "Espanna")
+
+
+
 class TestCondition(unittest.TestCase):
     COND_1 = WhereCondition[City, Country](lambda x, y: x.last_update != y.country_id)
     COND_2 = WhereCondition[Address, City](lambda a, c: a.address2 <= c.city_id)
