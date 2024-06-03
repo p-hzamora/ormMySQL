@@ -14,7 +14,7 @@ from test.models import City  # noqa: E402
 
 @__init_constructor__
 class PersonDecorator:
-    __table_name__: str = "person"
+    __table_name__ = "person"
     name: str = Column[str](is_unique=True)
     age: int = Column[int](is_auto_increment=True)
     sound: str
@@ -25,7 +25,7 @@ class PersonDecorator:
 
 
 class PersonHeritage(Table):
-    __table_name__: str = "person"
+    __table_name__ = "person"
     name: str = Column[str](is_unique=True)
     age: int = Column[int](is_auto_increment=True)
     sound: str
