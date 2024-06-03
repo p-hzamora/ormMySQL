@@ -18,7 +18,7 @@ class ForeignKey[Tbl1, Tbl2]:
         orig_table: str,
         referenced_table,
         relationship: Callable[[Tbl1, Tbl2], bool],
-    )->Tbl2:
+    ) -> Tbl2:
         dissambler_functions: Dissambler[Tbl1, Tbl2] = Dissambler[Tbl1, Tbl2](relationship)
 
         cls.add_foreign_key(orig_table, referenced_table, dissambler_functions)
