@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, Type, dataclass_transform
+from typing import Any, Iterable, Type, dataclass_transform
 import json
 from .column import Column
 
@@ -38,11 +38,12 @@ class Field:
         return f"self._{self.name} = {self.default.__to_string__(self.name,self.name)}"
 
 
-def delete_special_variables(dicc:dict[str,object])->None:
+def delete_special_variables(dicc: dict[str, object]) -> None:
     keys = tuple(dicc.keys())
     for key in keys:
         if key.startswith("__"):
             del dicc[key]
+
 
 def get_fields[T](cls: Type[T]) -> Iterable[Field]:
     annotations = getattr(cls, "__annotations__", {})
@@ -128,5 +129,5 @@ class Table(metaclass=TableMeta):
         params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
         return json.dumps(params, ensure_ascii=False, indent=2)
 
-    def __getattr__[T](self, __name: str) -> Optional[Column[T]]:
+    def __getattr__[T](self, __name: str) -> Column[T]:
         return self.__dict__.get(__name)
