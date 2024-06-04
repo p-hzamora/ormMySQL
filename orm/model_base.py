@@ -7,9 +7,9 @@ from queue import Queue
 
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
-
-from .orm_objects.queries.where_condition import WhereCondition  # noqa: F401
+from .orm_objects.queries.where_condition import WhereCondition
 from .condition_types import ConditionType
+from .orm_objects import ForeignKey
 # endregion
 
 
@@ -264,8 +264,8 @@ class ModelBase[T: Table](ABC):
         *,
         flavour: Any = None,
     ) -> T | list[T] | None:
-        if (iconditions := len(self._conditions)) == 0:
-            raise Exception("You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'")
+        # if (iconditions := len(self._conditions)) == 0:
+        #     raise Exception("You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'")
 
         is_col_method: bool = False
         if isinstance(col, list):
@@ -275,8 +275,7 @@ class ModelBase[T: Table](ABC):
             is_col_method = False  # True
             col = {x.opname: x.argval for x in dis.Bytecode(col)}["LOAD_ATTR"]
 
-        query_res: str = f"SELECT {col if col else '*'} FROM {self._model.__table_name__}"
-        rs: dict = self._fk_mapped.MAPPED[self._model.__table_name__][0]
+        rs = ForeignKey.MAPPED[self._model.__table_name__]
 
         fk = list(rs.keys())[0]
         col, object = rs[fk]
@@ -287,23 +286,23 @@ class ModelBase[T: Table](ABC):
         l_tbl = self._model.__table_name__
         l_col = fk
 
-        query_res: str = f"select {r_tbl}.* from {l_tbl}\n" f"inner join {r_tbl} on\n" f"{r_tbl}.{r_col} = {l_tbl}.{l_col}\n"
+        query_res = ""
 
         # region recorre las queue creando la query
         conditions = []
         _tuple = tuple(self._conditions.items())  # ej, ((" AND ",<Queue() object>),(" OR ",<Queue() object>))
-        for i in range(1, iconditions + 1):
-            str_cond: str = _tuple[i - 1][0]
-            value_cond: Queue = _tuple[i - 1][1]
+        # for i in range(1, iconditions + 1):
+        #     str_cond: str = _tuple[i - 1][0]
+        #     value_cond: Queue = _tuple[i - 1][1]
 
-            # concateno todos los valores de la cola y los agrupo dentro de parentesis (<conditions>)
-            condition = str_cond.join([value_cond.get() for _ in range(value_cond.qsize())])
-            conditions.append(f"({condition})")
-            # forma dinamica para agregar a la lista el tipo de condicion con el grupo siguiente
-            #
-            if i != iconditions:
-                # agrega solo el tipo de condicion que corresponda "AND", "OR", etc...
-                conditions.append(_tuple[i - 1][0])
+        #     # concateno todos los valores de la cola y los agrupo dentro de parentesis (<conditions>)
+        #     condition = str_cond.join([value_cond.get() for _ in range(value_cond.qsize())])
+        #     conditions.append(f"({condition})")
+        #     # forma dinamica para agregar a la lista el tipo de condicion con el grupo siguiente
+        #     #
+        #     if i != iconditions:
+        #         # agrega solo el tipo de condicion que corresponda "AND", "OR", etc...
+        #         conditions.append(_tuple[i - 1][0])
 
         query_res += f"\nWHERE {"".join(conditions)};"
         self._conditions = defaultdict(lambda: Queue())
