@@ -174,6 +174,9 @@ class TestTableConstructor(unittest.TestCase):
         )
 
     def test_TableConstructor(self):
+        """
+        I iterate through 3 differente classes, "PersonDecorator" "PersonHeritage" "PersonInit" to make sure I get the same result
+        """
         for person_class in self.PersonClasses:
             instance = person_class("pablo", 25)
             self._test_constructor(instance)
