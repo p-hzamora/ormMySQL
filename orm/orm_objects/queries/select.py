@@ -41,7 +41,8 @@ class SelectQuery[T](IQuery):
         if not self._select_list:
             return "*"
         else:
-            return ", ".join(self._select_list)
+            select = [f"{self._table.__table_name__}.{col}" for col in self._select_list]
+            return ", ".join(select)
 
     @property
     def query(self) -> str:
