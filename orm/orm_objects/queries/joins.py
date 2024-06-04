@@ -1,7 +1,7 @@
-from typing import override, Callable, overload, Optional
+from typing import override, Callable, overload, Optional, TypeVar
 from enum import Enum
 
-from ..table import Table
+# from ..table import Table
 
 from orm.interfaces.IQuery import IQuery
 from orm.dissambler import Dissambler
@@ -17,6 +17,7 @@ class JoinType(Enum):
     INNER_JOIN = "INNER JOIN"
 
 
+Table = TypeVar("Table")
 class JoinSelector[TLeft, TRight](IQuery):
     @overload
     def __init__(
