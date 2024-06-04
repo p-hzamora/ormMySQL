@@ -23,7 +23,7 @@ class TestJoinSelector(unittest.TestCase):
 
         self.assertEqual(
             join_selector.query,
-            "INNER JOIN address ON address.city_id = city.city_id",
+            "INNER JOIN city ON address.city_id = city.city_id",
         )
 
     def test_inner_join(self):
@@ -35,7 +35,7 @@ class TestJoinSelector(unittest.TestCase):
         )
 
         query_parser = qs.query
-        query = "INNER JOIN city ON city.country_id = country.country_id"
+        query = "INNER JOIN country ON city.country_id = country.country_id"
         self.assertEqual(query, query_parser)
 
     def test_right_join(self):
@@ -48,7 +48,7 @@ class TestJoinSelector(unittest.TestCase):
         )
 
         query_parser = qs.query
-        query = "RIGHT JOIN city ON city.country_id = country.country_id"
+        query = "RIGHT JOIN country ON city.country_id = country.country_id"
 
         self.assertEqual(query, query_parser)
 
@@ -61,7 +61,7 @@ class TestJoinSelector(unittest.TestCase):
         )
 
         query_parser = qs.query
-        query = "LEFT JOIN city ON city.country_id = country.country_id"
+        query = "LEFT JOIN country ON city.country_id = country.country_id"
         self.assertEqual(query, query_parser)
 
     def test_join_selectors(self):
@@ -79,7 +79,7 @@ class TestJoinSelector(unittest.TestCase):
             where=lambda ci, co: ci.country_id == co.country_id,
         )
         query_parser = JoinSelector.join_selectors(s1, s2)
-        query = "LEFT JOIN address ON address.city_id = city.city_id\nLEFT JOIN city ON city.country_id = country.country_id"
+        query = "LEFT JOIN city ON address.city_id = city.city_id\nLEFT JOIN country ON city.country_id = country.country_id"
         self.assertEqual(query, query_parser)
 
 
