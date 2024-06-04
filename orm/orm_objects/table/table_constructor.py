@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Type, dataclass_transform
+from collections import defaultdict
+from typing import Any, Callable, Iterable, Literal, Self, Type, dataclass_transform
 import json
 from .column import Column
 
@@ -114,12 +115,19 @@ def __create_properties[T](cls: Type[T], prop_name: str) -> property:
 class TableMeta(type):
     def __new__[T](cls, name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
-        return __init_constructor__(cls_object)
+
+        self = __init_constructor__(cls_object)
+        self.query: dict[OrderQuery, list[str]] = defaultdict(list)
+        return self
+
+
+OrderQuery = Literal["select", "join", "where", "sort"]
 
 
 @dataclass_transform(eq_default=False)
 class Table(metaclass=TableMeta):
     __table_name__ = ...
+    __order__ = ("select", "join", "where", "order")
 
     def __repr__(self) -> str:
         params = ", ".join([f"{x}={getattr(self,x)}" for x, y in self.__class__.__dict__.items() if isinstance(y, property)])
@@ -131,3 +139,54 @@ class Table(metaclass=TableMeta):
 
     def __getattr__[T](self, __name: str) -> Column[T]:
         return self.__dict__.get(__name)
+
+    def __init__(self):
+        self.query: dict[OrderQuery, list[str]]
+
+    # region public methods
+    def join[TRight](
+        self,
+        table_right: TRight,
+        table_left:Self=None,
+        *,
+        by: str,
+        where: Callable[[Self, TRight], bool],
+    ) -> Self:
+        from orm.orm_objects.queries.joins import JoinSelector, JoinType
+
+        if table_left is not None:
+            self = table_left
+        join_query = JoinSelector[Self, TRight](self, table_right, JoinType(by), where=where).query
+        self.query["join"].append(join_query)
+        return self
+
+    def where[T](
+        self,
+
+        table: T,
+        lambda_function: Callable[[T], bool],
+    ) -> T:
+        from orm.orm_objects.queries.where_condition import WhereCondition
+
+        where_query = WhereCondition[T, None](table, None, lambda_function).to_query()
+        self.query["where"].append(where_query)
+        return self
+
+    def select[T:Table](
+        self,
+        table:T,
+        selector: Callable[[T], None],
+    ) -> str:
+        from orm.orm_objects.queries.select import SelectQuery
+
+        select_query = SelectQuery[T](table, select_list=selector).query
+        table.query["select"].append(select_query)
+
+        res: str = ""
+        for x in table.__order__:
+            if query := table.query.get(x, None):
+                res += "\n"
+                res += "\n".join([x for x in query])
+        return res
+
+    # endregion
