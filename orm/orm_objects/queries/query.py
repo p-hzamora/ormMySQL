@@ -1,8 +1,8 @@
 from typing import Callable, overload, Iterable, Optional
 from abc import abstractmethod
 
-from ...interfaces.IQuery import IQuery
-from ..table import Table
+from orm.interfaces.IQuery import IQuery
+from orm.orm_objects.table import Table
 from .where_condition import WhereCondition
 
 

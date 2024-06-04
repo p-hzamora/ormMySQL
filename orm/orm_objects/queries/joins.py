@@ -3,7 +3,7 @@ from enum import Enum
 
 from ..table import Table
 
-from .query import IQuery
+from orm.interfaces.IQuery import IQuery
 from orm.dissambler import Dissambler
 
 
