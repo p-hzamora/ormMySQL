@@ -1,15 +1,18 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Optional, Self, overload
+from typing import Any, Callable, Optional, Self, Type, overload
 import dis
 from queue import Queue
 
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
-from .orm_objects.queries.where_condition import WhereCondition
 from .condition_types import ConditionType
-from .orm_objects import ForeignKey
+
+from .orm_objects.queries.joins import JoinSelector, JoinType
+from .orm_objects.foreign_key import ForeignKey
+from .orm_objects.queries.where_condition import WhereCondition
+from .orm_objects.queries.select import SelectQuery
 # endregion
 
 
@@ -181,13 +184,16 @@ class ModelBase[T: Table](ABC):
 
     # region all
     @overload
-    def all(self) -> list[T]: ...
+    def all(self) -> list[T]:
+        ...
 
     @overload
-    def all[TValue](self, flavour: Optional[TValue]) -> TValue: ...
+    def all[TValue](self, flavour: Optional[TValue]) -> TValue:
+        ...
 
     @overload
-    def all[TValue](self, limit: Optional[int]) -> TValue: ...
+    def all[TValue](self, limit: Optional[int]) -> TValue:
+        ...
 
     def all[TValue](self, flavour: Optional[TValue] = None, limit: Optional[int] = None) -> list[T] | TValue:
         LIMIT = "" if not limit else f"LIMIT {limit}"
@@ -201,7 +207,8 @@ class ModelBase[T: Table](ABC):
 
     # region get
     @overload
-    def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
+    def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None:
+        ...
 
     @overload
     def get(self, col: Callable[[T], None]) -> list[T] | None:
@@ -327,7 +334,8 @@ class ModelBase[T: Table](ABC):
 
     # region first
     @overload
-    def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
+    def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None:
+        ...
 
     @overload
     def first(self, col: Callable[[T], None]) -> list[T] | None:
