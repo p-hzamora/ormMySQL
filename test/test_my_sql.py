@@ -3,18 +3,16 @@
 import unittest
 import sys
 from pathlib import Path
+from datetime import datetime
+from mysql.connector import errors
+import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-import pandas as pd
-
-from pathlib import Path
-from datetime import datetime
-from mysql.connector import errors
 
 
 # Custom libraries
-from orm import MySQLRepository
+from orm import MySQLRepository  # noqa: E402
 
 
 TDDBB_name = "__test_ddbb__"

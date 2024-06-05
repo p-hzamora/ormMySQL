@@ -5,7 +5,18 @@ from pathlib import Path
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from orm.orm_objects.queries.select import SelectQuery  # noqa: E402
-from test.models import City, Address, Actor, Country  # noqa: E402
+from test.models import (  # noqa: E402
+    City,
+    CityModel,
+    Address,
+    AddressModel,
+    Actor,
+    ActorModel,
+    Country,
+    CountryModel,
+)
+from orm import Table
+
 
 
 class TestQuery(unittest.TestCase):

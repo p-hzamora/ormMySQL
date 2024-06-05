@@ -2,12 +2,12 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import unittest
+import dis 
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-import dis
-from orm.dissambler.tree_instruction import TreeInstruction
-from orm.dissambler.nested_element import NestedElement
+from orm.dissambler.tree_instruction import TreeInstruction  # noqa: E402
+from orm.dissambler.nested_element import NestedElement  # noqa: E402
 
 
 class A:

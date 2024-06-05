@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any, Callable, Iterable, Literal, Self, Type, dataclass_transform
+from typing import Any, Iterable, Literal, Type, dataclass_transform
 import json
 from .column import Column
 
