@@ -1,47 +1,57 @@
 import dbcontext as db
 from datetime import datetime
-from orm import Table, Column,ForeignKey
+from orm import Table, Column, ForeignKey
 
-instance = db.Address(1, "panizo", None, "tetuan", 28900, 26039, "617128992", "Madrid", datetime.now())
+address = db.Address(1, "panizo", None, "tetuan", 28900, 26039, "617128992", "Madrid", datetime.now())
+
+
+class A(Table):
+    __table_name__ = "a"
+    pk_a: int = Column(is_primary_key=True)
+    name: str
+    data: str
+    date: datetime
 
 
 class B(Table):
     __table_name__ = "b"
-    pk_b:int = Column(is_primary_key=True)
-    name:str
-    data:str
-    date:datetime
-    
-class A(Table):
-    __table_name__ = "a"
-    pk_a:int = Column(is_primary_key=True)
-    fk_b:int
+    pk_b: int = Column(is_primary_key=True)
+    data_b: str
+    fk_a: int
 
-    b = ForeignKey["A",B](__table_name__,B,lambda a,b: a.fk_b == b.pk_b)
-
+    a = ForeignKey["B", A](__table_name__, A, lambda b, a: b.fk_a == a.pk_a)
 
 
 class C(Table):
     __table_name__ = "c"
-    pk_c:int = Column(is_primary_key=True)
-    data_c:str
-    fk_a:int
-
-    c = ForeignKey["C",A](__table_name__,A,lambda c,a: c.fk_a == a.pk_a)
-
+    pk_c: int = Column(is_primary_key=True)
+    data_c: str
+    fk_b: int
+    b = ForeignKey["C", B](__table_name__, B, lambda c, b: c.fk_b == b.pk_b)
 
 
-a = A(1,4)
-b = B(4,"pablo","trabajador",datetime.now())
+class D(Table):
+    __table_name__ = "d"
+    pk_d: int = Column(is_primary_key=True)
+    data_d: str
+    fk_c: int
+    c = ForeignKey["D", C](__table_name__, C, lambda d, c: d.fk_c == c.pk_c)
 
-a.b # select b.name for a inner join b on a.fk_b = b.pk_b 
-            # output:pablo 
 
+# a = A(1, "pablo", "trabajador", datetime.now())
+# b = B(2, "data_b", 1)
+# c = C(3, "data_c", 2)
+d = D(4, "data_d", 3)
+
+d_instanceaaaaaaa = d
 ad_filter = (
-    instance.join(db.City, by="INNER JOIN", where=lambda a, c: a.city_id == c.city_id)
-    .join(db.Country, db.City, by="INNER JOIN", where=lambda ci, co: ci.country_id == co.country_id)
-    .where(db.Address, lambda a: a.address_id == 2)
-    .select(db.Country,lambda c:c.country)
+    d_instanceaaaaaaa.join(D, C)
+    .join(C, B)
+    .join(B, A)
+    .where(C, lambda c: c.fk_b == 2)
+    .where(B, lambda b: b.fk_a == 1)
+    .where(A, lambda a: a.name == "pablo")
+    .select(d_instanceaaaaaaa, lambda c: c.country)
 )
 
 
