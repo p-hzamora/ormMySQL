@@ -116,8 +116,8 @@ class TableMeta(type):
     def __new__[T](cls, name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
 
+        cls_object.query: dict[OrderQuery, list[str]] = defaultdict(list)  # type: ignore
         self = __init_constructor__(cls_object)
-        self.query: dict[OrderQuery, list[str]] = defaultdict(list)
         return self
 
 
@@ -144,26 +144,24 @@ class Table(metaclass=TableMeta):
         self.query: dict[OrderQuery, list[str]]
 
     # region public methods
-    def join[TRight](
-        self,
-        table_right: TRight,
-        table_left:Self=None,
+    @staticmethod
+    def join(
+        table_left: "Table",
+        table_right: "Table",
         *,
-        by: str,
-        where: Callable[[Self, TRight], bool],
-    ) -> Self:
+        by: str = "INNER JOIN",
+    ) -> "Table":
         from orm.orm_objects.queries.joins import JoinSelector, JoinType
+        from orm.orm_objects.foreign_key import ForeignKey
 
-        if table_left is not None:
-            self = table_left
-        join_query = JoinSelector[Self, TRight](self, table_right, JoinType(by), where=where).query
-        self.query["join"].append(join_query)
-        return self
+        where = ForeignKey.MAPPED[table_left.__table_name__][table_right.__table_name__]
+        join_query = JoinSelector[Self, Table](table_left, table_right, JoinType(by), where=where).query
+        table_left.query["join"].append(join_query)
+        return table_left
 
     def where[T](
         self,
-
-        table: T,
+        table: Type[T],
         lambda_function: Callable[[T], bool],
     ) -> T:
         from orm.orm_objects.queries.where_condition import WhereCondition
@@ -172,14 +170,14 @@ class Table(metaclass=TableMeta):
         self.query["where"].append(where_query)
         return self
 
-    def select[T:Table](
+    def select[T](
         self,
-        table:T,
+        table: "Table",
         selector: Callable[[T], None],
     ) -> str:
         from orm.orm_objects.queries.select import SelectQuery
 
-        select_query = SelectQuery[T](table, select_list=selector).query
+        select_query = SelectQuery(table, select_list=selector).query
         table.query["select"].append(select_query)
 
         res: str = ""
