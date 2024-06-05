@@ -1,35 +1,17 @@
-from typing import Callable, overload, Optional, Iterable
+from typing import Callable, Optional, Iterable
 import dis
 
-from ..table import Table
 from .query import IQuery
-from .where_condition import WhereCondition
 from orm.dissambler import TreeInstruction
 
 
 class SelectQuery[T](IQuery):
-    @overload
     def __init__(
         self,
-        table: Table,
-        select_list: Callable[[T], None],
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        table: Table,
-        where: Optional[Callable[[T], None]] = None,
-    ) -> None: ...
-
-    def __init__[T2](
-        self,
-        table: Table,
-        select_list: Optional[Callable[[T], None]] = lambda: None,
-        where: Optional[Callable[[T, T2], bool]] = None,
+        table: T,
+        select_list: Optional[Callable[..., None]] = lambda: None,
     ) -> None:
-        self._table:Table = table
-        self._where: Optional[WhereCondition[T, T2]] = WhereCondition[T, T2](where) if where else None
+        self._table: tuple[T] = table
         self._select_list: Iterable[str] = self._make_column_list(select_list)
 
     @staticmethod
