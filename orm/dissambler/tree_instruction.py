@@ -112,6 +112,10 @@ class TreeInstruction:
         return lista
 
     def to_list(self) -> list[TupleInstruction]:
+        """
+        Return list with tuple as data.
+        This tuple contains the variable name as the first element and all children as the second one, all inside a TupleInstruction NamedTuple.
+        """
         _list: list[list[NestedElement[str]]] = []
         for node in self.root.children:
             argval = self._join_data_attributes_from_node(node)
