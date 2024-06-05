@@ -445,41 +445,44 @@ class ModelBase[T: Table](ABC):
 
     # endregion
 
-    # region where
-    @overload
-    def where(self, col: Callable[[T], bool]) -> Self: ...
+    # # region where
+    # @overload
+    # def where(self, col: Callable[[T], bool]) -> Self: ...
 
-    @overload
-    def where[TValue](self, col: Callable[[T], str], value: TValue) -> Self: ...
+    # @overload
+    # def where[TValue](self, col: Callable[[T], str], value: TValue) -> Self: ...
 
-    @overload
-    def where[TValue](
-        self,
-        col: Callable[[T], str],
-        value: list[TValue] | TValue,
-        condition: ConditionType,
-    ) -> Self: ...
+    # @overload
+    # def where[TValue](
+    #     self,
+    #     col: Callable[[T], str],
+    #     value: list[TValue] | TValue,
+    #     condition: ConditionType,
+    # ) -> Self: ...
 
-    def where[TValue](
-        self,
-        col: Callable[[T], bool | str],
-        value: TValue | list[TValue] = None,
-        condition: ConditionType = "=",
-    ) -> Self:
-        self.__add_condition(col, value, condition, " OR ")
-        return self
+    # def where[TValue](
+    #     self,
+    #     col: Callable[[T], bool | str],
+    #     value: TValue | list[TValue] = None,
+    #     condition: ConditionType = "=",
+    # ) -> Self:
+    #     self.__add_condition(col, value, condition, " OR ")
+    #     return self
 
-    # endregion
+    # # endregion
 
     # region delete
     @overload
-    def delete(self) -> None: ...
+    def delete(self) -> None:
+        ...
 
     @overload
-    def delete(self, instance: T) -> None: ...
+    def delete(self, instance: T) -> None:
+        ...
 
     @overload
-    def delete(self, instance: list[T]) -> None: ...
+    def delete(self, instance: list[T]) -> None:
+        ...
 
     def delete(self, instance: T | list[T] = None) -> None:
         def get_pk(instance: T | list[T]) -> Column:
@@ -517,5 +520,46 @@ class ModelBase[T: Table](ABC):
 
     # endregion
 
+    # endregion
 
-# endregion
+    # region public methods
+
+    def join(
+        self,
+        table_right: "Table",
+        *,
+        by: str = "INNER JOIN",
+    ) -> "Table":
+        where = ForeignKey.MAPPED[self._model.__table_name__][table_right.__table_name__]
+        join_query = JoinSelector[Self, Table](self._model, table_right, JoinType(by), where=where).query
+        self._model._query["join"].append(join_query)
+        return self._model
+
+    def where(
+        self,
+        instance: T,
+        lambda_function: Callable[[T], bool],
+    ) -> Self:
+        where_query = WhereCondition[T, None](instance, None, lambda_function).to_query()
+        instance._query["where"].append(where_query)
+        return self
+
+    def select(
+        self,
+        selector: Callable[[T], None] = lambda: None,
+    ) -> str:
+        select_query = SelectQuery(self._model, select_list=selector).query
+        select_query = SelectQuery(self._model, select_list=selector).query
+        self._model._query["select"].append(select_query)
+
+        query: str = ""
+        for x in self._model.__order__:
+            if sub_query := self._model._query.get(x, None):
+                query += "\n"
+                query += "\n".join([x for x in sub_query])
+
+        res = self._repository.read_sql(query, flavour=dict)
+        res = [self._model(**x) for x in res]
+        return res if len(res) != 0 else None
+
+    # endregion
