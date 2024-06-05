@@ -1,15 +1,16 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Literal, Optional, Self, overload
+from typing import Any, Callable, Optional, Self, overload
 import dis
 from queue import Queue
 
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
+from .orm_objects.queries.where_condition import WhereCondition
+from .condition_types import ConditionType
+from .orm_objects import ForeignKey
 # endregion
-
-CONDITIONS = Literal["=", "<", ">", "<=", ">=", "REGEXP"]
 
 
 class ModelBase[T: Table](ABC):
@@ -22,6 +23,7 @@ class ModelBase[T: Table](ABC):
     # region Constructor
     def __init__(self, model: T, *, repository: IRepositoryBase):
         self._model: T = model
+
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
             # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
@@ -32,7 +34,7 @@ class ModelBase[T: Table](ABC):
             raise Exception(f"Se debe declarar la variabnle '__table_name__' en la clase '{model.__name__}'")
 
         self._repository: IRepositoryBase = repository
-        self._conditions: defaultdict[Queue] = defaultdict(lambda: Queue())
+        self._conditions: Queue[WhereCondition] = Queue()
 
     # endregion
 
@@ -40,25 +42,40 @@ class ModelBase[T: Table](ABC):
     def __repr__(self):
         return f"<Model: {self.__class__.__name__}>"
 
-    def __add_condition[TValue](
-        self,
-        col: Callable[[T], None | bool],
-        value: TValue,
-        condition: CONDITIONS,
-        _restriction: str,
-    ) -> Self:
-        attr = {x.opname: x.argval for x in dis.Bytecode(col)}
+    @staticmethod
+    def __is_valid(column: Column) -> bool:
+        """
+        Validamos si la columna la debemos eliminar o no a la hora de insertar o actualizar valores.
 
-        if value is None:
-            attr["COMPARE_OP"] = "=" if attr["COMPARE_OP"] == "==" else attr["COMPARE_OP"]
-            self._conditions[_restriction].put(f"{attr["LOAD_ATTR"]} {attr["COMPARE_OP"]} '{attr["LOAD_CONST"]}'")
-            return self
+        Querremos elimina un valor de nuestro objeto cuando especifiquemos un valor que en la bbdd sea AUTO_INCREMENT o AUTO GENERATED ALWAYS AS (__) STORED.
 
-        # if isinstance(value, list):
-        #     self._conditions[_restriction].put(f"{attr["LOAD_ATTR"]} {condition} '{value}'")
+        RETURN
+        -----
 
-        self._conditions[_restriction].put(f"{attr["LOAD_ATTR"]} {condition} '{value}'")
-        return self
+        - True  -> No eliminamos la columna de la consulta
+        - False -> Eliminamos la columna
+        """
+        # en el caso de tener un valor
+        cond_2 = column.is_auto_increment and column.column_value is None and column.is_primary_key
+
+        if column.is_auto_generated or cond_2:
+            return False
+        return True
+
+    @classmethod
+    def __create_dict_list(cls, _list: list, values: T | list[T]):
+        if issubclass(values.__class__, Table):
+            dicc: dict = {}
+            for col in values.__dict__.values():
+                if isinstance(col, Column) and cls.__is_valid(col):
+                    dicc.update({col.column_name: col.column_value})
+            _list.append(dicc)
+
+        elif isinstance(values, list):
+            for x in values:
+                cls.__create_dict_list(x)
+        else:
+            raise Exception(f"Tipo de dato'{type(values)}' no esperado")
 
     # endregion
 
@@ -87,46 +104,8 @@ class ModelBase[T: Table](ABC):
         Inserta valores en la bbdd parseando los datos a diccionarios
         """
 
-        def is_valid(column: Column) -> bool:
-            """
-            Validamos si la columna la debemos eliminar o no a la hora de insertar o actualizar valores.
-
-            Querremos elimina un valor de nuestro objeto cuando especifiquemos un valor que en la bbdd sea AUTO_INCREMENT o AUTO GENERATED ALWAYS AS (__) STORED.
-
-            RETURN
-            -----
-
-            - True  -> No eliminamos la columna de la consulta
-            - False -> Eliminamos la columna
-            """
-            # en el caso de tener un valor
-            cond_2 = column.auto_increment and column.column_value is None and column.is_primary_key
-
-            if column.auto_generated or cond_2:
-                return False
-            return True
-
-        def create_dict_list(values: T | list[T]):
-            """
-            Utilizamos lista como nonlocal para poder utilizar esta funcion de forma reciproca
-            """
-            nonlocal lista
-
-            if issubclass(values.__class__, Table):
-                dicc: dict = {}
-                for col in values.__dict__.values():
-                    if isinstance(col, Column) and is_valid(col):
-                        dicc.update({col.column_name: col.column_value})
-                lista.append(dicc)
-
-            elif isinstance(values, list):
-                for x in values:
-                    create_dict_list(x)
-            else:
-                raise Exception(f"Tipo de dato'{type(values)}' no esperado")
-
         lista: list = []
-        create_dict_list(values)
+        self.__create_dict_list(lista, values)
 
         self._repository.insert(self._model.__table_name__, lista)
         return None
@@ -170,7 +149,7 @@ class ModelBase[T: Table](ABC):
             - True  -> No eliminamos la columna de la consulta
             - False -> Eliminamos la columna
             """
-            if (column.auto_increment and not column.is_primary_key) or column.auto_generated:
+            if (column.is_auto_increment and not column.is_primary_key) or column.is_auto_generated:
                 return False
             return True
 
@@ -285,36 +264,47 @@ class ModelBase[T: Table](ABC):
         *,
         flavour: Any = None,
     ) -> T | list[T] | None:
-        if (iconditions := len(self._conditions)) == 0:
-            raise Exception("You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'")
+        # if (iconditions := len(self._conditions)) == 0:
+        #     raise Exception("You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'")
 
         is_col_method: bool = False
         if isinstance(col, list):
             col = ", ".join([{x.opname: x.argval for x in dis.Bytecode(i)}["LOAD_ATTR"] for i in col])
 
         elif callable(col):
-            is_col_method = True
+            is_col_method = False  # True
             col = {x.opname: x.argval for x in dis.Bytecode(col)}["LOAD_ATTR"]
 
-        query_res: str = f"SELECT {col if col else '*'} FROM {self._model.__table_name__}"
+        rs = ForeignKey.MAPPED[self._model.__table_name__]
+
+        fk = list(rs.keys())[0]
+        col, object = rs[fk]
+
+        r_tbl = object.__table_name__
+        r_col = col
+
+        l_tbl = self._model.__table_name__
+        l_col = fk
+
+        query_res = ""
 
         # region recorre las queue creando la query
         conditions = []
         _tuple = tuple(self._conditions.items())  # ej, ((" AND ",<Queue() object>),(" OR ",<Queue() object>))
-        for i in range(1, iconditions + 1):
-            str_cond: str = _tuple[i - 1][0]
-            value_cond: Queue = _tuple[i - 1][1]
+        # for i in range(1, iconditions + 1):
+        #     str_cond: str = _tuple[i - 1][0]
+        #     value_cond: Queue = _tuple[i - 1][1]
 
-            # concateno todos los valores de la cola y los agrupo dentro de parentesis (<conditions>)
-            condition = str_cond.join([value_cond.get() for _ in range(value_cond.qsize())])
-            conditions.append(f"({condition})")
-            # forma dinamica para agregar a la lista el tipo de condicion con el grupo siguiente
-            #
-            if i != iconditions:
-                # agrega solo el tipo de condicion que corresponda "AND", "OR", etc...
-                conditions.append(_tuple[i - 1][0])
+        #     # concateno todos los valores de la cola y los agrupo dentro de parentesis (<conditions>)
+        #     condition = str_cond.join([value_cond.get() for _ in range(value_cond.qsize())])
+        #     conditions.append(f"({condition})")
+        #     # forma dinamica para agregar a la lista el tipo de condicion con el grupo siguiente
+        #     #
+        #     if i != iconditions:
+        #         # agrega solo el tipo de condicion que corresponda "AND", "OR", etc...
+        #         conditions.append(_tuple[i - 1][0])
 
-        query_res = f"{query_res} WHERE {"".join(conditions)}"
+        query_res += f"\nWHERE {"".join(conditions)};"
         self._conditions = defaultdict(lambda: Queue())
         # endregion
 
@@ -437,7 +427,7 @@ class ModelBase[T: Table](ABC):
         ...
 
     @overload
-    def filter_by(self, col: Callable[[T], None], value: int | float | str, condition: CONDITIONS) -> Self:
+    def filter_by(self, col: Callable[[T], None], value: int | float | str, condition: ConditionType) -> Self:
         """
         Specifies "REGEXP" in "condition" arg to makes regular expression match
         """
@@ -447,8 +437,9 @@ class ModelBase[T: Table](ABC):
         self,
         col: Callable[[T], None],
         value: int | float | str = None,
-        condition: CONDITIONS = "=",
+        condition: ConditionType = "=",
     ) -> Self:
+        # self._conditions.put(Condition(lambda x: x.))
         self.__add_condition(col, value, condition, " AND ")
         return self
 
@@ -466,14 +457,14 @@ class ModelBase[T: Table](ABC):
         self,
         col: Callable[[T], str],
         value: list[TValue] | TValue,
-        condition: CONDITIONS,
+        condition: ConditionType,
     ) -> Self: ...
 
     def where[TValue](
         self,
         col: Callable[[T], bool | str],
         value: TValue | list[TValue] = None,
-        condition: CONDITIONS = "=",
+        condition: ConditionType = "=",
     ) -> Self:
         self.__add_condition(col, value, condition, " OR ")
         return self
