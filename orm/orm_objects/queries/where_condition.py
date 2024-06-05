@@ -43,7 +43,7 @@ class WhereCondition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
 
         n = len(args)
         for i in range(n):
-            condition = args[i]
+            condition:WhereCondition = args[i]
             query += f" ({condition.cond_1.name} {condition.compare_op} {condition.cond_2.name})"
             if i != n - 1:
                 query += f" {BY}"
