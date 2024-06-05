@@ -115,8 +115,8 @@ def __create_properties[T](cls: Type[T], prop_name: str) -> property:
 class TableMeta(type):
     def __new__[T](cls, name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
+        cls_object._query = defaultdict(list)
 
-        cls_object.query: dict[OrderQuery, list[str]] = defaultdict(list)  # type: ignore
         self = __init_constructor__(cls_object)
         return self
 
@@ -138,53 +138,7 @@ class Table(metaclass=TableMeta):
         return json.dumps(params, ensure_ascii=False, indent=2)
 
     def __getattr__[T](self, __name: str) -> Column[T]:
-        return self.__dict__.get(__name)
+        return self.__dict__.get(__name, None)
 
     def __init__(self):
-        self.query: dict[OrderQuery, list[str]]
-
-    # region public methods
-    @staticmethod
-    def join(
-        table_left: "Table",
-        table_right: "Table",
-        *,
-        by: str = "INNER JOIN",
-    ) -> "Table":
-        from orm.orm_objects.queries.joins import JoinSelector, JoinType
-        from orm.orm_objects.foreign_key import ForeignKey
-
-        where = ForeignKey.MAPPED[table_left.__table_name__][table_right.__table_name__]
-        join_query = JoinSelector[Self, Table](table_left, table_right, JoinType(by), where=where).query
-        table_left.query["join"].append(join_query)
-        return table_left
-
-    def where[T](
-        self,
-        table: Type[T],
-        lambda_function: Callable[[T], bool],
-    ) -> T:
-        from orm.orm_objects.queries.where_condition import WhereCondition
-
-        where_query = WhereCondition[T, None](table, None, lambda_function).to_query()
-        self.query["where"].append(where_query)
-        return self
-
-    def select[T](
-        self,
-        table: "Table",
-        selector: Callable[[T], None],
-    ) -> str:
-        from orm.orm_objects.queries.select import SelectQuery
-
-        select_query = SelectQuery(table, select_list=selector).query
-        table.query["select"].append(select_query)
-
-        res: str = ""
-        for x in table.__order__:
-            if query := table.query.get(x, None):
-                res += "\n"
-                res += "\n".join([x for x in query])
-        return res
-
-    # endregion
+        self._query: dict[OrderQuery, list[str]]
