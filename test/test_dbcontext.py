@@ -99,4 +99,4 @@ address = db.Address(1, "panizo", None, "tetuan", 28900, 26039, "617128992", "Ma
 
 a_model = AddressModel(database)
 
-filtro = a_model.where(address, lambda a: a.address_id == 1).select(lambda a: a.city.country)
+filtro = a_model.where(address, lambda a: a.address_id == 1).select(lambda a:( a, a.city, a.city.country))
