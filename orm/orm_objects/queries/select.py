@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Iterable
+from typing import Callable, Optional, Iterable, NamedTuple
 import dis
 
 import inspect
@@ -9,6 +9,9 @@ from orm.orm_objects.table.table_constructor import TableMeta
 from .query import IQuery
 from orm.dissambler import TreeInstruction, TupleInstruction
 
+class TableColTuple(NamedTuple):
+    table:Table
+    col:str
 
 class SelectQuery[T: Table, *Ts](IQuery):
     def __init__(
@@ -18,12 +21,13 @@ class SelectQuery[T: Table, *Ts](IQuery):
     ) -> None:
         self._first_table: T = tables[0]
         self._tables: tuple[T, *Ts] = tables
+        self._tables_heritage:set[Table] = set([self._first_table])
 
         self._select_lambda:Optional[Callable[[T, *Ts], None]] = select_lambda
         self._transform_lambda_variables: dict[str, Table] = {}
         self._select_list: Iterable[TableColTuple] = self._make_column_list(select_lambda)
 
-    def _make_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[tuple[str,str]]:
+    def _make_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[TableColTuple]:
         def _get_parents(tbl_obj: Table, tuple_inst: TupleInstruction) -> None:
             """
             Recursive function tu replace variable names by Select Query
@@ -33,7 +37,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
             if issubclass(tbl_obj.__class__, Table | TableMeta) and len(parents) == 1:
                 # if parents length is 1 says that the element is the table itself
-                return res.append((tbl_obj.__table_name__, "*"))
+                return res.append(TableColTuple(tbl_obj, "*"))
 
             first_el = tuple_inst.nested_element.parents[1]
             try:
@@ -43,11 +47,12 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
             if last_el not in tbl_obj.__dict__ or not isinstance(new_obj, property):
                 if isinstance(new_obj, property):
-                    return res.append((tbl_obj.__table_name__, last_el))
+                    return res.append(TableColTuple(tbl_obj, last_el))
 
                 new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:]))
+                self._tables_heritage.add(new_obj)
                 return _get_parents(new_obj, new_ti)
-            return res.append((tbl_obj.__table_name__, last_el))
+            return res.append(TableColTuple(tbl_obj, last_el))
 
         instruction_list: list[TupleInstruction] = TreeInstruction(dis.Bytecode(select_list), list).to_list()
         res = []
@@ -74,10 +79,14 @@ class SelectQuery[T: Table, *Ts](IQuery):
         if not self._select_list:
             return "*"
         else:
-            return ", ".join(".".join(x) for x in self._select_list)
+                
+            return ", ".join(f"{t.__table_name__}.{c}" for t,c in self._select_list)
 
     @property
     def query(self) -> str:
         select_str = self._convert_select_list()
         query = f"SELECT {select_str} FROM {self._first_table.__table_name__}"
         return query
+
+    def get_tables(self)->list[Table]:
+        return tuple(self._tables_heritage)
