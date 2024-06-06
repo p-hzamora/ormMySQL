@@ -1,9 +1,10 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Optional, Self, Type, overload
+from typing import Any, Callable, Optional, Self, overload
 import dis
 from queue import Queue
+from orm.dissambler.dissambler import Dissambler
 
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
@@ -544,13 +545,31 @@ class ModelBase[T: Table](ABC):
         instance._query["where"].append(where_query)
         return self
 
-    def select(
+    def select[*Ts](
         self,
-        selector: Optional[Callable[[T], None]] = lambda: None,
-    ) -> str:
-        select_query = SelectQuery(self._model, select_list=selector).query
-        select_query = SelectQuery(self._model, select_list=selector).query
-        self._model._query["select"].append(select_query)
+        selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
+    ) -> T|tuple[*Ts]:
+        select = SelectQuery[T,*Ts](self._model, select_lambda=selector)
+        self._model._query["select"].append(select.query)
+
+        tables:tuple[Table] = select.get_tables()
+
+        if (n := len(tables)) > 1:
+            for i in range(n - 1):
+                l_tbl = tables[i]
+                r_tbl = tables[i + 1]
+
+                _dis = Dissambler[l_tbl, r_tbl](ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
+                l_col = _dis.cond_1.name
+                r_col = _dis.cond_2.name
+                join = JoinSelector[l_tbl, r_tbl](
+                    l_tbl,
+                    r_tbl,
+                    JoinType.INNER_JOIN,
+                    l_col,
+                    r_col,
+                )
+                self._model._query["join"].append(join.query)
 
         query: str = ""
         for x in self._model.__order__:
@@ -558,7 +577,20 @@ class ModelBase[T: Table](ABC):
                 query += "\n"
                 query += "\n".join([x for x in sub_query])
 
-        res = self._repository.read_sql(query, flavour=dict)
+        res:list[dict[str,Any]] = self._repository.read_sql(query, flavour=dict)
+
+        table_initialize:list[tuple[Table,dict[str,Any]]] = []
+        for table in tables:
+            valid_keys = tuple(table.__annotations__.keys())
+            for r in res:
+                valid_attr = {}
+                for key,value in r.items():
+                    if key in valid_keys:
+                        valid_attr[key] = value
+                table_initialize.append((table,valid_attr))         
+                
+        return [table(**kwargs) for table, kwargs in table_initialize]
+        return query, res
         res = [self._model(**x) for x in res]
         return res if len(res) != 0 else None
 
