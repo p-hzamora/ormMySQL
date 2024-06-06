@@ -18,26 +18,26 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(q.query, "SELECT * FROM city")
 
     def test_select_all_col_with_select_list_attr(self):
-        q = SelectQuery[City](City, select_list=lambda: "*")
+        q = SelectQuery[City](City, select_lambda=lambda: "*")
         self.assertEqual(q.query, "SELECT * FROM city")
 
     def test_select_one_col(self):
-        q = SelectQuery[City](City, select_list=lambda c: c.city)
+        q = SelectQuery[City](City, select_lambda=lambda c: c.city)
         self.assertEqual(q.query, "SELECT city.city FROM city")
 
     def test_select_two_col(self):
-        q = SelectQuery[City](City, select_list=lambda c: (c.city, c.city_id))
+        q = SelectQuery[City](City, select_lambda=lambda c: (c.city, c.city_id))
         self.assertEqual(q.query, "SELECT city.city, city.city_id FROM city")
 
     def test_select_three_col(self):
-        q = SelectQuery[City](City, select_list=lambda c: (c.city, c.last_update, c.country_id))
+        q = SelectQuery[City](City, select_lambda=lambda c: (c.city, c.last_update, c.country_id))
         self.assertEqual(q.query, "SELECT city.city, city.last_update, city.country_id FROM city")
 
     def test_select_cols_from_foreign_keys(self):
         # this response must not be the real one,
         q = SelectQuery[Address](
             Address,
-            select_list=lambda a: (
+            select_lambda=lambda a: (
                 a,
                 a.city,
                 a.city.country,
@@ -55,7 +55,7 @@ class TestQuery(unittest.TestCase):
             Address,
             City,
             Country,
-            select_list=lambda a, ci, co: (
+            select_lambda=lambda a, ci, co: (
                 a,
                 ci,
                 co,
@@ -68,7 +68,7 @@ class TestQuery(unittest.TestCase):
         q = SelectQuery[Address, City, Country](
             Address,
             City,
-            select_list=lambda a, ci: (
+            select_lambda=lambda a, ci: (
                 a,
                 ci.country,
             ),

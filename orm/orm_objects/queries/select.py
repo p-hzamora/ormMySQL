@@ -14,13 +14,14 @@ class SelectQuery[T: Table, *Ts](IQuery):
     def __init__(
         self,
         *tables: tuple[T, *Ts],
-        select_list: Optional[Callable[[T, *Ts], None]] = lambda: None,
+        select_lambda: Optional[Callable[[T, *Ts], None]] = lambda: None,
     ) -> None:
         self._first_table: T = tables[0]
         self._tables: tuple[T, *Ts] = tables
 
+        self._select_lambda:Optional[Callable[[T, *Ts], None]] = select_lambda
         self._transform_lambda_variables: dict[str, Table] = {}
-        self._select_list: Iterable[tuple[str,str]] = self._make_column_list(select_list)
+        self._select_list: Iterable[TableColTuple] = self._make_column_list(select_lambda)
 
     def _make_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[tuple[str,str]]:
         def _get_parents(tbl_obj: Table, tuple_inst: TupleInstruction) -> None:
