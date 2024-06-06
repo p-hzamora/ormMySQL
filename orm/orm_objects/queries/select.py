@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Iterable, Type
+from typing import Callable, Optional, Iterable
 import dis
 
 import inspect
