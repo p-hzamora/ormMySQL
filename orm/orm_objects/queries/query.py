@@ -1,23 +1,11 @@
 from typing import Callable, overload, Iterable, Optional
 from abc import abstractmethod
 
-from orm.interfaces.IQuery import IQuery
 from orm.orm_objects.table import Table
 from .where_condition import WhereCondition
 
 
-class Query(IQuery):
-    SEMICOLON = ";"
-
-    def load(self) -> str:
-        return f"{self.query}{self.SEMICOLON}"
-
-    @property
-    @abstractmethod
-    def query(self) -> str: ...
-
-
-class QuerySelector[T](Query):
+class QuerySelector[T]():
     @overload
     def __init__(
         self,
