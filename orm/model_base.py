@@ -577,30 +577,41 @@ class ModelBase[T: Table](ABC):
 
         response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
+        values = ClusterQuery(select, response_sql).clean_response()
+        return values
+
+    # endregion
+
+
+class ClusterQuery:
+    def __init__(self, select: SelectQuery, response_sql: dict[list[dict[str, Any]]]) -> None:
+        self._select: SelectQuery = select
+        self._response_sql: dict[list[dict[str, Any]]] = response_sql
+
+    def loop_foo(self):
         #  We must ensure to get the valid attributes for each instance
         table_initialize = defaultdict(list)
 
         unic_table: dict[Table, list[TableColumn]] = defaultdict(list)
-        for table_col in select._select_list:
+        for table_col in self._select._select_list:
             unic_table[table_col._table].append(table_col)
 
         for table_, table_col in unic_table.items():
-            for dicc_cols in response_sql:
+            for dicc_cols in self._response_sql:
                 valid_attr: dict[str, Any] = {}
                 for col in table_col:
                     valid_attr[col.real_column] = dicc_cols[col.alias]
                 table_initialize[table_].append(table_(**valid_attr))
+        return table_initialize
 
-        values = tuple(table_initialize.values())
+    def clean_response(self):
+        data = self.loop_foo()
 
-        if len(table_initialize) == 1:
-            return values[0]
+        if len(data) == 1:
+            return tuple(data.values())[0]
 
-        for key, val in table_initialize.items():
+        for key, val in data.items():
             if len(val) == 1:
-                table_initialize[key] = val[0]
+                data[key] = val[0]
 
-        values = tuple(table_initialize.values())
-        return values
-
-    # endregion
+        return tuple(data.values())
