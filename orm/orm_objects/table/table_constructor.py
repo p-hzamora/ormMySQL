@@ -76,7 +76,7 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
 
             init_args.append(field.init_arg)
             locals_[field.default_name] = None  # field.default.column_value
-            __create_properties(cls, field.name)
+            __create_properties(cls, field)
 
     wrapper_fn = "\n".join(
         [
@@ -97,17 +97,33 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
     return cls
 
 
-def __create_properties[T](cls: Type[T], prop_name: str) -> property:
-    _name: str = f"_{prop_name}"
-
+def __create_properties[T](cls: Type[T], field: Field) -> property:
+    _name: str = f"_{field.name}"
+    type_ = field.type_
     # we need to get Table attributes (Column class) and then called __getattribute__ or __setattr__ to make changes inside of Column
     prop = property(
-        fget=lambda _obj: getattr(_obj, _name).__getattribute__("column_value"),
-        fset=lambda _obj, value: getattr(_obj, _name).__setattr__("column_value", value),
+        fget=lambda self: __transform_getter(getattr(self, _name), type_),
+        fset=lambda self, value: __transform_setter(getattr(self, _name), value, type_),
     )
 
     # set property in public name
-    setattr(cls, prop_name, prop)
+    setattr(cls, field.name, prop)
+    return None
+
+
+def __transform_getter[T](obj: object, type_: T) -> T:
+    getter = obj.__getattribute__("column_value")
+
+    if type_ is str and isinstance(eval(obj), Iterable):
+        getter = eval(obj)
+    return getter
+
+
+def __transform_setter[T](obj: object, value:Any, type_: T) -> None:
+    setter = obj.__setattr__("column_value", value)
+
+    if type_ is list:
+        setter = str(setter)
     return None
 
 
