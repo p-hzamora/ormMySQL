@@ -1,19 +1,22 @@
+from queue import Queue
 from typing import Callable, Optional, Iterable, NamedTuple
 import dis
 
 import inspect
-from orm.dissambler import NestedElement
+from orm.dissambler import TreeInstruction, TupleInstruction, NestedElement
 from orm.orm_objects import Table
 from orm.orm_objects.table.table_constructor import TableMeta
 
 from .query import IQuery
-from orm.dissambler import TreeInstruction, TupleInstruction
+
 
 class TableColTuple(NamedTuple):
-    table:Table
-    col:str
+    table: Table
+    col: str
+
 
 class SelectQuery[T: Table, *Ts](IQuery):
+    SELECT = "SELECT"
     def __init__(
         self,
         *tables: tuple[T, *Ts],
@@ -21,19 +24,46 @@ class SelectQuery[T: Table, *Ts](IQuery):
     ) -> None:
         self._first_table: T = tables[0]
         self._tables: tuple[T, *Ts] = tables
-        self._tables_heritage:set[Table] = set([self._first_table])
+        self._tables_heritage: Queue[Table] = Queue()
 
-        self._select_lambda:Optional[Callable[[T, *Ts], None]] = select_lambda
-        self._transform_lambda_variables: dict[str, Table] = {}
-        self._select_list: Iterable[TableColTuple] = self._make_column_list(select_lambda)
+        self._select_lambda: Optional[Callable[[T, *Ts], None]] = select_lambda
+        self._select_list: Iterable[TableColTuple] = self._rename_recursive_column_list(select_lambda)
 
-    def _make_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[TableColTuple]:
+    def _add_el_if_not_in_queue(self, table: Table) -> None:
+        if table not in self._tables_heritage.queue:
+            self._tables_heritage.put_nowait(table)
+            self._tables_heritage.task_done()
+        return None
+
+    def _rename_recursive_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[TableColTuple]:
+        """
+        Recursive function tu replace variable names by Select Query
+
+        lambda a: (a.pk_address, a.city.pk_city, a.city.country.pk_country)
+
+        >>> # convert lambda expression into list of values
+        >>> select_list = [
+        >>>     "a.pk_address",
+        >>>     "a.city",
+        >>>     "a.city.pk_city",
+        >>>     "a.city.country",
+        >>>     "a.city.country.pk_country",
+        >>> ]
+        >>> result = _rename_recursive_column_list(select_list)
+        >>> print(result)
+        >>> # result = [
+        >>> #   "address.pk_address"
+        >>> #   "city.*"
+        >>> #   "city.pk_city"
+        >>> #   "country.*"
+        >>> #   "country.pk_country"
+        ]
+        """
         def _get_parents(tbl_obj: Table, tuple_inst: TupleInstruction) -> None:
-            """
-            Recursive function tu replace variable names by Select Query
-            """
-            last_el = tuple_inst.nested_element.name
-            parents = tuple_inst.nested_element.parents
+            self._add_el_if_not_in_queue(tbl_obj)
+
+            last_el:str = tuple_inst.nested_element.name
+            parents:list[str] = tuple_inst.nested_element.parents
 
             if issubclass(tbl_obj.__class__, Table | TableMeta) and len(parents) == 1:
                 # if parents length is 1 says that the element is the table itself
@@ -49,20 +79,20 @@ class SelectQuery[T: Table, *Ts](IQuery):
                 if isinstance(new_obj, property):
                     return res.append(TableColTuple(tbl_obj, last_el))
 
-                new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:]))
-                self._tables_heritage.add(new_obj)
+                new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:])) # create new TupleInstruction from the second parent to the top 
                 return _get_parents(new_obj, new_ti)
             return res.append(TableColTuple(tbl_obj, last_el))
 
+        # ================== start =========================
         instruction_list: list[TupleInstruction] = TreeInstruction(dis.Bytecode(select_list), list).to_list()
-        res = []
+        res: list[TableColTuple] = []
 
         lambda_vars = tuple(inspect.signature(select_list).parameters)
 
-        self._update_transform_lambda_variables(lambda_vars)
+        transform_lambda_variables: dict[str, Table] = self._update_transform_lambda_variables(lambda_vars)
 
         for ti in instruction_list:
-            obj = self._transform_lambda_variables[ti.var]
+            obj = transform_lambda_variables[ti.var]
 
             var = obj.__table_name__
             new_nested = ti.nested_element.parents
@@ -72,21 +102,28 @@ class SelectQuery[T: Table, *Ts](IQuery):
         return res
 
     def _update_transform_lambda_variables(self, lambda_vars: tuple[str, ...]):
+        dicc: dict[str, Table] = {}
         for i in range(len(lambda_vars)):
-            self._transform_lambda_variables[lambda_vars[i]] = self._tables[i]
+            dicc[lambda_vars[i]] = self._tables[i]
+        return dicc
 
     def _convert_select_list(self) -> str:
         if not self._select_list:
             return "*"
         else:
-                
-            return ", ".join(f"{t.__table_name__}.{c}" for t,c in self._select_list)
+            return ", ".join(f"{t.__table_name__}.{c}" for t, c in self._select_list)
 
     @property
     def query(self) -> str:
         select_str = self._convert_select_list()
-        query = f"SELECT {select_str} FROM {self._first_table.__table_name__}"
+        query = f"{self.SELECT} {select_str} FROM {self._first_table.__table_name__}"
         return query
 
-    def get_tables(self)->list[Table]:
-        return tuple(self._tables_heritage)
+    def get_involved_tables(self) -> Queue[Table]:
+        res_queue: Queue[Table] = Queue(maxsize=self._tables_heritage.qsize())
+
+        for x in self._tables_heritage.queue:
+            res_queue.put_nowait(x)
+            res_queue.task_done()
+
+        return res_queue
