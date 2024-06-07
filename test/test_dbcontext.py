@@ -20,13 +20,18 @@ HOST = "localhost"  # os.getenv("DB_HOST")
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST).connect()
 
-address = db.Address(1, "panizo", None, "tetuan", 28900, 26039, "617128992", "Madrid", datetime.now())
+address = db.Address(address_id=10)
 
 a_model = AddressModel(database)
 
-# filtro = a_model.where(address, lambda a: a.address_id == 1).select(lambda a:( a, a.city, a.city.country))
-filtro2 = a_model.select(lambda a: (a, a.city.country.country_id))
 
-address,country = filtro2
+filtro = a_model.where(address, lambda a: a.address_id == 10).select(
+    lambda a: (
+        a,
+        a.city,
+        a.city.country,
+    )
+)
+# a = a_model.select(lambda a: (a.address, a.city_id))
 
 pass
