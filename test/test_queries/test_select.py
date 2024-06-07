@@ -1,6 +1,7 @@
 import unittest
 import sys
 from pathlib import Path
+from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
@@ -10,6 +11,41 @@ from test.models import (  # noqa: E402
     Address,
     Country,
 )
+
+from orm import Table, Column, ForeignKey  # noqa: E402
+
+
+class A(Table):
+    __table_name__ = "a"
+    pk_a: int = Column(is_primary_key=True)
+    name_a: str
+    data_a: str
+    date_a: datetime
+
+
+class B(Table):
+    __table_name__ = "b"
+    pk_b: int = Column(is_primary_key=True)
+    data_b: str
+    fk_a: int
+
+    a = ForeignKey["B", A](__table_name__, A, lambda b, a: b.fk_a == a.pk_a)
+
+
+class C(Table):
+    __table_name__ = "c"
+    pk_c: int = Column(is_primary_key=True)
+    data_c: str
+    fk_b: int
+    b = ForeignKey["C", B](__table_name__, B, lambda c, b: c.fk_b == b.pk_b)
+
+
+class D(Table):
+    __table_name__ = "d"
+    pk_d: int = Column(is_primary_key=True)
+    data_d: str
+    fk_c: int
+    c = ForeignKey["D", C](__table_name__, C, lambda d, c: d.fk_c == c.pk_c)
 
 
 class TestQuery(unittest.TestCase):
@@ -70,10 +106,31 @@ class TestQuery(unittest.TestCase):
             City,
             select_lambda=lambda a, ci: (
                 a,
+                a.city,
                 ci.country,
             ),
         )
-        self.assertEqual(q.query, "SELECT address.*, country.* FROM address")
+        self.assertEqual(q.query, "SELECT address.*, city.*, country.* FROM address")
+
+    def test_d_c_b_a_models(self):
+        # a = A(1, "pablo", "trabajador", datetime.now())
+        # b = B(2, "data_b", 1)
+        # c = C(3, "data_c", 2)
+        # d = D(4, "data_d", 3)
+        q = SelectQuery[D, C, B, A](
+            D,
+            C,
+            B,
+            A,
+            select_lambda=lambda d: (
+                d.c.b,
+                d.data_d,
+                d.c.data_c,
+                d.c.b.data_b,
+                d.c.b.a.data_a,
+            ),
+        )
+        self.assertEqual(q.query, "SELECT b.*, d.data_d, c.data_c, b.data_b, a.data_a FROM d")
 
 
 if "__main__" == __name__:
