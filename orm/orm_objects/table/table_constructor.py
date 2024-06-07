@@ -146,8 +146,7 @@ class Table(metaclass=TableMeta):
     __order__ = ("select", "join", "where", "order")
 
     def __repr__(self) -> str:
-        params = ", ".join([f"{x}={getattr(self,x)}" for x, y in self.__class__.__dict__.items() if isinstance(y, property)])
-        return f"{self.__class__.__name__}({params})"
+        return f"{Table.__name__}: {self.__table_name__}"
 
     def __str__(self) -> str:
         params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
