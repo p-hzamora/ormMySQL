@@ -1,10 +1,9 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Optional, Self, overload
+from typing import Any, Callable, Optional, Self, Type, overload
 import dis
 from queue import Queue
-from orm.dissambler.dissambler import Dissambler
 
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
@@ -13,7 +12,7 @@ from .condition_types import ConditionType
 from .orm_objects.queries.joins import JoinSelector, JoinType
 from .orm_objects.foreign_key import ForeignKey
 from .orm_objects.queries.where_condition import WhereCondition
-from .orm_objects.queries.select import SelectQuery
+from .orm_objects.queries.select import SelectQuery, TableColumn
 # endregion
 
 
@@ -537,12 +536,12 @@ class ModelBase[T: Table](ABC):
         self,
         table_right: "Table",
         *,
-        by: str = "INNER JOIN",
-    ) -> "Table":
+        by: str,
+    ) -> Self:
         where = ForeignKey.MAPPED[self._model.__table_name__][table_right.__table_name__]
         join_query = JoinSelector[Self, Table](self._model, table_right, JoinType(by), where=where).query
         self._model._query["join"].append(join_query)
-        return self._model
+        return self
 
     def where(
         self,
@@ -556,27 +555,18 @@ class ModelBase[T: Table](ABC):
     def select[*Ts](
         self,
         selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
-    ) -> T|tuple[*Ts]:
-        select = SelectQuery[T,*Ts](self._model, select_lambda=selector)
+    ) -> T | tuple[T] | dict[Type[Table], tuple[*Ts]]:
+        select = SelectQuery[T, *Ts](self._model, select_lambda=selector)
         self._model._query["select"].append(select.query)
 
-        tables:tuple[Table] = select.get_tables()
+        tables: Queue[Table] = select.get_involved_tables()
 
-        if (n := len(tables)) > 1:
+        if (n := tables.maxsize) > 1:
             for i in range(n - 1):
-                l_tbl = tables[i]
-                r_tbl = tables[i + 1]
+                l_tbl: Table = tables.queue[i]
+                r_tbl: Table = tables.queue[i + 1]
 
-                _dis = Dissambler[l_tbl, r_tbl](ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
-                l_col = _dis.cond_1.name
-                r_col = _dis.cond_2.name
-                join = JoinSelector[l_tbl, r_tbl](
-                    l_tbl,
-                    r_tbl,
-                    JoinType.INNER_JOIN,
-                    l_col,
-                    r_col,
-                )
+                join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
                 self._model._query["join"].append(join.query)
 
         query: str = ""
@@ -585,21 +575,32 @@ class ModelBase[T: Table](ABC):
                 query += "\n"
                 query += "\n".join([x for x in sub_query])
 
-        res:list[dict[str,Any]] = self._repository.read_sql(query, flavour=dict)
+        response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
-        table_initialize:list[tuple[Table,dict[str,Any]]] = []
-        for table in tables:
-            valid_keys = tuple(table.__annotations__.keys())
-            for r in res:
-                valid_attr = {}
-                for key,value in r.items():
-                    if key in valid_keys:
-                        valid_attr[key] = value
-                table_initialize.append((table,valid_attr))         
-                
-        return [table(**kwargs) for table, kwargs in table_initialize]
-        return query, res
-        res = [self._model(**x) for x in res]
-        return res if len(res) != 0 else None
+        #  We must ensure to get the valid attributes for each instance
+        table_initialize = defaultdict(list)
+
+        unic_table: dict[Table, list[TableColumn]] = defaultdict(list)
+        for table_col in select._select_list:
+            unic_table[table_col._table].append(table_col)
+
+        for table_, table_col in unic_table.items():
+            for dicc_cols in response_sql:
+                valid_attr: dict[str, Any] = {}
+                for col in table_col:
+                    valid_attr[col.real_column] = dicc_cols[col.alias]
+                table_initialize[table_].append(table_(**valid_attr))
+
+        values = tuple(table_initialize.values())
+
+        if len(table_initialize) == 1:
+            return values[0]
+
+        for key, val in table_initialize.items():
+            if len(val) == 1:
+                table_initialize[key] = val[0]
+
+        values = tuple(table_initialize.values())
+        return values
 
     # endregion
