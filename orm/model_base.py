@@ -5,6 +5,8 @@ from typing import Any, Callable, Optional, Self, Type, overload
 import dis
 from queue import Queue
 
+from .orm_objects.queries import SQLQuery
+
 from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
 from .condition_types import ConditionType
@@ -26,6 +28,7 @@ class ModelBase[T: Table](ABC):
     # region Constructor
     def __init__(self, model: T, *, repository: IRepositoryBase):
         self._model: T = model
+        self.build_query:SQLQuery =  SQLQuery()
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
@@ -37,7 +40,6 @@ class ModelBase[T: Table](ABC):
             raise Exception(f"Se debe declarar la variabnle '__table_name__' en la clase '{model.__name__}'")
 
         self._repository: IRepositoryBase = repository
-        self._conditions: Queue[WhereCondition] = Queue()
 
     # endregion
 
@@ -532,7 +534,7 @@ class ModelBase[T: Table](ABC):
     ) -> Self:
         where = ForeignKey.MAPPED[self._model.__table_name__][table_right.__table_name__]
         join_query = JoinSelector[Self, Table](self._model, table_right, JoinType(by), where=where).query
-        self._model._query["join"].append(join_query)
+        self.build_query._query["join"].append(join_query)
         return self
 
     def where(
@@ -541,7 +543,7 @@ class ModelBase[T: Table](ABC):
         lambda_function: Callable[[T], bool],
     ) -> Self:
         where_query = WhereCondition[T, None](instance, None, lambda_function).to_query()
-        instance._query["where"].append(where_query)
+        self.build_query._query["where"].append(where_query)
         return self
 
     def select[*Ts](
@@ -549,7 +551,7 @@ class ModelBase[T: Table](ABC):
         selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
     ) -> T | tuple[T] | dict[Type[Table], tuple[*Ts]]:
         select = SelectQuery[T, *Ts](self._model, select_lambda=selector)
-        self._model._query["select"].append(select.query)
+        self.build_query._query["select"].append(select.query)
 
         tables: Queue[Table] = select.get_involved_tables()
 
@@ -559,14 +561,9 @@ class ModelBase[T: Table](ABC):
                 r_tbl: Table = tables.queue[i + 1]
 
                 join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
-                self._model._query["join"].append(join.query)
+                self.build_query._query["join"].append(join.query)
 
-        query: str = ""
-        for x in self._model.__order__:
-            if sub_query := self._model._query.get(x, None):
-                query += "\n"
-                query += "\n".join([x for x in sub_query])
-
+        query = self.build_query.build()
         response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
         values = ClusterQuery(select, response_sql).clean_response()
@@ -600,7 +597,10 @@ class ClusterQuery:
         data = self.loop_foo()
 
         if len(data) == 1:
-            return tuple(data.values())[0]
+            val = tuple(data.values())[0]
+            if len(val) == 1:
+                return val[0]
+            return val
 
         for key, val in data.items():
             if len(val) == 1:
