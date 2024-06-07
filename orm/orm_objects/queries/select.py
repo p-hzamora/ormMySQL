@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import Callable, Optional, Iterable, NamedTuple
+from typing import Callable, Optional, Iterable
 import dis
 
 import inspect
@@ -10,9 +10,33 @@ from orm.orm_objects.table.table_constructor import TableMeta
 from .query import IQuery
 
 
-class TableColTuple(NamedTuple):
-    table: Table
-    col: str
+class TableColumn:
+    def __init__(self, table: Table, col: str) -> None:
+        self._table: Table = table
+        self._column: str = col
+
+    def __repr__(self) -> str:
+        return f"{TableColumn.__name__}: T={self._table.__table_name__} col={self._column}"
+
+    @property
+    def real_column(self) -> str:
+        return self._column
+
+    @property
+    def column(self) -> str:
+        return f"{self._table.__table_name__}.{self._column} as `{self.alias}`"
+
+    @property
+    def alias(self) -> str:
+        return f"{self._table.__table_name__}_{self._column}"
+    
+    def get_all_alias(self)->list[str]:
+        return [class_.alias for class_ in self.all_columns(self._table)]
+
+
+    @classmethod
+    def all_columns(cls, table: Table) -> list["TableColumn"]:
+        return [cls(table, col) for col in table.__annotations__]
 
 
 class SelectQuery[T: Table, *Ts](IQuery):
@@ -28,7 +52,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
         self._tables_heritage: Queue[Table] = Queue()
 
         self._select_lambda: Optional[Callable[[T, *Ts], None]] = select_lambda
-        self._select_list: Iterable[TableColTuple] = self._rename_recursive_column_list(select_lambda)
+        self._select_list: Iterable[TableColumn] = self._rename_recursive_column_list(select_lambda)
 
     def _add_el_if_not_in_queue(self, table: Table) -> None:
         if table not in self._tables_heritage.queue:
@@ -36,7 +60,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
             self._tables_heritage.task_done()
         return None
 
-    def _rename_recursive_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[TableColTuple]:
+    def _rename_recursive_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[TableColumn]:
         """
         Recursive function tu replace variable names by Select Query
 
@@ -69,7 +93,8 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
             if issubclass(tbl_obj.__class__, Table | TableMeta) and len(parents) == 1:
                 # if parents length is 1 says that the element is the table itself
-                return res.append(TableColTuple(tbl_obj, "*"))
+                res.extend(TableColumn.all_columns(tbl_obj))
+                return None
 
             first_el = tuple_inst.nested_element.parents[1]
             try:
@@ -79,15 +104,15 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
             if last_el not in tbl_obj.__dict__ or not isinstance(new_obj, property):
                 if isinstance(new_obj, property):
-                    return res.append(TableColTuple(tbl_obj, last_el))
+                    return res.append(TableColumn(tbl_obj, last_el))
 
                 new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:]))  # create new TupleInstruction from the second parent to the top
                 return _get_parents(new_obj, new_ti)
-            return res.append(TableColTuple(tbl_obj, last_el))
+            return res.append(TableColumn(tbl_obj, last_el))
 
         # ================== start =========================
         instruction_list: list[TupleInstruction] = TreeInstruction(dis.Bytecode(select_list), list).to_list()
-        res: list[TableColTuple] = []
+        res: list[TableColumn] = []
 
         lambda_vars = tuple(inspect.signature(select_list).parameters)
 
@@ -113,7 +138,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
         if not self._select_list:
             return "*"
         else:
-            return ", ".join(f"{t.__table_name__}.{c}" for t, c in self._select_list)
+            return ", ".join([col.column for col in self._select_list])
 
     @property
     def query(self) -> str:
