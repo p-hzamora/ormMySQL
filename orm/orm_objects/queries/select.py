@@ -136,9 +136,9 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
     def _convert_select_list(self) -> str:
         if not self._select_list:
-            return "*"
+            return ", ".join(col.column for col in TableColumn.all_columns(self._first_table))
         else:
-            return ", ".join([col.column for col in self._select_list])
+            return ", ".join(col.column for col in self._select_list)
 
     @property
     def query(self) -> str:
