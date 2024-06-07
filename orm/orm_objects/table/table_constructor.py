@@ -134,9 +134,6 @@ class TableMeta(type):
         return self
 
 
-OrderQuery = Literal["select", "join", "where", "sort"]
-
-
 @dataclass_transform(eq_default=False)
 class Table(metaclass=TableMeta):
     __table_name__ = ...
@@ -150,6 +147,3 @@ class Table(metaclass=TableMeta):
 
     def __getattr__[T](self, __name: str) -> Column[T]:
         return self.__dict__.get(__name, None)
-
-    def __init__(self):
-        self._query: dict[OrderQuery, list[str]]
