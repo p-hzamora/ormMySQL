@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Callable, overload, Iterable, Optional
 from abc import abstractmethod
 
@@ -6,37 +7,7 @@ from .where_condition import WhereCondition
 
 
 class QuerySelector[T]():
-    @overload
-    def __init__(
-        self,
-        orig_table: Table,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        where: WhereCondition,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        orig_table: Table,
-        where: WhereCondition,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        orig_table: Table,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        orig_table: Table,
-        select_list: Callable[[T], None],
-    ) -> None: ...
+    __order__:tuple[str] = ("select", "join", "where", "order","with","with_recursive")
 
     def __init__[T2](
         self,
@@ -46,6 +17,7 @@ class QuerySelector[T]():
     ) -> None:
         self._orig_table: Table = orig_table
         self._where: WhereCondition = WhereCondition[T, T2](where) if where else None
+        self._query = defaultdict(list)
 
 
     @property

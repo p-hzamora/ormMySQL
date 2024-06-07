@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Any, Iterable, Literal, Type, dataclass_transform
 import json
 from .column import Column
@@ -131,8 +130,6 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
 class TableMeta(type):
     def __new__[T](cls, name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
-        cls_object._query = defaultdict(list)
-
         self = __init_constructor__(cls_object)
         return self
 
@@ -143,7 +140,6 @@ OrderQuery = Literal["select", "join", "where", "sort"]
 @dataclass_transform(eq_default=False)
 class Table(metaclass=TableMeta):
     __table_name__ = ...
-    __order__ = ("select", "join", "where", "order")
 
     def __repr__(self) -> str:
         return f"{Table.__name__}: {self.__table_name__}"
