@@ -4,10 +4,10 @@ import dis
 
 import inspect
 from orm.dissambler import TreeInstruction, TupleInstruction, NestedElement
+from orm.interfaces.IQuery import IQuery
 from orm.orm_objects import Table
 from orm.orm_objects.table.table_constructor import TableMeta
 
-from .query import IQuery
 
 
 class TableColumn:
