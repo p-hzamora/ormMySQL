@@ -28,16 +28,16 @@ class TestSQLMapping(unittest.TestCase):
         self.assertEqual(self.PERSON_INSTANCE.dni_list, [1, 2, 3, 4, 5, 6])
 
     def test_column_name(self):
-        self.assertEqual(self.PERSON_INSTANCE.id.column_name, "id")
-        self.assertEqual(self.PERSON_INSTANCE.title.column_name, "title")
-        self.assertEqual(self.PERSON_INSTANCE.content.column_name, "content")
-        self.assertEqual(self.PERSON_INSTANCE.dni_list.column_name, "dni_list")
+        self.assertEqual(self.PERSON_INSTANCE._id.column_name, "id")
+        self.assertEqual(self.PERSON_INSTANCE._title.column_name, "title")
+        self.assertEqual(self.PERSON_INSTANCE._content.column_name, "content")
+        self.assertEqual(self.PERSON_INSTANCE._dni_list.column_name, "dni_list")
 
     def test_column_value(self):
-        self.assertEqual(self.PERSON_INSTANCE.id.column_value, 1)
-        self.assertEqual(self.PERSON_INSTANCE.title.column_value, "titleCustom")
-        self.assertEqual(self.PERSON_INSTANCE.content.column_value, "contentCustom")
-        self.assertEqual(self.PERSON_INSTANCE.dni_list.column_value, "[1, 2, 3, 4, 5, 6]")
+        self.assertEqual(self.PERSON_INSTANCE._id.column_value, 1)
+        self.assertEqual(self.PERSON_INSTANCE._title.column_value, "titleCustom")
+        self.assertEqual(self.PERSON_INSTANCE._content.column_value, "contentCustom")
+        self.assertEqual(self.PERSON_INSTANCE._dni_list.column_value, [1, 2, 3, 4, 5, 6])
 
 
 if "__main__" == __name__:
