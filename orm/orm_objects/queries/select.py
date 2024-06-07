@@ -17,6 +17,7 @@ class TableColTuple(NamedTuple):
 
 class SelectQuery[T: Table, *Ts](IQuery):
     SELECT = "SELECT"
+
     def __init__(
         self,
         *tables: tuple[T, *Ts],
@@ -59,11 +60,12 @@ class SelectQuery[T: Table, *Ts](IQuery):
         >>> #   "country.pk_country"
         ]
         """
+
         def _get_parents(tbl_obj: Table, tuple_inst: TupleInstruction) -> None:
             self._add_el_if_not_in_queue(tbl_obj)
 
-            last_el:str = tuple_inst.nested_element.name
-            parents:list[str] = tuple_inst.nested_element.parents
+            last_el: str = tuple_inst.nested_element.name
+            parents: list[str] = tuple_inst.nested_element.parents
 
             if issubclass(tbl_obj.__class__, Table | TableMeta) and len(parents) == 1:
                 # if parents length is 1 says that the element is the table itself
@@ -79,7 +81,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
                 if isinstance(new_obj, property):
                     return res.append(TableColTuple(tbl_obj, last_el))
 
-                new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:])) # create new TupleInstruction from the second parent to the top 
+                new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:]))  # create new TupleInstruction from the second parent to the top
                 return _get_parents(new_obj, new_ti)
             return res.append(TableColTuple(tbl_obj, last_el))
 
