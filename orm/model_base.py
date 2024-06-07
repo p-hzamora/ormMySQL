@@ -185,13 +185,16 @@ class ModelBase[T: Table](ABC):
 
     # region all
     @overload
-    def all(self) -> list[T]: ...
+    def all(self) -> list[T]:
+        ...
 
     @overload
-    def all[TValue](self, flavour: Optional[TValue]) -> TValue: ...
+    def all[TValue](self, flavour: Optional[TValue]) -> TValue:
+        ...
 
     @overload
-    def all[TValue](self, limit: Optional[int]) -> TValue: ...
+    def all[TValue](self, limit: Optional[int]) -> TValue:
+        ...
 
     def all[TValue](self, flavour: Optional[TValue] = None, limit: Optional[int] = None) -> list[T] | TValue:
         LIMIT = "" if not limit else f"LIMIT {limit}"
@@ -205,7 +208,8 @@ class ModelBase[T: Table](ABC):
 
     # region get
     @overload
-    def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
+    def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None:
+        ...
 
     @overload
     def get(self, col: Callable[[T], None]) -> list[T] | None:
@@ -331,7 +335,8 @@ class ModelBase[T: Table](ABC):
 
     # region first
     @overload
-    def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
+    def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None:
+        ...
 
     @overload
     def first(self, col: Callable[[T], None]) -> list[T] | None:
@@ -477,13 +482,16 @@ class ModelBase[T: Table](ABC):
 
     # region delete
     @overload
-    def delete(self) -> None: ...
+    def delete(self) -> None:
+        ...
 
     @overload
-    def delete(self, instance: T) -> None: ...
+    def delete(self, instance: T) -> None:
+        ...
 
     @overload
-    def delete(self, instance: list[T]) -> None: ...
+    def delete(self, instance: list[T]) -> None:
+        ...
 
     def delete(self, instance: T | list[T] = None) -> None:
         def get_pk(instance: T | list[T]) -> Column:
