@@ -51,23 +51,24 @@ class D(Table):
 class TestQuery(unittest.TestCase):
     def test_select_all_col_with_no_select_list_attr(self):
         q = SelectQuery[City](City)
-        self.assertEqual(q.query, "SELECT * FROM city")
+
+        self.assertEqual(q.query, "SELECT city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update` FROM city")
 
     def test_select_all_col_with_select_list_attr(self):
         q = SelectQuery[City](City, select_lambda=lambda: "*")
-        self.assertEqual(q.query, "SELECT * FROM city")
+        self.assertEqual(q.query, "SELECT city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update` FROM city")
 
     def test_select_one_col(self):
         q = SelectQuery[City](City, select_lambda=lambda c: c.city)
-        self.assertEqual(q.query, "SELECT city.city FROM city")
+        self.assertEqual(q.query, "SELECT city.city as `city_city` FROM city")
 
     def test_select_two_col(self):
         q = SelectQuery[City](City, select_lambda=lambda c: (c.city, c.city_id))
-        self.assertEqual(q.query, "SELECT city.city, city.city_id FROM city")
+        self.assertEqual(q.query, "SELECT city.city as `city_city`, city.city_id as `city_city_id` FROM city")
 
     def test_select_three_col(self):
         q = SelectQuery[City](City, select_lambda=lambda c: (c.city, c.last_update, c.country_id))
-        self.assertEqual(q.query, "SELECT city.city, city.last_update, city.country_id FROM city")
+        self.assertEqual(q.query, "SELECT city.city as `city_city`, city.last_update as `city_last_update`, city.country_id as `city_country_id` FROM city")
 
     def test_select_cols_from_foreign_keys(self):
         # this response must not be the real one,
@@ -83,7 +84,10 @@ class TestQuery(unittest.TestCase):
                 a.city.country.country,
             ),
         )
-        self.assertEqual(q.query, "SELECT address.*, city.*, country.*, city.country_id, address.city_id, address.last_update, country.country FROM address")
+        self.assertEqual(
+            q.query,
+            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update`, city.country_id as `city_country_id`, address.city_id as `address_city_id`, address.last_update as `address_last_update`, country.country as `country_country` FROM address",
+        )
 
     def test_select_all_columns_from_all_tables(self):
         # this response must not be the real one,
@@ -97,11 +101,14 @@ class TestQuery(unittest.TestCase):
                 co,
             ),
         )
-        self.assertEqual(q.query, "SELECT address.*, city.*, country.* FROM address")
+        self.assertEqual(
+            q.query,
+            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update` FROM address",
+        )
 
     def test_select_all_columns_from_tables_without_use_all_vars(self):
         # this response must not be the real one,
-        q = SelectQuery[Address, City, Country](
+        q = SelectQuery[Address, City](
             Address,
             City,
             select_lambda=lambda a, ci: (
@@ -110,7 +117,10 @@ class TestQuery(unittest.TestCase):
                 ci.country,
             ),
         )
-        self.assertEqual(q.query, "SELECT address.*, city.*, country.* FROM address")
+        self.assertEqual(
+            q.query,
+            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update` FROM address",
+        )
 
     def test_d_c_b_a_models(self):
         # a = A(1, "pablo", "trabajador", datetime.now())
@@ -130,8 +140,41 @@ class TestQuery(unittest.TestCase):
                 d.c.b.a.data_a,
             ),
         )
-        self.assertEqual(q.query, "SELECT b.*, d.data_d, c.data_c, b.data_b, a.data_a FROM d")
+        self.assertEqual(
+            q.query, "SELECT b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, d.data_d as `d_data_d`, c.data_c as `c_data_c`, b.data_b as `b_data_b`, a.data_a as `a_data_a` FROM d"
+        )
+
+    def test_all_a(self):
+        q = SelectQuery[A](A)
+        self.assertEqual(q.query, "SELECT a.pk_a as `a_pk_a`, a.name_a as `a_name_a`, a.data_a as `a_data_a`, a.date_a as `a_date_a` FROM a")
+
+    def test_all_b(self):
+        q = SelectQuery[B](B)
+        self.assertEqual(q.query, "SELECT b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a` FROM b")
+
+    def test_all_c(self):
+        q = SelectQuery[C](C)
+        self.assertEqual(q.query, "SELECT c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b` FROM c")
+
+    def test_all_d(self):
+        q = SelectQuery[D](D)
+        self.assertEqual(q.query, "SELECT d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c` FROM d")
+
+    def test_a_b_c_d_e(self):
+        q = SelectQuery[D](
+            D,
+            select_lambda=lambda d: (
+                d.c.b.a,
+                d.c.b,
+                d.c,
+                d,
+            ),
+        )
+        self.assertEqual(q.query, "SELECT a.pk_a as `a_pk_a`, a.name_a as `a_name_a`, a.data_a as `a_data_a`, a.date_a as `a_date_a`, b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b`, d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c` FROM d")
 
 
 if "__main__" == __name__:
     unittest.main()
+
+
+
