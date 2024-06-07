@@ -112,19 +112,19 @@ def __create_properties[T](cls: Type[T], field: Field) -> property:
 
 
 def __transform_getter[T](obj: object, type_: T) -> T:
-    getter = obj.__getattribute__("column_value")
+    return obj.__getattribute__("column_value")
 
-    if type_ is str and isinstance(eval(obj), Iterable):
-        getter = eval(obj)
-    return getter
+    # if type_ is str and isinstance(eval(obj), Iterable):
+    #     getter = eval(obj)
+    # return getter
 
 
-def __transform_setter[T](obj: object, value:Any, type_: T) -> None:
-    setter = obj.__setattr__("column_value", value)
+def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
+    return obj.__setattr__("column_value", value)
 
-    if type_ is list:
-        setter = str(setter)
-    return None
+    # if type_ is list:
+    #     setter = str(setter)
+    # return None
 
 
 @dataclass_transform()
