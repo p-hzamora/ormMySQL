@@ -28,7 +28,7 @@ class ModelBase[T: Table](ABC):
     # region Constructor
     def __init__(self, model: T, *, repository: IRepositoryBase):
         self._model: T = model
-        self.build_query:SQLQuery =  SQLQuery()
+        self.build_query: SQLQuery[T] = SQLQuery()
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
