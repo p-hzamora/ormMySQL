@@ -13,11 +13,11 @@ class SQLQuery[T]:
     def __init__[T2](self) -> None:
         self._query: dict[OrderQuery, list[str]] = defaultdict(list)
 
-    def where(self): ...
-    def select(self): ...
-    def join(self): ...
 
-    def build(self):
+    def order(self, _lambda_col: Callable[[T], None], order_type: str) -> OrderQuery:
+        order = OrderQuery(_lambda_col, order_type)
+        self._query["order"].append(order.query)
+        return order
         query: str = ""
         for x in self.__order__:
             if sub_query := self._query.get(x, None):

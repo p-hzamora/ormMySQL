@@ -542,8 +542,9 @@ class ModelBase[T: Table](ABC):
         instance: T,
         lambda_function: Callable[[T], bool],
     ) -> Self:
-        where_query = WhereCondition[T, None](instance, None, lambda_function).to_query()
-        self.build_query._query["where"].append(where_query)
+
+    def order(self, _lambda_col: Callable[[T], None], order_type: str) -> Self:
+        self.build_query.order(_lambda_col, order_type)
         return self
 
     def select[*Ts](
