@@ -33,8 +33,13 @@ class TableColumn:
         return [class_.alias for class_ in self.all_columns(self._table)]
 
     @classmethod
-    def all_columns(cls, table: Table) -> list["TableColumn"]:
-        return [cls(table, col) for col in table.__annotations__]
+    def __hash__(self) -> int:
+        return hash((self._table,self._column))
+
+    def __eq__(self, __value: "TableColumn") -> bool:
+        if isinstance(__value,TableColumn):
+            return (self._table.__table_name__ == __value._table.__table_name__ and self._column == __value._column)
+        return False
 
 
 class SelectQuery[T: Table, *Ts](IQuery):
