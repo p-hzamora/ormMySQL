@@ -67,7 +67,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
             self._tables_heritage.task_done()
         return None
 
-    def _rename_recursive_column_list(self, select_list: Optional[Callable[[T], None]]) -> Iterable[TableColumn]:
+    def _rename_recursive_column_list(self, _lambda: Optional[Callable[[T], None]]) -> Iterable[TableColumn]:
         """
         Recursive function tu replace variable names by Select Query
 
@@ -118,12 +118,10 @@ class SelectQuery[T: Table, *Ts](IQuery):
             return res.append(TableColumn(tbl_obj, last_el))
 
         # ================== start =========================
-        instruction_list: list[TupleInstruction] = TreeInstruction(dis.Bytecode(select_list), list).to_list()
+        instruction_list: list[TupleInstruction] = TreeInstruction(dis.Bytecode(_lambda), list).to_list()
         res: list[TableColumn] = []
 
-        lambda_vars = tuple(inspect.signature(select_list).parameters)
-
-        lambda_var_to_table_dicc: dict[str, Table] = self._assign_lambda_variables_to_table(lambda_vars)
+        lambda_var_to_table_dicc: dict[str, Table] = self._assign_lambda_variables_to_table(_lambda)
 
         for ti in instruction_list:
             obj = lambda_var_to_table_dicc[ti.var]
@@ -135,7 +133,21 @@ class SelectQuery[T: Table, *Ts](IQuery):
             _get_parents(obj, ti)
         return res
 
-    def _assign_lambda_variables_to_table(self, lambda_vars: tuple[str, ...]):
+    def _assign_lambda_variables_to_table(self, _lambda: Callable[[T], None]) -> dict[str, Type[Table]]:
+        """
+        return a dictionary with the lambda's parameters as keys and Type[Table] as the values
+
+
+        >>> res = _assign_lambda_variables_to_table(lambda a,ci,co: ...)
+        >>> print(res)
+        >>> # {
+        >>> #   "a": Address,
+        >>> #   "ci": City,
+        >>> #   "co": Country,
+        >>> # }
+        """
+        lambda_vars = tuple(inspect.signature(_lambda).parameters)
+
         dicc: dict[str, Table] = {}
         for i in range(len(lambda_vars)):
             dicc[lambda_vars[i]] = self._tables[i]
