@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import Callable, Optional, Iterable
+from typing import Callable, Iterator, Optional, Iterable, Type
 import dis
 
 import inspect
@@ -33,6 +33,10 @@ class TableColumn:
         return [class_.alias for class_ in self.all_columns(self._table)]
 
     @classmethod
+    def all_columns(cls, table: Table) -> Iterator["TableColumn"]:
+        for col in table.__annotations__:
+            yield cls(table, col)
+
     def __hash__(self) -> int:
         return hash((self._table,self._column))
 
@@ -96,7 +100,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
             if issubclass(tbl_obj.__class__, Table | TableMeta) and len(parents) == 1:
                 # if parents length is 1 says that the element is the table itself
-                res.extend(TableColumn.all_columns(tbl_obj))
+                res.extend(list(TableColumn.all_columns(tbl_obj)))
                 return None
 
             first_el = tuple_inst.nested_element.parents[1]
@@ -138,7 +142,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
         return dicc
 
     def _convert_select_list(self) -> str:
-        data_orig = self._select_list if self._select_list else TableColumn.all_columns(self._first_table)
+        data_orig = self._select_list if self._select_list else tuple(TableColumn.all_columns(self._first_table))
 
         return ", ".join(col.column for col in data_orig)
 
