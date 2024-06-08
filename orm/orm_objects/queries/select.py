@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import Callable, Iterator, Optional, Iterable, Type
+from typing import Callable, Iterator, Optional, Iterable, Type, override
 import dis
 
 import inspect
@@ -158,6 +158,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
         return ", ".join(col.column for col in data_orig)
 
+    @override
     @property
     def query(self) -> str:
         select_str = self._convert_select_list()
