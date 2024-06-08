@@ -116,10 +116,10 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
         lambda_vars = tuple(inspect.signature(select_list).parameters)
 
-        transform_lambda_variables: dict[str, Table] = self._update_transform_lambda_variables(lambda_vars)
+        lambda_var_to_table_dicc: dict[str, Table] = self._assign_lambda_variables_to_table(lambda_vars)
 
         for ti in instruction_list:
-            obj = transform_lambda_variables[ti.var]
+            obj = lambda_var_to_table_dicc[ti.var]
 
             var = obj.__table_name__
             new_nested = ti.nested_element.parents
@@ -128,7 +128,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
             _get_parents(obj, ti)
         return res
 
-    def _update_transform_lambda_variables(self, lambda_vars: tuple[str, ...]):
+    def _assign_lambda_variables_to_table(self, lambda_vars: tuple[str, ...]):
         dicc: dict[str, Table] = {}
         for i in range(len(lambda_vars)):
             dicc[lambda_vars[i]] = self._tables[i]
