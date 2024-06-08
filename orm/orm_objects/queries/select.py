@@ -9,7 +9,6 @@ from orm.orm_objects import Table
 from orm.orm_objects.table.table_constructor import TableMeta
 
 
-
 class TableColumn:
     def __init__(self, table: Table, col: str) -> None:
         self._table: Table = table
@@ -29,10 +28,9 @@ class TableColumn:
     @property
     def alias(self) -> str:
         return f"{self._table.__table_name__}_{self._column}"
-    
-    def get_all_alias(self)->list[str]:
-        return [class_.alias for class_ in self.all_columns(self._table)]
 
+    def get_all_alias(self) -> list[str]:
+        return [class_.alias for class_ in self.all_columns(self._table)]
 
     @classmethod
     def all_columns(cls, table: Table) -> list["TableColumn"]:
