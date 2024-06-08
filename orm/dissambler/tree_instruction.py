@@ -64,10 +64,23 @@ class TreeInstruction:
         """
         add instructions into self._root
         """
+
+        def is_instruction_comparable(instr: Instruction) -> bool:
+            opname = OpName(instr.opname)
+            if opname in (OpName.COMPARE_OP, OpName.IS_OP):
+                return True
+            return False
+
+        def python_comparable_to_sql(opname: OpName) -> Optional[str]:
+            dicc = {
+                OpName.COMPARE_OP.value: "=",
+                OpName.IS_OP.value: "is",
+            }
+            return dicc[opname]
+
         for x in self._bytecode:
-            if OpName(x.opname) == OpName.COMPARE_OP:
-                self._compare_op = x.argval
-            self._raise_error_if_not_valid(x)
+            if is_instruction_comparable(x):
+                self._compare_op = python_comparable_to_sql(x.opname)
             self.add_instruction(x)
 
     def to_dict(self) -> dict[str, list[NestedElement[str]]]:
