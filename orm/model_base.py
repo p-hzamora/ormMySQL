@@ -566,8 +566,7 @@ class ModelBase[T: Table](ABC):
         query = self.build_query.build()
         response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
-        values = ClusterQuery(select, response_sql).clean_response()
-        return values
+        return ClusterQuery(select, response_sql).clean_response()
 
     # endregion
 
