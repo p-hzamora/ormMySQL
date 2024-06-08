@@ -2,7 +2,6 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import unittest
-import dis 
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -37,8 +36,8 @@ class DtoC:
 
 
 class TestTreeInstruction(unittest.TestCase):
-    COMPLEX_BYTECODE: dis.Bytecode = dis.Bytecode(
-        lambda class_x, class_b, class_c: (
+    def COMPLEX_LAMBDA(class_x, class_b, class_c):
+        return (
             class_c.item,
             class_c.fk_class_b.item_from_class_b.a.s.d.f.g.h.j.k.l.q,
             class_b.item,
@@ -46,17 +45,18 @@ class TestTreeInstruction(unittest.TestCase):
             class_x.b,
             class_x.c,
         )
-    )
 
     def test_create_method(self):
-        byte_code = dis.Bytecode(lambda a, b: (a.foo_a, b.foo_b))
-        tree = TreeInstruction(byte_code, dtype=tuple).to_dict()
+        def lambda_(a, b):
+            return a.foo_a, b.foo_b
+
+        tree = TreeInstruction(lambda_, dtype=tuple).to_dict()
 
         self.assertEqual(tree["a"][0].name, "foo_a")
         self.assertEqual(tree["b"][0].name, "foo_b")
 
     def test_create_method_isinstance(self):
-        tree = TreeInstruction(self.COMPLEX_BYTECODE, list).to_dict()
+        tree = TreeInstruction(self.COMPLEX_LAMBDA, list).to_dict()
         self.assertIsInstance(tree, dict)
 
         self.assertIsInstance(tree["class_c"], list)
@@ -75,8 +75,10 @@ class TestTreeInstruction(unittest.TestCase):
         self.assertIsInstance(tree["class_x"][0].name, str)
 
     def test_to_list(self):
-        byte_code = dis.Bytecode(lambda a, b: (a.foo_a, b.foo_b))
-        tree = TreeInstruction(byte_code, dtype=tuple).to_list()
+        def lambda_(a, b):
+            return a.foo_a, b.foo_b
+
+        tree = TreeInstruction(lambda_, dtype=tuple).to_list()
 
         self.assertEqual(tree[0].var, "a")
         self.assertEqual(tree[1].var, "b")
@@ -85,8 +87,10 @@ class TestTreeInstruction(unittest.TestCase):
         self.assertEqual(tree[1].nested_element.name, "foo_b")
 
     def test_const(self):
-        byte_code = dis.Bytecode(lambda x: ("6", 123, x.a, x.b.c.d.e))
-        tree = TreeInstruction(byte_code, dtype=tuple).to_list()
+        def lambda_(x):
+            return "6", 123, x.a, x.b.c.d.e
+
+        tree = TreeInstruction(lambda_, dtype=tuple).to_list()
 
         self.assertEqual(tree[0].var, "6")
         self.assertEqual(tree[1].var, 123)
@@ -100,8 +104,10 @@ class TestTreeInstruction(unittest.TestCase):
         self.assertEqual(tree[3].nested_element.parent.parent.parent.name, "b")
 
     def test_const_and_var(self):
-        byte_code = dis.Bytecode(lambda x: "6" == x.a.b.c)
-        tree = TreeInstruction(byte_code, dtype="COMPARABLE").to_list()
+        def lambda_(x):
+            return "6" == x.a.b.c
+
+        tree = TreeInstruction(lambda_, dtype="COMPARABLE").to_list()
 
         self.assertEqual(tree[0].nested_element.name, "6")
         self.assertEqual(tree[1].nested_element.name, "c")

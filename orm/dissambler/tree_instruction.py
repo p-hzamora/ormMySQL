@@ -1,9 +1,9 @@
 from collections import defaultdict
-from typing import Any, NamedTuple, Self, Optional, Literal
+from typing import Any, Callable, NamedTuple, Self, Optional, Literal
 from dis import Instruction, Bytecode
 from .dis_types import OpName
 from .nested_element import NestedElement
-
+import dis
 
 class Node[T]:
     def __init__(self, data: T):
@@ -43,9 +43,10 @@ class TreeInstruction:
         OpName.COMPARE_OP: ("COMPARABLE",),
     }
 
-    def __init__(self, byte_code: Bytecode, dtype: object | DTypes):
+    def __init__[T,*Ts](self, lambda_: Callable[[T,*Ts], None], dtype: object | DTypes):
         self._root: Node[Instruction] = Node[Instruction](None)
-        self._bytecode: Bytecode = byte_code
+
+        self._bytecode: Bytecode = dis.Bytecode(lambda_)
         self._dtype: OpName = self._valid_dtype(dtype)
         self._compare_op: Optional[str] = None
         self._set_root()
