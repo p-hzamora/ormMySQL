@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Literal, Type, dataclass_transform
+from typing import Any, Iterable, Type, dataclass_transform
 import json
 from .column import Column
 
