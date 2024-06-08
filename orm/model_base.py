@@ -532,9 +532,7 @@ class ModelBase[T: Table](ABC):
         *,
         by: str,
     ) -> Self:
-        where = ForeignKey.MAPPED[self._model.__table_name__][table_right.__table_name__]
-        join_query = JoinSelector[Self, Table](self._model, table_right, JoinType(by), where=where).query
-        self.build_query._query["join"].append(join_query)
+        self.build_query.join(self._model, table_right, by=by)
         return self
 
     def where(
@@ -542,6 +540,8 @@ class ModelBase[T: Table](ABC):
         instance: T,
         lambda_function: Callable[[T], bool],
     ) -> Self:
+        self.build_query.where(instance, lambda_function)
+        return self
 
     def order(self, _lambda_col: Callable[[T], None], order_type: str) -> Self:
         self.build_query.order(_lambda_col, order_type)
@@ -551,20 +551,9 @@ class ModelBase[T: Table](ABC):
         self,
         selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
     ) -> T | tuple[T] | dict[Type[Table], tuple[*Ts]]:
-        select = SelectQuery[T, *Ts](self._model, select_lambda=selector)
-        self.build_query._query["select"].append(select.query)
+        select = self.build_query.select(selector, self._model)
 
-        tables: Queue[Table] = select.get_involved_tables()
-
-        if (n := tables.maxsize) > 1:
-            for i in range(n - 1):
-                l_tbl: Table = tables.queue[i]
-                r_tbl: Table = tables.queue[i + 1]
-
-                join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
-                self.build_query._query["join"].append(join.query)
-
-        query = self.build_query.build()
+        query: str = self.build_query.build()
         response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
         return ClusterQuery(select, response_sql).clean_response()
