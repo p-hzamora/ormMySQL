@@ -5,7 +5,7 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.orm_objects.queries.select import SelectQuery  # noqa: E402
+from orm.orm_objects.queries.select import SelectQuery, TableColumn  # noqa: E402
 from test.models import (  # noqa: E402
     City,
     Address,
@@ -170,11 +170,84 @@ class TestQuery(unittest.TestCase):
                 d,
             ),
         )
-        self.assertEqual(q.query, "SELECT a.pk_a as `a_pk_a`, a.name_a as `a_name_a`, a.data_a as `a_data_a`, a.date_a as `a_date_a`, b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b`, d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c` FROM d")
+        self.assertEqual(
+            q.query,
+            "SELECT a.pk_a as `a_pk_a`, a.name_a as `a_name_a`, a.data_a as `a_data_a`, a.date_a as `a_date_a`, b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b`, d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c` FROM d",
+        )
+
+    def test_get_involved_table_method_consistency(self):
+        q = SelectQuery[D](
+            D,
+            select_lambda=lambda d: (
+                d.c.b.a,
+                d.c.b,
+                d.c,
+                d,
+            ),
+        )
+        queue = q.get_involved_tables()
+
+        tuple_ = tuple([queue.get_nowait() for _ in range(queue.maxsize)])
+        self.assertEqual(tuple_, (D, C, B, A))
+
+    def test_check_private_variabels(self):
+        def _lambda(d, c, b, a):
+            return d, c, b, a
+
+        q = SelectQuery[D, C, B, A](D, C, B, A, select_lambda=_lambda)
+
+        self.assertEqual(q._first_table, D)
+        self.assertEqual(q._tables, (D, C, B, A))
+
+        self.assertTrue(callable(q._select_lambda))
+        self.assertEqual(q._select_lambda, _lambda)
+
+        self.assertDictEqual(
+            q._assign_lambda_variables_to_table(_lambda),
+            {
+                "d": D,
+                "c": C,
+                "b": B,
+                "a": A,
+            },
+        )
+
+
+class TestTableColumn(unittest.TestCase):
+    tc = TableColumn(Address, "address_id")
+
+    def test_TableColumn_properties(self):
+        self.assertEqual(self.tc.real_column, "address_id")
+        self.assertEqual(self.tc.column, "address.address_id as `address_address_id`")
+        self.assertEqual(self.tc.alias, "address_address_id")
+
+    def test_check__hash__and__eq__methods(self):
+        tuple_all_columns: tuple[TableColumn, ...] = (
+            TableColumn(Address, "address_id"),
+            TableColumn(Address, "address"),
+            TableColumn(Address, "address2"),
+            TableColumn(Address, "district"),
+            TableColumn(Address, "city_id"),
+            TableColumn(Address, "postal_code"),
+            TableColumn(Address, "phone"),
+            TableColumn(Address, "location"),
+            TableColumn(Address, "last_update"),
+        )
+        list_all_alias: list[str] = [
+            "address_address_id",
+            "address_address",
+            "address_address2",
+            "address_district",
+            "address_city_id",
+            "address_postal_code",
+            "address_phone",
+            "address_location",
+            "address_last_update",
+        ]
+
+        self.assertTupleEqual(tuple(TableColumn.all_columns(Address)), tuple_all_columns)
+        self.assertListEqual(self.tc.get_all_alias(), list_all_alias)
 
 
 if "__main__" == __name__:
     unittest.main()
-
-
-
