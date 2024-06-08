@@ -117,7 +117,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
             return res.append(TableColumn(tbl_obj, last_el))
 
         # ================== start =========================
-        instruction_list: list[TupleInstruction] = TreeInstruction(_lambda, list).to_list()
+        instruction_list: list[TupleInstruction] = TreeInstruction(_lambda).to_list()
         res: list[TableColumn] = []
 
         lambda_var_to_table_dicc: dict[str, Table] = self._assign_lambda_variables_to_table(_lambda)

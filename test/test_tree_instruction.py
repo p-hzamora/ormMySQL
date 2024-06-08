@@ -50,13 +50,13 @@ class TestTreeInstruction(unittest.TestCase):
         def lambda_(a, b):
             return a.foo_a, b.foo_b
 
-        tree = TreeInstruction(lambda_, dtype=tuple).to_dict()
+        tree = TreeInstruction(lambda_).to_dict()
 
         self.assertEqual(tree["a"][0].name, "foo_a")
         self.assertEqual(tree["b"][0].name, "foo_b")
 
     def test_create_method_isinstance(self):
-        tree = TreeInstruction(self.COMPLEX_LAMBDA, list).to_dict()
+        tree = TreeInstruction(self.COMPLEX_LAMBDA).to_dict()
         self.assertIsInstance(tree, dict)
 
         self.assertIsInstance(tree["class_c"], list)
@@ -78,7 +78,7 @@ class TestTreeInstruction(unittest.TestCase):
         def lambda_(a, b):
             return a.foo_a, b.foo_b
 
-        tree = TreeInstruction(lambda_, dtype=tuple).to_list()
+        tree = TreeInstruction(lambda_).to_list()
 
         self.assertEqual(tree[0].var, "a")
         self.assertEqual(tree[1].var, "b")
@@ -90,7 +90,7 @@ class TestTreeInstruction(unittest.TestCase):
         def lambda_(x):
             return "6", 123, x.a, x.b.c.d.e
 
-        tree = TreeInstruction(lambda_, dtype=tuple).to_list()
+        tree = TreeInstruction(lambda_).to_list()
 
         self.assertEqual(tree[0].var, "6")
         self.assertEqual(tree[1].var, 123)
@@ -107,7 +107,7 @@ class TestTreeInstruction(unittest.TestCase):
         def lambda_(x):
             return "6" == x.a.b.c
 
-        tree = TreeInstruction(lambda_, dtype="COMPARABLE").to_list()
+        tree = TreeInstruction(lambda_).to_list()
 
         self.assertEqual(tree[0].nested_element.name, "6")
         self.assertEqual(tree[1].nested_element.name, "c")

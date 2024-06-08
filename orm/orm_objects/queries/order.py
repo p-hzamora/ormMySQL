@@ -15,7 +15,7 @@ class OrderQuery[T](IQuery):
 
         self._order_lambda: Callable[[T], None] = order_lambda
         self._order_type: str = order_type
-        self._column: str = TreeInstruction(order_lambda, "tuple").to_list()[0].nested_element.name
+        self._column: str = TreeInstruction(order_lambda).to_list()[0].nested_element.name
 
     def _valid_order_type(self, _value: str) -> bool:
         return _value in (ASC, DESC)

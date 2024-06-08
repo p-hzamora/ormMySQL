@@ -1,9 +1,10 @@
 from collections import defaultdict
-from typing import Any, Callable, NamedTuple, Self, Optional, Literal
+from typing import Any, Callable, NamedTuple, Self, Optional
 from dis import Instruction, Bytecode
 from .dis_types import OpName
 from .nested_element import NestedElement
 import dis
+
 
 class Node[T]:
     def __init__(self, data: T):
@@ -12,15 +13,6 @@ class Node[T]:
 
     def __repr__(self) -> str:
         return f"{Node.__name__}: data={self.data} children={self.children}"
-
-
-DTypes = Literal[
-    "tuple",
-    "list",
-    "dict",
-    "set",
-    "COMPARABLE",
-]
 
 
 class TupleInstruction(NamedTuple):
@@ -43,22 +35,15 @@ class TreeInstruction:
         OpName.COMPARE_OP: ("COMPARABLE",),
     }
 
-    def __init__[T,*Ts](self, lambda_: Callable[[T,*Ts], None], dtype: object | DTypes):
+    def __init__[T, *Ts](self, lambda_: Callable[[T, *Ts], None]):
         self._root: Node[Instruction] = Node[Instruction](None)
 
         self._bytecode: Bytecode = dis.Bytecode(lambda_)
-        self._dtype: OpName = self._valid_dtype(dtype)
         self._compare_op: Optional[str] = None
         self._set_root()
 
     def __repr__(self) -> str:
         return f"{TreeInstruction.__name__} < at {hex(id(self))}>"
-
-    @classmethod
-    def _valid_dtype(cls, dtype: object | DTypes) -> OpName:
-        for key, values in cls._VALID_DTYPES.items():
-            if dtype in values:
-                return key
 
     def _set_root(self) -> None:
         """
@@ -89,10 +74,6 @@ class TreeInstruction:
             argval = self._join_data_attributes_from_node(node)
             _dict[node.data.argval].append(NestedElement[str](argval))
         return _dict
-
-    def _raise_error_if_not_valid(self, ins: Instruction) -> bool:
-        if self._dtype != OpName.COMPARE_OP and OpName(ins.opname) == OpName.COMPARE_OP:
-            raise ValueError(f"Comparable symbols does not expected when '{self._dtype}' is specified.\nTry passing '{self._VALID_DTYPES[OpName.COMPARE_OP]}' as type parameter")
 
     def add_instruction(self, ins: Instruction) -> None:
         opname = OpName(ins.opname)

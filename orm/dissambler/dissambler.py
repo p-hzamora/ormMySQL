@@ -48,7 +48,7 @@ class Dissambler[TProp1, TProp2: Any]:
         return f"<{self.__class__.__name__}>: {self._cond_1.name} {self._cond_2.name} {self._compare_op}"
 
     def __init_custom__(self):
-        tree = TreeInstruction(self._function, "COMPARABLE")
+        tree = TreeInstruction(self._function)
         dicc = tree.to_list()
         self._compare_op:str = self._transform__compare_op(ConditionType(tree.compare_op))
 
