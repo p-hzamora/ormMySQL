@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any, Callable, NamedTuple, Self, Optional
 from dis import Instruction, Bytecode
+from orm.condition_types import ConditionType
 from .dis_types import OpName
 from .nested_element import NestedElement
 import dis
@@ -44,6 +45,22 @@ class TreeInstruction:
 
     def __repr__(self) -> str:
         return f"{TreeInstruction.__name__} < at {hex(id(self))}>"
+
+    @staticmethod
+    def _transform__compare_op(compare_sybmol: ConditionType) -> str:
+        dicc_symbols: dict[ConditionType, str] = {
+            ConditionType.EQUAL: "=",
+        }
+        return dicc_symbols.get(compare_sybmol, compare_sybmol.value)
+
+    @staticmethod
+    def _transform_is_is_not(instr: Instruction) -> str:
+        if instr.argval == 1:
+            return ConditionType.IS_NOT.value
+        elif instr.argval == 0:
+            return ConditionType.IS.value
+        else:
+            raise Exception(f"argval value '{instr.argval}' not expected.")
 
     def _set_root(self) -> None:
         """

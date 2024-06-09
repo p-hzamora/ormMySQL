@@ -1,7 +1,6 @@
 import dis
 from typing import Any, Callable, overload
 
-from orm.condition_types import ConditionType
 from .nested_element import NestedElement
 from .tree_instruction import TreeInstruction
 
@@ -50,19 +49,12 @@ class Dissambler[TProp1, TProp2: Any]:
     def __init_custom__(self):
         tree = TreeInstruction(self._function)
         dicc = tree.to_list()
-        self._compare_op:str = self._transform__compare_op(ConditionType(tree.compare_op))
+        self._compare_op: str = tree.compare_op[0]
 
         self._cond_1: NestedElement[TProp1] = dicc[0].nested_element
         self._cond_2: NestedElement[TProp2] = dicc[1].nested_element
 
         return None
-
-    @staticmethod
-    def _transform__compare_op(compare_sybmol: ConditionType) -> str:
-        dicc_symbols: dict[ConditionType, str] = {
-            ConditionType.EQUAL: "=",
-        }
-        return dicc_symbols.get(compare_sybmol, compare_sybmol.value)
 
     @property
     def cond_1(self) -> NestedElement[str]:
