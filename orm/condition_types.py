@@ -12,3 +12,5 @@ class ConditionType(Enum):
     BETWEEN = "BETWEEN"
     LIKE = "LIKE"
     IN = "IN"
+    IS = "IS"
+    IS_NOT = "IS NOT"
