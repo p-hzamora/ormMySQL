@@ -28,19 +28,11 @@ class TreeInstruction:
         OpName.LOAD_CONST,
     )
 
-    _VALID_DTYPES: dict[object, OpName] = {
-        OpName.BUILD_TUPLE: (tuple, "tuple"),
-        OpName.BUILD_LIST: (list, "list"),
-        OpName.BUILD_MAP: (dict, "dict"),
-        OpName.BUILD_SET: (set, "set"),
-        OpName.COMPARE_OP: ("COMPARABLE",),
-    }
-
     def __init__[T, *Ts](self, lambda_: Callable[[T, *Ts], None]):
         self._root: Node[Instruction] = Node[Instruction](None)
 
         self._bytecode: Bytecode = dis.Bytecode(lambda_)
-        self._compare_op: Optional[str] = None
+        self._compare_op: Optional[list[str]] = []
         self._set_root()
 
     def __repr__(self) -> str:
@@ -73,16 +65,17 @@ class TreeInstruction:
                 return True
             return False
 
-        def python_comparable_to_sql(opname: OpName) -> Optional[str]:
-            dicc = {
-                OpName.COMPARE_OP.value: "=",
-                OpName.IS_OP.value: "is",
-            }
-            return dicc[opname]
+        def set_comparable(instr: Instruction) -> None:
+            opname = OpName(instr.opname)
+            if opname == OpName.COMPARE_OP:
+                return self._compare_op.append(self._transform__compare_op(ConditionType(x.argval)))
+            elif opname == OpName.IS_OP:
+                return self._compare_op.append(self._transform_is_is_not(x))
+            return None
 
         for x in self._bytecode:
             if is_instruction_comparable(x):
-                self._compare_op = python_comparable_to_sql(x.opname)
+                set_comparable(x)
             self.add_instruction(x)
 
     def to_dict(self) -> dict[str, list[NestedElement[str]]]:
@@ -147,5 +140,5 @@ class TreeInstruction:
         return self._root
 
     @property
-    def compare_op(self) -> Optional[str]:
+    def compare_op(self) -> Optional[list[str]]:
         return self._compare_op
