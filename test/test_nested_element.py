@@ -42,5 +42,10 @@ class TestCondition(unittest.TestCase):
             NestedElement[int](5).parent
 
 
+    def test_none_value(self):
+        con = NestedElement[int](None)
+        self.assertEqual(con.name,"NULL")
+
+
 if __name__ == "__main__":
     unittest.main()
