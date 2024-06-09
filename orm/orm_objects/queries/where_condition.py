@@ -1,36 +1,44 @@
-from collections import defaultdict
-from queue import Queue
-from typing import Callable, overload, Optional
+from typing import Callable, override
 
-from orm.dissambler import Dissambler
+from orm.dissambler.tree_instruction import TreeInstruction
+from orm.interfaces.IQuery import IQuery
 
 
-class WhereCondition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
+class WhereCondition[*Inst](IQuery):
     WHERE: str = "WHERE"
     __slots__ = [
-        "_instance_tbl_1",
-        "_instance_tbl_2",
+        "_instances",
         "_function",
-    ] + list(Dissambler.__slots__)
+        "_tree",
+    ]
 
     def __init__(
         self,
-        instance_tbl_1: TProp1,
-        instance_tbl_2: TProp2,
-        lambda_function: Callable[[TProp1], bool] | Callable[[TProp1, TProp2], bool],
+        instances: tuple[*Inst],
+        lambda_function: Callable[[*Inst], bool],
     ) -> None:
-        self._instance_tbl_1: TProp1 = instance_tbl_1
-        self._instance_tbl_2: TProp2 = instance_tbl_2
-        self._function: Callable[[TProp1, TProp2], bool] = lambda_function
+        self._instances: tuple[*Inst] = instances
+        self._function: Callable[[*Inst], bool] = lambda_function
 
-        super().__init__(lambda_function)
+        self._tree: TreeInstruction = TreeInstruction(lambda_function)
 
-    def to_query(self) -> str:
-        try:
-            cond_2_name = getattr(self._instance_tbl_2, self.cond_2.name)
-        except Exception:
-            cond_2_name = self.cond_2.name
-        return f"{self.WHERE} {self.cond_1.name} {self.compare_op} '{cond_2_name}'"
+    @override
+    @property
+    def query(self) -> str:
+        n = len(self._tree.compare_op)
+
+        if n == 2:
+            return self.__between_condition()
+        else:
+            query: str = self.WHERE
+            for val in self._tree.to_list():
+                nested_element = val.nested_element
+                query += nested_element
+            return query
+
+
+    def __between_condition(self) -> str:
+        return
 
     @classmethod
     def join_condition(cls, *args: "WhereCondition", restrictive=False) -> str:
@@ -40,7 +48,7 @@ class WhereCondition[TProp1, TProp2](Dissambler[TProp1, TProp2]):
         n = len(args)
         for i in range(n):
             condition: WhereCondition = args[i]
-            query += f" ({condition.cond_1.name} {condition.compare_op} {condition.cond_2.name})"
+            query += condition.query
             if i != n - 1:
                 query += f" {BY}"
 
