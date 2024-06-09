@@ -108,22 +108,29 @@ class TestTreeInstruction(unittest.TestCase):
         self.assertEqual(var_list[1].nested_element.name, "c")
 
     def test_compare_op_multiples_types(self):
-        tree = TreeInstruction(lambda x: 5 <= x.value <= 10)
+        tree = TreeInstruction(lambda x: 5 <= x.value != 10)
 
         var_list = tree.to_list()
-        self.assertListEqual(tree.compare_op, ["<=", "<="])
+        self.assertListEqual(tree.compare_op, ["<=", "!="])
         self.assertEqual(var_list[0].nested_element.name, 5)
         self.assertEqual(var_list[1].nested_element.name, "value")
         self.assertEqual(var_list[2].nested_element.name, 10)
 
     def test_compare_op_in(self):
-        tree = TreeInstruction(lambda x: 5 <= x.value <= 10)
+        tree = TreeInstruction(lambda x: x.data is None)
 
         var_list = tree.to_list()
-        self.assertListEqual(tree.compare_op, ["<=", "<="])
-        self.assertEqual(var_list[0].nested_element.name, 5)
-        self.assertEqual(var_list[1].nested_element.name, "value")
-        self.assertEqual(var_list[2].nested_element.name, 10)
+        self.assertListEqual(tree.compare_op, ["IS"])
+        self.assertEqual(var_list[0].nested_element.name, "data")
+        self.assertEqual(var_list[1].nested_element.name, "NULL")
+
+    def test_compare_op_is_not(self):
+        tree = TreeInstruction(lambda x: x.data is not None)
+
+        var_list = tree.to_list()
+        self.assertListEqual(tree.compare_op, ["IS NOT"])
+        self.assertEqual(var_list[0].nested_element.name, "data")
+        self.assertEqual(var_list[1].nested_element.name, "NULL")
 
 
 if __name__ == "__main__":
