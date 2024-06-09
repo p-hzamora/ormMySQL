@@ -14,7 +14,7 @@ class NestedElement[T]:
         if self._parent_list:
             return self._parent_list[-1]
         else:
-            return self._cond
+            return "NULL" if self._cond is None else self._cond
 
     @property
     def parent(self) -> "NestedElement":
@@ -42,4 +42,3 @@ class NestedElement[T]:
     @staticmethod
     def __get_parent(constructor: T) -> "NestedElement":
         return NestedElement[T](constructor)
-
