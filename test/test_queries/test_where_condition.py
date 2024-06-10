@@ -7,6 +7,7 @@ sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 from orm.orm_objects.queries import WhereCondition  # noqa: E402
 from test.models import City, Country, Address  # noqa: E402
 
+
 class C:
     c: str
     data: str
@@ -29,7 +30,6 @@ city = City(1, "Madrid", 50)
 country = Country(50, "Espanna")
 
 
-
 class TestCondition(unittest.TestCase):
     COND_1 = WhereCondition[City, Country](City, Country, lambda_function=lambda x, y: x.last_update != y.country_id)
     COND_2 = WhereCondition[Address, City](Address, City, lambda_function=lambda a, c: a.address2 <= c.city_id)
@@ -41,13 +41,13 @@ class TestCondition(unittest.TestCase):
         self.assertIsInstance(self.COND_3, WhereCondition)
 
     def test_to_query_cond_1(self):
-        self.assertEqual(self.COND_1.to_query(), "WHERE last_update != country_id")
+        self.assertEqual(self.COND_1.query, "WHERE last_update != country_id")
 
     def test_to_query_cond_2(self):
-        self.assertEqual(self.COND_2.to_query(), "WHERE address2 <= city_id")
+        self.assertEqual(self.COND_2.query, "WHERE address2 <= city_id")
 
     def test_to_query_cond_3(self):
-        self.assertEqual(self.COND_3.to_query(), "WHERE value = data")
+        self.assertEqual(self.COND_3.query, "WHERE value = data")
 
     def test_join_condition_restrictive_false(self):
         joins = WhereCondition.join_condition(self.COND_1, self.COND_2, self.COND_3, restrictive=False)
