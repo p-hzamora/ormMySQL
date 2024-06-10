@@ -31,9 +31,9 @@ country = Country(50, "Espanna")
 
 
 class TestCondition(unittest.TestCase):
-    COND_1 = WhereCondition[City, Country](lambda x, y: x.last_update != y.country_id)
-    COND_2 = WhereCondition[Address, City](lambda a, c: a.address2 <= c.city_id)
-    COND_3 = WhereCondition[A, B](lambda a, b: a.b.value == b.c.data)
+    COND_1 = WhereCondition[City, Country](City, Country, lambda_function=lambda x, y: x.last_update != y.country_id)
+    COND_2 = WhereCondition[Address, City](Address, City, lambda_function=lambda a, c: a.address2 <= c.city_id)
+    COND_3 = WhereCondition[A, B](A, B, lambda_function=lambda a, b: a.b.value == b.c.data)
 
     def test_condition_constructor(self):
         self.assertIsInstance(self.COND_1, WhereCondition)

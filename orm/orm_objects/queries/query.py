@@ -22,7 +22,7 @@ class SQLQuery[T]:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
     def where(self, instance: T, lambda_function: Callable[[T], bool]) -> WhereCondition:
-        where_query = WhereCondition[T, None](instance, None, lambda_function)
+        where_query = WhereCondition[T, None](instance, lambda_function=lambda_function)
         self._query["where"].append(where_query)
         return where_query
 
