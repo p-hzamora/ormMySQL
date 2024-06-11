@@ -60,9 +60,20 @@ class JoinSelector[TLeft, TRight](IQuery):
             self._compareop:str = "="
         else:
             _dis: Dissambler[TLeft, TRight] = Dissambler[TLeft, TRight](where)
-            self._left_col:str = _dis.cond_1.name
-            self._right_col:str = _dis.cond_2.name
-            self._compareop:str = _dis.compare_op
+    def __eq__(self, __value: "JoinSelector") -> bool:
+        return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self._orig_table,
+                self._table_right,
+                self._by,
+                self._left_col,
+                self._right_col,
+                self._compareop,
+            )
+        )
 
     @classmethod
     def join_selectors(cls, *args:"JoinSelector")->str:
