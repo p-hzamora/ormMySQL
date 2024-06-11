@@ -18,6 +18,8 @@ class JoinType(Enum):
 
 
 Table = TypeVar("Table")
+
+
 class JoinSelector[TLeft, TRight](IQuery):
     __slots__: tuple = (
         "_orig_table",
@@ -36,7 +38,8 @@ class JoinSelector[TLeft, TRight](IQuery):
         col_left: str,
         col_right: str,
         by: JoinType,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def __init__(
@@ -45,7 +48,8 @@ class JoinSelector[TLeft, TRight](IQuery):
         table_right: TRight,
         by: JoinType,
         where: Callable[[TLeft, TRight], bool],
-    ) -> None: ...
+    ) -> None:
+        ...
 
     def __init__(
         self,
@@ -64,11 +68,15 @@ class JoinSelector[TLeft, TRight](IQuery):
             raise ValueError("You must specify at least 'where' clausule or ('_left_col',_right_col')")
 
         if where is None:
-            self._left_col:str = col_left
-            self._right_col:str = col_right
-            self._compareop:str = "="
+            self._left_col: str = col_left
+            self._right_col: str = col_right
+            self._compareop: str = "="
         else:
             _dis: Dissambler[TLeft, TRight] = Dissambler[TLeft, TRight](where)
+            self._left_col: str = _dis.cond_1.name
+            self._right_col: str = _dis.cond_2.name
+            self._compareop: str = _dis.compare_op
+
     def __eq__(self, __value: "JoinSelector") -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
 
@@ -85,9 +93,9 @@ class JoinSelector[TLeft, TRight](IQuery):
         )
 
     @classmethod
-    def join_selectors(cls, *args:"JoinSelector")->str:
+    def join_selectors(cls, *args: "JoinSelector") -> str:
         return "\n".join([x.query for x in args])
-    
+
     @property
     @override
     def query(self) -> str:
