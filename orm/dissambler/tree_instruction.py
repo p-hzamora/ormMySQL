@@ -78,11 +78,11 @@ class TreeInstruction:
                 set_comparable(x)
             self.add_instruction(x)
 
-    def to_dict(self) -> dict[str, list[NestedElement[str]]]:
+    def to_dict(self) -> dict[str, NestedElement[str]]:
         _dict: dict[str, list[NestedElement[str]]] = defaultdict(list)
         for node in self.root.children:
             argval = self._join_data_attributes_from_node(node)
-            _dict[node.data.argval].append(NestedElement[str](argval))
+            _dict[node.data.argval]=NestedElement[str](argval)
         return _dict
 
     def add_instruction(self, ins: Instruction) -> None:
