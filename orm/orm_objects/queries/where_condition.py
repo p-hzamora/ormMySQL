@@ -42,7 +42,7 @@ class WhereCondition[*Inst](IQuery):
     def _build_with_lambda_as_column_name(self) -> str:
         conditions = []
         compare_sign = []
-        for lkey, nested_element in self._tree.to_dict().items():
+        for lkey, nested_element in self._tree.to_list():
             if nested_element.name in ConditionType._value2member_map_:
                 compare_sign.append(nested_element.name)
 
@@ -87,7 +87,7 @@ class WhereCondition[*Inst](IQuery):
         self.__valid_between_comparable_sign()
 
         conds = []
-        for key, nested_element in self._tree.to_dict().items():
+        for key, nested_element in self._tree.to_list():
             if key in self._kwargs:
                 conds.append(self._replace_values(key, nested_element))
             else:
