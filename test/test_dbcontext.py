@@ -4,6 +4,7 @@ import dbcontext as db
 
 from orm import MySQLRepository, IRepositoryBase
 
+from orm.condition_types import ConditionType
 from test.models import AddressModel
 
 from dotenv import load_dotenv
@@ -24,14 +25,8 @@ address = db.Address(address_id=10)
 
 a_model = AddressModel(database)
 
+pattern = r"^A"
 
-filtro = a_model.where(address, lambda a: a.address_id == 10).select(
-    lambda a: (
-        a,
-        a.city,
-        a.city.country,
-    )
-)
-# a = a_model.select(lambda a: (a.address, a.city_id))
+filtro = a_model.where(lambda a: 1<= a.city.country.country_id <= 10, pattern=pattern).select(lambda a: (a.city.country.country_id, a.city), flavour=dict)
 
 pass
