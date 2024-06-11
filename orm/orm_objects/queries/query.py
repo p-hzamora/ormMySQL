@@ -2,6 +2,7 @@ from collections import defaultdict
 from queue import Queue
 from typing import Callable, Literal, Optional
 
+from orm.condition_types import ConditionType
 from orm.interfaces.IQuery import IQuery
 
 
@@ -21,8 +22,13 @@ class SQLQuery[T]:
     def __init__(self) -> None:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
-    def where(self, instance: T, lambda_function: Callable[[T], bool]) -> WhereCondition:
-        where_query = WhereCondition[T, None](instance, lambda_function=lambda_function)
+    def where[*Ts](
+        self,
+        instance: tuple[T, *Ts],
+        lambda_function: Callable[[T], bool] = lambda: None,
+        comparable_sign: ConditionType = None,
+    ) -> WhereCondition:
+        where_query = WhereCondition[T](instance, lambda_function=lambda_function, comparable_sign=comparable_sign)
         self._query["where"].append(where_query)
         return where_query
 
