@@ -19,6 +19,15 @@ class JoinType(Enum):
 
 Table = TypeVar("Table")
 class JoinSelector[TLeft, TRight](IQuery):
+    __slots__: tuple = (
+        "_orig_table",
+        "_table_right",
+        "_by",
+        "_left_col",
+        "_right_col",
+        "_compareop",
+    )
+
     @overload
     def __init__(
         self,
