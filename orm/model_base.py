@@ -1,7 +1,7 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Optional, Self, Type, overload
+from typing import Any, Callable, Optional, Self, overload, Iterable
 import dis
 from queue import Queue
 
@@ -11,9 +11,7 @@ from .interfaces import IRepositoryBase
 from .orm_objects import Column, Table
 from .condition_types import ConditionType
 
-from .orm_objects.queries.joins import JoinSelector, JoinType
 from .orm_objects.foreign_key import ForeignKey
-from .orm_objects.queries.where_condition import WhereCondition
 from .orm_objects.queries.select import SelectQuery, TableColumn
 # endregion
 
@@ -451,20 +449,6 @@ class ModelBase[T: Table](ABC):
     # endregion
 
     # # region where
-    # @overload
-    # def where(self, col: Callable[[T], bool]) -> Self: ...
-
-    # @overload
-    # def where[TValue](self, col: Callable[[T], str], value: TValue) -> Self: ...
-
-    # @overload
-    # def where[TValue](
-    #     self,
-    #     col: Callable[[T], str],
-    #     value: list[TValue] | TValue,
-    #     condition: ConditionType,
-    # ) -> Self: ...
-
     # def where[TValue](
     #     self,
     #     col: Callable[[T], bool | str],
@@ -535,28 +519,66 @@ class ModelBase[T: Table](ABC):
         self.build_query.join(self._model, table_right, by=by)
         return self
 
-    def where(
+    @overload
+    def where(self, lambda_function: Callable[[T], bool]) -> Self: ...
+
+    @overload
+    def where[*Ts](self, lambda_function: Callable[[T], bool], instance: tuple[T, *Ts]) -> Self: ...
+
+    @overload
+    def where[*Ts](self, lambda_function: Callable[[T], bool], instance: tuple[T, *Ts], comparable_sign: ConditionType) -> Self: ...
+
+    def where[T, *Ts](
         self,
-        instance: T,
-        lambda_function: Callable[[T], bool],
+        lambda_function: Callable[[T], bool]=lambda: None,
+        instance: tuple[T, *Ts] = (),
+        comparable_sign: ConditionType = None,
     ) -> Self:
-        self.build_query.where(instance, lambda_function)
+        if not instance:
+            instance = self._model
+
+        self.build_query.where(instance=instance, lambda_function=lambda_function, comparable_sign=comparable_sign)
         return self
 
     def order(self, _lambda_col: Callable[[T], None], order_type: str) -> Self:
         self.build_query.order(_lambda_col, order_type)
         return self
 
-    def select[*Ts](
+    @overload
+    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T]: ...
+
+    @overload
+    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> TValue: ...
+
+    def select[*Ts, TValue](
         self,
         selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
-    ) -> T | tuple[T] | dict[Type[Table], tuple[*Ts]]:
+        *,
+        flavour: TValue = None,
+    ) -> TValue | T | Iterable[T]:
         select = self.build_query.select(selector, self._model)
 
         query: str = self.build_query.build()
-        response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
-        return ClusterQuery(select, response_sql).clean_response()
+        if flavour:
+            return self._return_flavour(query, flavour)
+        return self._return_model(select, query)
+
+    def _return_flavour[TValue](self, query, flavour: TValue) -> TValue:
+        response = self._repository.read_sql(query, flavour=flavour)
+
+        # with this conditional we try to avoid return tuples or lists of lists with one element at all:
+        # [[0],[1],[2],[3]] -> [0,1,2,3]
+        # ((0),(1),(2),(3)) -> (0,1,2,3)
+        if isinstance(response, list) and not isinstance(response[0], dict) and (isinstance(response[0][0], str) or not isinstance(response[0][0], Iterable)):
+            return flavour([x[0] for x in response])
+
+        return response
+
+    def _return_model(self, select: SelectQuery, query: str) -> T | Iterable[T]:
+        response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
+        cluster = ClusterQuery(select, response_sql).clean_response()
+        return cluster
 
     # endregion
 
