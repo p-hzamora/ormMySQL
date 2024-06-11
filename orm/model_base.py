@@ -562,20 +562,16 @@ class ModelBase[T: Table](ABC):
         return self._return_model(select, query)
 
     def _return_flavour[TValue](self, query, flavour: TValue) -> TValue:
-        response = self._repository.read_sql(query, flavour=flavour)
-
-        # with this conditional we try to avoid return tuples or lists of lists with one element at all:
-        # [[0],[1],[2],[3]] -> [0,1,2,3]
-        # ((0),(1),(2),(3)) -> (0,1,2,3)
-        if isinstance(response, list) and not isinstance(response[0], dict) and (isinstance(response[0][0], str) or not isinstance(response[0][0], Iterable)):
-            return flavour([x[0] for x in response])
-
-        return response
+        return self._repository.read_sql(query, flavour=flavour)
 
     def _return_model(self, select: SelectQuery, query: str) -> T | Iterable[T]:
-        response_sql: list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
-        cluster = ClusterQuery(select, response_sql).clean_response()
-        return cluster
+        response_sql: None | str | list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
+
+        if not isinstance(response_sql, str) and isinstance(response_sql, Iterable):
+            cluster = ClusterQuery(select, response_sql).clean_response()
+            return cluster
+
+        return response_sql
 
     # endregion
 
