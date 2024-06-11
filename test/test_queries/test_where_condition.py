@@ -72,7 +72,7 @@ class TestCondition(unittest.TestCase):
     def test_like_condition(self):
         country = Country(50, "Espanna")
 
-        cond_2 = WhereCondition[Address, Country](lambda a, c: (a.city_id,ConditionType.REGEXP, c.country), c=country)
+        cond_2 = WhereCondition[Address, Country](lambda a, c: (a.city_id, ConditionType.REGEXP, c.country), c=country)
         self.assertEqual(cond_2.query, "WHERE city_id REGEXP Espanna")
 
     def test_raise_KeyError(self):
@@ -80,8 +80,9 @@ class TestCondition(unittest.TestCase):
             WhereCondition[Address, City, Country](lambda a, ci, co: a.city_id != ci.city_id <= co.country_id == 3).query
 
     def test_replace_address(self):
-        cond=  WhereCondition[City,Address](lambda c,a: c.city == a.address, a=ADDRESS_1)
+        cond = WhereCondition[City, Address](lambda c, a: c.city == a.address, a=ADDRESS_1)
         self.assertEqual(cond.query, "WHERE city = Calle Cristo de la victoria")
+
 
 if __name__ == "__main__":
     unittest.main()
