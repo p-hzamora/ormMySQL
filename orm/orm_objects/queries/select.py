@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import Callable, Iterator, Optional, Iterable, Type, override
+from typing import Callable, Iterator, Optional, Type, override
 
 import inspect
 from orm.dissambler import TreeInstruction, TupleInstruction, NestedElement
@@ -58,7 +58,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
         self._tables_heritage: Queue[Table] = Queue()
 
         self._select_lambda: Optional[Callable[[T, *Ts], None]] = select_lambda
-        self._select_list: Iterable[TableColumn] = self._rename_recursive_column_list(select_lambda)
+        self._select_list: list[TableColumn] = self._rename_recursive_column_list(select_lambda)
 
     def _add_el_if_not_in_queue(self, table: Table) -> None:
         if table not in self._tables_heritage.queue:
@@ -66,7 +66,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
             self._tables_heritage.task_done()
         return None
 
-    def _rename_recursive_column_list(self, _lambda: Optional[Callable[[T], None]]) -> Iterable[TableColumn]:
+    def _rename_recursive_column_list(self, _lambda: Optional[Callable[[T], None]]) -> list[TableColumn]:
         """
         Recursive function tu replace variable names by Select Query
 
