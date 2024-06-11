@@ -83,5 +83,24 @@ class TestJoinSelector(unittest.TestCase):
         self.assertEqual(query, query_parser)
 
 
+    def test__eq__method(self):
+        s1 = JoinSelector[Address, City](
+            table_left=Address,
+            table_right=City,
+            by=JoinType.LEFT_EXCLUSIVE,
+            where=lambda a, c: a.city_id == c.city_id,
+        )
+        s2 = JoinSelector[Address, City](
+            table_left=Address,
+            table_right=City,
+            by=JoinType.LEFT_EXCLUSIVE,
+            where=lambda a, c: a.city_id == c.city_id,
+        )
+
+
+        self.assertEqual(s1,s2)
+
+
+
 if __name__ == "__main__":
     unittest.main()
