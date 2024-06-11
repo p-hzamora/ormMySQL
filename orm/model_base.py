@@ -528,16 +528,11 @@ class ModelBase[T: Table](ABC):
     @overload
     def where[*Ts](self, lambda_function: Callable[[T], bool], instance: tuple[T, *Ts], comparable_sign: ConditionType) -> Self: ...
 
-    def where[T, *Ts](
-        self,
-        lambda_function: Callable[[T], bool]=lambda: None,
-        instance: tuple[T, *Ts] = (),
-        comparable_sign: ConditionType = None,
-    ) -> Self:
-        if not instance:
-            instance = self._model
+    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> Self:
+        # if not instance:
+        #     instance = self._model
 
-        self.build_query.where(instance=instance, lambda_function=lambda_function, comparable_sign=comparable_sign)
+        self.build_query.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
         return self
 
     def order(self, _lambda_col: Callable[[T], None], order_type: str) -> Self:
@@ -545,10 +540,12 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T]: ...
+    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T]:
+        ...
 
     @overload
-    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> TValue: ...
+    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> TValue:
+        ...
 
     def select[*Ts, TValue](
         self,
