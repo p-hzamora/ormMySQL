@@ -1,6 +1,6 @@
 # Standard libraries
 from functools import wraps
-from typing import Any, Iterator, Literal, override
+from typing import Any, Callable, Iterable, Iterator, Literal, Optional, override
 
 # Third party libraries
 import pandas as pd
@@ -13,6 +13,58 @@ from .interfaces import IRepositoryBase
 
 
 type_exists = Literal["fail", "replace", "append"]
+
+# with this conditional we try to avoid return tuples or lists of lists with one element at all:
+# [[0],[1],[2],[3]] -> [0,1,2,3]
+# ((0),(1),(2),(3)) -> (0,1,2,3)
+
+
+class Response[TFlavour]:
+    def __init__(self, response_values: list[tuple[Any, ...]], columns: tuple[str], flavour: TFlavour, **kwargs) -> None:
+        self._response_values: list[tuple[Any, ...]] = response_values
+        self._columns: tuple[str] = columns
+        self._flavour: TFlavour = flavour
+        self._kwargs: dict[str, Any] = kwargs
+
+        self._response_values_index: int = len(self._response_values)
+        # self.select_values()
+
+    @property
+    def is_one(self) -> bool:
+        return self._response_values_index == 1
+
+    @property
+    def is_there_response(self) -> bool:
+        return self._response_values_index != 0
+
+    @property
+    def is_many(self) -> bool:
+        return self._response_values_index > 1
+
+    @property
+    def response(self) -> Optional[list[TFlavour]]:
+        if not self.is_there_response:
+            return None
+
+        if self.is_one:
+            if len(self._response_values[0]) == 1:
+                return self._response_values[0][0]
+
+        return self._cast_to_flavour(self._response_values)
+
+    def _cast_to_flavour(self, data: Iterable[tuple[Any, ...]]) -> Callable[[], TFlavour]:
+        def _dict():
+            return [dict(zip(self._columns, x)) for x in data]
+
+        def _tuple():
+            return data
+
+        def _default():
+            return [self._flavour(x, **self._kwargs) for x in data]
+
+        selector: dict[str, Any] = {dict: _dict, tuple: _tuple}
+
+        return selector.get(self._flavour, _default)()
 
 
 class MySQLRepository(IRepositoryBase):
@@ -205,7 +257,7 @@ class MySQLRepository(IRepositoryBase):
             cursor.execute(query)
             values = cursor.fetchall()
             columns = cursor.column_names
-            return select_values(values, columns)
+            return Response[flavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     @is_connected
     def delete(self, table: str, col: str, value: list[str] | str) -> None:
