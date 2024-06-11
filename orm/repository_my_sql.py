@@ -238,25 +238,13 @@ class MySQLRepository(IRepositoryBase):
         return True
 
     @is_connected
-    def read_sql[T](self, query: str, flavour: T = pd.DataFrame) -> T:
+    def read_sql[T](self, query: str, flavour: T = tuple, **kwargs) -> T:
         """ """
-
-        def select_values(values: tuple[list[Any], ...], columns: list[str]) -> list[T]:
-            selector: dict[str, Any] = {
-                list: lambda: values,
-                tuple: lambda: tuple(values),
-                dict: lambda: [dict(zip(columns, x)) for x in values],
-                pd.DataFrame: lambda: pd.DataFrame(values, columns=columns),
-            }
-
-            if flavour not in selector:
-                raise Exception(f"El tipo de dato '{flavour}' no esta contemplado.")
-            return selector[flavour]()
 
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
-            values = cursor.fetchall()
-            columns = cursor.column_names
+            values: list[tuple[Any, ...]] = cursor.fetchall()
+            columns: tuple[str] = cursor.column_names
             return Response[flavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     @is_connected
@@ -316,7 +304,7 @@ class MySQLRepository(IRepositoryBase):
         COL2 = _val.COL2;
 
         """
-        valid_types = (dict, list, pd.DataFrame,tuple)
+        valid_types = (dict, list, pd.DataFrame, tuple)
         if not isinstance(changes, valid_types):
             raise ValueError(f"El tipo de dato de changes es {type(changes)}.\nSe esperaba {valid_types}")
 
