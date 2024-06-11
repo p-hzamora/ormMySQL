@@ -1,8 +1,7 @@
 from collections import defaultdict
 from queue import Queue
-from typing import Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional
 
-from orm.condition_types import ConditionType
 from orm.interfaces.IQuery import IQuery
 
 
@@ -22,13 +21,13 @@ class SQLQuery[T]:
     def __init__(self) -> None:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
-    def where[*Ts](
+    def where(
         self,
-        instance: tuple[T, *Ts],
-        lambda_function: Callable[[T], bool] = lambda: None,
-        comparable_sign: ConditionType = None,
+        instance: tuple[Table],
+        lambda_: Callable[[T], bool],
+        **kwargs: dict[str, Any],
     ) -> WhereCondition:
-        where_query = WhereCondition[T](instance, lambda_function=lambda_function, comparable_sign=comparable_sign)
+        where_query = WhereCondition[T](function=lambda_, instances=instance, **kwargs)
         self._query["where"].append(where_query)
         return where_query
 
@@ -41,17 +40,6 @@ class SQLQuery[T]:
     def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]] = lambda: None, *tables: tuple[T, *Ts]) -> SelectQuery:
         select = SelectQuery[T, *Ts](*tables, select_lambda=selector)
         self._query["select"].append(select)
-
-        tables: Queue[Table] = select.get_involved_tables()
-
-        if (n := tables.maxsize) > 1:
-            for i in range(n - 1):
-                l_tbl: Table = tables.queue[i]
-                r_tbl: Table = tables.queue[i + 1]
-
-                join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
-                self._query["join"].append(join)
-
         return select
 
     def order(self, _lambda_col: Callable[[T], None], order_type: str) -> OrderQuery:
@@ -61,9 +49,30 @@ class SQLQuery[T]:
 
     def build(self) -> str:
         query: str = ""
+        self._create_necessary_inner_join()
         for x in self.__order__:
             if sub_query := self._query.get(x, None):
                 join_sub_query = "\n".join([x.query for x in sub_query])
                 query += f"\n{join_sub_query}"
         self._query.clear()
         return query
+
+    def _create_necessary_inner_join(self):
+        select: SelectQuery = self._query["select"][0]
+        tables: list[Table] = list(select.get_involved_tables().queue)
+
+        # TODOM: updated lambda function in Where clausules to added tables
+        # where: WhereCondition = self._query["where"][0]
+        # tables_where: list[Table] = where.get_involved_tables()
+        # avoid_repeated_table = set(tables).difference(set(tables_where))
+        # tables.extend(list(avoid_repeated_table))
+
+        if (n := len(tables)) > 1:
+            for i in range(n - 1):
+                l_tbl: Table = tables[i]
+                r_tbl: Table = tables[i + 1]
+
+                join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
+                self._query["join"].append(join)
+
+        pass
