@@ -538,10 +538,10 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T]: ...
+    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T] | str: ...
 
     @overload
-    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> TValue: ...
+    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> Iterable[TValue]: ...
 
     def select[*Ts, TValue](
         self,
@@ -560,7 +560,7 @@ class ModelBase[T: Table](ABC):
     def _return_flavour[TValue](self, query, flavour: TValue) -> list[TValue]:
         return self._repository.read_sql(query, flavour=flavour)
 
-    def _return_model(self, select: SelectQuery, query: str) -> T | Iterable[T]:
+    def _return_model(self, select: SelectQuery, query: str) -> list[T] | T | str:
         response_sql: str | list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
         if response_sql and not isinstance(response_sql, str) and isinstance(response_sql, Iterable):
@@ -577,7 +577,7 @@ class ClusterQuery:
         self._select: SelectQuery = select
         self._response_sql: dict[list[dict[str, Any]]] = response_sql
 
-    def loop_foo(self):
+    def loop_foo(self) -> dict[Type[Table], list[Table]]:
         #  We must ensure to get the valid attributes for each instance
         table_initialize = defaultdict(list)
 
@@ -590,6 +590,7 @@ class ClusterQuery:
                 valid_attr: dict[str, Any] = {}
                 for col in table_col:
                     valid_attr[col.real_column] = dicc_cols[col.alias]
+                # COMMENT: At this point we are going to instantiate Table class with specific attributes getting directly from database
                 table_initialize[table_].append(table_(**valid_attr))
         return table_initialize
 
