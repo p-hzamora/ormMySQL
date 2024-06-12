@@ -188,8 +188,9 @@ class WhereCondition[*Inst](IQuery):
             key = ti.var
             ne = ti.nested_element
 
-            if ne.name in ConditionType._value2member_map_:
-                compare_sign.append(ne.name)
+            if hasattr(ConditionType, str(ne.name)):
+                cond_type: ConditionType = getattr(ConditionType, ne.name)
+                compare_sign.append(cond_type.value)
 
             elif key in self._kwargs:
                 conds.append(self._replace_values(ti))
