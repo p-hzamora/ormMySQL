@@ -78,24 +78,7 @@ class WhereCondition[*Inst](IQuery):
         return self._build_with_lambda_as_condition()
 
     def _build_with_lambda_as_column_name(self) -> str:
-        conditions = []
-        compare_sign = []
-        for ti in self._tree.to_list():
-            lkey = ti.var
-            nested_element = ti.nested_element
-            if nested_element.name in ConditionType._value2member_map_:
-                compare_sign.append(nested_element.name)
-
-            elif lkey in self._kwargs:
-
-                conditions.append(self._replace_values(lkey, nested_element))
-
-            else:
-                _name_table = self._get_table_for_tuple_instruction(ti)
-                if _name_table:
-                    _name_table = f"{_name_table}."
-                conditions.append(f"{_name_table if _name_table else ""}{nested_element.name}")
-
+        conditions, compare_sign = self.create_conditions_list_and_compare_sign()
         c1, c2 = conditions
         return f"{self.WHERE} {c1} {compare_sign[0]} {c2}"
 
@@ -119,6 +102,7 @@ class WhereCondition[*Inst](IQuery):
 
     def __one_sign(self) -> str:
         """lambda x: x <= 10"""
+        conds, _ = self.create_conditions_list_and_compare_sign()
         c1, c2 = conds
 
         return f"{self.WHERE} {c1} {self._tree.compare_op[0]} {c2}"
@@ -148,19 +132,7 @@ class WhereCondition[*Inst](IQuery):
     def __two_sign(self) -> str:
         """lambda x: 100 <= x <= 500"""
         self.__valid_between_comparable_sign()
-
-        conds = []
-        for ti in self._tree.to_list():
-            key =ti.var
-            ne =ti.nested_element
-            if key in self._kwargs:
-                conds.append(self._replace_values(key, ne))
-            else:
-                _name_table = self._get_table_for_tuple_instruction(ti)
-                if _name_table:
-                    _name_table = f"{_name_table}."
-                conds.append(f"{_name_table if _name_table else ""}{ne.name}")
-
+        conds, _ = self.create_conditions_list_and_compare_sign()
         c1, c2, c3 = conds
         cond1 = WhereConditionByArg[str, str](c1, c2, ConditionType(self._tree.compare_op[0]))
         cond2 = WhereConditionByArg[str, str](c2, c3, ConditionType(self._tree.compare_op[1]))
@@ -204,3 +176,21 @@ class WhereCondition[*Inst](IQuery):
             if attr is not None:
                 involved_tables.append(attr)
         return involved_tables
+
+    def create_conditions_list_and_compare_sign(self) -> tuple[list[str], list[str]]:
+        compare_sign: list[str] = []
+        conds: list[str] = []
+        for ti in self._tree.to_list():
+            key = ti.var
+            ne = ti.nested_element
+
+            if ne.name in ConditionType._value2member_map_:
+                compare_sign.append(ne.name)
+
+            elif key in self._kwargs:
+                conds.append(self._replace_values(ti))
+            else:
+                _name_table = self._get_table_for_tuple_instruction(ti)
+                _name_table = f"{_name_table}." if _name_table else ""
+                conds.append(f"{_name_table}{ne.name}")
+        return conds, compare_sign
