@@ -427,7 +427,7 @@ class ModelBase[T: Table](ABC):
 
         col: str
         if instance is None:
-            return self.delete(self.get())
+            return self.delete(self.select())
 
         elif issubclass(instance.__class__, Table):
             pk = get_pk(instance)
