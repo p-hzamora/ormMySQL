@@ -140,8 +140,8 @@ class WhereCondition[*Inst](IQuery):
         return WhereCondition.join_condition(cond1, cond2, restrictive=True)
 
     def __valid_between_comparable_sign(self) -> bool:
-        if len(self._tree.compare_op) > 2:
-            raise Exception("Number of comparable signs greater than 2.")
+        if not len(self._tree.compare_op) == 2:
+            raise Exception("Number of comparable signs distinct from 2.")
         return True
 
     @classmethod
