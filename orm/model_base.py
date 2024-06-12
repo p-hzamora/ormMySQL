@@ -7,13 +7,13 @@ from queue import Queue
 
 from .orm_objects.queries.order import OrderType
 from .orm_objects.queries import SQLQuery
-
-from .interfaces import IRepositoryBase
-from .orm_objects import Column, Table
-from .condition_types import ConditionType
-
 from .orm_objects.foreign_key import ForeignKey
 from .orm_objects.queries.select import SelectQuery, TableColumn
+from .orm_objects import Column, Table
+
+from .interfaces import IRepositoryBase
+from .condition_types import ConditionType
+
 # endregion
 
 
@@ -538,12 +538,10 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T]:
-        ...
+    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T]: ...
 
     @overload
-    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> TValue:
-        ...
+    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> TValue: ...
 
     def select[*Ts, TValue](
         self,
