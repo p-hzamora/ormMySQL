@@ -1,6 +1,6 @@
 # Standard libraries
 from functools import wraps
-from typing import Any, Callable, Iterable, Iterator, Literal, Optional, override
+from typing import Any, Callable, Iterable, Iterator, Literal, override
 
 # Third party libraries
 import pandas as pd
@@ -42,9 +42,9 @@ class Response[TFlavour]:
         return self._response_values_index > 1
 
     @property
-    def response(self) -> Optional[list[TFlavour]]:
+    def response(self) -> list[TFlavour]:
         if not self.is_there_response:
-            return None
+            return []
 
         if self.is_one:
             if len(self._response_values[0]) == 1:

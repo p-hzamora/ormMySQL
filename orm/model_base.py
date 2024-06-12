@@ -557,14 +557,14 @@ class ModelBase[T: Table](ABC):
             return self._return_flavour(query, flavour)
         return self._return_model(select, query)
 
-    def _return_flavour[TValue](self, query, flavour: TValue) -> TValue:
+    def _return_flavour[TValue](self, query, flavour: TValue) -> list[TValue]:
         return self._repository.read_sql(query, flavour=flavour)
 
     def _return_model(self, select: SelectQuery, query: str) -> T | Iterable[T]:
-        response_sql: None | str | list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
+        response_sql: str | list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
-        if not isinstance(response_sql, str) and isinstance(response_sql, Iterable):
-            cluster = ClusterQuery(select, response_sql).clean_response()
+        if response_sql and not isinstance(response_sql, str) and isinstance(response_sql, Iterable):
+            cluster: list[T] | T | str = ClusterQuery(select, response_sql).clean_response()
             return cluster
 
         return response_sql
