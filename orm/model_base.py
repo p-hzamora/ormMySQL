@@ -1,7 +1,7 @@
 # region imports
 from abc import ABC
 from collections import defaultdict
-from typing import Any, Callable, Optional, Self, overload, Iterable
+from typing import Any, Callable, Optional, Self, Type, overload, Iterable
 import dis
 from queue import Queue
 
@@ -593,17 +593,18 @@ class ClusterQuery:
                 table_initialize[table_].append(table_(**valid_attr))
         return table_initialize
 
-    def clean_response(self):
-        data = self.loop_foo()
+    def clean_response(self) -> Iterable | str:
+        tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
 
-        if len(data) == 1:
-            val = tuple(data.values())[0]
+        # Avoid
+        if len(tbl_dicc) == 1:
+            val = tuple(tbl_dicc.values())[0]
             if len(val) == 1:
                 return val[0]
             return val
 
-        for key, val in data.items():
+        for key, val in tbl_dicc.items():
             if len(val) == 1:
-                data[key] = val[0]
+                tbl_dicc[key] = val[0]
 
-        return tuple(data.values())
+        return tuple(tbl_dicc.values())
