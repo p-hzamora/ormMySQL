@@ -465,13 +465,44 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def where(self, lambda_: Callable[[T], bool]) -> Self: ...
+    def where(self, lambda_: Callable[[T], bool]) -> Self:
+        """
+        This method creates where clause by passing the lambda's condition
+
+        EXAMPLE
+        -
+        mb = ModelBase()
+        mb.where(lambda a: 10 <= a.city_id <= 100)
+        """
+        ...
 
     @overload
-    def where(self, lambda_: Callable[[T], Iterable]) -> Self: ...
+    def where(self, lambda_: Callable[[T], Iterable]) -> Self:
+        """
+        This method creates where clause by passing the Iterable in lambda function
+        EXAMPLE
+        -
+        mb = ModelBase()
+        mb.where(lambda a: (a.city, ConditionType.REGEXP, r"^B"))
+        """
+        ...
 
     @overload
-    def where(self, lambda_: Callable[[T], bool], **kwargs) -> Self: ...
+    def where(self, lambda_: Callable[[T], bool], **kwargs) -> Self:
+        """
+        PARAM
+        -
+
+        -kwargs: Use this when you need to replace variables inside a lambda method. When working with lambda methods, all variables will be replaced by their own variable names. To avoid this, we need to pass key-value parameters  to specify which variables we want to replace with their values.
+
+        EXAMPLE
+        -
+        mb = ModelBase()
+
+        external_data = "
+        mb.where(lambda a: a.city_id > external_data)
+        """
+        ...
 
     def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> Self:
         self.build_query.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
