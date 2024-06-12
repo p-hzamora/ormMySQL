@@ -52,9 +52,22 @@ class SQLQuery[T]:
         self._create_necessary_inner_join()
         for x in self.__order__:
             if sub_query := self._query.get(x, None):
-                join_sub_query = "\n".join([x.query for x in sub_query])
-                query += f"\n{join_sub_query}"
+                if isinstance(sub_query[0], WhereCondition):
+                    query_ = self.__build_where_clause(sub_query)
+                else:
+                    query_ = "\n".join([x.query for x in sub_query])
+
+                query += f"\n{query_}"
         self._query.clear()
+        return query
+
+    def __build_where_clause(self, where_condition: list[WhereCondition]) -> str:
+        query: str = where_condition[0].query
+
+        for where in where_condition[1:]:
+            q = where.query.replace(where.WHERE, "AND")
+            and_, clause = q.split(" ", maxsplit=1)
+            query += f" {and_} ({clause})"
         return query
 
     def _create_necessary_inner_join(self):
