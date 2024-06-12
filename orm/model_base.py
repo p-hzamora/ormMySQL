@@ -68,6 +68,7 @@ class ModelBase[T: Table](ABC):
                 column.is_auto_generated,
             ]
         )
+
     @classmethod
     def __create_dict_list(cls, _list: list, values: T | list[T]):
         if issubclass(values.__class__, Table):
@@ -392,18 +393,6 @@ class ModelBase[T: Table](ABC):
         return self
 
     # endregion
-
-    # # region where
-    # def where[TValue](
-    #     self,
-    #     col: Callable[[T], bool | str],
-    #     value: TValue | list[TValue] = None,
-    #     condition: ConditionType = "=",
-    # ) -> Self:
-    #     self.__add_condition(col, value, condition, " OR ")
-    #     return self
-
-    # # endregion
 
     # region delete
     @overload
