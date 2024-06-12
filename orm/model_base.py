@@ -269,65 +269,7 @@ class ModelBase[T: Table](ABC):
         col: str | list[Callable[[T], None]] | Callable[[T], None] = None,
         *,
         flavour: Any = None,
-    ) -> T | list[T] | None:
-        # if (iconditions := len(self._conditions)) == 0:
-        #     raise Exception("You cannot call the 'get()' method without calling 'filter_by()' or 'group_by()' before.\nIf you want to retrieve all table objects, you must use 'all()'")
-
-        is_col_method: bool = False
-        if isinstance(col, list):
-            col = ", ".join([{x.opname: x.argval for x in dis.Bytecode(i)}["LOAD_ATTR"] for i in col])
-
-        elif callable(col):
-            is_col_method = False  # True
-            col = {x.opname: x.argval for x in dis.Bytecode(col)}["LOAD_ATTR"]
-
-        rs = ForeignKey.MAPPED[self._model.__table_name__]
-
-        fk = list(rs.keys())[0]
-        col, object = rs[fk]
-
-        r_tbl = object.__table_name__
-        r_col = col
-
-        l_tbl = self._model.__table_name__
-        l_col = fk
-
-        query_res = ""
-
-        # region recorre las queue creando la query
-        conditions = []
-        _tuple = tuple(self._conditions.items())  # ej, ((" AND ",<Queue() object>),(" OR ",<Queue() object>))
-        # for i in range(1, iconditions + 1):
-        #     str_cond: str = _tuple[i - 1][0]
-        #     value_cond: Queue = _tuple[i - 1][1]
-
-        #     # concateno todos los valores de la cola y los agrupo dentro de parentesis (<conditions>)
-        #     condition = str_cond.join([value_cond.get() for _ in range(value_cond.qsize())])
-        #     conditions.append(f"({condition})")
-        #     # forma dinamica para agregar a la lista el tipo de condicion con el grupo siguiente
-        #     #
-        #     if i != iconditions:
-        #         # agrega solo el tipo de condicion que corresponda "AND", "OR", etc...
-        #         conditions.append(_tuple[i - 1][0])
-
-        query_res += f"\nWHERE {"".join(conditions)};"
-        self._conditions = defaultdict(lambda: Queue())
-        # endregion
-
-        if is_col_method:
-            # if 'is_col_method' True means that you are trying to return one column so to avoid list[tuple[Any]] we iterate through res var to get tuple[Any]
-
-            res = self._repository.read_sql(query_res, flavour=flavour if flavour else tuple)
-            if isinstance(res[0], tuple):
-                res = tuple([x[0] for x in res[::]]) if res else None
-            return res
-
-        if flavour:
-            return self._repository.read_sql(query_res, flavour=flavour)
-
-        res = self._repository.read_sql(query_res, flavour=dict)
-        res = [self._model(**x) for x in res]
-        return res if len(res) != 0 else None
+    ) -> T | list[T] | None: ...
 
     # endregion
 
