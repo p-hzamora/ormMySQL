@@ -93,7 +93,17 @@ class TestCondition(unittest.TestCase):
 
     def test_replace_address(self):
         cond = WhereCondition[City, Address](instances=(City, Address), function=lambda c, a: c.city == a.address, a=ADDRESS_1)
-        self.assertEqual(cond.query, "WHERE city.city = Calle Cristo de la victoria")
+        self.assertEqual(cond.query, "WHERE city.city = 'Calle Cristo de la victoria'")
+
+    def test_replace_variable(self):
+        variable_ = "var_string"
+        cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > variable_, variable_=variable_)
+        self.assertEqual(cond.query, "WHERE city.city > 'var_string'")
+
+    def test_no_replace_variable(self):
+        variable_ = "var_string"
+        cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > variable_)
+        self.assertEqual(cond.query, "WHERE city.city > variable_")
 
 
 if __name__ == "__main__":
