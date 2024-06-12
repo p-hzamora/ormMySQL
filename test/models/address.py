@@ -1,4 +1,3 @@
-from typing import NamedTuple
 from datetime import datetime
 
 from orm import (
@@ -10,11 +9,6 @@ from orm import (
 )
 
 from .city import City
-
-
-class Point(NamedTuple):
-    x: float
-    y: float
 
 
 class Address(Table):
@@ -31,7 +25,6 @@ class Address(Table):
     last_update: datetime = Column[datetime](is_auto_generated=True)
 
     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
-
 
 
 class AddressModel(ModelBase[Address]):
