@@ -95,15 +95,28 @@ class TestCondition(unittest.TestCase):
         cond = WhereCondition[City, Address](instances=(City, Address), function=lambda c, a: c.city == a.address, a=ADDRESS_1)
         self.assertEqual(cond.query, "WHERE city.city = 'Calle Cristo de la victoria'")
 
-    def test_replace_variable(self):
+    def test_wrapped_string_variable_content(self):
         variable_ = "var_string"
         cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > variable_, variable_=variable_)
         self.assertEqual(cond.query, "WHERE city.city > 'var_string'")
 
+    def test_wrapped_string_const_content(self):
+        cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > "var_string")
+        self.assertEqual(cond.query, "WHERE city.city > 'var_string'")
+
+    def test_wrapped_distinct_from_string_variable_content(self):
+        variable_ = 1000
+        cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > variable_, variable_=variable_)
+        self.assertEqual(cond.query, "WHERE city.city > 1000")
+
+    def test_wrapped_distinct_from_string_const_content(self):
+        cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > 1000)
+        self.assertEqual(cond.query, "WHERE city.city > 1000")
+
     def test_no_replace_variable(self):
         variable_ = "var_string"
         cond = WhereCondition[City, Address](instances=(City,), function=lambda c: c.city > variable_)
-        self.assertEqual(cond.query, "WHERE city.city > variable_")
+        self.assertEqual(cond.query, "WHERE city.city > 'variable_'")
 
 
 if __name__ == "__main__":
