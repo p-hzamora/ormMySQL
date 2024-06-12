@@ -1,7 +1,6 @@
 from typing import Any, Callable, Optional, override
 import inspect
 from orm.condition_types import ConditionType
-from orm.dissambler.nested_element import NestedElement
 from orm.dissambler.tree_instruction import TreeInstruction, TupleInstruction
 from orm.interfaces.IQuery import IQuery
 from orm.orm_objects.table.table_constructor import Table
@@ -196,6 +195,16 @@ class WhereCondition[*Inst](IQuery):
                 conds.append(self._replace_values(ti))
             else:
                 _name_table = self._get_table_for_tuple_instruction(ti)
-                _name_table = f"{_name_table}." if _name_table else ""
-                conds.append(f"{_name_table}{ne.name}")
+                _name_table_str = f"{_name_table}." if _name_table else ""
+
+                _name = ne.name
+                if not _name_table:
+                    _name = self._wrapp_condition_id_str(ne.name)
+
+                conds.append(f"{_name_table_str}{_name}")
         return conds, compare_sign
+
+    def _wrapp_condition_id_str(self, name: Any):
+        if not isinstance(name, str):
+            return name
+        return f"'{name}'"
