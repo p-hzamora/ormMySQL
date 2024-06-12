@@ -26,6 +26,7 @@ class TreeInstruction:
         OpName.LOAD_FAST,
         OpName.LOAD_GLOBAL,
         OpName.LOAD_CONST,
+        OpName.LOAD_DEREF,
     )
 
     def __init__[T, *Ts](self, lambda_: Callable[[T, *Ts], None]):
