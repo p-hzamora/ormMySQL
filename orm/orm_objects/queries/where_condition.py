@@ -53,7 +53,12 @@ class WhereCondition[*Inst](IQuery):
         "_lambda_param_map",
     ]
 
-    def __init__(self, instances: tuple[*Inst], function: Callable[[*Inst], bool] = lambda: None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        instances: tuple[*Inst],
+        function: Callable[[*Inst], bool] = lambda: None,
+        **kwargs: Any,
+    ) -> None:
         self._instances: tuple[Table] = instances
         self._function: Callable[[*Inst], bool] = function
         self._kwargs: dict[str, tuple[*Inst]] = kwargs
@@ -85,12 +90,11 @@ class WhereCondition[*Inst](IQuery):
     def _replace_values(self, ti: TupleInstruction) -> str:
         instance: Any = self._kwargs[ti.var]
         if isinstance(instance, Table):
-            data= getattr(instance, ti.nested_element.name)
+            data = getattr(instance, ti.nested_element.name)
         else:
-            data= instance
+            data = instance
 
-
-        return f"'{data}'" if isinstance(data,str) else data
+        return f"'{data}'" if isinstance(data, str) else data
 
     def _build_with_lambda_as_condition(self) -> Callable[[], Any]:
         n: int = len(self._tree.compare_op)
@@ -107,10 +111,10 @@ class WhereCondition[*Inst](IQuery):
 
         return f"{self.WHERE} {c1} {self._tree.compare_op[0]} {c2}"
 
-    def _get_table_for_tuple_instruction(self, ti: TupleInstruction)->Optional[Table]:
+    def _get_table_for_tuple_instruction(self, ti: TupleInstruction) -> Optional[Table]:
         if ti.var not in self._lambda_param_map:
             return None
-        
+
         involved_tables: list[Table] = [self._lambda_param_map[ti.var]]
 
         def get_attr_tbl(tbl: Table, class_var: str) -> Optional[Table]:
