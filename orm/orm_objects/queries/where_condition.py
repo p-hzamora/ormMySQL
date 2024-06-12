@@ -19,6 +19,31 @@ class WhereConditionByArg[TProp1, TProp2](IQuery):
 
 
 class WhereCondition[*Inst](IQuery):
+    """
+    The purpose of this class is to create 'WHERE' condition queries properly.
+
+    Args.
+        - instances: tuple[*Inst],
+            - passed all instance that we are going to use inside of `function` arg
+
+        - function: Callable[[*Inst], bool] = lambda: None,
+            - lambda function to create condition between instance variables
+        - **kwargs: Any,
+            - We use this clause by passing all the variables that we want to replace inside the lambda function.
+            When we try to disassemble the lambda function, we see that the variables were not replaced by their values.
+            Instead, we only got the variable names, not the values.
+            Due to this problem, we need to specify the correct dictionary to map variable names to their values.
+
+    >>> var = 100
+    >>> _lambda = lambda a: a.city_id <= var
+    >>> ... #Dissamble _lambda method
+    >>> parts_of_lambda = [
+    >>>     "city_id"
+    >>>     "<="
+    >>>     "var"                   <-------- We excepted 100
+    >>> ]
+    """
+
     WHERE: str = "WHERE"
     __slots__ = [
         "_instances",
@@ -93,17 +118,7 @@ class WhereCondition[*Inst](IQuery):
         return dicc_selector[n]()
 
     def __one_sign(self) -> str:
-        conds = []
-        for ti in self._tree.to_list():
-            ne = ti.nested_element
-            if ti.var in self._kwargs:
-                conds.append(self._replace_values(ti.var, ne))
-            else:
-                _name_table = self._get_table_for_tuple_instruction(ti)
-                if _name_table:
-                    _name_table = f"{_name_table}."
-                conds.append(f"{_name_table if _name_table else ""}{ne.name}")
-
+        """lambda x: x <= 10"""
         c1, c2 = conds
 
         return f"{self.WHERE} {c1} {self._tree.compare_op[0]} {c2}"
@@ -131,6 +146,7 @@ class WhereCondition[*Inst](IQuery):
         return involved_tables[-1].__table_name__
 
     def __two_sign(self) -> str:
+        """lambda x: 100 <= x <= 500"""
         self.__valid_between_comparable_sign()
 
         conds = []
