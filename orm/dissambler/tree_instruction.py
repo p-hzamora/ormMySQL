@@ -77,7 +77,8 @@ class TreeInstruction:
         for x in self._bytecode:
             if is_instruction_comparable(x):
                 set_comparable(x)
-            self.add_instruction(x)
+            else:
+                self.add_instruction(x)
 
     def to_dict(self) -> dict[str, list[NestedElement[str]]]:
         _dict: dict[str, list[NestedElement[str]]] = defaultdict(list)
