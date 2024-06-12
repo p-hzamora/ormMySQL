@@ -526,9 +526,6 @@ class ModelBase[T: Table](ABC):
     def where[*Ts](self, lambda_function: Callable[[T,*Ts], bool], **kwargs) -> Self: ...
 
     def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> Self:
-        # if not instance:
-        #     instance = self._model
-
         self.build_query.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
         return self
 
