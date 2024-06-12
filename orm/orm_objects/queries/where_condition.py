@@ -72,14 +72,17 @@ class WhereCondition[*Inst](IQuery):
                 conditions.append(f"{_name_table if _name_table else ""}{nested_element.name}")
 
         c1, c2 = conditions
-        return f"{self.WHERE} {c1} {compare_sign[0]} '{c2}'"
+        return f"{self.WHERE} {c1} {compare_sign[0]} {c2}"
 
-    def _replace_values(self, _lambda_key: str, _nested_element: NestedElement):
-        instance = self._kwargs[_lambda_key]
+    def _replace_values(self, ti: TupleInstruction) -> str:
+        instance: Any = self._kwargs[ti.var]
         if isinstance(instance, Table):
-            return getattr(instance, _nested_element.name)
+            data= getattr(instance, ti.nested_element.name)
         else:
-            return instance
+            data= instance
+
+
+        return f"'{data}'" if isinstance(data,str) else data
 
     def _build_with_lambda_as_condition(self) -> Callable[[], Any]:
         n: int = len(self._tree.compare_op)
