@@ -5,14 +5,17 @@ from orm.interfaces.IQuery import IQuery
 ASC = "ASC"
 DESC = "DESC"
 
+OrderType = Literal["ASC", "DESC"]
+
 
 class OrderQuery[T](IQuery):
     ORDER = "ORDER BY"
 
-    def __init__(self, order_lambda: Callable[[T], None], order_type: Literal["ASC", "DESC"]) -> None:
+    def __init__(self, instance: T, order_lambda: Callable[[T], None], order_type: OrderType) -> None:
         if not self._valid_order_type(order_type):
             raise Exception("order_type only can be 'ASC' or 'DESC'")
 
+        self._instance: T = instance
         self._order_lambda: Callable[[T], None] = order_lambda
         self._order_type: str = order_type
         self._column: str = TreeInstruction(order_lambda).to_list()[0].nested_element.name
@@ -23,4 +26,4 @@ class OrderQuery[T](IQuery):
     @override
     @property
     def query(self) -> str:
-        return f"{self.ORDER} {self._column} {self._order_type}"
+        return f"{self.ORDER} {self._instance.__table_name__}.{self._column} {self._order_type}"

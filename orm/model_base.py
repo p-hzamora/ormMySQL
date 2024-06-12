@@ -5,6 +5,7 @@ from typing import Any, Callable, Optional, Self, overload, Iterable
 import dis
 from queue import Queue
 
+from .orm_objects.queries.order import OrderType
 from .orm_objects.queries import SQLQuery
 
 from .interfaces import IRepositoryBase
@@ -532,8 +533,8 @@ class ModelBase[T: Table](ABC):
         self.build_query.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
         return self
 
-    def order(self, _lambda_col: Callable[[T], None], order_type: str) -> Self:
-        self.build_query.order(_lambda_col, order_type)
+    def order(self, _lambda_col: Callable[[T], None], order_type: OrderType) -> Self:
+        self.build_query.order(self._model, _lambda_col, order_type)
         return self
 
     @overload

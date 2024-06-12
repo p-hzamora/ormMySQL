@@ -8,7 +8,7 @@ from orm.interfaces.IQuery import IQuery
 from .joins import JoinSelector, JoinType
 from .select import SelectQuery
 from .where_condition import WhereCondition
-from .order import OrderQuery
+from .order import OrderQuery, OrderType
 from ..table import Table
 from ..foreign_key import ForeignKey
 
@@ -42,8 +42,8 @@ class SQLQuery[T]:
         self._query["select"].append(select)
         return select
 
-    def order(self, _lambda_col: Callable[[T], None], order_type: str) -> OrderQuery:
-        order = OrderQuery(_lambda_col, order_type)
+    def order(self,instance:T, _lambda_col: Callable[[T], None], order_type: OrderType) -> OrderQuery:
+        order = OrderQuery(instance, _lambda_col, order_type)
         self._query["order"].append(order)
         return order
 
