@@ -186,152 +186,152 @@ class ModelBase[T: Table](ABC):
 
     # endregion
 
-    # region all
-    @overload
-    def all(self) -> list[T]: ...
+    # # region all
+    # @overload
+    # def all(self) -> list[T]: ...
 
-    @overload
-    def all[TValue](self, flavour: Optional[TValue]) -> TValue: ...
+    # @overload
+    # def all[TValue](self, flavour: Optional[TValue]) -> TValue: ...
 
-    @overload
-    def all[TValue](self, limit: Optional[int]) -> TValue: ...
+    # @overload
+    # def all[TValue](self, limit: Optional[int]) -> TValue: ...
 
-    def all[TValue](self, flavour: Optional[TValue] = None, limit: Optional[int] = None) -> list[T] | TValue:
-        LIMIT = "" if not limit else f"LIMIT {limit}"
-        if flavour is None:
-            query_res = self._repository.read_sql(f"SELECT * FROM {self._repository.database}.{self._model.__table_name__} {LIMIT}", flavour=dict)
-            return [self._model(**x) for x in query_res]
+    # def all[TValue](self, flavour: Optional[TValue] = None, limit: Optional[int] = None) -> list[T] | TValue:
+    #     LIMIT = "" if not limit else f"LIMIT {limit}"
+    #     if flavour is None:
+    #         query_res = self._repository.read_sql(f"SELECT * FROM {self._repository.database}.{self._model.__table_name__} {LIMIT}", flavour=dict)
+    #         return [self._model(**x) for x in query_res]
 
-        return self._repository.read_sql(f"SELECT * FROM {self._model.__table_name__} {LIMIT}", flavour=flavour)
+    #     return self._repository.read_sql(f"SELECT * FROM {self._model.__table_name__} {LIMIT}", flavour=flavour)
 
-    # endregion
+    # # endregion
 
-    # region get
-    @overload
-    def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
+    # # region get
+    # @overload
+    # def get[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
 
-    @overload
-    def get(self, col: Callable[[T], None]) -> list[T] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def get(self, col: Callable[[T], None]) -> list[T] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        col: Callable[[T],None] -> lambda function to specify col name
-        """
-        ...
+    #     col: Callable[[T],None] -> lambda function to specify col name
+    #     """
+    #     ...
 
-    @overload
-    def get(self, col: list[Callable[[T], None]]) -> list[T] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def get(self, col: list[Callable[[T], None]]) -> list[T] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        col: list[Callable[[T],None]] -> list of lambda functions to specify a group of retrieves names
+    #     col: list[Callable[[T],None]] -> list of lambda functions to specify a group of retrieves names
 
-        """
-        ...
+    #     """
+    #     ...
 
-    @overload
-    def get[TValue](self, col: list[Callable[[T], None]], flavour: TValue) -> list[TValue] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def get[TValue](self, col: list[Callable[[T], None]], flavour: TValue) -> list[TValue] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        col: list[Callable[[T],None]]   -> list of lambda functions to specify a group of retrieves names
-        flavour: TValue                 -> object to return like pd.DataFrame, list, tuple, dict
-        """
-        ...
+    #     col: list[Callable[[T],None]]   -> list of lambda functions to specify a group of retrieves names
+    #     flavour: TValue                 -> object to return like pd.DataFrame, list, tuple, dict
+    #     """
+    #     ...
 
-    @overload
-    def get(self) -> list[T] | None:
-        """
-        You must call this function when you have used filter_by or group_by. Otherwise you'll raise an Exception error
-        """
-        ...
+    # @overload
+    # def get(self) -> list[T] | None:
+    #     """
+    #     You must call this function when you have used filter_by or group_by. Otherwise you'll raise an Exception error
+    #     """
+    #     ...
 
-    @overload
-    def get[TValue](self, flavour: TValue) -> TValue | list[TValue] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def get[TValue](self, flavour: TValue) -> TValue | list[TValue] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        flavour:TValue  -> object type returned
+    #     flavour:TValue  -> object type returned
 
-        RETURN
-        -----
+    #     RETURN
+    #     -----
 
-        TValue or list[TValue]
-        if you specify pd.DataFrame as flavour, you will get a pd.DataFrame. Otherwise you will retrieve list of TValue
-        """
-        ...
+    #     TValue or list[TValue]
+    #     if you specify pd.DataFrame as flavour, you will get a pd.DataFrame. Otherwise you will retrieve list of TValue
+    #     """
+    #     ...
 
-    def get(
-        self,
-        col: str | list[Callable[[T], None]] | Callable[[T], None] = None,
-        *,
-        flavour: Any = None,
-    ) -> T | list[T] | None: ...
+    # def get(
+    #     self,
+    #     col: str | list[Callable[[T], None]] | Callable[[T], None] = None,
+    #     *,
+    #     flavour: Any = None,
+    # ) -> T | list[T] | None: ...
 
-    # endregion
+    # # endregion
 
-    # region first
-    @overload
-    def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
+    # # region first
+    # @overload
+    # def first[TValue](self, col: Callable[[T], None], flavour: TValue) -> TValue | list[TValue] | None: ...
 
-    @overload
-    def first(self, col: Callable[[T], None]) -> list[T] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def first(self, col: Callable[[T], None]) -> list[T] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        col: Callable[[T],None] -> lambda function to specify col name
-        """
-        ...
+    #     col: Callable[[T],None] -> lambda function to specify col name
+    #     """
+    #     ...
 
-    @overload
-    def first(self, col: list[Callable[[T], None]]) -> list[T] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def first(self, col: list[Callable[[T], None]]) -> list[T] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        col: list[Callable[[T],None]] -> list of lambda functions to specify a group of retrieves names
+    #     col: list[Callable[[T],None]] -> list of lambda functions to specify a group of retrieves names
 
-        """
-        ...
+    #     """
+    #     ...
 
-    @overload
-    def first(self) -> T | None:
-        """
-        You must call this function when you have used filter_by or group_by. Otherwise you'll raise an Exception error
-        """
-        ...
+    # @overload
+    # def first(self) -> T | None:
+    #     """
+    #     You must call this function when you have used filter_by or group_by. Otherwise you'll raise an Exception error
+    #     """
+    #     ...
 
-    @overload
-    def first[TValue](self, flavour: TValue) -> TValue | list[TValue] | None:
-        """
-        PARAMS
-        ------
+    # @overload
+    # def first[TValue](self, flavour: TValue) -> TValue | list[TValue] | None:
+    #     """
+    #     PARAMS
+    #     ------
 
-        flavour:TValue  -> object type returned
+    #     flavour:TValue  -> object type returned
 
-        RETURN
-        -----
+    #     RETURN
+    #     -----
 
-        TValue or list[TValue]
-        if you specify pd.DataFrame as flavour, you will get a pd.DataFrame. Otherwise you will retrieve list of TValue
-        """
-        ...
+    #     TValue or list[TValue]
+    #     if you specify pd.DataFrame as flavour, you will get a pd.DataFrame. Otherwise you will retrieve list of TValue
+    #     """
+    #     ...
 
-    def first(
-        self,
-        col: str | list[Callable[[T], None]] | Callable[[T], None] = None,
-        *,
-        flavour: Any = None,
-    ) -> T:
-        res = self.get(col=col, flavour=flavour)
-        return res[0] if res else None
+    # def first(
+    #     self,
+    #     col: str | list[Callable[[T], None]] | Callable[[T], None] = None,
+    #     *,
+    #     flavour: Any = None,
+    # ) -> T:
+    #     res = self.get(col=col, flavour=flavour)
+    #     return res[0] if res else None
 
-    # endregion
+    # # endregion
 
     # region filter_by
     @overload
