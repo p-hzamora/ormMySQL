@@ -502,6 +502,9 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
+    def select(self) -> T | Iterable[T]: ...
+
+    @overload
     def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T] | str: ...
 
     @overload
