@@ -6,16 +6,17 @@ from ...interfaces.IQuery import IQuery
 
 from .joins import JoinSelector, JoinType
 from .select import SelectQuery
+from .limit import LimitQuery
 from .where_condition import WhereCondition
 from .order import OrderQuery, OrderType
 from ..table import Table
 from ..foreign_key import ForeignKey
 
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive"]
+ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive","limit"]
 
 
 class SQLQuery[T]:
-    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive")
+    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive","limit")
 
     def __init__(self) -> None:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
@@ -87,4 +88,7 @@ class SQLQuery[T]:
                 join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
                 self._query["join"].append(join)
 
-        pass
+    def limit(self, number:int)->str:
+        limit:LimitQuery = LimitQuery(number)
+        self._query["limit"].append(limit)
+
