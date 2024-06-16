@@ -43,7 +43,7 @@ class SQLQuery[T]:
         return select
 
     def order(self,instance:T, _lambda_col: Callable[[T], None], order_type: OrderType) -> OrderQuery:
-        order = OrderQuery(instance, _lambda_col, order_type)
+        order = OrderQuery[instance](instance, _lambda_col, order_type)
         self._query["order"].append(order)
         return order
 
