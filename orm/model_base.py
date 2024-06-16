@@ -2,12 +2,9 @@
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Callable, Optional, Self, Type, overload, Iterable
-import dis
-from queue import Queue
 
 from .orm_objects.queries.order import OrderType
 from .orm_objects.queries import SQLQuery
-from .orm_objects.foreign_key import ForeignKey
 from .orm_objects.queries.select import SelectQuery, TableColumn
 from .orm_objects import Column, Table
 
