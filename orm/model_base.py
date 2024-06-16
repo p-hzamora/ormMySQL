@@ -507,6 +507,9 @@ class ModelBase[T: Table](ABC):
     @overload
     def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> Iterable[TValue]: ...
 
+    @overload
+    def select[TValue](self, flavour: TValue) -> Iterable[TValue]: ...
+
     def select[*Ts, TValue](
         self,
         selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
