@@ -2,10 +2,10 @@ from queue import Queue
 from typing import Callable, Iterator, Optional, Type, override
 
 import inspect
-from orm.dissambler import TreeInstruction, TupleInstruction, NestedElement
-from orm.interfaces.IQuery import IQuery
-from orm.orm_objects import Table
-from orm.orm_objects.table.table_constructor import TableMeta
+from ...dissambler import TreeInstruction, TupleInstruction, NestedElement
+from ...interfaces.IQuery import IQuery
+from ...orm_objects import Table
+from ...orm_objects.table.table_constructor import TableMeta
 
 
 class TableColumn:
@@ -96,6 +96,8 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
             last_el: str = tuple_inst.nested_element.name
             parents: list[str] = tuple_inst.nested_element.parents
+
+            
 
             if issubclass(tbl_obj.__class__, Table | TableMeta) and len(parents) == 1:
                 # if parents length is 1 says that the element is the table itself

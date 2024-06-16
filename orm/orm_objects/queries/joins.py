@@ -3,8 +3,8 @@ from enum import Enum
 
 # from ..table import Table
 
-from orm.interfaces.IQuery import IQuery
-from orm.dissambler import Dissambler
+from ...interfaces.IQuery import IQuery
+from ...dissambler import Dissambler
 
 
 class JoinType(Enum):

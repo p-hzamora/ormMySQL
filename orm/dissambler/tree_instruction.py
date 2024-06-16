@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Any, Callable, NamedTuple, Self, Optional
 from dis import Instruction, Bytecode
-from orm.condition_types import ConditionType
+from ..condition_types import ConditionType
 from .dis_types import OpName
 from .nested_element import NestedElement
 import dis

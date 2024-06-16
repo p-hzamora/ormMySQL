@@ -1,9 +1,9 @@
 from typing import Any, Callable, Optional, override
 import inspect
-from orm.condition_types import ConditionType
-from orm.dissambler.tree_instruction import TreeInstruction, TupleInstruction
-from orm.interfaces.IQuery import IQuery
-from orm.orm_objects.table.table_constructor import Table
+from ...condition_types import ConditionType
+from ...dissambler.tree_instruction import TreeInstruction, TupleInstruction
+from ...interfaces.IQuery import IQuery
+from ...orm_objects.table.table_constructor import Table
 
 
 class WhereConditionByArg[TProp1, TProp2](IQuery):

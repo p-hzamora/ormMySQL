@@ -1,8 +1,7 @@
 from collections import defaultdict
-from queue import Queue
 from typing import Any, Callable, Literal, Optional
 
-from orm.interfaces.IQuery import IQuery
+from ...interfaces.IQuery import IQuery
 
 
 from .joins import JoinSelector, JoinType

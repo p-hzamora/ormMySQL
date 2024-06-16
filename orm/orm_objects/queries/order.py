@@ -1,6 +1,6 @@
 from typing import Literal, override, Callable
-from orm.dissambler.tree_instruction import TreeInstruction
-from orm.interfaces.IQuery import IQuery
+from ...dissambler.tree_instruction import TreeInstruction
+from ...interfaces.IQuery import IQuery
 
 ASC = "ASC"
 DESC = "DESC"
