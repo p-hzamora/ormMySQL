@@ -12,11 +12,11 @@ from .order import OrderQuery, OrderType
 from ..table import Table
 from ..foreign_key import ForeignKey
 
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive","limit"]
+ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit"]
 
 
 class SQLQuery[T]:
-    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive","limit")
+    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit")
 
     def __init__(self) -> None:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
@@ -42,7 +42,7 @@ class SQLQuery[T]:
         self._query["select"].append(select)
         return select
 
-    def order(self,instance:T, _lambda_col: Callable[[T], None], order_type: OrderType) -> OrderQuery:
+    def order(self, instance: T, _lambda_col: Callable[[T], None], order_type: OrderType) -> OrderQuery:
         order = OrderQuery[instance](instance, _lambda_col, order_type)
         self._query["order"].append(order)
         return order
@@ -89,7 +89,6 @@ class SQLQuery[T]:
                 join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
                 self._query["join"].append(join)
 
-    def limit(self, number:int)->str:
-        limit:LimitQuery = LimitQuery(number)
+    def limit(self, number: int) -> str:
+        limit: LimitQuery = LimitQuery(number)
         self._query["limit"].append(limit)
-
