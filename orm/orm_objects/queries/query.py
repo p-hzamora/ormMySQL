@@ -37,8 +37,8 @@ class SQLQuery[T]:
         self._query["join"].append(join_query)
         return join_query
 
-    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]] = lambda: None, *tables: tuple[T, *Ts]) -> SelectQuery:
-        select = SelectQuery[T, *Ts](*tables, select_lambda=selector)
+    def select[*Ts](self,tables:tuple[T,*Ts], selector: Optional[Callable[[T, *Ts], None]] = lambda: None, by:JoinType = JoinType.INNER_JOIN) -> SelectQuery:
+        select = SelectQuery[T, *Ts](tables, select_lambda=selector,by=by)
         self._query["select"].append(select)
         return select
 
@@ -49,7 +49,7 @@ class SQLQuery[T]:
 
     def build(self) -> str:
         query: str = ""
-        self._create_necessary_inner_join()
+        # self._create_necessary_inner_join()
         for x in self.__order__:
             if sub_query := self._query.get(x, None):
                 if isinstance(sub_query[0], WhereCondition):
