@@ -49,16 +49,16 @@ class TableColumn:
 class SelectQuery[T: Table, *Ts](IQuery):
     SELECT = "SELECT"
 
-    def __init__(
-        self,
-        *tables: tuple[T, *Ts],
-        select_lambda: Optional[Callable[[T, *Ts], None]] = lambda: None,
-    ) -> None:
+    def __init__(self, tables: T | tuple[T, *Ts] = (), *, select_lambda: Optional[Callable[[T, *Ts], None]] = lambda: None, by: JoinType = JoinType.INNER_JOIN) -> None:
+        if not isinstance(tables, tuple):
+            tables = tuple([tables])
+            
         self._first_table: T = tables[0]
         self._tables: tuple[T, *Ts] = tables
-        self._tables_heritage: list[tuple[Table, Table]] = []
-
         self._select_lambda: Optional[Callable[[T, *Ts], None]] = select_lambda
+        self._by: JoinType = by
+
+        self._tables_heritage: list[tuple[Table, Table]] = []
         self._lambda_var_to_table_dicc: dict[str, Table] = self._assign_lambda_variables_to_table(select_lambda)
 
         self._select_list: list[TableColumn] = self._rename_recursive_column_list(select_lambda)
@@ -183,7 +183,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
         for l_tbl, r_tbl in involved_tables:
             sub_query: str = ""
-            join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey[l_tbl, r_tbl].MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
+            join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, by=self._by, where=ForeignKey[l_tbl, r_tbl].MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
             sub_query += join.query
 
         query += f" {sub_query}"
