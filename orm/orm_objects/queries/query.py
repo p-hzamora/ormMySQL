@@ -55,9 +55,10 @@ class SQLQuery[T]:
                 if isinstance(sub_query[0], WhereCondition):
                     query_ = self.__build_where_clause(sub_query)
                 else:
-                    query_ = "\n".join([x.query for x in sub_query])
+                    query_ = " ".join([x.query for x in sub_query])
 
-                query += f"\n{query_}"
+
+                query += f" {query_}" if query != "" else query_
         self._query.clear()
         return query
 
