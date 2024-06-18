@@ -49,7 +49,13 @@ class TableColumn:
 class SelectQuery[T: Table, *Ts](IQuery):
     SELECT = "SELECT"
 
-    def __init__(self, tables: T | tuple[T, *Ts] = (), *, select_lambda: Optional[Callable[[T, *Ts], None]] = lambda: None, by: JoinType = JoinType.INNER_JOIN) -> None:
+    def __init__(
+        self,
+        tables: T | tuple[T, *Ts] = (),
+        select_lambda: Optional[Callable[[T, *Ts], None]] = lambda: None,
+        *,
+        by: JoinType = JoinType.INNER_JOIN,
+    ) -> None:
         if not isinstance(tables, tuple):
             tables = tuple([tables])
 
