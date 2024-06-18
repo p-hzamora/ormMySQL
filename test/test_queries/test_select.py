@@ -185,10 +185,9 @@ class TestQuery(unittest.TestCase):
                 d,
             ),
         )
-        queue = q.get_involved_tables()
+        tuple_ = q.get_involved_tables()
 
-        tuple_ = tuple([queue.get_nowait() for _ in range(queue.maxsize)])
-        self.assertEqual(tuple_, (D, C, B, A))
+        self.assertListEqual(tuple_, ((D,D), (D,C), (C,B), (B,A)))
 
     def test_check_private_variabels(self):
         def _lambda(d, c, b, a):

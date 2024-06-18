@@ -73,7 +73,7 @@ class SQLQuery[T]:
 
     def _create_necessary_inner_join(self):
         select: SelectQuery = self._query["select"][0]
-        tables: list[Table] = list(select.get_involved_tables().queue)
+        tables: list[Table] = select.get_involved_tables()
 
         # TODOM: updated lambda function in Where clausules to added tables
         # where: WhereCondition = self._query["where"][0]
