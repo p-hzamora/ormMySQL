@@ -1,10 +1,12 @@
-from typing import Any, Callable, Iterator, Optional, Type, override
+from typing import Callable, Iterator, Optional, Type, override
 
 import inspect
+
 from ...dissambler import TreeInstruction, TupleInstruction, NestedElement
 from ...interfaces.IQuery import IQuery
-from ...orm_objects import Table
+from ...orm_objects import Table, ForeignKey
 from ...orm_objects.table.table_constructor import TableMeta
+from ...orm_objects.queries.joins import JoinSelector, JoinType
 
 
 class TableColumn:
@@ -85,31 +87,6 @@ class SelectQuery[T: Table, *Ts](IQuery):
         >>> #   "country.pk_country"
         ]
         """
-
-        def _get_parents(tbl_obj: Table, tuple_inst: TupleInstruction,column_list:list[TableColumn]) -> None:
-            # self._add_fk_relationship(tbl_obj, tuple_inst)
-
-            if self._user_want_all_col(tbl_obj,tuple_inst):
-                # if parents length is 1 says that the element is the table itself (table.*)
-                column_list.extend(list(TableColumn.all_columns(tbl_obj)))
-                return None
-
-            last_el: str = tuple_inst.nested_element.name
-            parents: list[str] = tuple_inst.nested_element.parents
-            first_el = parents[1]
-
-            new_attr = self.get_attribute_of(tbl_obj, first_el)
-
-            # if the 'last_el' var is a property, we'll know the user will want a column of the same instance of the 'tbl_obj'. Otherwise the user will want to get a column of the other instance
-            if self._user_want_column_of_the_same_table(tbl_obj,ti):
-                if isinstance(new_attr, property):
-                    return column_list.append(TableColumn(tbl_obj, last_el))
-
-                new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:]))  # create new TupleInstruction from the second parent to the top
-                return _get_parents(new_attr, new_ti,column_list)
-            return column_list.append(TableColumn(tbl_obj, last_el))
-
-        # ================== start =========================
         instruction_list: list[TupleInstruction] = TreeInstruction(_lambda).to_list()
         column_list: list[TableColumn] = []
 
@@ -120,29 +97,50 @@ class SelectQuery[T: Table, *Ts](IQuery):
             new_nested = ti.nested_element.parents
             new_nested[0] = var
             ti = TupleInstruction(var, NestedElement(new_nested))
-            _get_parents(obj, ti,column_list=column_list)
+            self._get_parents(obj, ti, column_list)
         return column_list
 
-    def _add_fk_relationship(self, table: Table, ti: TupleInstruction) -> None:
-        if table.__table_name__ == ti.nested_element.name:
-            return self._tables_heritage.append(table,table)
-        
-        if hasattr(table, ti.nested_element.name):
-            self._tables_heritage
+    def _get_parents(self, tbl_obj: Table, tuple_inst: TupleInstruction, column_list: list[TableColumn]) -> None:
+        if self._user_want_all_col(tbl_obj, tuple_inst):
+            column_list.extend(list(TableColumn.all_columns(tbl_obj)))
+            return None
 
-    def _user_want_all_col(tbl:Table,ti:TupleInstruction)->bool:
+        # if the 'last_el' var is a property, we'll know the user will want retrieve a column of the same instance of the 'tbl_obj'. Otherwise the user will want to get a column of the other instance
+        last_el: str = tuple_inst.nested_element.name
+        if self._user_want_column_of_the_same_table(tbl_obj, tuple_inst):
+            return column_list.append(TableColumn(tbl_obj, last_el))
+
+        parents: list[str] = tuple_inst.nested_element.parents
+        first_el = parents[1]
+        new_ti = TupleInstruction(first_el, NestedElement[str](parents[1:]))  # create new TupleInstruction from the second parent to the top
+        new_attr = self.get_attribute_of(tbl_obj, first_el)  # could be Table or property
+
+        self._add_fk_relationship(tbl_obj, new_attr)
+        return self._get_parents(new_attr, new_ti, column_list)
+
+    def _add_fk_relationship(self, t1: Table, t2: Table) -> None:
+        tuple_ = tuple([t1, t2])
+        if tuple_ not in self._tables_heritage:
+            self._tables_heritage.append(tuple_)
+        return None
+
+    @staticmethod
+    def _user_want_all_col(tbl: Table, ti: TupleInstruction) -> bool:
+        """
+        if  ti.nested_element.parents length is 1 says that the element is the table itself (table.*)
+        """
         return issubclass(tbl.__class__, Table | TableMeta) and len(ti.nested_element.parents) == 1
-    
-    def _user_want_column_of_the_same_table(self,table:Table, ti:TupleInstruction)->bool:
+
+    def _user_want_column_of_the_same_table(self, table: Table, ti: TupleInstruction) -> bool:
         last_el: str = ti.nested_element.name
         first_el = ti.nested_element.parents[1]
 
-        new_attr = self.get_attribute_of(table, first_el)
+        table_attr = self.get_attribute_of(table, first_el)
 
-        return last_el not in table.__dict__ or not isinstance(new_attr, property)
+        return last_el in table.__dict__ and isinstance(table_attr, property)
 
     @staticmethod
-    def get_attribute_of(table: Table, _value: str) -> Optional[Any]:
+    def get_attribute_of[TProp: Table](table: TProp, _value: str) -> Optional[TProp | property]:
         try:
             return getattr(table.__class__, _value)
         except Exception:
@@ -177,9 +175,19 @@ class SelectQuery[T: Table, *Ts](IQuery):
     @property
     def query(self) -> str:
         select_str = self._convert_select_list()
-        query = f"{self.SELECT} {select_str} FROM {self._first_table.__table_name__}"
+        query: str = f"{self.SELECT} {select_str} FROM {self._first_table.__table_name__}"
+
+        involved_tables = self.get_involved_tables()
+        if not involved_tables:
+            return query
+
+        for l_tbl, r_tbl in involved_tables:
+            sub_query: str = ""
+            join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey[l_tbl, r_tbl].MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
+            sub_query += join.query
+
+        query += f" {sub_query}"
         return query
 
     def get_involved_tables(self) -> tuple[tuple[Table, Table]]:
         return tuple(self._tables_heritage)
-
