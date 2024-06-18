@@ -86,15 +86,13 @@ class TestQuery(unittest.TestCase):
         )
         self.assertEqual(
             q.query,
-            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update`, city.country_id as `city_country_id`, address.city_id as `address_city_id`, address.last_update as `address_last_update`, country.country as `country_country` FROM address",
+            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update`, city.country_id as `city_country_id`, address.city_id as `address_city_id`, address.last_update as `address_last_update`, country.country as `country_country` FROM address INNER JOIN city ON address.city_id = city.city_id INNER JOIN country ON city.country_id = country.country_id",
         )
 
     def test_select_all_columns_from_all_tables(self):
         # this response must not be the real one,
         q = SelectQuery[Address, City, Country](
-            Address,
-            City,
-            Country,
+            (Address, City, Country),
             select_lambda=lambda a, ci, co: (
                 a,
                 ci,
@@ -109,8 +107,7 @@ class TestQuery(unittest.TestCase):
     def test_select_all_columns_from_tables_without_use_all_vars(self):
         # this response must not be the real one,
         q = SelectQuery[Address, City](
-            Address,
-            City,
+            (Address, City),
             select_lambda=lambda a, ci: (
                 a,
                 a.city,
@@ -119,7 +116,7 @@ class TestQuery(unittest.TestCase):
         )
         self.assertEqual(
             q.query,
-            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update` FROM address",
+            "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update` FROM address INNER JOIN city ON address.city_id = city.city_id INNER JOIN country ON city.country_id = country.country_id",
         )
 
     def test_d_c_b_a_models(self):
@@ -128,10 +125,7 @@ class TestQuery(unittest.TestCase):
         # c = C(3, "data_c", 2)
         # d = D(4, "data_d", 3)
         q = SelectQuery[D, C, B, A](
-            D,
-            C,
-            B,
-            A,
+            (D, C, B, A),
             select_lambda=lambda d: (
                 d.c.b,
                 d.data_d,
@@ -141,7 +135,7 @@ class TestQuery(unittest.TestCase):
             ),
         )
         self.assertEqual(
-            q.query, "SELECT b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, d.data_d as `d_data_d`, c.data_c as `c_data_c`, b.data_b as `b_data_b`, a.data_a as `a_data_a` FROM d"
+            q.query, "SELECT b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, d.data_d as `d_data_d`, c.data_c as `c_data_c`, b.data_b as `b_data_b`, a.data_a as `a_data_a` FROM d INNER JOIN c ON d.fk_c = c.pk_c INNER JOIN b ON c.fk_b = b.pk_b INNER JOIN a ON b.fk_a = a.pk_a"
         )
 
     def test_all_a(self):
@@ -172,7 +166,7 @@ class TestQuery(unittest.TestCase):
         )
         self.assertEqual(
             q.query,
-            "SELECT a.pk_a as `a_pk_a`, a.name_a as `a_name_a`, a.data_a as `a_data_a`, a.date_a as `a_date_a`, b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b`, d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c` FROM d",
+            "SELECT a.pk_a as `a_pk_a`, a.name_a as `a_name_a`, a.data_a as `a_data_a`, a.date_a as `a_date_a`, b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b`, d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c` FROM d INNER JOIN c ON d.fk_c = c.pk_c INNER JOIN b ON c.fk_b = b.pk_b INNER JOIN a ON b.fk_a = a.pk_a",
         )
 
     def test_get_involved_table_method_consistency(self):
@@ -187,13 +181,13 @@ class TestQuery(unittest.TestCase):
         )
         tuple_ = q.get_involved_tables()
 
-        self.assertListEqual(tuple_, ((D,D), (D,C), (C,B), (B,A)))
+        self.assertTupleEqual(tuple_, ((D, C), (C, B), (B, A)))
 
     def test_check_private_variabels(self):
         def _lambda(d, c, b, a):
             return d, c, b, a
 
-        q = SelectQuery[D, C, B, A](D, C, B, A, select_lambda=_lambda)
+        q = SelectQuery[D, C, B, A]((D, C, B, A), select_lambda=_lambda)
 
         self.assertEqual(q._first_table, D)
         self.assertEqual(q._tables, (D, C, B, A))
