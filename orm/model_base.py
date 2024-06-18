@@ -505,13 +505,13 @@ class ModelBase[T: Table](ABC):
     def select(self) -> T | Iterable[T]: ...
 
     @overload
-    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> T | Iterable[T] | str: ...
-
-    @overload
     def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]], flavour: TValue) -> Iterable[TValue]: ...
 
     @overload
     def select[TValue](self, flavour: TValue) -> Iterable[TValue]: ...
+
+    @overload
+    def select[TValue](self, by: JoinType) -> Iterable[TValue]: ...
 
     def select[*Ts, TValue](
         self,
