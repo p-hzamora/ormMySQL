@@ -3,6 +3,8 @@ from abc import ABC
 from collections import defaultdict
 from typing import Any, Callable, Optional, Self, Type, overload, Iterable
 
+from orm.orm_objects.queries.joins import JoinType
+
 from .orm_objects.queries.order import OrderType
 from .orm_objects.queries import SQLQuery
 from .orm_objects.queries.select import SelectQuery, TableColumn
@@ -200,11 +202,12 @@ class ModelBase[T: Table](ABC):
 
     # endregion
 
-    #region limit
-    def limit(self,limit:int)->Self:
+    # region limit
+    def limit(self, limit: int) -> Self:
         self.build_query.limit(limit)
         return self
-    #endregion
+
+    # endregion
 
     # # region get
     # @overload
@@ -518,8 +521,9 @@ class ModelBase[T: Table](ABC):
         selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
         *,
         flavour: TValue = None,
+        by: JoinType = JoinType.INNER_JOIN,
     ) -> TValue | T | Iterable[T]:
-        select = self.build_query.select(selector, self._model)
+        select: SelectQuery = self.build_query.select(self._model, selector, by)
 
         query: str = self.build_query.build()
 
