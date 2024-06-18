@@ -3,7 +3,7 @@ from abc import ABC
 from collections import defaultdict
 from typing import Any, Callable, Optional, Self, Type, overload, Iterable
 
-from orm.orm_objects.queries.joins import JoinType
+from .orm_objects.queries.joins import JoinType
 
 from .orm_objects.queries.order import OrderType
 from .orm_objects.queries import SQLQuery
