@@ -60,45 +60,35 @@ class D(Table):
 class TestQuery(unittest.TestCase):
     def test_select_one_column_without_fk(self):
         query = SQLQuery[D]()
-        query.select(lambda d: (d.pk_d), D)
+        query.select(D, lambda d: (d.pk_d))
         self.assertEqual(query.build(), "SELECT d.pk_d as `d_pk_d` FROM d")
 
     def test_select_all_column_without_fk(self):
         query = SQLQuery[D]()
-        query.select(lambda d: (d), D)
+        query.select(D, lambda d: (d))
         self.assertEqual(query.build(), "SELECT d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c`, d.fk_extra_c as `d_fk_extra_c` FROM d")
 
     def test_select_two_column_with_one_fk(self):
         query = SQLQuery[D]()
-        query.select(lambda d: (d.pk_d, d.C.data_c), D)
-        query.join(D, C, by="INNER JOIN")
+        query.select(D, lambda d: (d.pk_d, d.C.data_c))
         self.assertEqual(query.build(), "SELECT d.pk_d as `d_pk_d`, c.data_c as `c_data_c` FROM d INNER JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_all_column_from_all_tables_with_one_fk(self):
         query = SQLQuery[D]()
-        query.select(lambda d: (d, d.C), D)
-        query.join(D, C, by="INNER JOIN")
+        query.select(D, lambda d: (d, d.C))
         self.assertEqual(
             query.build(),
             "SELECT d.pk_d as `d_pk_d`, d.data_d as `d_data_d`, d.fk_c as `d_fk_c`, d.fk_extra_c as `d_fk_extra_c`, c.pk_c as `c_pk_c`, c.data_c as `c_data_c`, c.fk_b as `c_fk_b` FROM d INNER JOIN c ON d.fk_c = c.pk_c",
         )
 
-    def test_select_one_column_with_two_fk(self):
+    def test_select_one_column_with_two_fk_in_one_table(self):
         query = SQLQuery[D]()
-        query.select(lambda d: (d.ExtraC.data_extra_c), D)
-        query.join(D, ExtraC, by="INNER JOIN")
+        query.select(D, lambda d: (d.ExtraC.data_extra_c))
         self.assertEqual(query.build(), "SELECT extra_c.data_extra_c as `extra_c_data_extra_c` FROM d INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
 
-    def test_select_all_column_with_two_fk(self):
+    def test_select_all_column_with_two_fk_in_one_table(self):
         query = SQLQuery[D]()
-        query.select(lambda d: (d.ExtraC), D)
-        query.join(D, ExtraC, by="INNER JOIN")
-        self.assertEqual(query.build(), "SELECT extra_c.pk_extra_c as `extra_c_pk_extra_c`, extra_c.data_extra_c as `extra_c_data_extra_c` FROM d INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
-
-
-    def test_select_all_column_with_two_fk_without_join_method(self):
-        query = SQLQuery[D]()
-        query.select(lambda d: (d.ExtraC), D)
+        query.select(D, lambda d: (d.ExtraC))
         self.assertEqual(query.build(), "SELECT extra_c.pk_extra_c as `extra_c_pk_extra_c`, extra_c.data_extra_c as `extra_c_data_extra_c` FROM d INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
 
 
