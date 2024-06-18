@@ -13,6 +13,7 @@ from test.models import (  # noqa: E402
 )
 
 from orm import Table, Column, ForeignKey  # noqa: E402
+from orm.orm_objects.queries import JoinType  # noqa: E402
 
 
 class A(Table):
@@ -48,7 +49,7 @@ class D(Table):
     c = ForeignKey["D", C](__table_name__, C, lambda d, c: d.fk_c == c.pk_c)
 
 
-class TestQuery(unittest.TestCase):
+class TestSelect(unittest.TestCase):
     def test_select_all_col_with_no_select_list_attr(self):
         q = SelectQuery[City](City)
 
@@ -135,7 +136,8 @@ class TestQuery(unittest.TestCase):
             ),
         )
         self.assertEqual(
-            q.query, "SELECT b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, d.data_d as `d_data_d`, c.data_c as `c_data_c`, b.data_b as `b_data_b`, a.data_a as `a_data_a` FROM d INNER JOIN c ON d.fk_c = c.pk_c INNER JOIN b ON c.fk_b = b.pk_b INNER JOIN a ON b.fk_a = a.pk_a"
+            q.query,
+            "SELECT b.pk_b as `b_pk_b`, b.data_b as `b_data_b`, b.fk_a as `b_fk_a`, d.data_d as `d_data_d`, c.data_c as `c_data_c`, b.data_b as `b_data_b`, a.data_a as `a_data_a` FROM d INNER JOIN c ON d.fk_c = c.pk_c INNER JOIN b ON c.fk_b = b.pk_b INNER JOIN a ON b.fk_a = a.pk_a",
         )
 
     def test_all_a(self):
@@ -204,6 +206,34 @@ class TestQuery(unittest.TestCase):
                 "a": A,
             },
         )
+
+    def test_select_one_col_from_RIGHT_INCLUSIVE_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.RIGHT_INCLUSIVE)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT INCLUSIVE c ON d.fk_c = c.pk_c")
+
+    def test_select_one_col_from_LEFT_INCLUSIVE_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.LEFT_INCLUSIVE)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT INCLUSIVE c ON d.fk_c = c.pk_c")
+
+    def test_select_one_col_from_RIGHT_EXCLUSIVE_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.RIGHT_EXCLUSIVE)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT EXCLUSIVE c ON d.fk_c = c.pk_c")
+
+    def test_select_one_col_from_LEFT_EXCLUSIVE_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.LEFT_EXCLUSIVE)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT EXCLUSIVE c ON d.fk_c = c.pk_c")
+
+    def test_select_one_col_from_FULL_OUTER_INCLUSIVE_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.FULL_OUTER_INCLUSIVE)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT FULL OUTER_INCLUSIVE ON d.fk_c = c.pk_c")
+
+    def test_select_one_col_from_FULL_OUTER_EXCLUSIVE_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.FULL_OUTER_EXCLUSIVE)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT FULL OUTER_EXCLUSIVE ON d.fk_c = c.pk_c")
+
+    def test_select_one_col_from_INNER_JOIN_table(self):
+        q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.INNER_JOIN)
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM INNER_JOIN JOIN c ON d.fk_c = c.pk_c")
 
 
 class TestTableColumn(unittest.TestCase):
