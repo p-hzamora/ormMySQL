@@ -52,7 +52,7 @@ class SelectQuery[T: Table, *Ts](IQuery):
     def __init__(self, tables: T | tuple[T, *Ts] = (), *, select_lambda: Optional[Callable[[T, *Ts], None]] = lambda: None, by: JoinType = JoinType.INNER_JOIN) -> None:
         if not isinstance(tables, tuple):
             tables = tuple([tables])
-            
+
         self._first_table: T = tables[0]
         self._tables: tuple[T, *Ts] = tables
         self._select_lambda: Optional[Callable[[T, *Ts], None]] = select_lambda

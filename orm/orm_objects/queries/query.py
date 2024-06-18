@@ -71,23 +71,13 @@ class SQLQuery[T]:
             query += f" {and_} ({clause})"
         return query
 
-    def _create_necessary_inner_join(self):
-        select: SelectQuery = self._query["select"][0]
-        tables: list[Table] = select.get_involved_tables()
-
+    def _create_necessary_inner_join(self)->None:
         # TODOM: updated lambda function in Where clausules to added tables
         # where: WhereCondition = self._query["where"][0]
         # tables_where: list[Table] = where.get_involved_tables()
         # avoid_repeated_table = set(tables).difference(set(tables_where))
         # tables.extend(list(avoid_repeated_table))
-
-        if (n := len(tables)) > 1:
-            for i in range(n - 1):
-                l_tbl: Table = tables[i]
-                r_tbl: Table = tables[i + 1]
-
-                join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, JoinType.INNER_JOIN, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
-                self._query["join"].append(join)
+        ...
 
     def limit(self, number: int) -> str:
         limit: LimitQuery = LimitQuery(number)
