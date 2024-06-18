@@ -181,12 +181,12 @@ class SelectQuery[T: Table, *Ts](IQuery):
         if not involved_tables:
             return query
 
+        sub_query: str = ""
         for l_tbl, r_tbl in involved_tables:
-            sub_query: str = ""
             join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, by=self._by, where=ForeignKey[l_tbl, r_tbl].MAPPED[l_tbl.__table_name__][r_tbl.__table_name__])
-            sub_query += join.query
+            sub_query += f" {join.query}"
 
-        query += f" {sub_query}"
+        query += sub_query
         return query
 
     def get_involved_tables(self) -> tuple[tuple[Table, Table]]:
