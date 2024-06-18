@@ -128,18 +128,18 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
 
 @dataclass_transform()
 class TableMeta(type):
-    def __new__[T](cls:"Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
+    def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
         self = __init_constructor__(cls_object)
         return self
 
-    def __repr__(cls:"Table") -> str:
+    def __repr__(cls: "Table") -> str:
         return f"{TableMeta.__name__}: {cls.__table_name__}"
+
 
 @dataclass_transform(eq_default=False)
 class Table(metaclass=TableMeta):
     __table_name__ = ...
-
 
     def __str__(self) -> str:
         params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
@@ -148,5 +148,5 @@ class Table(metaclass=TableMeta):
     def __getattr__[T](self, __name: str) -> Column[T]:
         return self.__dict__.get(__name, None)
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({", ".join(["=".join([x,getattr(self,x)]) for x in self.__annotations__])})"
+    def __repr__(cls: "Table") -> str:
+        return f"{Table.__name__}: {cls.__table_name__}"
