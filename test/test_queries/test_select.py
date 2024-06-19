@@ -209,31 +209,31 @@ class TestSelect(unittest.TestCase):
 
     def test_select_one_col_from_RIGHT_INCLUSIVE_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.RIGHT_INCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT INCLUSIVE c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_one_col_from_LEFT_INCLUSIVE_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.LEFT_INCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT INCLUSIVE c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_one_col_from_RIGHT_EXCLUSIVE_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.RIGHT_EXCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT EXCLUSIVE c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_one_col_from_LEFT_EXCLUSIVE_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.LEFT_EXCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT EXCLUSIVE c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_one_col_from_FULL_OUTER_INCLUSIVE_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.FULL_OUTER_INCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT FULL OUTER_INCLUSIVE ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_one_col_from_FULL_OUTER_EXCLUSIVE_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.FULL_OUTER_EXCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d LEFT FULL OUTER_EXCLUSIVE ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d RIGHT JOIN c ON d.fk_c = c.pk_c")
 
     def test_select_one_col_from_INNER_JOIN_table(self):
         q = SelectQuery[D](D, lambda d: d.c.data_c, by=JoinType.INNER_JOIN)
-        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM INNER_JOIN JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT c.data_c as `c_data_c` FROM d INNER JOIN c ON d.fk_c = c.pk_c")
 
 
 class TestTableColumn(unittest.TestCase):
