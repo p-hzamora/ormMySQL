@@ -1,17 +1,21 @@
 import os
-
-from orm import MySQLRepository, IRepositoryBase
-from orm.condition_types import ConditionType
-from test.models.address import AddressModel
-
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
+
+sys.path = [str(Path(__file__).parent.parent), *sys.path]
+
+from orm import MySQLRepository, IRepositoryBase  # noqa: E402
+from orm.condition_types import ConditionType  # noqa: E402
+from test.models.address import AddressModel, Address  # noqa: E402
+
 
 load_dotenv()
 
 
-USERNAME = os.getenv("DB_USERNAME")
-PASSWORD = os.getenv("DB_PASSWORD")
-HOST = os.getenv("DB_HOST")
+USERNAME = "root"  # os.getenv("DB_USERNAME")
+PASSWORD = "1234"  # os.getenv("DB_PASSWORD")
+HOST = "localhost"  # os.getenv("DB_HOST")
 
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST).connect()
@@ -45,5 +49,9 @@ pass
 
 address = a_model.where(lambda x: x.address_id == 1).select()
 
-address.address2 = "primera vivienda"
+print(address.phone)
+address.phone = 10000000
 a_model.upsert(address)
+
+address = a_model.where(lambda x: x.address_id == 1).select()
+print(address.phone)
