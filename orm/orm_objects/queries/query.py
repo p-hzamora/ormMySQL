@@ -1,7 +1,10 @@
 from collections import defaultdict
 from typing import Any, Callable, Literal, Optional
 
+
 from ...interfaces.IQuery import IQuery
+from ..foreign_key import ForeignKey
+from ..table import Table
 
 
 from .joins import JoinSelector, JoinType
@@ -9,14 +12,14 @@ from .select import SelectQuery
 from .limit import LimitQuery
 from .where_condition import WhereCondition
 from .order import OrderQuery, OrderType
-from ..table import Table
-from ..foreign_key import ForeignKey
+from .offset import OffsetQuery
 
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit"]
+
+ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit","offset"]
 
 
 class SQLQuery[T]:
-    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit")
+    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit","offset")
 
     def __init__(self) -> None:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
@@ -79,6 +82,12 @@ class SQLQuery[T]:
         # tables.extend(list(avoid_repeated_table))
         ...
 
-    def limit(self, number: int) -> str:
+    def limit(self, number: int) -> LimitQuery:
         limit: LimitQuery = LimitQuery(number)
         self._query["limit"].append(limit)
+        return limit 
+
+    def offset(self, number: int) -> OffsetQuery:
+        offset: OffsetQuery = OffsetQuery(number)
+        self._query["offset"].append(offset)
+        return offset 

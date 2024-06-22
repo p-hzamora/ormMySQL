@@ -207,6 +207,10 @@ class ModelBase[T: Table](ABC):
         self.build_query.limit(limit)
         return self
 
+    def offset(self, offset: int) -> Self:
+        self.build_query.offset(offset)
+        return self
+
     # endregion
 
     # # region get
