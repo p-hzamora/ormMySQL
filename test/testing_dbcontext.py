@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+import math
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
@@ -47,11 +48,23 @@ address = a_model._repository.read_sql(query, flavour=dict)
 pass
 
 
-address = a_model.where(lambda x: x.address_id == 1).select()
 
-print(address.phone)
-address.phone = 10000000
-a_model.upsert(address)
+def pagination(page:int):
+    limit = 20
+    total_register:int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")
+    total_pages = int(math.ceil(total_register/limit))
 
-address = a_model.where(lambda x: x.address_id == 1).select()
-print(address.phone)
+    if page > total_pages:
+        page =  total_pages
+    offset = (page - 1) * limit
+    return {
+        "page":page,
+        "pages":total_pages,
+        "limit":limit,
+        "data": a_model.limit(limit).offset(offset).select(flavour=dict)
+    }
+
+
+a = [pagination(x) for x in range(1,11)]
+
+pass
