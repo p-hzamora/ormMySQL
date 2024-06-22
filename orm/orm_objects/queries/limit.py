@@ -7,6 +7,8 @@ class LimitQuery(IQuery):
     LIMIT = "LIMIT"
 
     def __init__(self, number: int) -> None:
+        if not isinstance(number,int):
+            raise ValueError
         self._number: int = number
 
     @override
