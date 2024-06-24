@@ -1,6 +1,6 @@
 # Standard libraries
 from functools import wraps
-from typing import Any, Callable, Iterable, Iterator, Literal, override
+from typing import Any, Iterable, Iterator, Literal, Type, override
 
 # Third party libraries
 import pandas as pd
@@ -20,10 +20,10 @@ type_exists = Literal["fail", "replace", "append"]
 
 
 class Response[TFlavour]:
-    def __init__(self, response_values: list[tuple[Any, ...]], columns: tuple[str], flavour: TFlavour, **kwargs) -> None:
+    def __init__(self, response_values: list[tuple[Any, ...]], columns: tuple[str], flavour: Type[TFlavour], **kwargs) -> None:
         self._response_values: list[tuple[Any, ...]] = response_values
         self._columns: tuple[str] = columns
-        self._flavour: TFlavour = flavour
+        self._flavour: Type[TFlavour] = flavour
         self._kwargs: dict[str, Any] = kwargs
 
         self._response_values_index: int = len(self._response_values)
@@ -42,7 +42,7 @@ class Response[TFlavour]:
         return self._response_values_index > 1
 
     @property
-    def response(self) -> list[TFlavour]:
+    def response(self) -> str | TFlavour | list[TFlavour]:
         if not self.is_there_response:
             return []
 
@@ -52,14 +52,14 @@ class Response[TFlavour]:
 
         return self._cast_to_flavour(self._response_values)
 
-    def _cast_to_flavour(self, data: Iterable[tuple[Any, ...]]) -> Callable[[], TFlavour]:
-        def _dict():
+    def _cast_to_flavour(self, data: Iterable[tuple[Any, ...]]) -> list[tuple[Any, ...]] | list[dict[str, Any]] | list[TFlavour]:
+        def _dict() -> list[dict[str, Any]]:
             return [dict(zip(self._columns, x)) for x in data]
 
-        def _tuple():
+        def _tuple() -> list[tuple[Any, ...]]:
             return data
 
-        def _default():
+        def _default() -> list[TFlavour]:
             return [self._flavour(x, **self._kwargs) for x in data]
 
         selector: dict[str, Any] = {dict: _dict, tuple: _tuple}
@@ -238,14 +238,14 @@ class MySQLRepository(IRepositoryBase):
         return True
 
     @is_connected
-    def read_sql[T](self, query: str, flavour: T = tuple, **kwargs) -> T:
+    def read_sql[T](self, query: str, flavour: Type[T] = tuple, **kwargs) -> str | T | list[T]:
         """ """
 
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple[Any, ...]] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[flavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
+            return Response[T](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     @is_connected
     def delete(self, table: str, col: str, value: list[str] | str) -> None:

@@ -509,25 +509,42 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select(self) -> T | Iterable[T]: ...
+    def select(self) -> T | list[T]: ...
 
     @overload
-    def select[*Ts](self, selector: Optional[Callable[[T, *Ts], None]]) -> Iterable[T]: ...
+    def select[TValue](self, selector: Callable[[T], tuple[TValue]]) -> TValue: ...
 
     @overload
-    def select[*Ts, TValue](self, selector: Optional[Callable[[T, *Ts], None]],*, flavour: TValue) -> Iterable[TValue]: ...
+    def select[TValue, *Ts](self, selector: Callable[[T], tuple[TValue, *Ts]]) -> tuple[TValue, *Ts]: ...
+
 
     @overload
-    def select[TValue, *Ts](self, selector: Optional[Callable[[T, *Ts], None]],*, flavour: TValue, by: JoinType) -> Iterable[TValue]: ...
+    def select[TFlavour](self, *, flavour: Type[TFlavour]) -> list[TFlavour]: ...
 
-    def select[*Ts, TValue](
+    @overload
+    def select[TValue, *Ts](self, selector: Callable[[T], tuple[TValue, *Ts]], *, flavour: Type[tuple]) -> tuple[TValue, *Ts]: ...
+
+    @overload
+    def select[TFlavour, *Ts](self, selector: Callable[[T], tuple[Any, *Ts]], *, flavour: Type[TFlavour]) -> list[TFlavour]: ...
+    
+    @overload
+    def select(self, *, by: JoinType) -> T | list[T]: ...
+
+    @overload
+    def select[*Ts](self, selector: Callable[[T], tuple[Any, *Ts]], *, by: JoinType) -> T| list[T]: ...
+
+    @overload
+    def select[*Ts, TFlavour](self, selector: Optional[Callable[[T, *Ts], None]], *, flavour: TFlavour, by: JoinType) -> list[TFlavour]: ...
+
+
+    def select[TValue, TFlavour, *Ts](
         self,
-        selector: Optional[Callable[[T, *Ts], None]] = lambda: None,
+        selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None,
         *,
-        flavour: TValue = None,
+        flavour: Type[TFlavour] = None,
         by: JoinType = JoinType.INNER_JOIN,
-    ) -> TValue | T | Iterable[T]:
-        select: SelectQuery = self.build_query.select(self._model, selector, by)
+    ):
+        select: SelectQuery[T, *Ts] = self.build_query.select(self._model, selector, by)
 
         query: str = self.build_query.build()
 
@@ -535,24 +552,23 @@ class ModelBase[T: Table](ABC):
             return self._return_flavour(query, flavour)
         return self._return_model(select, query)
 
-    def _return_flavour[TValue](self, query, flavour: TValue) -> list[TValue]:
+    def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> list[TValue]:
         return self._repository.read_sql(query, flavour=flavour)
 
-    def _return_model(self, select: SelectQuery, query: str) -> list[T] | T | str:
-        response_sql: str | list[dict[str, Any]] = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
+    def _return_model[TValue, *Ts](self, select: SelectQuery[T, *Ts], query: str) -> TValue | tuple[tuple[*Ts]]:
+        response_sql = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
         if response_sql and not isinstance(response_sql, str) and isinstance(response_sql, Iterable):
-            cluster: list[T] | T | str = ClusterQuery(select, response_sql).clean_response()
-            return cluster
+            return ClusterQuery[T, *Ts](select, response_sql).clean_response()
 
         return response_sql
 
     # endregion
 
 
-class ClusterQuery:
-    def __init__(self, select: SelectQuery, response_sql: dict[list[dict[str, Any]]]) -> None:
-        self._select: SelectQuery = select
+class ClusterQuery[T, *Ts]:
+    def __init__(self, select: SelectQuery[T, *Ts], response_sql: dict[list[dict[str, Any]]]) -> None:
+        self._select: SelectQuery[T, *Ts] = select
         self._response_sql: dict[list[dict[str, Any]]] = response_sql
 
     def loop_foo(self) -> dict[Type[Table], list[Table]]:
@@ -572,7 +588,7 @@ class ClusterQuery:
                 table_initialize[table_].append(table_(**valid_attr))
         return table_initialize
 
-    def clean_response(self) -> Iterable | str:
+    def clean_response[TValue](self) -> T | tuple[tuple[*Ts]] | TValue:
         tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
 
         # Avoid
@@ -585,5 +601,7 @@ class ClusterQuery:
         for key, val in tbl_dicc.items():
             if len(val) == 1:
                 tbl_dicc[key] = val[0]
+            else:
+                tbl_dicc[key] = tuple(val)
 
         return tuple(tbl_dicc.values())
