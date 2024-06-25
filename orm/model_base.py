@@ -509,33 +509,46 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select(self) -> T | list[T]: ...
-
-    @overload
-    def select[TValue](self, selector: Callable[[T], tuple[TValue]]) -> TValue: ...
-
-    @overload
-    def select[TValue, *Ts](self, selector: Callable[[T], tuple[TValue, *Ts]]) -> tuple[TValue, *Ts]: ...
-
-
-    @overload
-    def select[TFlavour](self, *, flavour: Type[TFlavour]) -> list[TFlavour]: ...
-
-    @overload
-    def select[TValue, *Ts](self, selector: Callable[[T], tuple[TValue, *Ts]], *, flavour: Type[tuple]) -> tuple[TValue, *Ts]: ...
-
-    @overload
-    def select[TFlavour, *Ts](self, selector: Callable[[T], tuple[Any, *Ts]], *, flavour: Type[TFlavour]) -> list[TFlavour]: ...
+    def select(self) -> T | tuple[T]: ...
     
     @overload
-    def select(self, *, by: JoinType) -> T | list[T]: ...
+    def select[T1](self, selector: Callable[[T], tuple[T1]]) -> T1 | tuple[T1]: ...
+    @overload
+    def select[T1, T2](self, selector: Callable[[T], tuple[T1, T2]]) -> tuple[tuple[T1], tuple[T2]]: ...
+    @overload
+    def select[T1, T2, T3](self, selector: Callable[[T], tuple[T1, T2, T3]]) -> tuple[tuple[T1], tuple[T2], tuple[T3]]: ...
+    @overload
+    def select[T1, T2, T3, T4](self, selector: Callable[[T], tuple[T1, T2, T3, T4]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4]]: ...
+    @overload
+    def select[T1, T2, T3, T4, T5](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5]]: ...
+    @overload
+    def select[T1, T2, T3, T4, T5, T6](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6]]: ...
+    @overload
+    def select[T1, T2, T3, T4, T5, T6, T7](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7]]: ...
+    @overload
+    def select[T1, T2, T3, T4, T5, T6, T7, T8](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8]]: ...
+    @overload
+    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8], tuple[T9]]: ...
+    @overload
+    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8], tuple[T9], tuple[T10]]: ...
 
     @overload
-    def select[*Ts](self, selector: Callable[[T], tuple[Any, *Ts]], *, by: JoinType) -> T| list[T]: ...
+    def select[*Ts](self, selector: Callable[[T], tuple[*Ts]], *, flavour: Type[tuple]) -> tuple[tuple[*Ts]]: ...
+
+    @overload
+    def select[TFlavour](self, selector: Callable[[T], tuple], *, flavour: Type[TFlavour]) -> tuple[TFlavour]: ...
+
+    @overload
+    def select[TFlavour](self, flavour: Type[TFlavour]) -> tuple[TFlavour]: ...
+
+    @overload
+    def select(self, *, by: JoinType) -> T | tuple[T]: ...
+
+    @overload
+    def select[TValue, *Ts](self, selector: Callable[[T], tuple[TValue, *Ts]], *, by: JoinType) -> T | list[tuple[TValue, *Ts]]: ...
 
     @overload
     def select[*Ts, TFlavour](self, selector: Optional[Callable[[T, *Ts], None]], *, flavour: TFlavour, by: JoinType) -> list[TFlavour]: ...
-
 
     def select[TValue, TFlavour, *Ts](
         self,
@@ -588,7 +601,7 @@ class ClusterQuery[T, *Ts]:
                 table_initialize[table_].append(table_(**valid_attr))
         return table_initialize
 
-    def clean_response[TValue](self) -> T | tuple[tuple[*Ts]] | TValue:
+    def clean_response[TValue](self) -> T | list[tuple[*Ts]] | TValue:
         tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
 
         # Avoid
@@ -596,7 +609,7 @@ class ClusterQuery[T, *Ts]:
             val = tuple(tbl_dicc.values())[0]
             if len(val) == 1:
                 return val[0]
-            return val
+            return tuple(val)
 
         for key, val in tbl_dicc.items():
             if len(val) == 1:
