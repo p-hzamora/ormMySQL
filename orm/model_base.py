@@ -564,6 +564,28 @@ class ModelBase[T: Table](ABC):
             return self._return_flavour(query, flavour)
         return self._return_model(select, query)
 
+    def select_one[TValue, TFlavour, *Ts](
+        self,
+        selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None,
+        *,
+        flavour: Type[TFlavour] = None,
+        by: JoinType = JoinType.INNER_JOIN,
+    ) -> tuple[TValue, *Ts]:
+        select: SelectQuery[T, *Ts] = self.build_query.select(self._model, selector, by)
+        query: str = self.build_query.build()
+
+        if flavour:
+            respone = self._return_flavour(query, flavour)
+        else:
+            respone = self._return_model(select, query)
+
+        new_res = []
+        if (n := len(respone)) > 1:
+            for x in range(n):
+                new_res.append(respone[x][0])
+            return tuple(new_res)
+        return respone[0]
+
     def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> list[TValue]:
         return self._repository.read_sql(query, flavour=flavour)
 
