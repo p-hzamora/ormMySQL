@@ -19,7 +19,7 @@ type_exists = Literal["fail", "replace", "append"]
 # ((0),(1),(2),(3)) -> (0,1,2,3)
 
 
-class Response[TFlavour,*Ts]:
+class Response[TFlavour, *Ts]:
     def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], **kwargs) -> None:
         self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
@@ -45,10 +45,6 @@ class Response[TFlavour,*Ts]:
     def response(self) -> str | TFlavour | list[TFlavour]:
         if not self.is_there_response:
             return []
-
-        if self.is_one:
-            if len(self._response_values[0]) == 1:
-                return self._response_values[0][0]
 
         return self._cast_to_flavour(self._response_values)
 
@@ -245,7 +241,7 @@ class MySQLRepository(IRepositoryBase):
             cursor.execute(query)
             values: list[tuple[*Ts]] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[T,*Ts](response_values=values, columns=columns, flavour=flavour, **kwargs).response
+            return Response[T, *Ts](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     @is_connected
     def delete(self, table: str, col: str, value: list[str] | str) -> None:
