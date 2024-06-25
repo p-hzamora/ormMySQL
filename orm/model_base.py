@@ -432,7 +432,7 @@ class ModelBase[T: Table](ABC):
             col = pk.column_name
             value = str(pk.column_value)
 
-        elif isinstance(instance, list):
+        elif isinstance(instance, Iterable):
             value = []
             for ins in instance:
                 pk = get_pk(ins)
