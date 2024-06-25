@@ -1,5 +1,5 @@
 [tool.ruff]
-line-length = 200
+line-length = 260
 
 [tool.poetry]
 name = "orm"
