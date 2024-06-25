@@ -19,9 +19,9 @@ type_exists = Literal["fail", "replace", "append"]
 # ((0),(1),(2),(3)) -> (0,1,2,3)
 
 
-class Response[TFlavour]:
-    def __init__(self, response_values: list[tuple[Any, ...]], columns: tuple[str], flavour: Type[TFlavour], **kwargs) -> None:
-        self._response_values: list[tuple[Any, ...]] = response_values
+class Response[TFlavour,*Ts]:
+    def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], **kwargs) -> None:
+        self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
         self._flavour: Type[TFlavour] = flavour
         self._kwargs: dict[str, Any] = kwargs
@@ -238,14 +238,14 @@ class MySQLRepository(IRepositoryBase):
         return True
 
     @is_connected
-    def read_sql[T](self, query: str, flavour: Type[T] = tuple, **kwargs) -> str | T | list[T]:
+    def read_sql[T, *Ts](self, query: str, flavour: Type[T] = tuple, **kwargs) -> str | T | list[T]:
         """ """
 
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
-            values: list[tuple[Any, ...]] = cursor.fetchall()
+            values: list[tuple[*Ts]] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[T](response_values=values, columns=columns, flavour=flavour, **kwargs).response
+            return Response[T,*Ts](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     @is_connected
     def delete(self, table: str, col: str, value: list[str] | str) -> None:
