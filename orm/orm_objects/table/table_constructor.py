@@ -1,3 +1,6 @@
+import base64
+import datetime
+from decimal import Decimal
 from typing import Any, Iterable, Type, dataclass_transform
 import json
 from .column import Column
@@ -142,7 +145,7 @@ class Table(metaclass=TableMeta):
     __table_name__ = ...
 
     def __str__(self) -> str:
-        params = {x: getattr(self, x) for x, y in self.__class__.__dict__.items() if isinstance(y, property)}
+        params = self.to_dict()
         return json.dumps(params, ensure_ascii=False, indent=2)
 
     def __getattr__[T](self, __name: str) -> Column[T]:
@@ -150,3 +153,27 @@ class Table(metaclass=TableMeta):
 
     def __repr__(cls: "Table") -> str:
         return f"{Table.__name__}: {cls.__table_name__}"
+
+    def to_dict(self) -> dict[str, str | int]:
+        dicc: dict[str, Any] = {}
+        for x in self.__annotations__:
+            transform_data = self.__transform_data__(getattr(self, x))
+            dicc[x] = transform_data
+        return dicc
+
+    @staticmethod
+    def __transform_data__[T](_value: T) -> T:
+        def byte_to_string(value: bytes):
+            return base64.b64encode(value).decode("utf-8")
+
+        transform_map: dict = {
+            datetime.datetime: datetime.datetime.isoformat,
+            datetime.date: datetime.date.isoformat,
+            Decimal: str,
+            bytes: byte_to_string,
+            set: list,
+        }
+
+        if (dtype := type(_value)) in transform_map:
+            return transform_map[dtype](_value)
+        return _value
