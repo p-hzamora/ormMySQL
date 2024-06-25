@@ -23,21 +23,21 @@ database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, da
 
 
 a_model = AddressModel(database)
-address = (
-    a_model.where(lambda a: 177 >= a.address_id >= 28)
-    .where(lambda x: (x.city.country.country, ConditionType.REGEXP, r"^[FHA]"))
-    .where(lambda x: (x.city.city, ConditionType.REGEXP, r"[^W]"))
+res_tuple_3 = (
+    a_model.where(lambda a: a.address_id <= 5)
     .order(lambda a: a.address_id, order_type="DESC")
     .select(
         lambda a: (
-            a.address_id,
-            a.city.country.country,
-            a.city.city,
-            a.address,
-        ),
-        flavour=tuple,
+            a,
+            a.city,
+            a.city.country.country_id,
+        )
     )
 )
+
+res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a.city,))
+res_one_table_five_results = a_model.where(lambda a: a.address_id ==5).order(lambda a: a.address_id, order_type="DESC").select()
+
 
 query = """
 SELECT address.address_id as `kkk`, country.country as `country_country`, city.city as `city_city`, address.address as `address_address` FROM address INNER JOIN city ON address.city_id = city.city_id INNER JOIN country ON city.country_id = country.country_id
@@ -48,23 +48,17 @@ address = a_model._repository.read_sql(query, flavour=dict)
 pass
 
 
-
-def pagination(page:int):
+def pagination(page: int):
     limit = 20
-    total_register:int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")
-    total_pages = int(math.ceil(total_register/limit))
+    total_register: int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")
+    total_pages = int(math.ceil(total_register / limit))
 
     if page > total_pages:
-        page =  total_pages
+        page = total_pages
     offset = (page - 1) * limit
-    return {
-        "page":page,
-        "pages":total_pages,
-        "limit":limit,
-        "data": a_model.limit(limit).offset(offset).select(flavour=dict)
-    }
+    return {"page": page, "pages": total_pages, "limit": limit, "data": a_model.limit(limit).offset(offset).select(flavour=dict)}
 
 
-a = [pagination(x) for x in range(1,11)]
+a = [pagination(x) for x in range(1, 11)]
 
 pass
