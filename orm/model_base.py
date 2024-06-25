@@ -604,16 +604,17 @@ class ClusterQuery[T, *Ts]:
         tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
 
         # Avoid
-        if len(tbl_dicc) == 1:
-            val = tuple(tbl_dicc.values())[0]
-            if len(val) == 1:
-                return val[0]
-            return tuple(val)
+        # if len(tbl_dicc) == 1:
+        #     val = tuple(tbl_dicc.values())[0]
+        #     if len(val) == 1:
+        #         return val[0]
+        #     return tuple(val)
 
         for key, val in tbl_dicc.items():
-            if len(val) == 1:
-                tbl_dicc[key] = val[0]
-            else:
-                tbl_dicc[key] = tuple(val)
+            # if len(val) == 1:
+            #     tbl_dicc[key] = val[0]
+            # else:
+            #     tbl_dicc[key] = tuple(val)
+            tbl_dicc[key] = tuple(val)
 
         return tuple(tbl_dicc.values())
