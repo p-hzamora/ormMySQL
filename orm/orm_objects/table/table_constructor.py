@@ -151,8 +151,17 @@ class Table(metaclass=TableMeta):
     def __getattr__[T](self, __name: str) -> Column[T]:
         return self.__dict__.get(__name, None)
 
-    def __repr__(cls: "Table") -> str:
-        return f"{Table.__name__}: {cls.__table_name__}"
+    def __repr__(self: "Table") -> str:
+        def __cast_long_variables(value: Any):
+            if not isinstance(value, str):
+                value = str(value)
+            if len(value) > 20:
+                return value[:20]+ "..."
+            return value
+
+        dicc:dict[str,str] = {x:str(getattr(self,x)) for x in self.__annotations__}
+        equal_loop = ["=".join((x, __cast_long_variables(y))) for x, y in dicc.items()]
+        return ", ".join(equal_loop)
 
     def to_dict(self) -> dict[str, str | int]:
         dicc: dict[str, Any] = {}
