@@ -1,6 +1,6 @@
 # Standard libraries
 from functools import wraps
-from typing import Any, Iterable, Iterator, Literal, Type, override
+from typing import Any, Iterator, Literal, Type, override
 
 # Third party libraries
 import pandas as pd
