@@ -42,23 +42,23 @@ class Response[TFlavour, *Ts]:
         return self._response_values_index > 1
 
     @property
-    def response(self) -> str | TFlavour | list[TFlavour]:
+    def response(self) -> tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]:
         if not self.is_there_response:
             return []
 
         return self._cast_to_flavour(self._response_values)
 
-    def _cast_to_flavour(self, data: Iterable[tuple[Any, ...]]) -> list[tuple[Any, ...]] | list[dict[str, Any]] | list[TFlavour]:
-        def _dict() -> list[dict[str, Any]]:
+    def _cast_to_flavour(self, data: list[tuple[*Ts]]) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
+        def _dict() -> list[dict[str, tuple[*Ts]]]:
             return [dict(zip(self._columns, x)) for x in data]
 
-        def _tuple() -> list[tuple[Any, ...]]:
+        def _tuple() -> list[tuple[*Ts]]:
             return data
 
         def _default() -> list[TFlavour]:
             return [self._flavour(x, **self._kwargs) for x in data]
 
-        selector: dict[str, Any] = {dict: _dict, tuple: _tuple}
+        selector: dict[Type[object], Any] = {dict: _dict, tuple: _tuple}
 
         return selector.get(self._flavour, _default)()
 
@@ -234,14 +234,14 @@ class MySQLRepository(IRepositoryBase):
         return True
 
     @is_connected
-    def read_sql[T, *Ts](self, query: str, flavour: Type[T] = tuple, **kwargs) -> str | T | list[T]:
+    def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """ """
 
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
-            values: list[tuple[*Ts]] = cursor.fetchall()
+            values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[T, *Ts](response_values=values, columns=columns, flavour=flavour, **kwargs).response
+            return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     @is_connected
     def delete(self, table: str, col: str, value: list[str] | str) -> None:
