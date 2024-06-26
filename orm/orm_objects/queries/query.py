@@ -84,7 +84,12 @@ class SQLQuery[T]:
 
     def limit(self, number: int) -> LimitQuery:
         limit: LimitQuery = LimitQuery(number)
-        self._query["limit"].append(limit)
+        # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
+        limit_list = self._query["limit"]
+        if len(limit_list)>0:
+            self._query["limit"] = [limit]
+        else:
+            self._query["limit"].append(limit)
         return limit 
 
     def offset(self, number: int) -> OffsetQuery:
