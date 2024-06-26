@@ -537,9 +537,6 @@ class ModelBase[T: Table](ABC):
     @overload
     def select[TFlavour](self, selector: Callable[[T], tuple], *, flavour: Type[TFlavour], by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[TFlavour]: ...
 
-    @overload
-    def select[TFlavour](self, flavour: Type[TFlavour]) -> tuple[TFlavour]: ...
-
     def select[TValue, TFlavour, *Ts](
         self,
         selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None,
@@ -575,6 +572,9 @@ class ModelBase[T: Table](ABC):
     @overload
     def select_one[*Ts](self, selector: Callable[[T], tuple[*Ts]], *, by: JoinType = JoinType.INNER_JOIN) -> tuple[*Ts]: ...
 
+    @overload
+    def select_one[TFlavour](self, selector: Callable[[T], tuple], *, by: JoinType = JoinType.INNER_JOIN, flavour: Type[TFlavour]) -> TFlavour: ...
+
     def select_one[TValue, TFlavour, *Ts](
         self,
         selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None,
@@ -585,6 +585,10 @@ class ModelBase[T: Table](ABC):
         self.limit(1)
         response = self.select(selector=selector, flavour=flavour, by=by)
 
+        if flavour:
+            return response[0]
+        
+        # response var could be return more than one element when we work with models an we need a join query 
         if len(response) == 1 and len(response[0]) == 1:
             return response[0][0]
         return tuple([res[0] for res in response])
