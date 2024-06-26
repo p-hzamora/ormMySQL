@@ -40,3 +40,20 @@ class Column[T]:
             exec_str += f"  {x}={dicc.get(x,self_value)},\n"
         exec_str += ")"
         return exec_str
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.column_name,
+                self.column_value,
+                self.is_primary_key,
+                self.is_auto_generated,
+                self.is_auto_increment,
+                self.is_unique,
+            )
+        )
+
+    def __eq__(self, value: "Column") -> bool:
+        if isinstance(value, Column):
+            return self.__hash__() == value.__hash__()
+        return False
