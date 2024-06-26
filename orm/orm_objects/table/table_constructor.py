@@ -142,6 +142,29 @@ class TableMeta(type):
 
 @dataclass_transform(eq_default=False)
 class Table(metaclass=TableMeta):
+    """
+    Class to mapped database tables with Python classes.
+
+    It uses __annotations__ special var to store all table columns. If you do not type class var it means this var is not store as table column
+    and it do not going to appear when you instantiate the object itself.
+
+    This principle it so powerful due to we can create Foreign Key references without break __init__ class method.
+
+    >>> class Address(Table):
+    >>>     __table_name__ = "address"
+
+    >>>     address_id: int = Column[int](is_primary_key=True)
+    >>>     address: str
+    >>>     address2: str
+    >>>     district: str
+    >>>     city_id: int
+    >>>     postal_code: datetime
+    >>>     phone: str
+    >>>     location: datetime
+    >>>     last_update: datetime = Column[datetime](is_auto_generated=True)
+ 
+    >>>     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
+    """
     __table_name__ = ...
 
     def __str__(self) -> str:
