@@ -564,29 +564,7 @@ class ModelBase[T: Table](ABC):
             return self._return_flavour(query, flavour)
         return self._return_model(select, query)
 
-    def select_one[TValue, TFlavour, *Ts](
-        self,
-        selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None,
-        *,
-        flavour: Type[TFlavour] = None,
-        by: JoinType = JoinType.INNER_JOIN,
-    ) -> tuple[TValue, *Ts]:
-        select: SelectQuery[T, *Ts] = self.build_query.select(self._model, selector, by)
-        query: str = self.build_query.build()
-
-        if flavour:
-            respone = self._return_flavour(query, flavour)
-        else:
-            respone = self._return_model(select, query)
-
-        new_res = []
-        if (n := len(respone)) > 1:
-            for x in range(n):
-                new_res.append(respone[x][0])
-            return tuple(new_res)
-        return respone[0]
-
-    def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> list[TValue]:
+    def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> tuple[TValue]:
         return self._repository.read_sql(query, flavour=flavour)
 
     def _return_model[TValue, *Ts](self, select: SelectQuery[T, *Ts], query: str) -> TValue | tuple[tuple[*Ts]]:
@@ -598,6 +576,20 @@ class ModelBase[T: Table](ABC):
         return response_sql
 
     # endregion
+
+    def select_one[TValue, TFlavour, *Ts](
+        self,
+        selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None,
+        *,
+        flavour: Type[TFlavour] = None,
+        by: JoinType = JoinType.INNER_JOIN,
+    ):
+        self.limit(1)
+        response = self.select(selector=selector, flavour=flavour, by=by)
+
+        if len(response) == 1 and len(response[0]) == 1:
+            return response[0][0]
+        return tuple([res[0] for res in response])
 
 
 class ClusterQuery[T, *Ts]:
