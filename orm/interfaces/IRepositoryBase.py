@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from typing import Iterator, Literal, Self, overload
+from typing import Iterator, Literal, Optional, Self, Type, overload
 import pandas as pd
 
 
@@ -47,7 +47,9 @@ class IRepositoryBase(ABC):
     def drop_table(self, name: str) -> bool: ...
 
     @overload
-    def read_sql[T](self, query: str, flavour: T) -> str | T | list[T]: ...
+    def read_sql(self, query: str) -> tuple[tuple]: ...
+    @overload
+    def read_sql[TFlavour](self, query: str, flavour: Optional[Type[TFlavour]], **kwargs) -> tuple[TFlavour]: ...
 
     @overload
     def delete(self, table: str, col: str, value: list[str]) -> None: ...
