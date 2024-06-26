@@ -44,9 +44,9 @@ class Response[TFlavour, *Ts]:
     @property
     def response(self) -> tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]:
         if not self.is_there_response:
-            return []
+            return tuple([])
 
-        return self._cast_to_flavour(self._response_values)
+        return tuple(self._cast_to_flavour(self._response_values))
 
     def _cast_to_flavour(self, data: list[tuple[*Ts]]) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
         def _dict() -> list[dict[str, tuple[*Ts]]]:
