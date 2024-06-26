@@ -161,7 +161,7 @@ class Table(metaclass=TableMeta):
 
         dicc:dict[str,str] = {x:str(getattr(self,x)) for x in self.__annotations__}
         equal_loop = ["=".join((x, __cast_long_variables(y))) for x, y in dicc.items()]
-        return ", ".join(equal_loop)
+        return f'{self.__class__.__name__}({", ".join(equal_loop)})'
 
     def to_dict(self) -> dict[str, str | int]:
         dicc: dict[str, Any] = {}
