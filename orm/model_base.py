@@ -509,45 +509,36 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select(self) -> tuple[T]: ...
+    def select(self) -> tuple[tuple[T]]: ...
     @overload
-    def select[T1](self, selector: Callable[[T], tuple[T1]]) -> tuple[T1]: ...
+    def select[T1](self, selector: Callable[[T], tuple[T1]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1]]: ...
     @overload
-    def select[T1, T2](self, selector: Callable[[T], tuple[T1, T2]]) -> tuple[tuple[T1], tuple[T2]]: ...
+    def select[T1, T2](self, selector: Callable[[T], tuple[T1, T2]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2]]: ...
     @overload
-    def select[T1, T2, T3](self, selector: Callable[[T], tuple[T1, T2, T3]]) -> tuple[tuple[T1], tuple[T2], tuple[T3]]: ...
+    def select[T1, T2, T3](self, selector: Callable[[T], tuple[T1, T2, T3]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3]]: ...
     @overload
-    def select[T1, T2, T3, T4](self, selector: Callable[[T], tuple[T1, T2, T3, T4]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4]]: ...
+    def select[T1, T2, T3, T4](self, selector: Callable[[T], tuple[T1, T2, T3, T4]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4]]: ...
     @overload
-    def select[T1, T2, T3, T4, T5](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5]]: ...
+    def select[T1, T2, T3, T4, T5](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5]]: ...
     @overload
-    def select[T1, T2, T3, T4, T5, T6](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6]]: ...
+    def select[T1, T2, T3, T4, T5, T6](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6]]: ...
     @overload
-    def select[T1, T2, T3, T4, T5, T6, T7](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7]]: ...
+    def select[T1, T2, T3, T4, T5, T6, T7](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7]]: ...
     @overload
-    def select[T1, T2, T3, T4, T5, T6, T7, T8](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8]]: ...
+    def select[T1, T2, T3, T4, T5, T6, T7, T8](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8]]: ...
     @overload
-    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8], tuple[T9]]: ...
+    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8], tuple[T9]]: ...
     @overload
-    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8], tuple[T9], tuple[T10]]: ...
+    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](self, selector: Callable[[T], tuple[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1], tuple[T2], tuple[T3], tuple[T4], tuple[T5], tuple[T6], tuple[T7], tuple[T8], tuple[T9], tuple[T10]]: ...
 
     @overload
-    def select[*Ts](self, selector: Callable[[T], tuple[*Ts]], *, flavour: Type[tuple]) -> tuple[tuple[*Ts]]: ...
+    def select[*Ts](self, selector: Callable[[T], tuple[*Ts]], *, flavour: Type[tuple], by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[*Ts]]: ...
 
     @overload
-    def select[TFlavour](self, selector: Callable[[T], tuple], *, flavour: Type[TFlavour]) -> tuple[TFlavour]: ...
+    def select[TFlavour](self, selector: Callable[[T], tuple], *, flavour: Type[TFlavour], by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[TFlavour]: ...
 
     @overload
     def select[TFlavour](self, flavour: Type[TFlavour]) -> tuple[TFlavour]: ...
-
-    @overload
-    def select(self, *, by: JoinType) -> T | tuple[T]: ...
-
-    @overload
-    def select[TValue, *Ts](self, selector: Callable[[T], tuple[TValue, *Ts]], *, by: JoinType) -> T | list[tuple[TValue, *Ts]]: ...
-
-    @overload
-    def select[*Ts, TFlavour](self, selector: Optional[Callable[[T, *Ts], None]], *, flavour: TFlavour, by: JoinType) -> list[TFlavour]: ...
 
     def select[TValue, TFlavour, *Ts](
         self,
@@ -570,12 +561,19 @@ class ModelBase[T: Table](ABC):
     def _return_model[TValue, *Ts](self, select: SelectQuery[T, *Ts], query: str) -> TValue | tuple[tuple[*Ts]]:
         response_sql = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
-        if response_sql and not isinstance(response_sql, str) and isinstance(response_sql, Iterable):
+        if isinstance(response_sql, Iterable):
             return ClusterQuery[T, *Ts](select, response_sql).clean_response()
 
         return response_sql
 
     # endregion
+
+    @overload
+    def select_one(self) -> T: ...
+    @overload
+    def select_one[T1](self, selector: Callable[[T], tuple[T1]], *, by: JoinType = JoinType.INNER_JOIN) -> T1: ...
+    @overload
+    def select_one[*Ts](self, selector: Callable[[T], tuple[*Ts]], *, by: JoinType = JoinType.INNER_JOIN) -> tuple[*Ts]: ...
 
     def select_one[TValue, TFlavour, *Ts](
         self,
@@ -593,9 +591,9 @@ class ModelBase[T: Table](ABC):
 
 
 class ClusterQuery[T, *Ts]:
-    def __init__(self, select: SelectQuery[T, *Ts], response_sql: dict[list[dict[str, Any]]]) -> None:
+    def __init__(self, select: SelectQuery[T, *Ts], response_sql: tuple[dict[str, Any]]) -> None:
         self._select: SelectQuery[T, *Ts] = select
-        self._response_sql: dict[list[dict[str, Any]]] = response_sql
+        self._response_sql: tuple[dict[str, Any]] = response_sql
 
     def loop_foo(self) -> dict[Type[Table], list[Table]]:
         #  We must ensure to get the valid attributes for each instance
@@ -614,21 +612,11 @@ class ClusterQuery[T, *Ts]:
                 table_initialize[table_].append(table_(**valid_attr))
         return table_initialize
 
-    def clean_response[TValue](self) -> T | list[tuple[*Ts]] | TValue:
+    def clean_response(self) -> tuple[dict[Type[Table], tuple[Table]]]:
         tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
 
-        # Avoid
-        # if len(tbl_dicc) == 1:
-        #     val = tuple(tbl_dicc.values())[0]
-        #     if len(val) == 1:
-        #         return val[0]
-        #     return tuple(val)
-
+        # it not depend of flavour attr
         for key, val in tbl_dicc.items():
-            # if len(val) == 1:
-            #     tbl_dicc[key] = val[0]
-            # else:
-            #     tbl_dicc[key] = tuple(val)
             tbl_dicc[key] = tuple(val)
 
         return tuple(tbl_dicc.values())
