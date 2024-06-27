@@ -130,12 +130,10 @@ class MySQLRepository(IRepositoryBase):
                 cursor.execute(f"CREATE DATABASE {db_name} DEFAULT CHARACTER SET 'utf8'")
             except Error as err:
                 if err.errno == errorcode.ER_DB_CREATE_EXISTS and if_exists != "fail":
-                    print(err)
+                    cursor.execute(f"USE {db_name};")
                 else:
                     raise err
-                cursor.execute(f"USE {db_name};")
             else:
-                print(f"Database {db_name} created successfully.")
                 self._connection.database = db_name
         return None
 
@@ -146,22 +144,12 @@ class MySQLRepository(IRepositoryBase):
                 cursor.execute(f"DROP DATABASE {db_name}")
         except Error as err:
             raise err
-        else:
-            print(f"Database {db_name} deleted successfully.")
 
     def create_tables(self, tables: Iterator):
         for table_name in tables:
             table_description = tables[table_name]
-            try:
-                print(f"Creating table {table_name}: ", end="")
-                self.create_table(table_description)
-            except Error as err:
-                if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-                    print("already exists.")
-                else:
-                    print(err.msg)
-            else:
-                print("OK")
+            self.create_table(table_description)
+
 
     @is_connected
     def create_table(
