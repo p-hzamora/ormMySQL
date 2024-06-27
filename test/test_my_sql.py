@@ -22,19 +22,18 @@ data_config = {"user": "root", "password": "1234"}
 
 
 class Test_my_sql(unittest.TestCase):
-    def test_create_and_drop_database(self):
-        cnx = MySQLRepository(**data_config).connect()
-        cnx.create_database(TDDBB_name, "replace")
-        cnx.drop_database(TDDBB_name)
+
+    def setUp(self) -> None:
+        self.ddbb = MySQLRepository(**data_config).connect()
+        self.ddbb.create_database(TDDBB_name,"replace")
+
+    def tearDown(self) -> None:
+        self.ddbb.drop_database(TDDBB_name)
 
     def test_database_already_exists(self):
-        cnx = MySQLRepository(**data_config).connect()
-        cnx.create_database(TDDBB_name, "replace")
-
         # Debe alcanzar un raise pero como esta contenido en el with, el programa no falla
         with self.assertRaises(errors.DatabaseError):
-            cnx.create_database(TDDBB_name)
-        cnx.drop_database(TDDBB_name)
+            self.ddbb.create_database(TDDBB_name)
 
     def test_create_insert_and_drop_table(self):
         class test_table(object):
@@ -59,59 +58,37 @@ class Test_my_sql(unittest.TestCase):
             test_table(datetime.now(), "23/00002", 20.5).to_dict,
             test_table(datetime.now(), "23/00003", 800.00).to_dict,
         ]
-        cnx = MySQLRepository(**data_config).connect()
-        cnx.create_database(TDDBB_name, "replace")
-        cnx.create_table(TABLE[tbl_name])
-        cnx.insert(tbl_name, values)
-        cnx.drop_table(tbl_name)
-        cnx.drop_database(TDDBB_name)
+        self.ddbb.create_table(TABLE[tbl_name])
+        self.ddbb.insert(tbl_name, values)
+        self.ddbb.drop_table(tbl_name)
 
     def test_insert_table_from_df(self):
-        ddbb = MySQLRepository(**data_config).connect()
-
-        ddbb.create_database(TDDBB_name)
-
         df = pd.read_csv(Path(__file__).parent / "csv_table.csv")
-        ddbb.create_table(data=df, name=TTABLE_name)
-        ddbb.drop_table(TTABLE_name)
-        ddbb.drop_database(TDDBB_name)
+        self.ddbb.create_table(data=df, name=TTABLE_name)
+        self.ddbb.drop_table(TTABLE_name)
 
     def test_create_table_already_exists_fail(self):
-        ddbb = MySQLRepository(**data_config).connect()
-
-        ddbb.create_database(TDDBB_name)
-
         df = pd.read_csv(Path(__file__).parent / "csv_table.csv")
-        ddbb.create_table(data=df.head(), name=TTABLE_name)
+        self.ddbb.create_table(data=df.head(), name=TTABLE_name)
 
         with self.assertRaises(errors.DatabaseError):
-            ddbb.create_table(df, TTABLE_name)
-        ddbb.drop_database(TDDBB_name)
+            self.ddbb.create_table(df, TTABLE_name)
 
     def test_create_table_already_exists_replace(self):
-        ddbb = MySQLRepository(**data_config).connect()
-
-        ddbb.create_database(TDDBB_name)
-
         df = pd.read_csv(Path(__file__).parent / "csv_table.csv")
-        ddbb.create_table(data=df.head(), name=TTABLE_name)
+        self.ddbb.create_table(data=df.head(), name=TTABLE_name)
 
-        ddbb.create_table(df, TTABLE_name, "replace")
-        ddbb.drop_database(TDDBB_name)
+        self.ddbb.create_table(df, TTABLE_name, "replace")
 
     def test_read_sql(self):
-        ddbb = MySQLRepository(**data_config).connect()
-
-        ddbb.create_database(TDDBB_name)
-
         df = pd.read_csv(Path(__file__).parent / "csv_table.csv")
-        ddbb.create_table(data=df.head(), name=TTABLE_name)
+        self.ddbb.create_table(data=df.head(), name=TTABLE_name)
 
-        result_all = ddbb.read_sql(f"SELECT * FROM {TTABLE_name}")
-        result_col = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name}",tuple)
-        result_unic = ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044",tuple)
-        result_row_dicc = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", dict)
-        result_row_tuple = ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", tuple)
+        result_all = self.ddbb.read_sql(f"SELECT * FROM {TTABLE_name}",pd.DataFrame)
+        result_col = self.ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name}",tuple)
+        result_unic = self.ddbb.read_sql(f"SELECT Col2 FROM {TTABLE_name} WHERE Col1 = 62044",tuple)
+        result_row_dicc = self.ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", dict)
+        result_row_tuple = self.ddbb.read_sql(f"SELECT * FROM {TTABLE_name} WHERE Col1 = 6623", tuple)
 
         my_tuple = (
             6623,
@@ -169,12 +146,11 @@ class Test_my_sql(unittest.TestCase):
             "Col25": 83170,
         }
 
-        self.assertAlmostEqual(type(result_all), pd.DataFrame)
-        self.assertAlmostEqual([x[0] for x in result_col], [77642, 93631, 58778, 94092, 16228])
-        self.assertAlmostEqual(result_unic[0][0], 93631)
-        self.assertAlmostEqual(result_row_dicc[0], dicc)
-        self.assertAlmostEqual(result_row_tuple[0], my_tuple)
-        ddbb.drop_database(TDDBB_name)
+        self.assertIsInstance(result_all[0], pd.DataFrame)
+        self.assertEqual([x[0] for x in result_col], [77642, 93631, 58778, 94092, 16228])
+        self.assertEqual(result_unic[0][0], 93631)
+        self.assertEqual(result_row_dicc[0], dicc)
+        self.assertEqual(result_row_tuple[0], my_tuple)
 
     def test_upsert(self):
         values = [
@@ -212,21 +188,17 @@ class Test_my_sql(unittest.TestCase):
             "   )"
         )
 
-        ddbb = MySQLRepository(**data_config).connect()
-
-        ddbb.create_database(TDDBB_name)
-
-        ddbb.create_table(data=query, name=TTABLE_name)
+        self.ddbb.create_table(data=query, name=TTABLE_name)
 
         cols = "id_unique, col1, col2, col3, col4, col5"
 
         # insert in empty table
-        ddbb.upsert(TTABLE_name, values)
-        prev_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} LIMIT 1",dict)
+        self.ddbb.upsert(TTABLE_name, values)
+        prev_dicc = self.ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} LIMIT 1",dict)
         self.assertDictEqual(prev_dicc[0], values[0])
 
         # update values currently in empty table
-        ddbb.upsert(
+        self.ddbb.upsert(
             TTABLE_name,
             {
                 "id_unique": 100,
@@ -237,12 +209,12 @@ class Test_my_sql(unittest.TestCase):
                 "col5": 555,
             },
         )
-        current_dicc = ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100",dict)
+        current_dicc = self.ddbb.read_sql(f"SELECT {cols} FROM {TTABLE_name} WHERE id_unique = 100",dict)
         self.assertDictEqual(current_dicc[0], new_val_100)
 
         # insert news values
-        ddbb.upsert(TTABLE_name, {"id_unique": 101})
-        ddbb.upsert(
+        self.ddbb.upsert(TTABLE_name, {"id_unique": 101})
+        self.ddbb.upsert(
             TTABLE_name,
             {
                 "id_unique": 101,
@@ -253,9 +225,6 @@ class Test_my_sql(unittest.TestCase):
                 "col5": 101,
             },
         )
-
-        ddbb.drop_database(TDDBB_name)
-
 
 if __name__ == "__main__":
     unittest.main()
