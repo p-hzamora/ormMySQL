@@ -412,35 +412,30 @@ class ModelBase[T: Table](ABC):
     def delete(self, instance: list[T]) -> None: ...
 
     def delete(self, instance: T | list[T] = None) -> None:
-        def get_pk(instance: T | list[T]) -> Column:
-            for col in instance.__dict__.values():
-                if isinstance(col, Column) and col.is_primary_key:
-                    # utilizamos la columna que sea primary key si no la encuentra, dara error
-                    break
-            if not col.is_primary_key:
-                raise Exception(f"La tabla '{self._model.__table_name__}' no tiene primary key")
-            return col
-
-        col: str
         if instance is None:
-            return self.delete(self.select())
+            response = self.select()
+            if len(response)== 0:
+                return None
+            # [0] because if we do not select anything, we retrieve all columns of the unic model, stored in tuple[tuple[model]] structure.
+            # We always going to have a tuple of one element 
+            return self.delete(response[0])
 
-        elif issubclass(instance.__class__, Table):
-            pk = get_pk(instance)
+        col: str = ""
+        if issubclass(instance.__class__, Table):
+            pk = instance.get_pk()
             if pk.column_value is None:
-                raise Exception(f"No se puede realizar la petición 'DELETE' sin establecer un valor único para la primary key '{pk.column_name}'")
+                raise Exception(f"You cannot use 'DELETE' query without set primary key in '{instance.__table_name__}'")
             col = pk.column_name
             value = str(pk.column_value)
 
         elif isinstance(instance, Iterable):
             value = []
             for ins in instance:
-                pk = get_pk(ins)
+                pk = ins.get_pk()
                 col = pk.column_name
                 value.append(str(pk.column_value))
-
         else:
-            raise Exception(f"'{type(instance)}' dato no esperado")
+            raise Exception(f"'{type(instance)}' data not expected")
 
         self._repository.delete(self._model.__table_name__, col=col, value=value)
         return None

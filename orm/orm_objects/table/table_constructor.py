@@ -209,3 +209,11 @@ class Table(metaclass=TableMeta):
         if (dtype := type(_value)) in transform_map:
             return transform_map[dtype](_value)
         return _value
+
+    def get_pk(self) -> Optional[Column]:
+        for col_name in self.__annotations__.keys():
+            private_col = f"_{col_name}"
+            col_obj = getattr(self, private_col)
+            if isinstance(col_obj, Column) and col_obj.is_primary_key:
+                return col_obj
+        return None
