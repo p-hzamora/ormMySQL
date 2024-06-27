@@ -583,7 +583,8 @@ class ModelBase[T: Table](ABC):
         if flavour:
             return response[0]
         
-        # response var could be return more than one element when we work with models an we need a join query 
+        # response var could be return more than one element when we work with models an we 
+        # select columns from different tables using a join query 
         if len(response) == 1 and len(response[0]) == 1:
             return response[0][0]
         return tuple([res[0] for res in response])
