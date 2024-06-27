@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
@@ -8,7 +7,10 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 from orm import MySQLRepository, IRepositoryBase  # noqa: E402
 from orm.condition_types import ConditionType  # noqa: E402
+from orm.orm_objects.queries.joins import JoinType  # noqa: E402
 from test.models.address import AddressModel, Address  # noqa: E402
+from test.models.staff import StaffModel, Staff  # noqa: E402
+
 
 
 load_dotenv()
@@ -23,20 +25,31 @@ database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, da
 
 
 a_model = AddressModel(database)
+s_model = StaffModel(database)
 res_tuple_3 = (
-    a_model.where(lambda a: a.address_id <= 5)
-    .order(lambda a: a.address_id, order_type="DESC")
+    a_model.order(lambda a: a.address_id, order_type="DESC")
+    .where(lambda x: x.city.country.country_id == 87)
     .select(
         lambda a: (
             a,
             a.city,
-            a.city.country.country_id,
+            a.city.country,
         )
     )
 )
 
-res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a.city,))
-res_one_table_five_results = a_model.where(lambda a: a.address_id ==5).order(lambda a: a.address_id, order_type="DESC").select()
+country, address, c = a_model.order(lambda a: a.address_id, order_type="DESC").where(lambda x: x.city.country.country_id == 87).select(lambda a: (a.city.country, a, a.city), by=JoinType.LEFT_EXCLUSIVE)
+
+
+for co in country:
+    print(co.to_dict())
+
+for ad in address:
+    print(ad.to_dict())
+
+
+res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).limit(100).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a,))
+res_one_table_one_result = a_model.where(lambda a: a.address_id == 5).order(lambda a: a.address_id, order_type="DESC").select_one()
 
 
 query = """
@@ -50,7 +63,7 @@ pass
 
 def pagination(page: int):
     limit = 20
-    total_register: int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")
+    total_register:int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")[0][0]
     total_pages = int(math.ceil(total_register / limit))
 
     if page > total_pages:
