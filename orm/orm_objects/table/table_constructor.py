@@ -1,7 +1,7 @@
 import base64
 import datetime
 from decimal import Decimal
-from typing import Any, Iterable, Type, dataclass_transform
+from typing import Any, Iterable, Optional, Type, dataclass_transform
 import json
 from .column import Column
 
@@ -162,9 +162,10 @@ class Table(metaclass=TableMeta):
     >>>     phone: str
     >>>     location: datetime
     >>>     last_update: datetime = Column[datetime](is_auto_generated=True)
- 
+
     >>>     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
     """
+
     __table_name__ = ...
 
     def __str__(self) -> str:
@@ -179,10 +180,10 @@ class Table(metaclass=TableMeta):
             if not isinstance(value, str):
                 value = str(value)
             if len(value) > 20:
-                return value[:20]+ "..."
+                return value[:20] + "..."
             return value
 
-        dicc:dict[str,str] = {x:str(getattr(self,x)) for x in self.__annotations__}
+        dicc: dict[str, str] = {x: str(getattr(self, x)) for x in self.__annotations__}
         equal_loop = ["=".join((x, __cast_long_variables(y))) for x, y in dicc.items()]
         return f'{self.__class__.__name__}({", ".join(equal_loop)})'
 
