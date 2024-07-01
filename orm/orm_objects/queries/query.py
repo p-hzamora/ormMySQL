@@ -52,16 +52,24 @@ class SQLQuery[T]:
 
     def build(self) -> str:
         query: str = ""
-        # self._create_necessary_inner_join()
+        self._create_necessary_inner_join()
         for x in self.__order__:
             if sub_query := self._query.get(x, None):
                 if isinstance(sub_query[0], WhereCondition):
                     query_ = self.__build_where_clause(sub_query)
+                    
+                # we must check if any join already exists on query string
+                elif isinstance(sub_query[0],JoinSelector):
+                    select_query:str = self._query["select"][0].query
+                    query_ = ""
+                    for join in sub_query:
+                        if join.query not in select_query:
+                            query_ += f"\n{join.query}"
                 else:
-                    query_ = " ".join([x.query for x in sub_query])
+                    query_ = "\n".join([x.query for x in sub_query])
 
 
-                query += f" {query_}" if query != "" else query_
+                query += f"\n{query_}" if query != "" else query_
         self._query.clear()
         return query
 
@@ -75,12 +83,15 @@ class SQLQuery[T]:
         return query
 
     def _create_necessary_inner_join(self)->None:
-        # TODOM: updated lambda function in Where clausules to added tables
-        # where: WhereCondition = self._query["where"][0]
-        # tables_where: list[Table] = where.get_involved_tables()
-        # avoid_repeated_table = set(tables).difference(set(tables_where))
-        # tables.extend(list(avoid_repeated_table))
-        ...
+        # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
+        where: WhereCondition = self._query["where"][0]
+        involved_tables = where.get_involved_tables()
+        if not involved_tables:
+            return None
+
+        for l_tbl, r_tbl in involved_tables:
+            self.join(l_tbl, r_tbl, by="INNER JOIN")
+
 
     def limit(self, number: int) -> LimitQuery:
         limit: LimitQuery = LimitQuery(number)

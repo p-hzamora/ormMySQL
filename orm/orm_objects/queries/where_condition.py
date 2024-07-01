@@ -161,7 +161,8 @@ class WhereCondition[*Inst](IQuery):
 
         return query
 
-    def get_involved_tables(self) -> list[Table]:
+    def get_involved_tables(self) ->tuple[tuple[Table,Table]]:
+        return_involved_tables: list[tuple[Table,Table]] = []
         involved_tables: list[Table] = [self._instances[0]]
 
         def get_attr_tbl(instance: Table, tbl_name: str) -> Optional[Table]:
@@ -175,10 +176,12 @@ class WhereCondition[*Inst](IQuery):
 
         tables: list[str] = self._tree.to_list()[0].nested_element.parents[1:]  # Avoid lambda variable
         for tbl_name in tables:
-            attr = get_attr_tbl(involved_tables[-1], tbl_name)
+            tbl = involved_tables[-1]
+            attr = get_attr_tbl(tbl, tbl_name)
             if attr is not None:
                 involved_tables.append(attr)
-        return involved_tables
+                return_involved_tables.append(tuple([tbl,attr]))
+        return tuple(return_involved_tables)
 
     def create_conditions_list_and_compare_sign(self) -> tuple[list[str], list[str]]:
         compare_sign: list[str] = []
