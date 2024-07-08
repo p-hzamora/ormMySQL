@@ -84,6 +84,8 @@ class SQLQuery[T]:
 
     def _create_necessary_inner_join(self)->None:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
+        if "where" not in self._query:
+            return None
         where: WhereCondition = self._query["where"][0]
         involved_tables = where.get_involved_tables()
         if not involved_tables:
