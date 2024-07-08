@@ -1,5 +1,7 @@
 # Standard libraries
 from functools import wraps
+from pathlib import Path
+import re
 from typing import Any, Iterator, Literal, Type, override
 
 # Third party libraries
@@ -10,7 +12,10 @@ from mysql.connector import errorcode
 
 # Custom libraries
 from .interfaces import IRepositoryBase
+from .orm_objects.table import Table, Column
+from .orm_objects.foreign_key import ForeignKey
 
+import datetime
 
 type_exists = Literal["fail", "replace", "append"]
 
@@ -149,7 +154,6 @@ class MySQLRepository(IRepositoryBase):
         for table_name in tables:
             table_description = tables[table_name]
             self.create_table(table_description)
-
 
     @is_connected
     def create_table(
@@ -330,3 +334,72 @@ class MySQLRepository(IRepositoryBase):
             cursor.executemany(query, self._clean_data(values))
             self._connection.commit()
         return None
+
+    @is_connected
+    def create_table_code_first(self, path: str | Path) -> None:
+        def get_table_class_name(path: Path) -> str:
+            with path.open(encoding="utf-8") as f:
+                py_file_string_list = f.readlines()
+
+            table_pattern: re.Pattern = re.compile(r"^class\s(\w+)\(.*Table.*\):$")
+            for line in py_file_string_list:
+                if pattern := table_pattern.match(line.rstrip()):
+                    return pattern.group(1)
+
+        def create_sql_column_query(table_object: Table) -> list[str]:
+            annotations: dict[str, Column] = table_object.__annotations__
+            all_columns: list = []
+            for col_name in annotations.keys():
+                col_object: Column = getattr(table_object, f"_{col_name}")
+                all_columns.append(self.get_query_clausule(col_object))
+            return all_columns
+
+        if not isinstance(path, Path | str):
+            raise ValueError
+
+        if isinstance(path, str):
+            path = Path(path).resolve()
+
+        if not path.exists():
+            raise FileNotFoundError
+
+        tbl_name: str = get_table_class_name(path)
+
+        namespace: dict = {}
+        exec(path.read_text(), namespace)
+        table_object: Table = namespace[tbl_name]()
+        all_columns = create_sql_column_query(table_object)
+
+        create_query: str = f"CREATE TABLE {table_object.__table_name__} ({','.join(all_columns)})"
+
+        with self._connection.cursor(buffered=True) as cursor:
+            cursor.execute(create_query)
+        return None
+
+    def get_query_clausule(self, column_obj: Column) -> str:
+        dtype: str = self.transform_py_dtype_into_query_dtype(column_obj.dtype)
+        query: str = f" {column_obj.column_name} {dtype}"
+        if column_obj.is_primary_key:
+            query += " PRIMARY KEY"
+        if column_obj.is_auto_generated:
+            query += "auto generated"
+        if column_obj.is_auto_increment:
+            query += " AUTO_INCREMENT"
+        if column_obj.is_unique:
+            query += " UNIQUE"
+        return query
+
+    @staticmethod
+    def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
+        # TODOL: must be found a better way to convert python data type into SQL clauses
+        # float -> DECIMAL(5,2) is an error
+        dicc: dict[Any, str] = {
+            int: "INTEGER",
+            float: "DECIMAL(5,2)",
+            datetime.datetime: "DATETIME",
+            datetime.date: "DATE",
+            bytes: "BLOB",
+            str: "TEXT",
+        }
+
+        return dicc[dtype]
