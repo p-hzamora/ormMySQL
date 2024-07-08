@@ -54,10 +54,10 @@ class PersonInit:
         sound: str = None,
         id_person: int = None,
     ) -> None:
-        self._name: Column[str] = Column[str]("name", name, is_unique=True)
-        self._age: Column[int] = Column[int]("age", age, is_auto_increment=True)
-        self._sound: Column[str] = Column[str]("sound", sound)
-        self._id_person: Column[int] = Column[int]("id_person", id_person, is_primary_key=True)
+        self._name: Column[str] = Column[str](dtype=str, column_name="name", column_value=name, is_unique=True)
+        self._age: Column[int] = Column[int](dtype=int, column_name="age", column_value=age, is_auto_increment=True)
+        self._sound: Column[str] = Column[str](dtype=str, column_name="sound", column_value=sound)
+        self._id_person: Column[int] = Column[int](dtype=int, column_name="id_person", column_value=id_person, is_primary_key=True)
 
     @property
     def age(self) -> int:
