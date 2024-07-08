@@ -38,7 +38,7 @@ class Field:
 
     @property
     def assginment(self) -> str:
-        return f"self._{self.name} = {self.default.__to_string__(self.name,self.name)}"
+        return f"self._{self.name} = {self.default.__to_string__(self.name,self.name,self.type_name)}"
 
 
 def delete_special_variables(dicc: dict[str, object]) -> None:

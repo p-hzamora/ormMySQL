@@ -1,5 +1,8 @@
+from typing import Type
+
 class Column[T]:
     __slots__ = (
+        "dtype",
         "column_name",
         "column_value",
         "is_primary_key",
@@ -10,6 +13,7 @@ class Column[T]:
 
     def __init__(
         self,
+        dtype:Type[T] = None,
         column_name: str = None,
         column_value: T = None,
         *,
@@ -18,6 +22,7 @@ class Column[T]:
         is_auto_increment: bool = False,
         is_unique: bool = False,
     ) -> None:
+        self.dtype = dtype
         self.column_name = column_name
         self.column_value: T = column_value
         self.is_primary_key: bool = is_primary_key
@@ -28,12 +33,13 @@ class Column[T]:
     def __repr__(self) -> str:
         return f"<Column: {self.column_name}>"
 
-    def __to_string__(self, name: str, value: T):
+    def __to_string__(self, name: str, var_name: T, type_: str):
         dicc: dict = {
+            "dtype":type_,
             "column_name": f"'{name}'",
-            "column_value": value,
+            "column_value": var_name, # must be the same variable name as the instance variable name in Table's __init__ class
         }
-        exec_str: str = f"{Column.__name__}("
+        exec_str: str = f"{Column.__name__}[{type_}]("
         for x in self.__slots__:
             self_value = getattr(self, x)
 
