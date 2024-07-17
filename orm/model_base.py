@@ -58,15 +58,11 @@ class ModelBase[T: Table](ABC):
         - True  -> No eliminamos la columna de la consulta
         - False -> Eliminamos la columna
         """
+        cond_1 = all([column.column_value is None, column.is_primary_key])
+        cond_2 = any([column.is_auto_increment, column.is_auto_generated])
+
         # not all to get False and deleted column
-        return not all(
-            [
-                column.column_value is None,
-                column.is_auto_increment,
-                column.is_primary_key,
-                column.is_auto_generated,
-            ]
-        )
+        return not all([cond_1,cond_2])
 
     @classmethod
     def __create_dict_list(cls, _list: list, values: T | list[T]):
