@@ -2,6 +2,7 @@
 from abc import ABC
 from collections import defaultdict
 from typing import Any, Callable, Optional, Self, Type, overload, Iterable
+import inspect
 
 from .orm_objects.queries.joins import JoinType
 
@@ -75,7 +76,7 @@ class ModelBase[T: Table](ABC):
 
         elif isinstance(values, list):
             for x in values:
-                cls.__create_dict_list(x)
+                cls.__create_dict_list(_list, x)
         else:
             raise Exception(f"Tipo de dato'{type(values)}' no esperado")
 
@@ -410,10 +411,10 @@ class ModelBase[T: Table](ABC):
     def delete(self, instance: T | list[T] = None) -> None:
         if instance is None:
             response = self.select()
-            if len(response)== 0:
+            if len(response) == 0:
                 return None
             # [0] because if we do not select anything, we retrieve all columns of the unic model, stored in tuple[tuple[model]] structure.
-            # We always going to have a tuple of one element 
+            # We always going to have a tuple of one element
             return self.delete(response[0])
 
         col: str = ""
@@ -505,7 +506,7 @@ class ModelBase[T: Table](ABC):
         return self
 
     @overload
-    def select(self) -> tuple[tuple[T]]: ...
+    def select(self) -> tuple[T]: ...
     @overload
     def select[T1](self, selector: Callable[[T], tuple[T1]], *, by: Optional[JoinType] = JoinType.INNER_JOIN) -> tuple[tuple[T1]]: ...
     @overload
@@ -540,6 +541,11 @@ class ModelBase[T: Table](ABC):
         flavour: Type[TFlavour] = None,
         by: JoinType = JoinType.INNER_JOIN,
     ):
+        if len(inspect.signature(selector).parameters) == 0:
+            # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
+            result = self.select(selector=lambda x: (x,), flavour=flavour, by= by)
+            return () if not result else result[0]
+        
         select: SelectQuery[T, *Ts] = self.build_query.select(self._model, selector, by)
 
         query: str = self.build_query.build()
@@ -583,9 +589,9 @@ class ModelBase[T: Table](ABC):
 
         if flavour:
             return response[0]
-        
-        # response var could be return more than one element when we work with models an we 
-        # select columns from different tables using a join query 
+
+        # response var could be return more than one element when we work with models an we
+        # select columns from different tables using a join query
         if len(response) == 1 and len(response[0]) == 1:
             return response[0][0]
         return tuple([res[0] for res in response])
