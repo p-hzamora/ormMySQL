@@ -495,7 +495,12 @@ class ModelBase[T: Table](ABC):
         self.build_query.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
         return self
 
-    def order(self, _lambda_col: Callable[[T], None], order_type: OrderType) -> Self:
+    @overload
+    def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> Self: ...
+    @overload
+    def order[TValue](self, _lambda_col: Callable[[T], TValue],order_type: OrderType) -> Self: ...
+
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> Self:
         self.build_query.order(self._model, _lambda_col, order_type)
         return self
 
