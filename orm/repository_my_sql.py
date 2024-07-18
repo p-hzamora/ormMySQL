@@ -1,8 +1,11 @@
 # Standard libraries
 from functools import wraps
+import importlib.resources
 import importlib.util
+import sys
 from pathlib import Path
 from typing import Any, Iterator, Literal, Type, override
+import re
 
 # Third party libraries
 import pandas as pd
@@ -17,6 +20,8 @@ from .orm_objects.table import Table, Column
 import importlib
 import inspect
 
+import copy
+
 
 import datetime
 from decimal import Decimal
@@ -26,6 +31,29 @@ type_exists = Literal["fail", "replace", "append"]
 # with this conditional we try to avoid return tuples or lists of lists with one element at all:
 # [[0],[1],[2],[3]] -> [0,1,2,3]
 # ((0),(1),(2),(3)) -> (0,1,2,3)
+
+
+class Node:
+    def __init__(
+        self,
+        pattern: str = r"from \.(.+) import (?:\w+)",
+        file: Path = None,
+        code: str = None,
+    ):
+        self.pattern: str = pattern
+        self.file: Path = file
+        self.code: str = code
+
+    def __repr__(self) -> str:
+        return f"{Node.__name__}: {self.file.stem if self.file else None}"
+
+    @property
+    def relative_modules(self) -> list[str]:
+        return re.findall(self.pattern, self.code) if self.file is not None else []
+
+    @property
+    def is_dependent(self) -> bool:
+        return len(self.relative_modules) > 0
 
 
 class Response[TFlavour, *Ts]:
@@ -346,6 +374,66 @@ class MySQLRepository(IRepositoryBase):
 
     @is_connected
     def create_tables_code_first(self, path: str | Path) -> None:
+        def load_module(path: str | Path):
+            def sort_dicc(old_dicc: dict[str, Node], new_list: dict[str, Node]):
+                def add_children(old_dicc: dict[str, Node], new_list: dict[str, Node], key: str):
+                    node = old_dicc[key]
+                    all_children_added = all(resolve_order[x] in new_list.values() for x in node.relative_modules)
+
+                    if node not in new_list.values() and node.file is not None and ((node.is_dependent and all_children_added) or not node.is_dependent):
+                        new_list[key] = node
+                        return None
+
+                    if node in new_list.values() and not node.is_dependent:
+                        return None
+
+                    for val in node.relative_modules:
+                        add_children(old_dicc, new_list, val)
+
+                copy_old_dicc = copy.deepcopy(old_dicc)
+                for key in copy_old_dicc:
+                    node: Node = old_dicc[key]
+                    add_children(copy_old_dicc, new_list, key)
+
+                    copy_old_dicc[key] = Node()  # we deleted all references
+                    if node not in new_list.values():
+                        new_list[key] = node
+
+                pass
+
+            if isinstance(path, str):
+                path = Path(path)
+
+            if path.is_dir():
+                resolve_order: dict[str, Node] = {}
+                for p in path.iterdir():
+                    if not p.is_dir():
+                        code = p.read_text()
+
+                        resolve_order[p.stem] = Node(file=p, code=code)
+
+                if "__init__" in resolve_order:
+                    del resolve_order["__init__"]
+
+                sorted_list: dict[str, Node] = {}
+
+                sort_dicc(resolve_order, sorted_list)
+
+                modules: dict = {}
+                for node in sorted_list.values():
+                    module_name = node.file.stem
+                    spec = importlib.util.spec_from_file_location(module_name, node.file)
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[spec.name] = module
+                    spec.loader.exec_module(module)
+                    modules[module_name] = module
+                return modules
+
+            spec = importlib.util.spec_from_loader(path.stem, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+
         def create_sql_column_query(table_object: Table) -> list[str]:
             annotations: dict[str, Column] = table_object.__annotations__
             all_columns: list = []
@@ -366,10 +454,7 @@ class MySQLRepository(IRepositoryBase):
         if not path.exists():
             raise FileNotFoundError
 
-        spec = importlib.util.spec_from_file_location("module", path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
+        module = load_module(path)
         tbl_name = [name for name, obj in inspect.getmembers(module) if is_table_subclass(module, obj)]
 
         queries_list: list[str] = []
