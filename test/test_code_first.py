@@ -26,9 +26,7 @@ class Test_my_sql(unittest.TestCase):
         self.ddbb.drop_database(TDDBB_name)
 
     def test_create_table_code_first(self):
-        models: tuple[str] = ("actor", "country", "city", "address", "staff", "store")
-        for m in models:
-            self.ddbb.create_tables_code_first(f"test/models/{m}.py")
+        self.ddbb.create_tables_code_first("test/models")
         pass
 
 
