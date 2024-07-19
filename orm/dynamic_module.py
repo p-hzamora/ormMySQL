@@ -226,6 +226,8 @@ class ModuleTree:
     def get_tables(self) -> tuple[str, Type[Table]]:
         table_list: list[Table] = []
         for node in self.order_module_tuple:
+            if node.class_name is None:
+                continue
             # avoid __init__ because we can get relative import not found error
             if node.file.is_dir() or node.class_name == "__init__":
                 continue
