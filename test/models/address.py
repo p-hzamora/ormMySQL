@@ -8,7 +8,7 @@ from orm import (
     ForeignKey,
 )
 
-from .city import City
+from .city import City  
 
 
 class Address(Table):
@@ -19,9 +19,9 @@ class Address(Table):
     address2: str
     district: str
     city_id: int
-    postal_code: datetime
+    postal_code: str
     phone: str
-    location: datetime
+    location: str
     last_update: datetime = Column[datetime](is_auto_generated=True)
 
     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
