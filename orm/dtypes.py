@@ -47,10 +47,56 @@ YEAR	A year in four-digit format. Values allowed in four-digit format: 1901 to 2
 MySQL 8.0 does not support year in two-digit format.
 """
 
-from typing import Literal
+from decimal import Decimal
+import datetime
+from typing import Any,Literal
+
+from orm.orm_objects.table.column import Column
 
 
 STRING = Literal["CHAR(size)", "VARCHAR(size)", "BINARY(size)", "VARBINARY(size)", "TINYBLOB", "TINYTEXT", "TEXT(size)", "BLOB(size)", "MEDIUMTEXT", "MEDIUMBLOB", "LONGTEXT", "LONGBLOB", "ENUM(val1, val2, val3, ...)", "SET(val1, val2, val3, ...)"]
 NUMERIC_SIGNED = Literal["BIT(size)", "TINYINT(size)", "BOOL", "BOOLEAN", "SMALLINT(size)", "MEDIUMINT(size)", "INT(size)", "INTEGER(size)", "BIGINT(size)", "FLOAT(size, d)", "FLOAT(p)", "DOUBLE(size, d)", "DOUBLE PRECISION(size, d)", "DECIMAL(size, d)", "DEC(size, d)"]
 NUMERIC_UNSIGNED = Literal["BIT(size)", "TINYINT(size)", "BOOL", "BOOLEAN", "SMALLINT(size)", "MEDIUMINT(size)", "INT(size)", "INTEGER(size)", "BIGINT(size)", "FLOAT(size, d)", "FLOAT(p)", "DOUBLE(size, d)", "DOUBLE PRECISION(size, d)", "DECIMAL(size, d)", "DEC(size, d)"]
 DATE = Literal["DATE", "DATETIME(fsp)", "TIMESTAMP(fsp)", "TIME(fsp)", "YEAR"]
+
+
+
+
+
+
+# FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
+@staticmethod
+def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
+    # TODOL: must be found a better way to convert python data type into SQL clauses
+    # float -> DECIMAL(5,2) is an error
+    dicc: dict[Any, str] = {
+        int: "INTEGER",
+        float: "FLOAT(5,2)",
+        Decimal: "DECIMAL(5,2)",
+        datetime.datetime: "DATETIME",
+        datetime.date: "DATE",
+        bytes: "BLOB",
+        str: "VARCHAR(255)",
+    }
+
+    return dicc[dtype]
+
+
+
+
+# FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
+def get_query_clausule(column_obj: Column) -> str:
+    dtype: str = transform_py_dtype_into_query_dtype(column_obj.dtype)
+    query: str = f"{column_obj.column_name} {dtype}"
+
+    # FIXME [ ]: that's horrible but i'm tired; change it in the future
+    if column_obj.is_primary_key:
+        query += " PRIMARY KEY"
+    if column_obj.is_auto_generated:
+        if column_obj.dtype is datetime.datetime:
+            query += " DEFAULT CURRENT_TIMESTAMP"
+    if column_obj.is_auto_increment:
+        query += " AUTO_INCREMENT"
+    if column_obj.is_unique:
+        query += " UNIQUE"
+    return query
