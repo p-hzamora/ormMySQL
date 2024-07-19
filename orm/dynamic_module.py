@@ -166,10 +166,11 @@ class ModuleTree:
                 add_children(list_nodes, new_list, child_node)
 
         for node in list_nodes:
+            add_children(list_nodes, new_list, node)
+            
             if node not in new_list and all([child_node in new_list for child_node in node.relative_modules]):
                 new_list.append(node)
 
-            add_children(list_nodes, new_list, node)
         return None
 
     def order_modules_from_file(self) -> tuple[Node]:
