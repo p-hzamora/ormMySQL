@@ -233,7 +233,8 @@ class ModuleTree:
                 continue
 
             # loop over order modules tuple to load it into sys.modules
-            submodule = self.load_module(f"{self.module_path.stem}.{node.class_name}", node.file)
+            #COMMENT!: Checked why changing 'class_name' by 'module_name' the method works
+            submodule = self.load_module(f"{self.module_path.stem}.{node.module_name}", node.file)
             table_class = self.get_member_table(submodule)
 
             # we need to ensure that the object we going to add in table_list is the same
