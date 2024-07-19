@@ -1,11 +1,7 @@
 # Standard libraries
 from functools import wraps
-import importlib.resources
-import importlib.util
-import sys
 from pathlib import Path
 from typing import Any, Iterator, Literal, Type, override
-import re
 
 # Third party libraries
 import pandas as pd
@@ -16,44 +12,12 @@ from mysql.connector import errorcode
 # Custom libraries
 from .interfaces import IRepositoryBase
 from .orm_objects.table import Table, Column
-
-import importlib
-import inspect
-
-import copy
-
-
-import datetime
-from decimal import Decimal
+from .orm_objects.foreign_key import ForeignKey
+from .dynamic_module import ModuleTree
+from .dtypes import get_query_clausule
 
 type_exists = Literal["fail", "replace", "append"]
 
-# with this conditional we try to avoid return tuples or lists of lists with one element at all:
-# [[0],[1],[2],[3]] -> [0,1,2,3]
-# ((0),(1),(2),(3)) -> (0,1,2,3)
-
-
-class Node:
-    def __init__(
-        self,
-        pattern: str = r"from \.(.+) import (?:\w+)",
-        file: Path = None,
-        code: str = None,
-    ):
-        self.pattern: str = pattern
-        self.file: Path = file
-        self.code: str = code
-
-    def __repr__(self) -> str:
-        return f"{Node.__name__}: {self.file.stem if self.file else None}"
-
-    @property
-    def relative_modules(self) -> list[str]:
-        return re.findall(self.pattern, self.code) if self.file is not None else []
-
-    @property
-    def is_dependent(self) -> bool:
-        return len(self.relative_modules) > 0
 
 
 class Response[TFlavour, *Ts]:
@@ -247,7 +211,6 @@ class MySQLRepository(IRepositoryBase):
                         self.create_table(data, name, if_exists="fail")
                         return True
                     else:
-                        # falta implementar "append"
                         raise err
                 else:
                     raise err
@@ -357,7 +320,7 @@ class MySQLRepository(IRepositoryBase):
         if isinstance(values, list):
             dicc_0 = values[0]
             col = ", ".join(dicc_0.keys())
-            row = f'({", ".join(["%s"]*len(dicc_0))})'  # multiple "%s" by len(dicc_0)
+            row = f'({", ".join(["%s"]*len(dicc_0))})'  # The number of "%s" must match the dict 'dicc_0' length
 
         elif isinstance(values, pd.DataFrame):
             self.insert(table, values.to_dict("records"))
@@ -372,78 +335,16 @@ class MySQLRepository(IRepositoryBase):
             self._connection.commit()
         return None
 
+    # FIXME [ ]: this method does not comply with the implemented interface
     @is_connected
     def create_tables_code_first(self, path: str | Path) -> None:
-        def load_module(path: str | Path):
-            def sort_dicc(old_dicc: dict[str, Node], new_list: dict[str, Node]):
-                def add_children(old_dicc: dict[str, Node], new_list: dict[str, Node], key: str):
-                    node = old_dicc[key]
-                    all_children_added = all(resolve_order[x] in new_list.values() for x in node.relative_modules)
-
-                    if node not in new_list.values() and node.file is not None and ((node.is_dependent and all_children_added) or not node.is_dependent):
-                        new_list[key] = node
-                        return None
-
-                    if node in new_list.values() and not node.is_dependent:
-                        return None
-
-                    for val in node.relative_modules:
-                        add_children(old_dicc, new_list, val)
-
-                copy_old_dicc = copy.deepcopy(old_dicc)
-                for key in copy_old_dicc:
-                    node: Node = old_dicc[key]
-                    add_children(copy_old_dicc, new_list, key)
-
-                    copy_old_dicc[key] = Node()  # we deleted all references
-                    if node not in new_list.values():
-                        new_list[key] = node
-
-                pass
-
-            if isinstance(path, str):
-                path = Path(path)
-
-            if path.is_dir():
-                resolve_order: dict[str, Node] = {}
-                for p in path.iterdir():
-                    if not p.is_dir():
-                        code = p.read_text()
-
-                        resolve_order[p.stem] = Node(file=p, code=code)
-
-                if "__init__" in resolve_order:
-                    del resolve_order["__init__"]
-
-                sorted_list: dict[str, Node] = {}
-
-                sort_dicc(resolve_order, sorted_list)
-
-                modules: dict = {}
-                for node in sorted_list.values():
-                    module_name = node.file.stem
-                    spec = importlib.util.spec_from_file_location(module_name, node.file)
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[spec.name] = module
-                    spec.loader.exec_module(module)
-                    modules[module_name] = module
-                return modules
-
-            spec = importlib.util.spec_from_loader(path.stem, path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-
         def create_sql_column_query(table_object: Table) -> list[str]:
             annotations: dict[str, Column] = table_object.__annotations__
             all_columns: list = []
             for col_name in annotations.keys():
                 col_object: Column = getattr(table_object, f"_{col_name}")
-                all_columns.append(self.get_query_clausule(col_object))
+                all_columns.append(get_query_clausule(col_object))
             return all_columns
-
-        def is_table_subclass(module, obj: object) -> bool:
-            return inspect.isclass(obj) and issubclass(obj, module.Table) and obj is not module.Table
 
         if not isinstance(path, Path | str):
             raise ValueError
@@ -454,46 +355,23 @@ class MySQLRepository(IRepositoryBase):
         if not path.exists():
             raise FileNotFoundError
 
-        module = load_module(path)
-        tbl_name = [name for name, obj in inspect.getmembers(module) if is_table_subclass(module, obj)]
+        module_tree: ModuleTree = ModuleTree(path)
+
+        table_objects: tuple[Type[Table]] = module_tree.get_tables()
 
         queries_list: list[str] = []
-        for tbl in tbl_name:
-            table_object: Table = getattr(module, tbl)()
-            all_columns = create_sql_column_query(table_object)
+        for table_object in table_objects:
+            table_init = table_object()
+            all_clauses: list[str] = []
 
-            queries_list.append(f"CREATE TABLE {table_object.__table_name__} ({','.join(all_columns)});")
+            all_clauses.extend(create_sql_column_query(table_init))
+            all_clauses.extend(ForeignKey.create_query(table_object))
 
-        with self._connection.cursor(buffered=True) as cursor:
-            cursor.execute(" ".join(queries_list), multi=True)
-            self._connection.commit()
+            queries_list.append(f"CREATE TABLE {table_init.__table_name__} ({', '.join(all_clauses)});")
+
+        for query in queries_list:
+            with self._connection.cursor(buffered=True) as cursor:
+                cursor.execute(query)
+                self._connection.commit()
         return None
 
-    def get_query_clausule(self, column_obj: Column) -> str:
-        dtype: str = self.transform_py_dtype_into_query_dtype(column_obj.dtype)
-        query: str = f" {column_obj.column_name} {dtype}"
-        if column_obj.is_primary_key:
-            query += " PRIMARY KEY"
-        if column_obj.is_auto_generated:
-            query += "auto generated"
-        if column_obj.is_auto_increment:
-            query += " AUTO_INCREMENT"
-        if column_obj.is_unique:
-            query += " UNIQUE"
-        return query
-
-    @staticmethod
-    def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
-        # TODOL: must be found a better way to convert python data type into SQL clauses
-        # float -> DECIMAL(5,2) is an error
-        dicc: dict[Any, str] = {
-            int: "INTEGER",
-            float: "FLOAT(5,2)",
-            Decimal: "DECIMAL(5,2)",
-            datetime.datetime: "DATETIME",
-            datetime.date: "DATE",
-            bytes: "BLOB",
-            str: "TEXT",
-        }
-
-        return dicc[dtype]
