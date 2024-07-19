@@ -50,6 +50,7 @@ MySQL 8.0 does not support year in two-digit format.
 from decimal import Decimal
 import datetime
 from typing import Any,Literal
+import numpy as np
 
 from orm.orm_objects.table.column import Column
 
@@ -72,11 +73,12 @@ def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
     dicc: dict[Any, str] = {
         int: "INTEGER",
         float: "FLOAT(5,2)",
-        Decimal: "DECIMAL(5,2)",
+        Decimal: "FLOAT",
         datetime.datetime: "DATETIME",
         datetime.date: "DATE",
         bytes: "BLOB",
         str: "VARCHAR(255)",
+        np.uint64: "BIGINT UNSIGNED"
     }
 
     return dicc[dtype]
