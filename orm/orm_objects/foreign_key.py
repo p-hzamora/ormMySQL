@@ -25,7 +25,7 @@ class ForeignKey[Tbl1, Tbl2]:
 
     @classmethod
     def add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
-        cls.MAPPED[orig_table][referenced_table.__table_name__] = relationship
+        cls.MAPPED[orig_table][referenced_table] = relationship
         return None
 
     @classmethod
@@ -36,5 +36,5 @@ class ForeignKey[Tbl1, Tbl2]:
             orig_col: str = dissambler.cond_1.name
             referenced_col: str = dissambler.cond_2.name
 
-            clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table}({referenced_col})")
+            clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.__table_name__}({referenced_col})")
         return clauses
