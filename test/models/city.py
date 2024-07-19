@@ -17,7 +17,7 @@ class City(Table):
 
     city_id: int = Column[int](is_primary_key=True)
     city: str
-    country_id: str
+    country_id: int
     last_update: datetime
 
     country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
