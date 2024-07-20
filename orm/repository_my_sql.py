@@ -147,7 +147,7 @@ class MySQLRepository(IRepositoryBase):
     def drop_database(self, db_name: str):
         try:
             with self._connection.cursor() as cursor:
-                cursor.execute(f"DROP DATABASE {db_name}")
+                cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
         except Error as err:
             raise err
 
