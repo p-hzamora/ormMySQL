@@ -62,7 +62,7 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
         cond_2 = any([column.is_auto_increment, column.is_auto_generated])
 
         # not all to get False and deleted column
-        return not all([cond_1,cond_2])
+        return not all([cond_1, cond_2])
 
     @classmethod
     def __create_dict_list(cls, _list: list, values: T | list[T]):
@@ -197,7 +197,6 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
         return self.select(flavour=flavour)
 
     # endregion
-
 
     # # region get
     # @overload
@@ -488,7 +487,7 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
     @overload
     def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> Self: ...
     @overload
-    def order[TValue](self, _lambda_col: Callable[[T], TValue],order_type: OrderType) -> Self: ...
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> Self: ...
 
     def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> Self:
         self.build_query.order(self._model, _lambda_col, order_type)
@@ -532,9 +531,9 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
     ):
         if len(inspect.signature(selector).parameters) == 0:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
-            result = self.select(selector=lambda x: (x,), flavour=flavour, by= by)
+            result = self.select(selector=lambda x: (x,), flavour=flavour, by=by)
             return () if not result else result[0]
-        
+
         select: SelectQuery[T, *Ts] = self.select(self._model, selector, by)
 
         query: str = self.build()
