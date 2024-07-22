@@ -15,11 +15,11 @@ from .order import OrderQuery, OrderType
 from .offset import OffsetQuery
 
 
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit","offset"]
+ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
 
 
 class SQLQuery[T]:
-    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit","offset")
+    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
 
     def __init__(self) -> None:
         self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
@@ -40,8 +40,8 @@ class SQLQuery[T]:
         self._query["join"].append(join_query)
         return join_query
 
-    def select[*Ts](self,tables:tuple[T,*Ts], selector: Optional[Callable[[T, *Ts], None]] = lambda: None, by:JoinType = JoinType.INNER_JOIN) -> SelectQuery:
-        select = SelectQuery[T, *Ts](tables, select_lambda=selector,by=by)
+    def select[*Ts](self, tables: tuple[T, *Ts], selector: Optional[Callable[[T, *Ts], None]] = lambda: None, by: JoinType = JoinType.INNER_JOIN) -> SelectQuery:
+        select = SelectQuery[T, *Ts](tables, select_lambda=selector, by=by)
         self._query["select"].append(select)
         return select
 
@@ -57,17 +57,16 @@ class SQLQuery[T]:
             if sub_query := self._query.get(x, None):
                 if isinstance(sub_query[0], WhereCondition):
                     query_ = self.__build_where_clause(sub_query)
-                    
+
                 # we must check if any join already exists on query string
-                elif isinstance(sub_query[0],JoinSelector):
-                    select_query:str = self._query["select"][0].query
+                elif isinstance(sub_query[0], JoinSelector):
+                    select_query: str = self._query["select"][0].query
                     query_ = ""
                     for join in sub_query:
                         if join.query not in select_query:
                             query_ += f"\n{join.query}"
                 else:
                     query_ = "\n".join([x.query for x in sub_query])
-
 
                 query += f"\n{query_}" if query != "" else query_
         self._query.clear()
@@ -82,7 +81,7 @@ class SQLQuery[T]:
             query += f" {and_} ({clause})"
         return query
 
-    def _create_necessary_inner_join(self)->None:
+    def _create_necessary_inner_join(self) -> None:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
         if "where" not in self._query:
             return None
@@ -94,18 +93,17 @@ class SQLQuery[T]:
         for l_tbl, r_tbl in involved_tables:
             self.join(l_tbl, r_tbl, by="INNER JOIN")
 
-
     def limit(self, number: int) -> LimitQuery:
         limit: LimitQuery = LimitQuery(number)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         limit_list = self._query["limit"]
-        if len(limit_list)>0:
+        if len(limit_list) > 0:
             self._query["limit"] = [limit]
         else:
             self._query["limit"].append(limit)
-        return limit 
+        return limit
 
     def offset(self, number: int) -> OffsetQuery:
         offset: OffsetQuery = OffsetQuery(number)
         self._query["offset"].append(offset)
-        return offset 
+        return offset
