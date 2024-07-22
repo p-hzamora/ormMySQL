@@ -1,11 +1,11 @@
-from typing import Literal, override, Callable
+from typing import override, Callable
 from ...dissambler.tree_instruction import TreeInstruction
 from ...interfaces.IQuery import IQuery
 
+from orm.interfaces.ISQLStatements import OrderType
+
 ASC = "ASC"
 DESC = "DESC"
-
-OrderType = Literal["ASC", "DESC"]
 
 
 class OrderQuery[T](IQuery):
