@@ -7,7 +7,7 @@ import inspect
 from .orm_objects.queries.joins import JoinType
 
 from .orm_objects.queries.order import OrderType
-from .orm_objects.queries import SQLQuery
+from .orm_objects.queries import MySQLStatements
 from .orm_objects.queries.select import SelectQuery, TableColumn
 from .orm_objects import Column, Table
 
@@ -17,7 +17,7 @@ from .condition_types import ConditionType
 # endregion
 
 
-class ModelBase[T: Table](ABC, SQLQuery[T]):
+class ModelBase[T: Table](ABC, MySQLStatements[T]):
     """
     Clase base de las clases Model.
 

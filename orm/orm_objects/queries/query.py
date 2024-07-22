@@ -3,6 +3,7 @@ from typing import Any, Callable, Literal, Optional
 
 
 from ...interfaces.IQuery import IQuery
+from ...interfaces.ISQLStatements import ISQLStatements
 from ..foreign_key import ForeignKey
 from ..table import Table
 
@@ -18,7 +19,7 @@ from .offset import OffsetQuery
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
 
 
-class SQLQuery[T]:
+class MySQLStatements[T](ISQLStatements):
     __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
 
     def __init__(self) -> None:
