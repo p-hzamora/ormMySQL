@@ -17,7 +17,7 @@ from .condition_types import ConditionType
 # endregion
 
 
-class ModelBase[T: Table](ABC):
+class ModelBase[T: Table](ABC, SQLQuery[T]):
     """
     Clase base de las clases Model.
 
@@ -27,7 +27,6 @@ class ModelBase[T: Table](ABC):
     # region Constructor
     def __init__(self, model: T, *, repository: IRepositoryBase):
         self._model: T = model
-        self.build_query: SQLQuery[T] = SQLQuery()
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
@@ -199,16 +198,6 @@ class ModelBase[T: Table](ABC):
 
     # endregion
 
-    # region limit
-    def limit(self, limit: int) -> Self:
-        self.build_query.limit(limit)
-        return self
-
-    def offset(self, offset: int) -> Self:
-        self.build_query.offset(offset)
-        return self
-
-    # endregion
 
     # # region get
     # @overload
@@ -449,7 +438,7 @@ class ModelBase[T: Table](ABC):
         *,
         by: str,
     ) -> Self:
-        self.build_query.join(self._model, table_right, by=by)
+        self.join(self._model, table_right, by=by)
         return self
 
     @overload
@@ -546,9 +535,9 @@ class ModelBase[T: Table](ABC):
             result = self.select(selector=lambda x: (x,), flavour=flavour, by= by)
             return () if not result else result[0]
         
-        select: SelectQuery[T, *Ts] = self.build_query.select(self._model, selector, by)
+        select: SelectQuery[T, *Ts] = self.select(self._model, selector, by)
 
-        query: str = self.build_query.build()
+        query: str = self.build()
 
         if flavour:
             return self._return_flavour(query, flavour)
