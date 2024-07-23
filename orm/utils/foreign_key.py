@@ -1,8 +1,8 @@
 from collections import defaultdict
 from typing import Callable, NamedTuple, Type
 
-from .table import Table
-from ..dissambler import Dissambler
+from .table_constructor import Table
+from .dissambler import Dissambler
 
 
 class RelationShip[T: Table](NamedTuple):

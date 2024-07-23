@@ -5,8 +5,8 @@ from pathlib import Path
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from orm import Table, ForeignKey  # noqa: E402
-from orm.condition_types import ConditionType  # noqa: E402
-from orm.orm_objects.queries import WhereCondition  # noqa: E402
+from orm.utils.condition_types import ConditionType  # noqa: E402
+from orm.databases.my_sql.clauses import WhereCondition  # noqa: E402
 from test.models import City, Country, Address  # noqa: E402
 
 

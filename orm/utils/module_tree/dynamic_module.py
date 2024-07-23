@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Optional, Type
 import re
 
-from .orm_objects.table import Table
-from .orm_objects.foreign_key import ForeignKey
+from orm.utils.table_constructor import Table
+from orm.utils.foreign_key import ForeignKey
 
 import importlib
 import inspect

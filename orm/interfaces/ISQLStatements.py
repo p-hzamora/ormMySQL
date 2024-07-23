@@ -1,9 +1,10 @@
 from typing import Callable, Any, Optional, Literal
 from abc import abstractmethod, ABC
 from enum import Enum
+from collections import defaultdict
 
-from ..orm_objects.table import Table
-from .IQuery import IQuery
+from orm.utils import Table
+from orm.interfaces import IQuery
 
 OrderType = Literal["ASC", "DESC"]
 
@@ -18,24 +19,32 @@ class JoinType(Enum):
     INNER_JOIN = "INNER JOIN"
 
 
-class ISQLStatements[T](ABC):
-    @abstractmethod
-    def where(self, instance: tuple[Table], lambda_: Callable[[T], bool], **kwargs: dict[str, Any]) -> IQuery: ...
+ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
+
+
+class AbstractSQLStatements[T](ABC):
+    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
+
+    def __init__(self) -> None:
+        self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
     @abstractmethod
-    def join(self, table_left: Table, table_right: Table, *, by: str) -> IQuery: ...
+    def where(self, instance: tuple[Table], lambda_: Callable[[T], bool], **kwargs: dict[str, Any]) -> "AbstractSQLStatements": ...
 
     @abstractmethod
-    def select[*Ts](self, tables: tuple[T, *Ts], selector: Optional[Callable[[T, *Ts], None]] = lambda: None, by: JoinType = JoinType.INNER_JOIN) -> IQuery: ...
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> "AbstractSQLStatements": ...
 
     @abstractmethod
-    def order(self, instance: T, _lambda_col: Callable[[T], None], order_type: OrderType) -> IQuery: ...
+    def select[*Ts](self, tables: tuple[T, *Ts], selector: Optional[Callable[[T, *Ts], None]] = lambda: None, by: JoinType = JoinType.INNER_JOIN) -> "AbstractSQLStatements": ...
 
     @abstractmethod
-    def build(self) -> IQuery: ...
+    def order(self, instance: T, _lambda_col: Callable[[T], None], order_type: OrderType) -> "AbstractSQLStatements": ...
 
     @abstractmethod
-    def limit(self, number: int) -> IQuery: ...
+    def build(self) -> "AbstractSQLStatements": ...
 
     @abstractmethod
-    def offset(self, number: int) -> IQuery: ...
+    def limit(self, number: int) -> "AbstractSQLStatements": ...
+
+    @abstractmethod
+    def offset(self, number: int) -> "AbstractSQLStatements": ...

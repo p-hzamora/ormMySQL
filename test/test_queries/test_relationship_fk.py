@@ -13,10 +13,9 @@ PASSWORD = os.environ["PASSWORD"]
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.orm_objects.foreign_key import ForeignKey  # noqa: E402
 from test.models.address import Address, AddressModel  # noqa: E402
 from orm import MySQLRepository  # noqa: E402
-from orm.orm_objects.queries import SelectQuery  # noqa: E402
+from orm.databases.my_sql.clauses import SelectQuery  # noqa: E402
 
 
 repo = MySQLRepository("")

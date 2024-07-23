@@ -10,11 +10,10 @@ from mysql.connector import connection, Error
 from mysql.connector import errorcode
 
 # Custom libraries
-from .interfaces import IRepositoryBase
-from .orm_objects.table import Table, Column
-from .orm_objects.foreign_key import ForeignKey
-from .dynamic_module import ModuleTree
-from .dtypes import get_query_clausule
+from ...interfaces import IRepositoryBase
+from orm.utils import Table, Column, ForeignKey
+from ...utils.module_tree.dynamic_module import ModuleTree
+from ...utils.dtypes import get_query_clausule
 
 type_exists = Literal["fail", "replace", "append"]
 

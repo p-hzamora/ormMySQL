@@ -6,9 +6,8 @@ from typing import Type, get_type_hints, Self
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.orm_objects.foreign_key import ForeignKey  # noqa: E402
-from orm.orm_objects import Table, Column  # noqa: E402
-from orm.orm_objects.table.table_constructor import __init_constructor__  # noqa: E402
+from orm.utils import ForeignKey, Table, Column  # noqa: E402
+from orm.utils.table_constructor import __init_constructor__  # noqa: E402
 from test.models import City  # noqa: E402
 
 

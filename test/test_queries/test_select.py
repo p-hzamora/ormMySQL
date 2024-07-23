@@ -5,15 +5,15 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.orm_objects.queries.select import SelectQuery, TableColumn  # noqa: E402
+from orm.databases.my_sql.clauses.select import SelectQuery, TableColumn  # noqa: E402
 from test.models import (  # noqa: E402
     City,
     Address,
     Country,
 )
 
-from orm import Table, Column, ForeignKey  # noqa: E402
-from orm.orm_objects.queries import JoinType  # noqa: E402
+from orm.utils import Table, Column, ForeignKey  # noqa: E402
+from orm.databases.my_sql.clauses import JoinType  # noqa: E402
 
 
 class A(Table):

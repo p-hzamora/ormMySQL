@@ -2,8 +2,8 @@ from typing import override, Callable, overload, Optional, TypeVar
 
 # from ..table import Table
 
-from ...interfaces.IQuery import IQuery
-from ...dissambler import Dissambler
+from orm.interfaces.IQuery import IQuery
+from orm.utils.dissambler import Dissambler
 
 from orm.interfaces.ISQLStatements import JoinType
 

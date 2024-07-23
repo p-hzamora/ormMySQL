@@ -5,7 +5,7 @@ from datetime import datetime
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm.dissambler import Dissambler  # noqa: E402
+from orm.utils.dissambler import Dissambler  # noqa: E402
 
 
 class A:

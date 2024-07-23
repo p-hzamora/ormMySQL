@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm.dissambler.dissambler import NestedElement  # noqa: E402
+from orm.utils.dissambler.dissambler import NestedElement  # noqa: E402
 
 
 class TestCondition(unittest.TestCase):

@@ -52,7 +52,7 @@ import datetime
 from typing import Any,Literal
 import numpy as np
 
-from orm.orm_objects.table.column import Column
+from .column import Column
 
 
 STRING = Literal["CHAR(size)", "VARCHAR(size)", "BINARY(size)", "VARBINARY(size)", "TINYBLOB", "TINYTEXT", "TEXT(size)", "BLOB(size)", "MEDIUMTEXT", "MEDIUMBLOB", "LONGTEXT", "LONGBLOB", "ENUM(val1, val2, val3, ...)", "SET(val1, val2, val3, ...)"]

@@ -6,8 +6,8 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm import Table, Column, ForeignKey  # noqa: E402
-from orm.orm_objects.queries.query import MySQLStatements  # noqa: E402
+from orm.utils import Table, Column, ForeignKey  # noqa: E402
+from orm.databases.my_sql.statements import MySQLStatements  # noqa: E402
 
 # class TestQuery(unittest.TestCase):
 #     def test_query(self):

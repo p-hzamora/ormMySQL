@@ -1,12 +1,12 @@
 from typing import Callable, Iterator, Optional, Type, override
-
 import inspect
 
-from ...dissambler import TreeInstruction, TupleInstruction, NestedElement
-from ...interfaces.IQuery import IQuery
-from ...orm_objects import Table, ForeignKey
-from ...orm_objects.table.table_constructor import TableMeta
-from ...orm_objects.queries.joins import JoinSelector, JoinType
+from orm.utils.dissambler import TreeInstruction, TupleInstruction, NestedElement
+from orm.interfaces.IQuery import IQuery
+from orm.utils import Table, ForeignKey
+from orm.utils.table_constructor import TableMeta
+
+from . import JoinSelector, JoinType
 
 
 class TableColumn:

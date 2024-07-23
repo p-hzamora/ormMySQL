@@ -1,29 +1,24 @@
 from collections import defaultdict
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Optional
+
+from .repository import MySQLRepository
+from orm.interfaces.ISQLStatements import AbstractSQLStatements
+from orm.utils import ForeignKey, Table
 
 
-from ...interfaces.IQuery import IQuery
-from ...interfaces.ISQLStatements import ISQLStatements
-from ..foreign_key import ForeignKey
-from ..table import Table
+from .clauses.joins import JoinSelector, JoinType
+from .clauses.select import SelectQuery
+from .clauses.limit import LimitQuery
+from .clauses.where_condition import WhereCondition
+from .clauses.order import OrderQuery, OrderType
+from .clauses.offset import OffsetQuery
 
 
-from .joins import JoinSelector, JoinType
-from .select import SelectQuery
-from .limit import LimitQuery
-from .where_condition import WhereCondition
-from .order import OrderQuery, OrderType
-from .offset import OffsetQuery
 
-
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
-
-
-class MySQLStatements[T](ISQLStatements):
-    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
+class MySQLStatements[T](AbstractSQLStatements[T]):
 
     def __init__(self) -> None:
-        self._query: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
+        super().__init__()
 
     def where(
         self,

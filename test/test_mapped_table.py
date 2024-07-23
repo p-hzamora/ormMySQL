@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
-from orm import Table, Column  # noqa: E402
+from orm.utils import Table, Column  # noqa: E402
 
 
 class Person(Table):

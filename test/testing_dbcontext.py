@@ -6,8 +6,8 @@ import math
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 from orm import MySQLRepository, IRepositoryBase  # noqa: E402
-from orm.condition_types import ConditionType  # noqa: E402
-from orm.orm_objects.queries.joins import JoinType  # noqa: E402
+from orm.utils.condition_types import ConditionType  # noqa: E402
+from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from test.models.address import AddressModel, Address  # noqa: E402
 from test.models.staff import StaffModel, Staff  # noqa: E402
 

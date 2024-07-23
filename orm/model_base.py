@@ -1,23 +1,24 @@
 # region imports
-from abc import ABC
 from collections import defaultdict
 from typing import Any, Callable, Optional, Self, Type, overload, Iterable
+from abc import ABC
 import inspect
 
-from .orm_objects.queries.joins import JoinType
+from .interfaces.ISQLStatements import JoinType
+from .interfaces.ISQLStatements import OrderType
+from .interfaces import AbstractSQLStatements, IRepositoryBase, IQuery
+from .databases.my_sql import MySQLStatements
 
-from .orm_objects.queries.order import OrderType
-from .orm_objects.queries import MySQLStatements
-from .orm_objects.queries.select import SelectQuery, TableColumn
-from .orm_objects import Column, Table
 
-from .interfaces import IRepositoryBase
-from .condition_types import ConditionType
+from .databases.my_sql.clauses.select import SelectQuery, TableColumn  # FIXME [ ]: TableColumn coupled to MySQL database
+from .utils import Column, Table
+
+from .utils.condition_types import ConditionType
 
 # endregion
 
 
-class ModelBase[T: Table](ABC, MySQLStatements[T]):
+class ModelBase[T: Table](ABC):
     """
     Clase base de las clases Model.
 
@@ -27,6 +28,9 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
     # region Constructor
     def __init__(self, model: T, *, repository: IRepositoryBase):
         self._model: T = model
+        self.sql_statements:AbstractSQLStatements[T] = MySQLStatements[T]()
+
+
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
@@ -481,7 +485,7 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
         ...
 
     def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> Self:
-        self.build_query.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
+        self.where(instance=tuple([self._model]), lambda_=lambda_, **kwargs)
         return self
 
     @overload
@@ -490,7 +494,7 @@ class ModelBase[T: Table](ABC, MySQLStatements[T]):
     def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> Self: ...
 
     def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> Self:
-        self.build_query.order(self._model, _lambda_col, order_type)
+        self.order(self._model, _lambda_col, order_type)
         return self
 
     @overload
