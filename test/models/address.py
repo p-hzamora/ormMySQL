@@ -4,11 +4,11 @@ from orm import (
     Column,
     Table,
     ModelBase,
-    IRepositoryBase,
     ForeignKey,
 )
+from orm.interfaces import IRepositoryBase, IStatements
 
-from .city import City  
+from .city import City
 
 
 class Address(Table):
@@ -28,5 +28,5 @@ class Address(Table):
 
 
 class AddressModel(ModelBase[Address]):
-    def __init__(self, repository: IRepositoryBase):
-        super().__init__(Address, repository=repository)
+    def __new__(cls, repository: IRepositoryBase) -> IStatements[Address]:
+        return super().__new__(cls, Address, repository)

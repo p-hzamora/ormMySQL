@@ -3,4 +3,4 @@ from .orm.databases.my_sql.repository import MySQLRepository, errorcode, Error  
 from .orm.model_base import ModelBase  # noqa: F401
 from .orm.utils import Table, Column, ForeignKey  # noqa: F401
 from .orm.utils.condition_types import ConditionType  # noqa: F401
-from .orm.interfaces.ISQLStatements import JoinType  # noqa: F401
+from .orm.abstract_model import JoinType  # noqa: F401

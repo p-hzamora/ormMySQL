@@ -11,6 +11,9 @@ from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from test.models.address import AddressModel, Address  # noqa: E402
 from test.models.staff import StaffModel, Staff  # noqa: E402
 
+from orm.databases.my_sql.statements import MySQLStatements
+from orm.interfaces import IStatements
+from orm.abstract_model import AbstractSQLStatements
 
 
 load_dotenv()
@@ -23,9 +26,8 @@ HOST = "localhost"  # os.getenv("DB_HOST")
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST).connect()
 
-
 a_model = AddressModel(database)
-s_model = StaffModel(database)
+# s_model = StaffModel(database)
 res_tuple_3 = (
     a_model.order(lambda a: a.address_id, order_type="DESC")
     .where(lambda x: x.city.country.country_id == 87)
@@ -38,7 +40,18 @@ res_tuple_3 = (
     )
 )
 
-country, address, c = a_model.order(lambda a: a.address_id, order_type="DESC").where(lambda x: x.city.country.country_id == 87).select(lambda a: (a.city.country, a, a.city), by=JoinType.LEFT_EXCLUSIVE)
+country, address, c = (
+    a_model.order(lambda a: a.address_id, order_type="DESC")
+    .where(lambda x: x.city.country.country_id == 87)
+    .select(
+        lambda a: (
+            a.city.country,
+            a,
+            a.city,
+        ),
+        by=JoinType.LEFT_EXCLUSIVE,
+    )
+)
 
 
 for co in country:
@@ -63,7 +76,7 @@ pass
 
 def pagination(page: int):
     limit = 20
-    total_register:int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")[0][0]
+    total_register: int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")[0][0]
     total_pages = int(math.ceil(total_register / limit))
 
     if page > total_pages:

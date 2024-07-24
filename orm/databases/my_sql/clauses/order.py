@@ -2,7 +2,7 @@ from typing import override, Callable
 from orm.utils.dissambler.tree_instruction import TreeInstruction
 from orm.interfaces.IQuery import IQuery
 
-from orm.interfaces.ISQLStatements import OrderType
+from orm.abstract_model import OrderType
 
 ASC = "ASC"
 DESC = "DESC"

@@ -5,7 +5,7 @@ from typing import override, Callable, overload, Optional, TypeVar
 from orm.interfaces.IQuery import IQuery
 from orm.utils.dissambler import Dissambler
 
-from orm.interfaces.ISQLStatements import JoinType
+from orm.abstract_model import JoinType
 
 
 

@@ -2,7 +2,7 @@ from typing import Callable, Iterator, Optional, Type, override
 import inspect
 
 from orm.utils.dissambler import TreeInstruction, TupleInstruction, NestedElement
-from orm.interfaces.IQuery import IQuery
+from orm.interfaces import IQuery, ISelect
 from orm.utils import Table, ForeignKey
 from orm.utils.table_constructor import TableMeta
 
@@ -46,7 +46,7 @@ class TableColumn:
         return False
 
 
-class SelectQuery[T: Table, *Ts](IQuery):
+class SelectQuery[T: Table, *Ts](IQuery, ISelect):
     SELECT = "SELECT"
 
     def __init__(
@@ -194,6 +194,11 @@ class SelectQuery[T: Table, *Ts](IQuery):
 
         query += sub_query
         return query
+
+    @override
+    @property
+    def select_list(self) -> list[TableColumn]:
+        return self._select_list
 
     def get_involved_tables(self) -> tuple[tuple[Table, Table]]:
         return tuple(self._tables_heritage)
