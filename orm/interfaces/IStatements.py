@@ -107,7 +107,7 @@ class IStatements[T: Table](ABC):
 
     # region join
     @abstractmethod
-    def join(self, table_left:Table, table_right: Table, *, by: str) -> "IStatements[T]": ...
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements[T]": ...
 
     # endregion
 
