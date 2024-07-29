@@ -64,7 +64,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements[T]):
                 raise Exception(f"Tipo de dato'{type(values)}' no esperado")
 
         lista: list = []
-        self.__create_dict_list(lista, values)
+        __create_dict_list(lista, values)
 
         self._repository.insert(self._model.__table_name__, lista)
         return None
