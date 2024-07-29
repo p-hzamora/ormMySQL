@@ -19,7 +19,7 @@ from .clauses.offset import OffsetQuery
 from orm.interfaces import IRepositoryBase
 
 
-class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements):
+class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements[T]):
     def __init__(self, model: T, repository: IRepositoryBase) -> None:
         super().__init__(model, repository=repository)
 
@@ -160,15 +160,15 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements):
         return self
 
     @override
-    def join(self, table_right: "Table", *, by: str) -> "IStatements":
-        where = ForeignKey.MAPPED[self._model.__table_name__][table_right.__table_name__]
-        join_query = JoinSelector[self._model, Table](self._model, table_right, JoinType(by), where=where)
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements":
+        where = ForeignKey.MAPPED[table_left.__table_name__][table_right]
+        join_query = JoinSelector[table_left, Table](table_left, table_right, JoinType(by), where=where)
         self._query_list["join"].append(join_query)
         return self
 
     @override
     def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements":
-        #FIXME [ ]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
+        # FIXME [ ]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         where_query = WhereCondition[T](function=lambda_, instances=(self._model,), **kwargs)
         self._query_list["where"].append(where_query)
         return self
@@ -180,7 +180,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements):
         return self
 
     @override
-    def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Type[TFlavour] = None, by: JoinType = JoinType.INNER_JOIN):
+    def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
         select = SelectQuery[T, *Ts](self._model, select_lambda=selector, by=by)
         self._query_list["select"].append(select)
 
@@ -206,7 +206,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements):
         return response_sql
 
     @override
-    def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Type[TFlavour] = None, by: JoinType = JoinType.INNER_JOIN): ...
+    def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN): ...
     @override
     def build(self) -> str:
         query: str = ""
@@ -249,7 +249,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T], IStatements):
             return None
 
         for l_tbl, r_tbl in involved_tables:
-            #FIXME [ ]: Checked what function was called by the self.join method before the change
+            # FIXME [ ]: Checked what function was called by the self.join method before the change
             self.join(l_tbl, r_tbl, by="INNER JOIN")
 
 
