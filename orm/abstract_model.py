@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from enum import Enum
 from collections import defaultdict
 
@@ -26,6 +26,8 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
     __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
 
     def __init__(self, model: T, repository: IRepositoryBase) -> None:
+        self.valid_repository(repository)
+
         self._model: T = model
         self._repository: IRepositoryBase = repository
         self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
@@ -38,3 +40,9 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
 
         if model.__table_name__ is Ellipsis:
             raise Exception(f"class variable '__table_name__' must be declared in '{model.__name__}' class")
+
+    @staticmethod
+    def valid_repository(repository:Any)->bool: 
+        if not isinstance(repository, IRepositoryBase):
+            raise ValueError(f"'repository' attribute does not instance of '{IRepositoryBase.__name__}'")
+        return True
