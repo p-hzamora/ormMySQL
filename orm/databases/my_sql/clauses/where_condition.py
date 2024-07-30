@@ -3,6 +3,7 @@ import inspect
 from orm.utils.condition_types import ConditionType
 from orm.utils.dissambler.tree_instruction import TreeInstruction, TupleInstruction
 from orm.interfaces.IQuery import IQuery
+from orm.interfaces.IWhere import AbstractWhere
 from orm.utils import Table
 
 
@@ -17,7 +18,7 @@ class WhereConditionByArg[TProp1, TProp2](IQuery):
         return f"WHERE {self.cond1} {self.symbol.value} {self.cond2}"
 
 
-class WhereCondition[*Inst](IQuery):
+class WhereCondition[*Inst](AbstractWhere):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.
 
@@ -43,7 +44,6 @@ class WhereCondition[*Inst](IQuery):
     >>> ]
     """
 
-    WHERE: str = "WHERE"
     __slots__ = [
         "_instances",
         "_function",
@@ -161,8 +161,9 @@ class WhereCondition[*Inst](IQuery):
 
         return query
 
-    def get_involved_tables(self) ->tuple[tuple[Table,Table]]:
-        return_involved_tables: list[tuple[Table,Table]] = []
+    @override
+    def get_involved_tables(self) -> tuple[tuple[Table, Table]]:
+        return_involved_tables: list[tuple[Table, Table]] = []
         involved_tables: list[Table] = [self._instances[0]]
 
         def get_attr_tbl(instance: Table, tbl_name: str) -> Optional[Table]:
@@ -180,7 +181,7 @@ class WhereCondition[*Inst](IQuery):
             attr = get_attr_tbl(tbl, tbl_name)
             if attr is not None:
                 involved_tables.append(attr)
-                return_involved_tables.append(tuple([tbl,attr]))
+                return_involved_tables.append(tuple([tbl, attr]))
         return tuple(return_involved_tables)
 
     def create_conditions_list_and_compare_sign(self) -> tuple[list[str], list[str]]:

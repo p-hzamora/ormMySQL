@@ -4,3 +4,5 @@ from .offset import OffsetQuery  # noqa: F401
 from .order import OrderQuery  # noqa: F401
 from .select import SelectQuery  # noqa: F401
 from .where_condition import WhereCondition  # noqa: F401
+from .insert import InsertQuery  # noqa: F401
+from .delete import DeleteQuery  # noqa: F401
