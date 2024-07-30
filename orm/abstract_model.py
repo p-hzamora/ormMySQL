@@ -114,7 +114,7 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
         return None
 
     @override
-    def limit(self, number: int) -> "IStatements":
+    def limit(self, number: int) -> "IStatements[T]":
         limit = self.LIMIT_QUERY(number)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         limit_list = self._query_list["limit"]
@@ -125,27 +125,27 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
         return self
 
     @override
-    def offset(self, number: int) -> "IStatements":
+    def offset(self, number: int) -> "IStatements[T]":
         offset = self.OFFSET_QUERY(number)
         self._query_list["offset"].append(offset)
         return self
 
     @override
-    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements":
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements[T]":
         where = ForeignKey.MAPPED[table_left.__table_name__][table_right]
         join_query = self.JOIN_QUERY[table_left, Table](table_left, table_right, JoinType(by), where=where)
         self._query_list["join"].append(join_query)
         return self
 
     @override
-    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements":
+    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements[T]":
         # FIXME [ ]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         where_query = self.WHERE_QUERY[T](function=lambda_, instances=(self._model,), **kwargs)
         self._query_list["where"].append(where_query)
         return self
 
     @override
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements":
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements[T]":
         order = self.ORDER_QUERY[T](self._model, _lambda_col, order_type)
         self._query_list["order"].append(order)
         return self
