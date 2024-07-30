@@ -218,3 +218,7 @@ class Table(metaclass=TableMeta):
             if isinstance(col_obj, Column) and col_obj.is_primary_key:
                 return col_obj
         return None
+
+    @classmethod
+    def get_columns(cls)->tuple[str,...]:
+        return tuple(cls.__annotations__.keys())
