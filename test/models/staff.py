@@ -9,6 +9,8 @@ from orm import (
 
 from datetime import datetime
 
+from orm.interfaces import IStatements
+
 from .address import Address
 from .store import Store
 
@@ -32,6 +34,7 @@ class Staff(Table):
     Store = ForeignKey[Self, Store](__table_name__, Store, lambda staff, store: staff.staff_id == store.store_id)
 
 
+# FIXME [ ]: check to change initialization Model
 class StaffModel(ModelBase[Staff]):
-    def __init__(self, repository: IRepositoryBase):
-        super().__init__(Staff, repository=repository)
+    def __new__(cls, repository: IRepositoryBase) -> IStatements[Staff]:
+        return super().__new__(cls, Staff, repository=repository)
