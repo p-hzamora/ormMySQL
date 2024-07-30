@@ -26,8 +26,21 @@ HOST = "localhost"  # os.getenv("DB_HOST")
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
 
+s_model = StaffModel(database)
+
+
+staff = s_model.where(lambda x: x.staff_id == 1).select_one()
+staff.staff_id = None
+s_model.insert(staff)
+id = s_model.order(lambda x: x.staff_id, order_type="DESC").select_one().staff_id
+new_staff = s_model.where(lambda x: x.staff_id == id, id=id).select_one()
+new_staff.first_name = "PEPON"
+s_model.upsert(new_staff)
+
+staffs = s_model.where(lambda x: x.staff_id >2).delete()
+
 a_model = AddressModel(database)
-# s_model = StaffModel(database)
+s_model = StaffModel(database)
 res_tuple_3 = (
     a_model.order(lambda a: a.address_id, order_type="DESC")
     .where(lambda x: x.city.country.country_id == 87)
@@ -49,7 +62,7 @@ country, address, c = (
             a,
             a.city,
         ),
-        by=JoinType.LEFT_EXCLUSIVE,
+        by=JoinType.INNER_JOIN,
     )
 )
 
@@ -63,6 +76,7 @@ for ad in address:
 
 res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).limit(100).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a,))
 res_one_table_one_result = a_model.where(lambda a: a.address_id == 5).order(lambda a: a.address_id, order_type="DESC").select_one()
+res_one_table_one_result = a_model.where(lambda a: a.address2 == 100).order(lambda a: a.address_id, order_type="DESC").select_one(lambda x: x)
 
 
 query = """
@@ -86,5 +100,5 @@ def pagination(page: int):
 
 
 a = [pagination(x) for x in range(1, 11)]
-
+print("Corrido con exito")
 pass
