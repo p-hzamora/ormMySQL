@@ -1,22 +1,18 @@
 # Standard libraries
 from functools import wraps
 from pathlib import Path
-from typing import Any, Iterator, Literal, Type, override
+from typing import Any, Literal, Type, override
 
-# Third party libraries
-import pandas as pd
 
-from mysql.connector import connection, Error
-from mysql.connector import errorcode
+from mysql.connector import Error, MySQLConnection, errorcode
 
 # Custom libraries
-from ...interfaces import IRepositoryBase
+from orm.interfaces import IRepositoryBase
 from orm.utils import Table, Column, ForeignKey
-from ...utils.module_tree.dynamic_module import ModuleTree
-from ...utils.dtypes import get_query_clausule
+from orm.utils.module_tree.dynamic_module import ModuleTree
+from orm.utils.dtypes import get_query_clausule
 
 type_exists = Literal["fail", "replace", "append"]
-
 
 
 class Response[TFlavour, *Ts]:
@@ -63,74 +59,32 @@ class Response[TFlavour, *Ts]:
         return selector.get(self._flavour, _default)()
 
 
-class MySQLRepository(IRepositoryBase):
-    def is_connected(func):
+class MySQLRepository(MySQLConnection, IRepositoryBase):
+    @staticmethod
+    def _is_connected(func):
         @wraps(func)
         def wrapper(self: "MySQLRepository", *args, **kwargs):
-            if not self._connection.is_connected():
+            if not self.is_connected():
                 self.connect()
 
             foo = func(self, *args, **kwargs)
-            self.close_connection()
+            self.close()
             return foo
 
         return wrapper
 
-    def __init__(
-        self,
-        user: str,
-        password: str,
-        database: str = None,
-        port: str = "3306",
-        host: str = "localhost",
-    ) -> None:
-        self._user = user
-        self._password = password
-        self._database = database
-        self._port = port
-        self._host = host
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
 
-        self._connection: connection.MySQLConnection = None
-
-    @property
-    @override
-    def database(self) -> str:
-        return self._connection.database
-
-    @database.setter
-    @is_connected
-    def database(self, value: str) -> None:
-        self._connection.database = value
-
-    @property
-    @override
-    def port(self) -> str:
-        return self._port
-
-    @property
-    @override
-    def host(self) -> str:
-        return self._host
-
-    def connect(self) -> "MySQLRepository":
-        self._connection = connection.MySQLConnection(
-            user=self._user,
-            password=self._password,
-            database=self._database,
-            port=self._port,
-            host=self._host,
-        )
-        return self
-
-    def close_connection(self) -> None:
-        if self._connection.is_connected():
-            self._connection.close()
+    def _close_connection(self) -> None:
+        if self.is_connected():
+            self.close()
         return None
 
-    @is_connected
+    @_is_connected
     def create_database(self, db_name: str, if_exists: Literal["fail", "replace"] = "fail") -> None:
         self._database = db_name
-        with self._connection.cursor() as cursor:
+        with self.cursor() as cursor:
             try:
                 cursor.execute(f"CREATE DATABASE {db_name} DEFAULT CHARACTER SET 'utf8'")
             except Error as err:
@@ -139,203 +93,39 @@ class MySQLRepository(IRepositoryBase):
                 else:
                     raise err
             else:
-                self._connection.database = db_name
+                self.database = db_name
         return None
 
-    @is_connected
+    @_is_connected
     def drop_database(self, db_name: str):
         try:
-            with self._connection.cursor() as cursor:
+            with self.cursor() as cursor:
                 cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
         except Error as err:
             raise err
 
-    def create_tables(self, tables: Iterator):
-        for table_name in tables:
-            table_description = tables[table_name]
-            self.create_table(table_description)
-
-    @is_connected
-    def create_table(
-        self,
-        data: str | pd.DataFrame,
-        name: str = None,
-        if_exists: type_exists = "fail",
-    ) -> bool:
-        def translate_dtypes(series: pd.Series):
-            dtypes = {"float64": "DOUBLE"}
-
-            if str(series.dtype) == "object":
-                dtype = f"VARCHAR({series.astype('str').str.len().max()})"
-            elif str(series.dtype) == "int64":
-                max_int = series.max()
-                if max_int <= 127:
-                    dtype = "TINYINT"
-                elif max_int <= 32767:
-                    dtype = "SMALLINT"
-                elif max_int <= 8388607:
-                    dtype = "MEDIUMINT"
-                elif max_int <= 2147483647:
-                    dtype = "INT"
-                else:
-                    dtype = "BIGINT"
-            else:
-                dtype = dtypes.get(str(series.dtype))
-            return dtype
-
-        # ____________________________________________start____________________________________________
-        if isinstance(data, pd.DataFrame):
-            params_column_dtype = []
-            # CREATE TABLE params preparation
-            for column_name, series in data.items():
-                dtype = translate_dtypes(series)
-                params_column_dtype.append(f"{column_name} {dtype}")
-
-            query = f"""CREATE TABLE {name} ({', '.join(params_column_dtype)});"""
-            # recursion
-            if self.create_table(query, name=name, if_exists=if_exists):
-                # try insert values
-                self.insert(name, data.to_dict("records"))
-                return True
-
-        with self._connection.cursor(buffered=True) as cursor:
-            # try create table
-            try:
-                cursor.execute(data)
-                self._connection.commit()
-            except Error as err:
-                if err.errno == errorcode.ER_TABLE_EXISTS_ERROR and if_exists != "fail":
-                    if if_exists == "replace":
-                        cursor.execute(f"DROP TABLE {name}")
-                        self.create_table(data, name, if_exists="fail")
-                        return True
-                    else:
-                        raise err
-                else:
-                    raise err
-        return True
-
-    @is_connected
+    @_is_connected
     def drop_table(self, name: str) -> bool:
         query = rf"DROP TABLE {name}"
+
         # CONSULTA A LA BBDD
-        with self._connection.cursor(buffered=True) as cursor:
+        with self.cursor(buffered=True) as cursor:
             cursor.execute(query)
-            self._connection.commit()
+            self.commit()
         return True
 
-    @is_connected
+    @_is_connected
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """ """
 
-        with self._connection.cursor(buffered=True) as cursor:
+        with self.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
             return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
-    @is_connected
-    def delete(self, table: str, col: str, value: list[str] | str) -> None:
-        with self._connection.cursor() as cursor:
-            if isinstance(value, str):
-                cursor.execute(f"DELETE FROM {table} WHERE {col} = %s", (value,))
-            elif isinstance(value, list):
-                params = ", ".join(["%s"] * len(value))
-                cursor.execute(f"DELETE FROM {table} WHERE {col} IN ({params})", value)
-            else:
-                raise Exception(f"'{type(value)}' no esperado")
-            self._connection.commit()
-        return None
-
-    @staticmethod
-    def _clean_data(data: list[dict[str, Any]]) -> list[tuple]:
-        res = []
-        for x in data:
-            val = list(x.values())
-            for i in range(len(x)):
-                try:
-                    val[i] = val[i].to_pydatetime()
-                except Exception:
-                    continue
-                if str(val[i]) == "NaT":
-                    val[i] = None
-            res.append(tuple(val))
-        return res
-
-    @is_connected
-    def upsert(self, table: str, changes: dict[str, Any] | list[dict[str, Any]] | pd.DataFrame):
-        """
-        Esta funcion se enfoca para trabajar con listas, aunque el argumneto changes sea un unico diccionario.
-
-        Accedemos a la primera posicion de la lista 'changes[0]' porque en la query solo estamos poniendo marcadores de posicion, alias y nombres de columnas
-
-        EXAMPLE
-        ------
-
-        MySQL
-        -----
-
-        INSERT INTO NAME_TABLE(PK_COL,COL2)
-        VALUES
-        (1,'PABLO'),
-        (2,'MARINA') AS _val
-        ON DUPLICATE KEY UPDATE
-        COL2 = _val.COL2;
-
-        Python
-        -----
-
-        INSERT INTO NAME_TABLE(PK_COL,COL2)
-        VALUES (%s, %s') AS _val
-        ON DUPLICATE KEY UPDATE
-        COL2 = _val.COL2;
-
-        """
-        valid_types = (dict, list, pd.DataFrame, tuple)
-        if not isinstance(changes, valid_types):
-            raise ValueError(f"El tipo de dato de changes es {type(changes)}.\nSe esperaba {valid_types}")
-
-        if isinstance(changes, dict):
-            return self.upsert(table, changes=(changes,))
-
-        if isinstance(changes, pd.DataFrame):
-            return self.upsert(table, changes.to_dict("records"))
-
-        alias = "_values"
-        columns = ", ".join([f"{x}" for x in changes[0].keys()])
-        position_mark = ", ".join(["%s" for _ in changes[0].values()])
-        alternative = ", ".join([f"{col} = {alias}.{col}" for col in changes[0]])
-        query = f"INSERT INTO {table} ({columns})" f"   VALUES ({position_mark}) as {alias}" f"   ON DUPLICATE KEY UPDATE" f"   {alternative};"
-
-        with self._connection.cursor(buffered=True) as cursor:
-            cursor.executemany(query, self._clean_data(changes))
-
-            self._connection.commit()
-
-        return None
-
-    @is_connected
-    def insert(self, table: str, values: list[dict[str, Any]] | pd.DataFrame) -> None:
-        if isinstance(values, list):
-            dicc_0 = values[0]
-            col = ", ".join(dicc_0.keys())
-            row = f'({", ".join(["%s"]*len(dicc_0))})'  # The number of "%s" must match the dict 'dicc_0' length
-
-        elif isinstance(values, pd.DataFrame):
-            self.insert(table, values.to_dict("records"))
-            return None
-
-        else:
-            raise ValueError(f"Se esperaba una lista de diccionarios o un DataFrame no {type(values)}")
-
-        query = f"INSERT INTO {table} {f'({col})'} VALUES {row}"
-        with self._connection.cursor(buffered=True) as cursor:
-            cursor.executemany(query, self._clean_data(values))
-            self._connection.commit()
-        return None
-
     # FIXME [ ]: this method does not comply with the implemented interface
-    @is_connected
+    @_is_connected
     def create_tables_code_first(self, path: str | Path) -> None:
         def create_sql_column_query(table_object: Table) -> list[str]:
             annotations: dict[str, Column] = table_object.__annotations__
@@ -369,8 +159,23 @@ class MySQLRepository(IRepositoryBase):
             queries_list.append(f"CREATE TABLE {table_init.__table_name__} ({', '.join(all_clauses)});")
 
         for query in queries_list:
-            with self._connection.cursor(buffered=True) as cursor:
+            with self.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-                self._connection.commit()
+                self.commit()
         return None
 
+    @override
+    @_is_connected
+    def executemany_with_values(self, query: str, values) -> None:
+        with self.cursor(buffered=True) as cursor:
+            cursor.executemany(query, values)
+            self.commit()
+        return None
+
+    @override
+    @_is_connected
+    def execute_with_values(self, query: str, values) -> None:
+        with self.cursor(buffered=True) as cursor:
+            cursor.execute(query, values)
+            self.commit()
+        return None
