@@ -24,7 +24,7 @@ data_config = {"user": "root", "password": "1234"}
 class Test_my_sql(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.ddbb = MySQLRepository(**data_config).connect()
+        self.ddbb = MySQLRepository(**data_config)
         self.ddbb.create_database(TDDBB_name,"replace")
 
     def tearDown(self) -> None:

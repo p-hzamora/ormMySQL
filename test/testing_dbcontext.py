@@ -24,7 +24,7 @@ PASSWORD = "1234"  # os.getenv("DB_PASSWORD")
 HOST = "localhost"  # os.getenv("DB_HOST")
 
 
-database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST).connect()
+database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
 
 a_model = AddressModel(database)
 # s_model = StaffModel(database)
