@@ -1,6 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from orm.utils import Table
-from typing import Iterator
+from typing import Any, Iterator
+
+from orm.interfaces import IQuery
 
 
 class TableColumn:
@@ -34,13 +36,17 @@ class TableColumn:
     def __hash__(self) -> int:
         return hash((self._table, self._column))
 
-    def __eq__(self, __value: "TableColumn") -> bool:
+    def __eq__(self, __value: Any) -> bool:
         if isinstance(__value, TableColumn):
             return self._table.__table_name__ == __value._table.__table_name__ and self._column == __value._column
         return False
 
 
-class ISelect(ABC):
+class ISelect(IQuery):
     @property
     @abstractmethod
     def select_list(self) -> list[TableColumn]: ...
+
+    @property
+    @abstractmethod
+    def tables_heritage(self) -> list[TableColumn]: ...
