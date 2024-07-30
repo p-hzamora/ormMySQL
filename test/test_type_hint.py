@@ -19,7 +19,7 @@ PASSWORD = os.getenv("PASSWORD")
 HOST = os.getenv("HOST")
 
 
-database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST).connect()
+database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
 
 
 a_model = AddressModel(database)
@@ -38,6 +38,25 @@ class TestTypeHint(unittest.TestCase):
         response = a_model.select(lambda a: (a.city,))
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(response[0][0], City)
+
+    def test_SELECT_ONE_method_passing_0_column(self):
+        response = a_model.select_one()
+        self.assertIsInstance(response, Address)
+
+    def test_SELECT_ONE_method_passing_tuple_with_table_itself(self):
+        response = a_model.select_one(lambda x: (x,))
+        self.assertIsInstance(response, Address)
+
+    def test_SELECT_ONE_method_passing_the_same_table_itself(self):
+        response = a_model.select_one(lambda x: x)
+        self.assertIsInstance(response, Address)
+
+    def test_SELECT_ONE_method_passing_3_columns_of_the_same_table(self):
+        response = a_model.select_one(lambda x: (x.address, x.address2, x.city_id), flavour=tuple)
+        self.assertIsInstance(response, tuple)
+        self.assertIsInstance(response[0], str)
+        self.assertIsInstance(response[1], str)
+        self.assertIsInstance(response[2], int)
 
     def test_SELECT_ONE_method_passing_3_columns(self):
         response = a_model.select_one(
