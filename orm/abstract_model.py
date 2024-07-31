@@ -14,7 +14,6 @@ from orm.interfaces.ISelect import TableColumn
 from orm.interfaces.IWhere import AbstractWhere
 
 
-
 OrderType = Literal["ASC", "DESC"]
 
 
@@ -31,15 +30,15 @@ class JoinType(Enum):
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
 
 
-class AbstractSQLStatements[T: Table](IStatements[T]):
+class AbstractSQLStatements[T: Table, Tdb](IStatements[T]):
     __slots__ = ("_model", "_repository", "_query_list")
-    __order__: tuple[ORDER_QUERIES] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
+    __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
 
-    def __init__(self, model: T, repository: IRepositoryBase) -> None:
+    def __init__(self, model: T, repository: IRepositoryBase[Tdb]) -> None:
         self.valid_repository(repository)
 
         self._model: T = model
-        self._repository: IRepositoryBase = repository
+        self._repository: IRepositoryBase[Tdb] = repository
         self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
         if not issubclass(self._model, Table):
@@ -108,7 +107,7 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
         return None
 
     @override
-    def upsert(self, values: T|list[T]) -> None:
+    def upsert(self, values: T | list[T]) -> None:
         query, values = self.UPSERT_QUERY(self._model).upsert(values)
         self._repository.executemany_with_values(query, values)
         return None

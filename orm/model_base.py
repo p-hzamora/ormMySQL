@@ -20,14 +20,14 @@ class ModelBase[T: Table]:
 
     Contiene los metodos necesarios para hacer consultas a una tabla
     """
-    statements_dicc: dict[Type[IRepositoryBase], Type[AbstractSQLStatements]] = {
+    statements_dicc: dict[Type[IRepositoryBase], Type[AbstractSQLStatements[T]]] = {
         MySQLRepository: MySQLStatements,
     }
 
     # region Constructor
 
     def __new__(cls, model: T, repository: IRepositoryBase) -> IStatements[T]:
-        cls:AbstractSQLStatements = cls.statements_dicc.get(type(repository),None)
+        cls:AbstractSQLStatements[T] = cls.statements_dicc.get(type(repository),None)
 
         if not cls:
             raise Exception(f"Repository selected does not exits '{repository}'")

@@ -59,7 +59,7 @@ class Response[TFlavour, *Ts]:
         return selector.get(self._flavour, _default)()
 
 
-class MySQLRepository(MySQLConnection, IRepositoryBase):
+class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
     @staticmethod
     def _is_connected(func):
         @wraps(func)

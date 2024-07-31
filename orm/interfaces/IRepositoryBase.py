@@ -3,10 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Literal, Optional, Type, overload
 
 
-type_exists = Literal["fail", "replace", "append"]
-
-
-class IRepositoryBase(ABC):
+class IRepositoryBase[T](ABC):
     # @abstractmethod
     # def connect(self) -> Self: ...
 
