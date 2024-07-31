@@ -63,7 +63,7 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
 
     @property
     @abstractmethod
-    def UPSERT_QUERY(self) -> Type[AbstractUpsertQuery]: ...
+    def UPSERT_QUERY(self) -> Type[AbstractUpsertQuery[T]]: ...
 
     @property
     @abstractmethod
@@ -168,7 +168,7 @@ class AbstractSQLStatements[T: Table](IStatements[T]):
     def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> tuple[TValue]:
         return self._repository.read_sql(query, flavour=flavour)
 
-    def _return_model[TValue, *Ts](self, select: ISelect, query: str) -> TValue | tuple[tuple[*Ts]]:
+    def _return_model(self, select: ISelect, query: str):
         response_sql = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
         if isinstance(response_sql, Iterable):
