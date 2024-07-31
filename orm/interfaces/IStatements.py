@@ -17,9 +17,6 @@ class JoinType(Enum):
     INNER_JOIN = "INNER JOIN"
 
 
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
-
-
 class IStatements[T: Table](ABC):
     # region insert
     @overload
