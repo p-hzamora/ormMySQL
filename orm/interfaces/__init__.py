@@ -3,3 +3,4 @@ from .IQuery import IQuery  # noqa: F401
 from .ISelect import ISelect  # noqa: F401
 from .IStatements import IStatements  # noqa: F401
 from .IDelete import IDelete  # noqa: F401
+from .ISQL import ISQL  # noqa: F401
