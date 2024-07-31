@@ -1,0 +1,1 @@
+from .non_query_base import NonQueryBase  # noqa: F401

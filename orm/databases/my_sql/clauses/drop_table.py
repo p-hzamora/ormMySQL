@@ -1,5 +1,5 @@
 from typing import Literal
-from orm.interfaces import IQuery, IRepositoryBase
+from orm.common.interfaces import IQuery, IRepositoryBase
 from mysql.connector import MySQLConnection
 from ..repository import MySQLRepository
 

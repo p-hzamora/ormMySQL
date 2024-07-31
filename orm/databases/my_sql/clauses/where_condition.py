@@ -2,8 +2,8 @@ from typing import Any, Callable, Optional, override
 import inspect
 from orm.utils.condition_types import ConditionType
 from orm.utils.dissambler.tree_instruction import TreeInstruction, TupleInstruction
-from orm.interfaces.IQuery import IQuery
-from orm.interfaces.IWhere import AbstractWhere
+from orm.common.interfaces.IQueryCommand import IQuery
+from orm.components.where.abstract_where import AbstractWhere
 from orm.utils import Table
 
 

@@ -1,12 +1,17 @@
 from typing import Any, override, Iterable
 
 from orm.utils import Table, Column
-from orm.interfaces.IDelete import AbstractDeleteQuery
+from orm.components.delete import DeleteQueryBase
+from ..repository import MySQLRepository
 
 
-class DeleteQuery[T: Table](AbstractDeleteQuery[T]):
-    def __init__(self, table: list[T] | T) -> None:
-        super().__init__(table)
+class DeleteQuery[T: Table](DeleteQueryBase[T, MySQLRepository]):
+    def __init__(self, model: T, repository: MySQLRepository) -> None:
+        super().__init__(model, repository)
+
+    @property
+    def CLAUSE(self) -> str:
+        return "DELETE"
 
     @override
     def delete(self, instances: T | list[T]) -> None:
@@ -25,14 +30,24 @@ class DeleteQuery[T: Table](AbstractDeleteQuery[T]):
                 col = pk.column_name
                 value.append(pk.column_value)
 
-        query: str = f"{self.DELETE} FROM {self._table.__table_name__} WHERE {col}"
+        query: str = f"{self.CLAUSE} FROM {self._model.__table_name__} WHERE {col}"
         if isinstance(value, str):
             query += "= %s"
-            return query, [value]
+            self._query = query
+            self._values = [value]
+            return None
+
         elif isinstance(value, Iterable):
             params = ", ".join(["%s"] * len(value))
             query += f" IN ({params})"
-            return query, value
+            self._query = query
+            self._values = value
+            return None
         else:
             raise Exception(f"'{type(value)}' no esperado")
-        return None
+
+    @override
+    def execute(self) -> None:
+        if not self._query:
+            raise ValueError
+        return self._repository.execute_with_values(self._query, self._values)

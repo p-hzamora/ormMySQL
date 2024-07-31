@@ -2,12 +2,11 @@
 from typing import Type
 
 
-from .interfaces import IRepositoryBase, IStatements
-from .databases.my_sql import MySQLStatements, MySQLRepository
+from ..interfaces import IRepositoryBase, IStatements
+from ...databases.my_sql import MySQLStatements, MySQLRepository
 from orm.abstract_model import AbstractSQLStatements
 
-
-from .utils import Table
+from ...utils import Table
 
 
 # endregion
@@ -20,7 +19,7 @@ class ModelBase[T: Table]:
 
     Contiene los metodos necesarios para hacer consultas a una tabla
     """
-    statements_dicc: dict[Type[IRepositoryBase], Type[AbstractSQLStatements[T]]] = {
+    statements_dicc: dict[Type[IRepositoryBase], Type[AbstractSQLStatements[T,IRepositoryBase]]] = {
         MySQLRepository: MySQLStatements,
     }
 

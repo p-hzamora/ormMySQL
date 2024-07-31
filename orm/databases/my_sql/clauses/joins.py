@@ -2,7 +2,7 @@ from typing import override, Callable, overload, Optional, TypeVar
 
 # from ..table import Table
 
-from orm.interfaces.IQuery import IQuery
+from orm.common.interfaces.IQueryCommand import IQuery
 from orm.utils.dissambler import Dissambler
 
 from orm.abstract_model import JoinType

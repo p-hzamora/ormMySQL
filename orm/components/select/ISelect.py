@@ -2,7 +2,7 @@ from abc import abstractmethod
 from orm.utils import Table
 from typing import Any, Iterator
 
-from orm.interfaces import IQuery
+from orm.common.interfaces import IQuery
 
 
 class TableColumn:

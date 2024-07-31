@@ -2,19 +2,27 @@ from collections.abc import Iterable
 from typing import override, Any
 
 from orm.utils import Table, Column
-from orm.interfaces.IUpsert import AbstractUpsertQuery
+from orm.components.upsert import UpsertQueryBase
+from ..repository import MySQLRepository
 
 from .insert import InsertQuery
 
 
-class UpsertQuery[T: Table](AbstractUpsertQuery[T], InsertQuery[T]):
-    UPSERT = "ON DUPLICATE KEY UPDATE"
-
-    def __init__(self, table: T | list[T]) -> None:
-        super().__init__(table)
+class UpsertQuery[T: Table](UpsertQueryBase[T, MySQLRepository]):
+    def __init__(self, model: T, repository: Any) -> None:
+        super().__init__(model, repository)
 
     @override
-    def upsert(self, instances: T | list[T]) -> tuple[str, list[tuple]]:
+    @property
+    def CLAUSE(self) -> str:
+        return "ON DUPLICATE KEY UPDATE"
+
+    @override
+    def execute(self) -> None:
+        return self._repository.executemany_with_values(self._query, self._values)
+
+    @override
+    def upsert(self, instances: T | list[T]) -> None:
         """
         Esta funcion se enfoca para trabajar con listas, aunque el argumneto changes sea un unico diccionario.
 
@@ -42,7 +50,7 @@ class UpsertQuery[T: Table](AbstractUpsertQuery[T], InsertQuery[T]):
         COL2 = _val.COL2;
 
         """
-        insert_query, _ = self.insert(instances)
+        insert = InsertQuery[T](self._model, self._repository)
 
         if isinstance(instances, Table):
             instances = tuple([instances])
@@ -52,14 +60,17 @@ class UpsertQuery[T: Table](AbstractUpsertQuery[T], InsertQuery[T]):
         pk_key = instances[0].get_pk().column_name
 
         alternative = ", ".join([f"{col}={ALIAS}({col})" for col in cols if col != pk_key])
-        query = f"{insert_query} {self.UPSERT} {alternative};"
+        query = f"{insert._query} {self.CLAUSE} {alternative};"
 
         new_dict_list = self.create_dict_list(instances)
 
-        values:list[Any] = []
+        values: list[Any] = []
         for x in new_dict_list:
             values.append(tuple(x.values()))
-        return query, values
+
+        self._query = query
+        self._values = values
+        return None
 
     @staticmethod
     def is_valid(column: Column) -> bool:
@@ -97,6 +108,3 @@ class UpsertQuery[T: Table](AbstractUpsertQuery[T], InsertQuery[T]):
         return result
 
     # FIXME [ ]: change interfaces to avoid override 'insert' method
-    @override
-    def insert(self, instances: T | list[T]):
-        return super().insert(instances)

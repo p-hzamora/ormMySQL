@@ -2,11 +2,10 @@ from orm import (
     Column,
     Table,
     ModelBase,
-    IRepositoryBase,
 )
 
 from datetime import datetime
-
+from orm.common.interfaces import IRepositoryBase
 
 class Country(Table):
     __table_name__ = "country"

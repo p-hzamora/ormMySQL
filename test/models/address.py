@@ -6,7 +6,7 @@ from orm import (
     ModelBase,
     ForeignKey,
 )
-from orm.interfaces import IRepositoryBase, IStatements
+from orm.common.interfaces import IStatements, IRepositoryBase
 from orm.abstract_model import AbstractSQLStatements
 
 from .city import City
@@ -30,5 +30,5 @@ class Address(Table):
 
 # FIXME [ ]: check to change initialization Model
 class AddressModel(ModelBase[Address]):
-    def __new__(cls, repository: IRepositoryBase) -> IStatements[Address]:
-        return super().__new__(cls, Address, repository)
+    def __new__[T](cls, repository: T) -> AbstractSQLStatements[Address, T]:
+        return super().__new__(cls, Address, repository=repository)

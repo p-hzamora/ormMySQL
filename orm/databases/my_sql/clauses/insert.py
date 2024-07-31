@@ -1,22 +1,36 @@
 from typing import Any, override
 
 from orm.utils import Table, Column
-from orm.interfaces.IInsert import AbstractInsertQuery
+from orm.components.insert import InsertQueryBase
+from orm.common.interfaces import IRepositoryBase
+from ..repository import MySQLRepository
 
 
-class InsertQuery[T: Table](AbstractInsertQuery[T]):
-    def __init__(self, table: T | list[T]) -> None:
-        super().__init__(table)
+class InsertQuery[T: Table](InsertQueryBase[T,MySQLRepository]):
+    def __init__(self, model: T, repository: IRepositoryBase[MySQLRepository]) -> None:
+        super().__init__(model, repository)
 
     @override
-    def insert(self, instances: T | list[T]) -> tuple[str, list[tuple]]:
+    @property
+    def CLAUSE(self) -> str:
+        return "INSERT INTO"
+
+    @override
+    def execute(self) -> None:
+        if not self._query:
+            raise ValueError
+        return self._repository.executemany_with_values(self.query, self._values)
+
+    @override
+    def insert(self, instances: T | list[T]) -> None:
         new_dict_list: list[dict[str, Any]] = self.__fill_dict_list(instances)
         cols_tuple = new_dict_list[0].keys()
         join_cols = ", ".join(cols_tuple)
         unknown_rows = f'({", ".join(["%s"]*len(cols_tuple))})'  # The number of "%s" must match the dict 'dicc_0' length
 
-        values = [tuple(x.values()) for x in new_dict_list]
-        return f"{self.INSERT} {self._table.__table_name__} {f'({join_cols})'} VALUES {unknown_rows}", values
+        self._values = [tuple(x.values()) for x in new_dict_list]
+        self._query = f"{self.CLAUSE} {self._model.__table_name__} {f'({join_cols})'} VALUES {unknown_rows}"
+        return None
 
     @staticmethod
     def __is_valid(column: Column) -> bool:

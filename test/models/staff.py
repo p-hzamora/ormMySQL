@@ -3,13 +3,14 @@ from orm import (
     Column,
     Table,
     ModelBase,
-    IRepositoryBase,
     ForeignKey,
 )
 
 from datetime import datetime
 
-from orm.interfaces import IStatements
+from orm.common.interfaces import IRepositoryBase
+from orm.abstract_model import AbstractSQLStatements
+
 
 from .address import Address
 from .store import Store
@@ -36,5 +37,5 @@ class Staff(Table):
 
 # FIXME [ ]: check to change initialization Model
 class StaffModel(ModelBase[Staff]):
-    def __new__(cls, repository: IRepositoryBase) -> IStatements[Staff]:
+    def __new__[T](cls, repository: T) -> AbstractSQLStatements[Staff,T]:
         return super().__new__(cls, Staff, repository=repository)

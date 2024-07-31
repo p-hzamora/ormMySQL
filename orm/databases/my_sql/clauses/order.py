@@ -1,6 +1,6 @@
 from typing import override, Callable
 from orm.utils.dissambler.tree_instruction import TreeInstruction
-from orm.interfaces.IQuery import IQuery
+from orm.common.interfaces.IQueryCommand import IQuery
 
 from orm.abstract_model import OrderType
 

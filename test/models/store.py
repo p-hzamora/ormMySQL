@@ -3,11 +3,12 @@ from orm import (
     Column,
     Table,
     ModelBase,
-    IRepositoryBase,
     ForeignKey,
 )
 
 from datetime import datetime
+from orm.common.interfaces import IRepositoryBase
+
 
 from .address import Address
 

@@ -1,20 +1,22 @@
-from typing import Literal
-from orm.interfaces import IQuery, IRepositoryBase
-from mysql.connector import Error, MySQLConnection, errorcode
+from typing import Literal, override
+from mysql.connector import Error, errorcode
 from ..repository import MySQLRepository
+
+from orm.common.abstract_classes.non_query_base import NonQueryBase
 
 TypeExists = Literal["fail", "replace", "append"]
 
-class CreateDatabase():
-    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
-        self._repository: IRepositoryBase[MySQLConnection] = repository
+
+class CreateDatabase[T](NonQueryBase[T, MySQLRepository]):
+    def __init__(self, model: T, repository: MySQLRepository) -> None:
+        super().__init__(model, repository)
 
     @MySQLRepository._is_connected
-    def execute(self, db_name: str, if_exists: TypeExists = "fail") -> None:
+    def _execute(self, db_name: str, if_exists: TypeExists = "fail") -> None:
         self._database = db_name
         with self._repository.connection.cursor() as cursor:
             try:
-                cursor.execute(f"CREATE DATABASE {db_name} DEFAULT CHARACTER SET 'utf8'")
+                cursor.execute(f"{self.CLAUSE} {db_name} DEFAULT CHARACTER SET 'utf8'")
             except Error as err:
                 if err.errno == errorcode.ER_DB_CREATE_EXISTS and if_exists != "fail":
                     cursor.execute(f"USE {db_name};")
@@ -23,3 +25,12 @@ class CreateDatabase():
             finally:
                 self.database = db_name
         return None
+
+    @override
+    @property
+    def CLAUSE(self) -> str:
+        return "CREATE DATABASE"
+
+    @override
+    def execute(self) -> None:
+        self._execute()

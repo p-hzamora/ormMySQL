@@ -7,7 +7,7 @@ from typing import Any, Literal, Type, override
 from mysql.connector import Error, MySQLConnection, errorcode
 
 # Custom libraries
-from orm.interfaces import IRepositoryBase
+from orm.common.interfaces import IRepositoryBase
 from orm.utils import Table, Column, ForeignKey
 from orm.utils.module_tree.dynamic_module import ModuleTree
 from orm.utils.dtypes import get_query_clausule

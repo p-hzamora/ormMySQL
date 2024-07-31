@@ -3,7 +3,8 @@ from typing import override, Type
 
 from orm.abstract_model import AbstractSQLStatements
 from orm.utils import Table
-from orm.interfaces import ISelect, IQuery, IRepositoryBase
+from orm.common.interfaces import IQuery, IRepositoryBase
+from orm.components.select import ISelect
 
 from .clauses import CreateDatabase
 from .clauses import DeleteQuery
@@ -18,8 +19,9 @@ from .clauses import SelectQuery
 from .clauses import UpsertQuery
 from .clauses import WhereCondition
 
+from .repository import MySQLRepository
 
-class MySQLStatements[T: Table](AbstractSQLStatements[T]):
+class MySQLStatements[T: Table](AbstractSQLStatements[T,MySQLRepository]):
     def __init__(self, model: T, repository: IRepositoryBase) -> None:
         super().__init__(model, repository=repository)
 

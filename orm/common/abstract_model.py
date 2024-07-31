@@ -7,11 +7,11 @@ import inspect
 from orm.utils import ForeignKey, Table
 
 from orm.common.interfaces import IQuery, IStatements, IRepositoryBase
+from orm.components.insert import InsertQueryBase
 from orm.components.select import ISelect
 from orm.components.delete import DeleteQueryBase
 from orm.components.upsert import UpsertQueryBase
 from orm.components.select import TableColumn
-from orm.components.insert import InsertQueryBase
 from orm.components.where.abstract_where import AbstractWhere
 
 
@@ -60,12 +60,14 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
     @property
     @abstractmethod
     def INSERT_QUERY(self) -> Type[InsertQueryBase[T, TRepo]]: ...
+
     @property
     @abstractmethod
     def UPSERT_QUERY(self) -> Type[UpsertQueryBase[T]]: ...
+
     @property
     @abstractmethod
-    def DELETE_QUERY(self) -> Type[DeleteQueryBase[T, TRepo]]: ...
+    def DELETE_QUERY(self) -> Type[DeleteQueryBase[T]]: ...
     @property
     @abstractmethod
     def LIMIT_QUERY(self) -> Type[IQuery]: ...
@@ -85,20 +87,15 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
     @abstractmethod
     def SELECT_QUERY(self) -> ISelect: ...
 
-
-    
-
-
     @override
-    def insert(self, instances: T | list[T]) -> None:
-        insert = self.INSERT_QUERY(self._model, self._repository)
-        insert.insert(instances)
-        insert.execute()
+    def insert(self, values: T | list[T]) -> None:
+        query, values = self.INSERT_QUERY(self._model, self._repository).insert(values)
+        self._repository.executemany_with_values(query, values)
         return None
 
     @override
-    def delete(self, instances: Optional[T | list[T]] = None) -> None:
-        if instances is None:
+    def delete(self, instance: Optional[T | list[T]] = None) -> None:
+        if instance is None:
             response = self.select()
             if len(response) == 0:
                 return None
@@ -106,15 +103,14 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
             # We always going to have a tuple of one element
             return self.delete(response)
 
-        delete = self.DELETE_QUERY(self._model, self._repository)
-        delete.delete(instances)
+        query, values = self.DELETE_QUERY(self._model).delete(instance)
+        self._repository.execute_with_values(query, values)
         return None
 
     @override
-    def upsert(self, instances: T | list[T]) -> None:
-        upsert = self.UPSERT_QUERY(self._model, self._repository)
-        upsert.upsert(instances)
-        upsert.execute()
+    def upsert(self, values: T | list[T]) -> None:
+        query, values = self.UPSERT_QUERY(self._model).upsert(values)
+        self._repository.executemany_with_values(query, values)
         return None
 
     @override

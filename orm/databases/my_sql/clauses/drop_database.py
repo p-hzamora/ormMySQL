@@ -1,4 +1,4 @@
-from orm.interfaces import IQuery, IRepositoryBase
+from orm.common.interfaces import IQuery, IRepositoryBase
 from mysql.connector import Error, MySQLConnection
 
 from ..repository import MySQLRepository
@@ -6,6 +6,7 @@ from ..repository import MySQLRepository
 
 class DropDatabase(IQuery):
     DROP: str = "DROP DATABASE IF EXISTS"
+
     def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
         self._repository: IRepositoryBase[MySQLConnection] = repository
 

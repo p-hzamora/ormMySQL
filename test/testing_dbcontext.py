@@ -5,15 +5,16 @@ import math
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
-from orm import MySQLRepository, IRepositoryBase  # noqa: E402
+from orm import MySQLRepository  # noqa: E402
+from orm.common.interfaces import IRepositoryBase  # noqa: E402
 from orm.utils.condition_types import ConditionType  # noqa: E402
 from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from test.models.address import AddressModel, Address  # noqa: E402
 from test.models.staff import StaffModel, Staff  # noqa: E402
 
-from orm.databases.my_sql.statements import MySQLStatements
-from orm.interfaces import IStatements
-from orm.abstract_model import AbstractSQLStatements
+from orm.databases.my_sql.statements import MySQLStatements  # noqa: E402
+from orm.common.interfaces import IStatements  # noqa: E402
+from orm.abstract_model import AbstractSQLStatements  # noqa: E402
 
 
 load_dotenv()
@@ -28,10 +29,9 @@ database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, da
 
 s_model = StaffModel(database)
 
-
 staff = s_model.where(lambda x: x.staff_id == 1).select_one()
-staff.staff_id = None
-s_model.insert(staff)
+staff.staff_id = 100
+s_model.upsert(staff)
 id = s_model.order(lambda x: x.staff_id, order_type="DESC").select_one().staff_id
 new_staff = s_model.where(lambda x: x.staff_id == id, id=id).select_one()
 new_staff.first_name = "PEPON"
