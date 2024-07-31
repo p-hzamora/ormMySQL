@@ -146,3 +146,8 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
             cursor.execute(query, values)
             self.commit()
         return None
+
+    @override
+    @property
+    def connection(self) -> MySQLConnection:
+        return self
