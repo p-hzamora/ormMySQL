@@ -82,39 +82,6 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
         return None
 
     @_is_connected
-    def create_database(self, db_name: str, if_exists: Literal["fail", "replace"] = "fail") -> None:
-        self._database = db_name
-        with self.cursor() as cursor:
-            try:
-                cursor.execute(f"CREATE DATABASE {db_name} DEFAULT CHARACTER SET 'utf8'")
-            except Error as err:
-                if err.errno == errorcode.ER_DB_CREATE_EXISTS and if_exists != "fail":
-                    cursor.execute(f"USE {db_name};")
-                else:
-                    raise err
-            else:
-                self.database = db_name
-        return None
-
-    @_is_connected
-    def drop_database(self, db_name: str):
-        try:
-            with self.cursor() as cursor:
-                cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
-        except Error as err:
-            raise err
-
-    @_is_connected
-    def drop_table(self, name: str) -> bool:
-        query = rf"DROP TABLE {name}"
-
-        # CONSULTA A LA BBDD
-        with self.cursor(buffered=True) as cursor:
-            cursor.execute(query)
-            self.commit()
-        return True
-
-    @_is_connected
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """ """
 
