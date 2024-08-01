@@ -128,7 +128,7 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
         for query in queries_list:
             with self.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-                self.commit()
+            self.commit()
         return None
 
     @override
@@ -136,7 +136,7 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
     def executemany_with_values(self, query: str, values) -> None:
         with self.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
-            self.commit()
+        self.commit()
         return None
 
     @override
@@ -144,7 +144,7 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
     def execute_with_values(self, query: str, values) -> None:
         with self.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
-            self.commit()
+        self.commit()
         return None
 
     @override
