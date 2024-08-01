@@ -1,19 +1,19 @@
-from orm.common.interfaces import IQuery, IRepositoryBase
-from mysql.connector import Error, MySQLConnection
+from typing import override
+from mysql.connector import Error
 
+from orm.components.drop_database import DropDatabaseBase
 from ..repository import MySQLRepository
 
 
-class DropDatabase(IQuery):
-    DROP: str = "DROP DATABASE IF EXISTS"
+class DropDatabase(DropDatabaseBase[MySQLRepository]):
+    def __init__(self, repository: MySQLRepository) -> None:
+        super().__init__(repository)
 
-    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
-        self._repository: IRepositoryBase[MySQLConnection] = repository
+    @override
+    def execute(self, name: str) -> None:
+        return self._repository.execute(f"{self.CLAUSE} {name}")
 
-    @MySQLRepository._is_connected
-    def execute(self, db_name: str) -> None:
-        try:
-            with self._repository.connection.cursor() as cursor:
-                cursor.execute(f"{self.DROP} {db_name}")
-        except Error as err:
-            raise err
+    @override
+    @property
+    def CLAUSE(self) -> str:
+        return "DROP DATABASE IF EXISTS"

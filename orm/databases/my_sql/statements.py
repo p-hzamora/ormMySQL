@@ -75,6 +75,12 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T,MySQLRepository]):
     @override
     def SELECT_QUERY(self) -> Type[ISelect]:
         return SelectQuery
+
+    @property
+    @override
+    def DropDatabase(self) -> Type[INonQueryCommand]:
+        return DropDatabase
+
     @property
     @override
     def CreateDatabase(self) -> Type[INonQueryCommand]:
