@@ -148,6 +148,14 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
         return None
 
     @override
+    @_is_connected
+    def execute(self, query: str) -> None:
+        with self.cursor(buffered=True) as cursor:
+            cursor.execute(query)
+        self.commit()
+        return None
+
+    @override
     @property
     def connection(self) -> MySQLConnection:
         return self
