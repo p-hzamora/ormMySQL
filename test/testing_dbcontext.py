@@ -5,7 +5,7 @@ import math
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
-from orm import MySQLRepository  # noqa: E402
+from orm.databases.my_sql import MySQLRepository  # noqa: E402
 from orm.common.interfaces import IRepositoryBase  # noqa: E402
 from orm.utils.condition_types import ConditionType  # noqa: E402
 from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
@@ -29,6 +29,11 @@ database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, da
 
 s_model = StaffModel(database)
 
+asdf = "TEST_DB"
+s_model.create_database(asdf, "replace")
+s_model.drop_database(asdf)
+
+
 staff = s_model.where(lambda x: x.staff_id == 1).select_one()
 staff.staff_id = 100
 s_model.upsert(staff)
@@ -37,7 +42,7 @@ new_staff = s_model.where(lambda x: x.staff_id == id, id=id).select_one()
 new_staff.first_name = "PEPON"
 s_model.upsert(new_staff)
 
-staffs = s_model.where(lambda x: x.staff_id >2).delete()
+staffs = s_model.where(lambda x: x.staff_id > 2).delete()
 
 a_model = AddressModel(database)
 s_model = StaffModel(database)
@@ -62,7 +67,7 @@ country, address, c = (
             a,
             a.city,
         ),
-        by=JoinType.INNER_JOIN,
+        by=JoinType.LEFT_EXCLUSIVE,
     )
 )
 
