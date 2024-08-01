@@ -15,6 +15,7 @@ from orm.components.insert import InsertQueryBase
 from orm.components.where.abstract_where import AbstractWhere
 from orm.components.create_database import TypeExists, CreateDatabaseBase
 from orm.components.drop_database import DropDatabaseBase
+from orm.components.drop_table import DropTableBase
 
 
 OrderType = Literal["ASC", "DESC"]
@@ -92,6 +93,10 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
     @property
     @abstractmethod
     def CreateDatabase(self) -> Type[CreateDatabaseBase[TRepo]]: ...
+
+    @property
+    @abstractmethod
+    def DropTable(self) -> Type[DropTableBase[T, TRepo]]: ...
 
     @override
     def insert(self, instances: T | list[T]) -> None:

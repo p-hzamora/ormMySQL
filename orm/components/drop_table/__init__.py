@@ -1,0 +1,1 @@
+from .abstract_drop_table import DropTableBase  # noqa: F401

@@ -1,23 +1,25 @@
-from typing import Literal
-from orm.common.interfaces import IQuery, IRepositoryBase
-from mysql.connector import MySQLConnection
+from typing import Literal, override
+
+from orm.common.interfaces import IRepositoryBase
+from orm.components.drop_table import DropTableBase
+
+from orm.utils import Table
 from ..repository import MySQLRepository
 
 TypeExists = Literal["fail", "replace", "append"]
 
 
-class DropTable:
-    DROP: str = "DROP TABLE"
+class DropTable[T: Table, TRepo: IRepositoryBase](DropTableBase[T, TRepo]):
+    def __init__(self, repository: MySQLRepository) -> None:
+        self._repository: MySQLRepository = repository
 
-    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
-        self._repository: IRepositoryBase[MySQLConnection] = repository
+    @override
+    def execute(self) -> None:
+        query = rf"{self.CLAUSE} {self._model.__table_name__}"
+        self._repository.execute(query)
+        return None
 
-    @MySQLRepository._is_connected
-    def drop_table(self, name: str) -> bool:
-        query = rf"{self.DROP} {name}"
-
-        # CONSULTA A LA BBDD
-        with self._repository.connection.cursor(buffered=True) as cursor:
-            cursor.execute(query)
-            self._repository.connection.commit()
-        return True
+    @property
+    @override
+    def CLAUSE(self) -> str:
+        return "DROP TABLE"

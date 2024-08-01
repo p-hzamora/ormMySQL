@@ -6,6 +6,7 @@ from orm.utils import Table
 from orm.common.interfaces import IQuery, IRepositoryBase
 from orm.components.create_database import CreateDatabaseBase
 from orm.components.drop_database import DropDatabaseBase
+from orm.components.drop_table import DropTableBase
 
 from orm.components.select import ISelect
 
@@ -89,3 +90,8 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLRepository]):
     @override
     def CreateDatabase(self) -> Type[CreateDatabaseBase]:
         return CreateDatabase
+
+    @property
+    @override
+    def DropTable(self)->Type[DropTableBase]:
+        return DropTable
