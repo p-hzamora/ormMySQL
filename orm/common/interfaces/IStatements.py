@@ -213,13 +213,4 @@ class IStatements[T: Table](ABC):
     # endregion
 
     @abstractmethod
-    def drop_database(self, name: str) -> None: ...
-
-    @abstractmethod
-    def create_database(self, name: str) -> None: ...
-
-    @abstractmethod
-    def drop_table(self, name: str) -> None: ...
-
-    @abstractmethod
     def build(self) -> str: ...

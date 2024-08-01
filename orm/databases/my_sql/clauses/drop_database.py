@@ -1,5 +1,4 @@
 from typing import override
-from mysql.connector import Error
 
 from orm.components.drop_database import DropDatabaseBase
 from ..repository import MySQLRepository

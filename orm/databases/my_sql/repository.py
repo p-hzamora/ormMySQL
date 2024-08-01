@@ -1,7 +1,7 @@
 # Standard libraries
 from functools import wraps
 from pathlib import Path
-from typing import Any, Literal, Type, override
+from typing import Any, Type, override
 
 
 from mysql.connector import MySQLConnection
@@ -12,7 +12,9 @@ from orm.utils import Table, Column, ForeignKey
 from orm.utils.module_tree.dynamic_module import ModuleTree
 from orm.utils.dtypes import get_query_clausule
 
-type_exists = Literal["fail", "replace", "append"]
+from .clauses import CreateDatabase, TypeExists
+from .clauses import DropDatabase
+from .clauses import DropTable
 
 
 class Response[TFlavour, *Ts]:
@@ -167,6 +169,18 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             cursor.execute(query)
         self._connection.commit()
         return None
+
+    @override
+    def drop_table(self, name: str) -> None:
+        return DropTable(self).execute(name)
+
+    @override
+    def drop_database(self, name: str) -> None:
+        return DropDatabase(self).execute(name)
+
+    @override
+    def create_database(self, name: str, if_exists: TypeExists) -> None:
+        return CreateDatabase(self).execute(name, if_exists)
 
     @override
     @property

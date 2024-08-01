@@ -4,16 +4,10 @@ from typing import override, Type
 from orm.abstract_model import AbstractSQLStatements
 from orm.utils import Table
 from orm.common.interfaces import IQuery, IRepositoryBase
-from orm.components.create_database import CreateDatabaseBase
-from orm.components.drop_database import DropDatabaseBase
-from orm.components.drop_table import DropTableBase
 
 from orm.components.select import ISelect
 
-from .clauses import CreateDatabase
 from .clauses import DeleteQuery
-from .clauses import DropDatabase
-from .clauses import DropTable
 from .clauses import InsertQuery
 from .clauses import JoinSelector
 from .clauses import LimitQuery
@@ -80,18 +74,3 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLRepository]):
     @override
     def SELECT_QUERY(self) -> Type[ISelect]:
         return SelectQuery
-
-    @property
-    @override
-    def DropDatabase(self) -> Type[DropDatabaseBase]:
-        return DropDatabase
-
-    @property
-    @override
-    def CreateDatabase(self) -> Type[CreateDatabaseBase]:
-        return CreateDatabase
-
-    @property
-    @override
-    def DropTable(self)->Type[DropTableBase]:
-        return DropTable

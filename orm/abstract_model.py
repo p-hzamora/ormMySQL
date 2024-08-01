@@ -87,16 +87,6 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
     @property
     @abstractmethod
     def SELECT_QUERY(self) -> Type[ISelect]: ...
-    @property
-    @abstractmethod
-    def DropDatabase(self) -> Type[DropDatabaseBase[TRepo]]: ...
-    @property
-    @abstractmethod
-    def CreateDatabase(self) -> Type[CreateDatabaseBase[TRepo]]: ...
-
-    @property
-    @abstractmethod
-    def DropTable(self) -> Type[DropTableBase[T, TRepo]]: ...
 
     @override
     def insert(self, instances: T | list[T]) -> None:
@@ -125,20 +115,6 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
         upsert = self.UPSERT_QUERY(self._model, self._repository)
         upsert.upsert(instances)
         upsert.execute()
-        return None
-
-    @override
-    def drop_table(self, name: str) -> None:
-        return self.DropTable(self._model, self._repository).execute(name)
-
-    @override
-    def drop_database(self, name: str) -> None:
-        self.DropDatabase(self._repository).execute(name)
-        return None
-
-    @override
-    def create_database(self, name: str, if_exists: TypeExists) -> None:
-        self.CreateDatabase(self._repository).execute(name, if_exists)
         return None
 
     @override

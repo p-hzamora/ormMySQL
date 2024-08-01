@@ -1,6 +1,6 @@
 from typing import override
 from mysql.connector import Error, errorcode
-from ..repository import MySQLRepository
+from orm.databases.my_sql import MySQLRepository
 
 from orm.components.create_database import CreateDatabaseBase, TypeExists
 

@@ -1,4 +1,4 @@
-from .create_database import CreateDatabase  # noqa: F401
+from .create_database import CreateDatabase, TypeExists  # noqa: F401
 from .delete import DeleteQuery  # noqa: F401
 from .drop_database import DropDatabase  # noqa: F401
 from .drop_table import DropTable  # noqa: F401
