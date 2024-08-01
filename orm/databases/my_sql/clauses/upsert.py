@@ -3,12 +3,13 @@ from typing import override, Any
 
 from orm.utils import Table, Column
 from orm.components.upsert import UpsertQueryBase
-from ..repository import MySQLRepository
+from orm.common.interfaces import IRepositoryBase
+from mysql.connector import MySQLConnection
 
 from .insert import InsertQuery
 
 
-class UpsertQuery[T: Table](UpsertQueryBase[T, MySQLRepository]):
+class UpsertQuery[T: Table](UpsertQueryBase[T, IRepositoryBase[MySQLConnection]]):
     def __init__(self, model: T, repository: Any) -> None:
         super().__init__(model, repository)
 

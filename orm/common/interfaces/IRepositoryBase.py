@@ -4,6 +4,10 @@ from typing import Any, Optional, Type
 
 
 class IRepositoryBase[T](ABC):
+    @staticmethod
+    @abstractmethod
+    def is_connected(func): ...
+    
     @abstractmethod
     def connect(self, **kwargs: Any) -> "IRepositoryBase[T]": ...
 

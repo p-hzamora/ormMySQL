@@ -2,11 +2,11 @@ from typing import Any, override, Iterable
 
 from orm.utils import Table, Column
 from orm.components.delete import DeleteQueryBase
-from ..repository import MySQLRepository
+from orm.common.interfaces import IRepositoryBase
+from mysql.connector import MySQLConnection
 
-
-class DeleteQuery[T: Table](DeleteQueryBase[T, MySQLRepository]):
-    def __init__(self, model: T, repository: MySQLRepository) -> None:
+class DeleteQuery[T: Table](DeleteQueryBase[T, IRepositoryBase[MySQLConnection]]):
+    def __init__(self, model: T, repository: IRepositoryBase[MySQLConnection]) -> None:
         super().__init__(model, repository)
 
     @property

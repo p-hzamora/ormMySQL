@@ -1,12 +1,12 @@
 from typing import override
 
-from orm.components.drop_database import DropDatabaseBase
-from ..repository import MySQLRepository
 
+from orm.common.interfaces import IRepositoryBase
 
-class DropDatabase(DropDatabaseBase[MySQLRepository]):
-    def __init__(self, repository: MySQLRepository) -> None:
-        super().__init__(repository)
+from mysql.connector import MySQLConnection
+class DropDatabase():
+    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
+        self._repository:IRepositoryBase[MySQLConnection] = repository
 
     @override
     def execute(self, name: str) -> None:

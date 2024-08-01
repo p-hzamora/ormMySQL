@@ -1,7 +1,7 @@
 # Standard libraries
 from functools import wraps
 from pathlib import Path
-from typing import Any, Type, override
+from typing import Any, Callable, Type, override
 
 
 from mysql.connector import MySQLConnection
@@ -64,7 +64,7 @@ class Response[TFlavour, *Ts]:
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @staticmethod
     @override
-    def is_connected(func):
+    def is_connected(func:Callable[...,Any]):
         @wraps(func)
         def wrapper(self: "MySQLRepository", *args, **kwargs):
             if not self._connection.is_connected():

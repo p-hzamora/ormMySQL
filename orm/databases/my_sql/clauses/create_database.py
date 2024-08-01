@@ -1,13 +1,14 @@
-from typing import override
+from typing import Literal, override
 from mysql.connector import Error, errorcode
-from orm.databases.my_sql import MySQLRepository
+from orm.common.interfaces import IRepositoryBase
+from mysql.connector import MySQLConnection
 
-from orm.components.create_database import CreateDatabaseBase, TypeExists
+TypeExists = Literal["fail", "replace", "append"]
 
 
-class CreateDatabase(CreateDatabaseBase[MySQLRepository]):
-    def __init__(self, repository: MySQLRepository) -> None:
-        super().__init__(repository)
+class CreateDatabase:
+    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
+       self._repository:IRepositoryBase[MySQLConnection] = repository
 
     @override
     @property

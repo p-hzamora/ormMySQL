@@ -3,11 +3,11 @@ from typing import Any, override
 from orm.utils import Table, Column
 from orm.components.insert import InsertQueryBase
 from orm.common.interfaces import IRepositoryBase
-from ..repository import MySQLRepository
+from mysql.connector import MySQLConnection
 
 
-class InsertQuery[T: Table](InsertQueryBase[T,MySQLRepository]):
-    def __init__(self, model: T, repository: IRepositoryBase[MySQLRepository]) -> None:
+class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]):
+    def __init__(self, model: T, repository: IRepositoryBase[IRepositoryBase[MySQLConnection]]) -> None:
         super().__init__(model, repository)
 
     @override
