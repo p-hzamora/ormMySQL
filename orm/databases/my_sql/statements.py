@@ -21,7 +21,8 @@ from .clauses import WhereCondition
 
 from .repository import MySQLRepository
 
-class MySQLStatements[T: Table](AbstractSQLStatements[T,MySQLRepository]):
+
+class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLRepository]):
     def __init__(self, model: T, repository: IRepositoryBase) -> None:
         super().__init__(model, repository=repository)
 
