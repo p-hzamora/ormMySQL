@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Literal, Type, override
 
 
-from mysql.connector import Error, MySQLConnection, errorcode
+from mysql.connector import MySQLConnection
 
 # Custom libraries
 from orm.common.interfaces import IRepositoryBase
