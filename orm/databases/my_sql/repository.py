@@ -77,9 +77,14 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def __init__(self, **kwargs: Any) -> None:
         self._connection: MySQLConnection = self.connect(**kwargs)
 
-    def _close_connection(self) -> None:
-        if self.is_connected():
-            self.close()
+    @override
+    def connect(self, **kwargs: Any) -> IRepositoryBase[MySQLConnection]:
+        return MySQLConnection(**kwargs)
+
+    @override
+    def close_connection(self) -> None:
+        if self._connection.is_connected():
+            self._connection.close()
         return None
 
     @is_connected

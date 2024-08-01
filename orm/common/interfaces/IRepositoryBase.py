@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 
-from typing import Optional, Type
+from typing import Any, Optional, Type
 
 
 class IRepositoryBase[T](ABC):
-    # @abstractmethod
-    # def connect(self) -> Self: ...
+    @abstractmethod
+    def connect(self,**kwargs:Any) -> "IRepositoryBase[T]": ...
 
-    # @abstractmethod
-    # def close_connection(self) -> None: ...
+    @abstractmethod
+    def close_connection(self) -> None: ...
 
     @abstractmethod
     def read_sql[TFlavour](self, query: str, flavour: Optional[Type[TFlavour]], **kwargs) -> tuple[TFlavour]: ...
