@@ -14,8 +14,9 @@ class DropTable[T: Table, TRepo: IRepositoryBase](DropTableBase[T, TRepo]):
         self._repository: MySQLRepository = repository
 
     @override
-    def execute(self) -> None:
-        query = rf"{self.CLAUSE} {self._model.__table_name__}"
+    def execute(self, name: str = None) -> None:
+        tbl_name = self._model.__table_name__ if not name else name
+        query = rf"{self.CLAUSE} {tbl_name}"
         self._repository.execute(query)
         return None
 

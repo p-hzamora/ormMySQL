@@ -8,7 +8,7 @@ from orm.common.abstract_classes.non_query_base import NonQueryBase
 TypeExists = Literal["fail", "replace", "append"]
 
 
-class DropTableBase[T:Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo]):
+class DropTableBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo]):
     def __init__(self, model: T, repository: TRepo) -> None:
         super().__init__(model, repository)
 
@@ -17,4 +17,4 @@ class DropTableBase[T:Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo]):
     def CLAUSE(self) -> str: ...
 
     @abstractmethod
-    def execute(self) -> None: ...
+    def execute(self, name: str) -> None: ...

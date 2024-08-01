@@ -128,6 +128,10 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
         return None
 
     @override
+    def drop_table(self, name: str) -> None:
+        return self.DropTable(self._model, self._repository).execute(name)
+
+    @override
     def drop_database(self, name: str) -> None:
         self.DropDatabase(self._repository).execute(name)
         return None
