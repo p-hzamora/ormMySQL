@@ -111,6 +111,7 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
 
         delete = self.DELETE_QUERY(self._model, self._repository)
         delete.delete(instances)
+        delete.execute()
         return None
 
     @override
