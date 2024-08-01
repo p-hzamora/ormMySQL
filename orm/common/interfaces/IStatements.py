@@ -213,4 +213,7 @@ class IStatements[T: Table](ABC):
     # endregion
 
     @abstractmethod
+    def create_database(self, name: str) -> None: ...
+
+    @abstractmethod
     def build(self) -> str: ...
