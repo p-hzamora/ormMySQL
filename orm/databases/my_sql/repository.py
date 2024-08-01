@@ -59,29 +59,30 @@ class Response[TFlavour, *Ts]:
         return selector.get(self._flavour, _default)()
 
 
-class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
+class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @staticmethod
-    def _is_connected(func):
+    @override
+    def is_connected(func):
         @wraps(func)
         def wrapper(self: "MySQLRepository", *args, **kwargs):
-            if not self.is_connected():
+            if not self._connection.is_connected():
                 self.connect()
 
             foo = func(self, *args, **kwargs)
-            self.close()
+            self._connection.close()
             return foo
 
         return wrapper
 
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
+        self._connection: MySQLConnection = self.connect(**kwargs)
 
     def _close_connection(self) -> None:
         if self.is_connected():
             self.close()
         return None
 
-    @_is_connected
+    @is_connected
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """
         Return tuple of tuples by default.
@@ -92,14 +93,14 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
-        with self.cursor(buffered=True) as cursor:
+        with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
             return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     # FIXME [ ]: this method does not comply with the implemented interface
-    @_is_connected
+    @is_connected
     def create_tables_code_first(self, path: str | Path) -> None:
         def create_sql_column_query(table_object: Table) -> list[str]:
             annotations: dict[str, Column] = table_object.__annotations__
@@ -133,36 +134,36 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
             queries_list.append(f"CREATE TABLE {table_init.__table_name__} ({', '.join(all_clauses)});")
 
         for query in queries_list:
-            with self.cursor(buffered=True) as cursor:
+            with self._connection.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-            self.commit()
+            self._connection.commit()
         return None
 
     @override
-    @_is_connected
+    @is_connected
     def executemany_with_values(self, query: str, values) -> None:
-        with self.cursor(buffered=True) as cursor:
+        with self._connection.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
-        self.commit()
+        self._connection.commit()
         return None
 
     @override
-    @_is_connected
+    @is_connected
     def execute_with_values(self, query: str, values) -> None:
-        with self.cursor(buffered=True) as cursor:
+        with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
-        self.commit()
+        self._connection.commit()
         return None
 
     @override
-    @_is_connected
+    @is_connected
     def execute(self, query: str) -> None:
-        with self.cursor(buffered=True) as cursor:
+        with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
-        self.commit()
+        self._connection.commit()
         return None
 
     @override
     @property
     def connection(self) -> MySQLConnection:
-        return self
+        return self._connection
