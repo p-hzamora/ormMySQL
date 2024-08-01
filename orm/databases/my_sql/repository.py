@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Type, override
 
 
+# from mysql.connector.pooling import MySQLConnectionPool
 from mysql.connector import MySQLConnection
 
 # Custom libraries
@@ -75,6 +76,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def connect(self, **kwargs: Any) -> IRepositoryBase[MySQLConnection]:
         if not kwargs:
             kwargs = self._kwargs
+        # return MySQLConnectionPool(pool_name="mypool", pool_size=5, **kwargs)
         self._connection.connect(**kwargs)
         return None
 
