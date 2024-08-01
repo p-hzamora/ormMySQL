@@ -25,5 +25,5 @@ class CreateDatabase(CreateDatabaseBase[MySQLRepository]):
                 else:
                     raise err
             else:
-                self._repository.database = name
+                self._repository.connection.database = name
         return None
