@@ -30,8 +30,8 @@ database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, da
 s_model = StaffModel(database)
 
 asdf = "TEST_DB"
-s_model.create_database(asdf, "replace")
-s_model.drop_database(asdf)
+s_model._repository.create_database(asdf, "replace")
+s_model._repository.drop_database(asdf)
 
 
 staff = s_model.where(lambda x: x.staff_id == 1).select_one()
