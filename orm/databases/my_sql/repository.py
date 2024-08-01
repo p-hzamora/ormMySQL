@@ -1,7 +1,6 @@
 # Standard libraries
-from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Type, override
+from typing import Any, Type, override
 
 
 from mysql.connector import MySQLConnection
@@ -62,26 +61,22 @@ class Response[TFlavour, *Ts]:
 
 
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
-    @staticmethod
-    @override
-    def is_connected(func:Callable[...,Any]):
-        @wraps(func)
-        def wrapper(self: "MySQLRepository", *args, **kwargs):
-            if not self._connection.is_connected():
-                self.connect()
-
-            foo = func(self, *args, **kwargs)
-            self._connection.close()
-            return foo
-
-        return wrapper
-
     def __init__(self, **kwargs: Any) -> None:
-        self._connection: MySQLConnection = self.connect(**kwargs)
+        self._kwargs: dict[str, Any] = kwargs
+        self._connection: MySQLConnection = MySQLConnection()
+        self.connect(**kwargs)
+        # self._pool_connection: MySQLConnection = MySQLConnection(**kwargs)
+
+    @override
+    def is_connected(self) -> bool:
+        return self._connection.is_connected()
 
     @override
     def connect(self, **kwargs: Any) -> IRepositoryBase[MySQLConnection]:
-        return MySQLConnection(**kwargs)
+        if not kwargs:
+            kwargs = self._kwargs
+        self._connection.connect(**kwargs)
+        return None
 
     @override
     def close_connection(self) -> None:
@@ -89,7 +84,8 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             self._connection.close()
         return None
 
-    @is_connected
+    @override
+    @IRepositoryBase.check_connection
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """
         Return tuple of tuples by default.
@@ -107,7 +103,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     # FIXME [ ]: this method does not comply with the implemented interface
-    @is_connected
+    @IRepositoryBase.check_connection
     def create_tables_code_first(self, path: str | Path) -> None:
         def create_sql_column_query(table_object: Table) -> list[str]:
             annotations: dict[str, Column] = table_object.__annotations__
@@ -147,7 +143,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @is_connected
+    @IRepositoryBase.check_connection
     def executemany_with_values(self, query: str, values) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
@@ -155,7 +151,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @is_connected
+    @IRepositoryBase.check_connection
     def execute_with_values(self, query: str, values) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
@@ -163,7 +159,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @is_connected
+    @IRepositoryBase.check_connection
     def execute(self, query: str) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
@@ -171,14 +167,17 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
+    @IRepositoryBase.check_connection
     def drop_table(self, name: str) -> None:
         return DropTable(self).execute(name)
 
     @override
+    @IRepositoryBase.check_connection
     def drop_database(self, name: str) -> None:
         return DropDatabase(self).execute(name)
 
     @override
+    @IRepositoryBase.check_connection
     def create_database(self, name: str, if_exists: TypeExists) -> None:
         return CreateDatabase(self).execute(name, if_exists)
 
