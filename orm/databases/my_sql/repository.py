@@ -83,7 +83,14 @@ class MySQLRepository(MySQLConnection, IRepositoryBase[MySQLConnection]):
 
     @_is_connected
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
-        """ """
+        """
+        Return tuple of tuples by default.
+
+        ATTRIBUTE
+        -
+            - query:str: string of request to the server
+            - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
+        """
 
         with self.cursor(buffered=True) as cursor:
             cursor.execute(query)
