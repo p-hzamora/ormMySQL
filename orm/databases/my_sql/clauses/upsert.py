@@ -51,6 +51,7 @@ class UpsertQuery[T: Table](UpsertQueryBase[T, MySQLRepository]):
 
         """
         insert = InsertQuery[T](self._model, self._repository)
+        insert.insert(instances)
 
         if isinstance(instances, Table):
             instances = tuple([instances])
