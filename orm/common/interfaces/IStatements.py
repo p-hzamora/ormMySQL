@@ -2,6 +2,7 @@ from typing import Callable, Iterable, Optional, Literal, Type, overload
 from abc import abstractmethod, ABC
 from enum import Enum
 
+from orm.common.interfaces import IRepositoryBase
 from orm.utils import Table
 
 OrderType = Literal["ASC", "DESC"]
@@ -214,3 +215,9 @@ class IStatements[T: Table](ABC):
 
     @abstractmethod
     def build(self) -> str: ...
+
+
+class IStatements_two_generic[T: Table, TRepo](IStatements[T]):
+    @property
+    @abstractmethod
+    def repository(self) -> IRepositoryBase[TRepo]: ...
