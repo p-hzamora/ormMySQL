@@ -9,6 +9,7 @@ from orm import (
 from datetime import datetime
 
 from orm.common.interfaces import IRepositoryBase
+from orm.common.interfaces.IStatements import IStatements_two_generic
 from .country import Country
 
 
@@ -20,9 +21,9 @@ class City(Table):
     country_id: int
     last_update: datetime
 
-    country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
+    Country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
 
 
 class CityModel(ModelBase[City]):
-    def __init__(self, repository: IRepositoryBase):
-        super().__init__(City, repository=repository)
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[City, TRepo]:
+        return super().__new__(cls, City, repository)

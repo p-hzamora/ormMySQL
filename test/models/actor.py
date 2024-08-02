@@ -7,6 +7,8 @@ from orm import (
 from datetime import datetime
 
 from orm.common.interfaces import IRepositoryBase
+from orm.common.interfaces.IStatements import IStatements_two_generic
+
 
 class Actor(Table):
     __table_name__ = "actor"
@@ -17,7 +19,6 @@ class Actor(Table):
     last_update: datetime
 
 
-
 class ActorModel(ModelBase[Actor]):
-    def __init__(self, repository: IRepositoryBase):
-        super().__init__(Actor, repository=repository)
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Actor, TRepo]:
+        return super().__new__(cls, Actor, repository)

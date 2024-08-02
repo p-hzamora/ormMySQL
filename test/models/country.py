@@ -6,6 +6,8 @@ from orm import (
 
 from datetime import datetime
 from orm.common.interfaces import IRepositoryBase
+from orm.common.interfaces.IStatements import IStatements_two_generic
+
 
 class Country(Table):
     __table_name__ = "country"
@@ -16,5 +18,5 @@ class Country(Table):
 
 
 class CountryModel(ModelBase[Country]):
-    def __init__(self, repository: IRepositoryBase):
-        super().__init__(Country, repository=repository)
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Country, TRepo]:
+        return super().__new__(cls, Country, repository)

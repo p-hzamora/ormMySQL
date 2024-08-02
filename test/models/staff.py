@@ -36,4 +36,4 @@ class Staff(Table):
 
 class StaffModel(ModelBase[Staff]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Staff, TRepo]:
-        return super().__new__(Staff, repository)
+        return super().__new__(cls, Staff, repository)

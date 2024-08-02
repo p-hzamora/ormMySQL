@@ -6,8 +6,7 @@ from orm import (
     ModelBase,
     ForeignKey,
 )
-from orm.common.interfaces import IStatements, IRepositoryBase
-from orm.abstract_model import AbstractSQLStatements
+from orm.common.interfaces import IStatements_two_generic, IRepositoryBase
 
 from .city import City
 
@@ -25,10 +24,10 @@ class Address(Table):
     location: str
     last_update: datetime = Column[datetime](is_auto_generated=True)
 
-    city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
+    City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
 
 # FIXME [ ]: check to change initialization Model
 class AddressModel(ModelBase[Address]):
-    def __new__[T](cls, repository: T) -> AbstractSQLStatements[Address, T]:
-        return super().__new__(cls, Address, repository=repository)
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Address, TRepo]:
+        return super().__new__(cls, Address, repository)
