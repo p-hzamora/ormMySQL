@@ -63,21 +63,20 @@ class Response[TFlavour, *Ts]:
 
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def __init__(self, **kwargs: Any) -> None:
-        self._kwargs: dict[str, Any] = kwargs
+        self._data_config: dict[str, Any] = kwargs
         self._connection: MySQLConnection = MySQLConnection()
-        self.connect(**kwargs)
+        self.connect()
         # self._pool_connection: MySQLConnection = MySQLConnection(**kwargs)
+        pass
 
     @override
     def is_connected(self) -> bool:
         return self._connection.is_connected()
 
     @override
-    def connect(self, **kwargs: Any) -> IRepositoryBase[MySQLConnection]:
-        if not kwargs:
-            kwargs = self._kwargs
+    def connect(self) -> IRepositoryBase[MySQLConnection]:
         # return MySQLConnectionPool(pool_name="mypool", pool_size=5, **kwargs)
-        self._connection.connect(**kwargs)
+        self._connection.connect(**self._data_config)
         return None
 
     @override
@@ -187,3 +186,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @property
     def connection(self) -> MySQLConnection:
         return self._connection
+
+    @override
+    def set_config(self, value: dict[str, Any]) -> dict[str, Any]:
+        return self._data_config.update(value)
