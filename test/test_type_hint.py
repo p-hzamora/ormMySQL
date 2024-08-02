@@ -27,7 +27,7 @@ a_model = AddressModel(database)
 
 class TestTypeHint(unittest.TestCase):
     def test_SELECT_method_passing_3_columns(self):
-        response = a_model.select(lambda a: (a, a.city, a.city.country))
+        response = a_model.select(lambda a: (a, a.City, a.City.Country))
         a, city, country = response
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(a[0], Address)
@@ -35,7 +35,7 @@ class TestTypeHint(unittest.TestCase):
         self.assertIsInstance(country[0], Country)
 
     def test_SELECT_method_passing_1_column(self):
-        response = a_model.select(lambda a: (a.city,))
+        response = a_model.select(lambda a: (a.City,))
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(response[0][0], City)
 
@@ -62,8 +62,8 @@ class TestTypeHint(unittest.TestCase):
         response = a_model.select_one(
             lambda a: (
                 a,
-                a.city,
-                a.city.country,
+                a.City,
+                a.City.Country,
             )
         )
         a, city, country = response

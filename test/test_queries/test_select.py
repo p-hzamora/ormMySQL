@@ -86,12 +86,12 @@ class TestSelect(unittest.TestCase):
             Address,
             select_lambda=lambda a: (
                 a,
-                a.city,
-                a.city.country,
-                a.city.country_id,
+                a.City,
+                a.City.Country,
+                a.City.country_id,
                 a.city_id,
                 a.last_update,
-                a.city.country.country,
+                a.City.Country.country,
             ),
         )
         self.assertEqual(
@@ -120,8 +120,8 @@ class TestSelect(unittest.TestCase):
             (Address, City),
             select_lambda=lambda a, ci: (
                 a,
-                a.city,
-                ci.country,
+                a.City,
+                ci.Country,
             ),
         )
         self.assertEqual(
