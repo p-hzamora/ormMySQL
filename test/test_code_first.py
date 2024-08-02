@@ -8,9 +8,7 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 
 # Custom libraries
-from orm.databases.my_sql import MySQLRepository, MySQLStatements  # noqa: E402
-
-from test.models.staff import Staff
+from orm.databases.my_sql import MySQLRepository  # noqa: E402
 
 TDDBB_name = "__test_ddbb__"
 TTABLE_name = "__test_table__"
@@ -21,11 +19,10 @@ data_config = {"user": "root", "password": "1234"}
 class Test_my_sql(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb = MySQLRepository(**data_config)
-        self.statements = MySQLStatements(Staff, self.ddbb)
-        self.statements.create_database(TDDBB_name, "replace")
+        self.ddbb.create_database(TDDBB_name, "replace")
 
     def tearDown(self) -> None:
-        self.statements.drop_database(TDDBB_name)
+        self.ddbb.drop_database(TDDBB_name)
 
     def test_create_table_code_first_passing_folder(self):
         self.ddbb.create_tables_code_first("test/models")
