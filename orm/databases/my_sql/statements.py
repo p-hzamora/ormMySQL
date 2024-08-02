@@ -17,10 +17,10 @@ from .clauses import SelectQuery
 from .clauses import UpsertQuery
 from .clauses import WhereCondition
 
-from .repository import MySQLRepository
+from mysql.connector import MySQLConnection
 
 
-class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLRepository]):
+class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     def __init__(self, model: T, repository: IRepositoryBase) -> None:
         super().__init__(model, repository=repository)
 
@@ -74,3 +74,8 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLRepository]):
     @override
     def SELECT_QUERY(self) -> Type[ISelect]:
         return SelectQuery
+
+    @property
+    @override
+    def repository(self) -> IRepositoryBase[MySQLConnection]:
+        return self._repository
