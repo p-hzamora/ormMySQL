@@ -6,7 +6,7 @@ import inspect
 
 from orm.utils import ForeignKey, Table
 
-from orm.common.interfaces import IQuery, IStatements, IRepositoryBase
+from orm.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
 from orm.components.select import ISelect
 from orm.components.delete import DeleteQueryBase
 from orm.components.upsert import UpsertQueryBase
@@ -31,15 +31,15 @@ class JoinType(Enum):
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
 
 
-class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
+class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T,TRepo]):
     __slots__ = ("_model", "_repository", "_query_list")
     __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
 
-    def __init__(self, model: T, repository: TRepo) -> None:
+    def __init__(self, model: T, repository: IRepositoryBase[TRepo]) -> None:
         self.valid_repository(repository)
 
         self._model: T = model
-        self._repository: TRepo = repository
+        self._repository: IRepositoryBase[TRepo] = repository
         self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
         if not issubclass(self._model, Table):
@@ -115,7 +115,7 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
         return None
 
     @override
-    def limit(self, number: int) -> "IStatements[T]":
+    def limit(self, number: int) -> "IStatements_two_generic[T,TRepo]":
         limit = self.LIMIT_QUERY(number)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         limit_list = self._query_list["limit"]
@@ -126,27 +126,27 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
         return self
 
     @override
-    def offset(self, number: int) -> "IStatements[T]":
+    def offset(self, number: int) -> "IStatements_two_generic[T,TRepo]":
         offset = self.OFFSET_QUERY(number)
         self._query_list["offset"].append(offset)
         return self
 
     @override
-    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements[T]":
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements_two_generic[T,TRepo]":
         where = ForeignKey.MAPPED[table_left.__table_name__][table_right]
         join_query = self.JOIN_QUERY[table_left, Table](table_left, table_right, JoinType(by), where=where)
         self._query_list["join"].append(join_query)
         return self
 
     @override
-    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements[T]":
+    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements_two_generic[T,TRepo]":
         # FIXME [ ]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         where_query = self.WHERE_QUERY[T](function=lambda_, instances=(self._model,), **kwargs)
         self._query_list["where"].append(where_query)
         return self
 
     @override
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements[T]":
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements_two_generic[T,TRepo]":
         order = self.ORDER_QUERY[T](self._model, _lambda_col, order_type)
         self._query_list["order"].append(order)
         return self
