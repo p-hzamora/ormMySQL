@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+from decouple import config
 import math
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
@@ -17,12 +17,10 @@ from orm.common.interfaces import IStatements  # noqa: E402
 from orm.abstract_model import AbstractSQLStatements  # noqa: E402
 
 
-load_dotenv()
 
-
-USERNAME = "root"  # os.getenv("DB_USERNAME")
-PASSWORD = "1234"  # os.getenv("DB_PASSWORD")
-HOST = "localhost"  # os.getenv("DB_HOST")
+USERNAME = config("USERNAME")
+PASSWORD = config("PASSWORD")
+HOST = config("HOST")
 
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
