@@ -8,7 +8,7 @@ TypeExists = Literal["fail", "replace", "append"]
 
 class CreateDatabase:
     def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
-       self._repository:IRepositoryBase[MySQLConnection] = repository
+        self._repository: IRepositoryBase[MySQLConnection] = repository
 
     @override
     @property
