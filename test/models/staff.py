@@ -8,8 +8,7 @@ from orm import (
 
 from datetime import datetime
 
-from orm.common.interfaces import IRepositoryBase
-from orm.abstract_model import AbstractSQLStatements
+from orm.common.interfaces import IRepositoryBase, IStatements_two_generic
 
 
 from .address import Address
@@ -35,7 +34,6 @@ class Staff(Table):
     Store = ForeignKey[Self, Store](__table_name__, Store, lambda staff, store: staff.staff_id == store.store_id)
 
 
-# FIXME [ ]: check to change initialization Model
 class StaffModel(ModelBase[Staff]):
-    def __new__[T](cls, repository: T) -> AbstractSQLStatements[Staff,T]:
-        return super().__new__(cls, Staff, repository=repository)
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Staff, TRepo]:
+        return super().__new__(Staff, repository)
