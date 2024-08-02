@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import functools
 from typing import Any, Callable, Optional, Type
 
+
 class IRepositoryBase[T](ABC):
     @staticmethod
     def check_connection(func: Callable[..., Any]):
