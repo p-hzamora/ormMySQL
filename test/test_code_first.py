@@ -20,6 +20,7 @@ class Test_my_sql(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb = MySQLRepository(**data_config)
         self.ddbb.create_database(TDDBB_name, "replace")
+        self.ddbb.set_config({"database": TDDBB_name})
 
     def tearDown(self) -> None:
         self.ddbb.drop_database(TDDBB_name)
