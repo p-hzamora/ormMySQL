@@ -47,4 +47,10 @@ class IRepositoryBase[T](ABC):
     def drop_table(self, name: str) -> None: ...
 
     @property
+    @abstractmethod
     def connection(self) -> T: ...
+
+    @abstractmethod
+    def set_config(self, value: dict[str, Any]) -> dict[str, Any]:
+        """Method to update database config"""
+        ...
