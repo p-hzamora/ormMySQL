@@ -27,7 +27,6 @@ class Address(Table):
     City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
 
-# FIXME [ ]: check to change initialization Model
 class AddressModel(ModelBase[Address]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Address, TRepo]:
         return super().__new__(cls, Address, repository)
