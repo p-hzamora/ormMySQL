@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import Any, Optional, override
-from ..interfaces.INonQueryCommand import INonQueryCommand
+from orm.common.interfaces.INonQueryCommand import INonQueryCommand
 
 from orm.common.interfaces import IRepositoryBase
 from orm.utils import Table
