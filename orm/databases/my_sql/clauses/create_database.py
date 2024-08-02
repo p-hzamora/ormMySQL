@@ -25,6 +25,6 @@ class CreateDatabase:
                     cursor.execute(f"USE {name};")
                 else:
                     raise err
-            else:
-                self._repository.connection.database = name
+            finally:
+                self._repository.set_config({"database":name})
         return None
