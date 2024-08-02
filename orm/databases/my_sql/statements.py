@@ -21,7 +21,7 @@ from mysql.connector import MySQLConnection
 
 
 class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
-    def __init__(self, model: T, repository: IRepositoryBase) -> None:
+    def __init__(self, model: T, repository: IRepositoryBase[MySQLConnection]) -> None:
         super().__init__(model, repository=repository)
 
     # region Private methods
