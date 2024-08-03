@@ -1,39 +1,31 @@
 import sys
-import os
+from decouple import config
 from pathlib import Path
 import unittest
-from datetime import datetime
-import dotenv
 
-
-dotenv.load_dotenv()
-
-USERNAME = os.environ["USERNAME"]
-PASSWORD = os.environ["PASSWORD"]
+USERNAME = config("USERNAME")
+PASSWORD = config("PASSWORD")
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from test.models.address import Address, AddressModel  # noqa: E402
-from orm import MySQLRepository  # noqa: E402
-from orm.databases.my_sql.clauses import SelectQuery  # noqa: E402
+from orm.utils import ForeignKey  # noqa: E402
 
 
-repo = MySQLRepository("")
-class TestFK(unittest.TestCase):
-    def test_fk(self):
-        a = Address(1, "panizo", None, "tetuan", 28900, 26039, "617128992", "Madrid", datetime.now())
-        
-         
+class TestForeignKey(unittest.TestCase):
+    def test_fk_with_staff_table_in_imports(self):
+        self.assertDictEqual(ForeignKey.MAPPED, {})
 
-        sakila_db = MySQLRepository(USERNAME,PASSWORD,"sakila")
+        from test.models import Staff, Store, Address, City
 
-        a_model = AddressModel(sakila_db)
-        country = a_model.get(a.city.country.country)
-        self.assertEqual(country, "España")
+        map = {
+            City.__table_name__: ...,
+            Address.__table_name__: ...,
+            Store.__table_name__: ...,
+            Staff.__table_name__: ...,
+        }
 
-        SelectQuery[Address](Address, lambda x: (x.address, x.city))
+        self.assertTupleEqual(tuple(ForeignKey.MAPPED), tuple(map))
 
 
 if __name__ == "__main__":
-
     unittest.main()
