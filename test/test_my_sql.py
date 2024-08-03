@@ -12,7 +12,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 
 # Custom libraries
-from orm import MySQLRepository  # noqa: E402
+from orm.databases.my_sql import MySQLRepository  # noqa: E402
 
 
 TDDBB_name = "__test_ddbb__"
