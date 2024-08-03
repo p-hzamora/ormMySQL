@@ -9,13 +9,10 @@ from orm.databases.my_sql import MySQLRepository  # noqa: E402
 from orm.common.interfaces import IRepositoryBase  # noqa: E402
 from orm.utils.condition_types import ConditionType  # noqa: E402
 from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
-from test.models.address import AddressModel, Address  # noqa: E402
-from test.models.staff import StaffModel, Staff  # noqa: E402
-
-from orm.databases.my_sql.statements import MySQLStatements  # noqa: E402
-from orm.common.interfaces import IStatements  # noqa: E402
-from orm.abstract_model import AbstractSQLStatements  # noqa: E402
-
+from test.models.address import AddressModel  # noqa: E402
+from test.models.actor import ActorModel  # noqa: E402
+from test.models.staff import StaffModel  # noqa: E402
+from test.models.store import StoreModel  # noqa: E402
 
 
 USERNAME = config("USERNAME")
@@ -25,7 +22,21 @@ HOST = config("HOST")
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
 
+actor_model = ActorModel(database)
+store_model = StoreModel(database)
+a_model = AddressModel(database)
 s_model = StaffModel(database)
+
+result = AddressModel(database).select()
+res = a_model.where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[aA]")).select(
+    lambda a: (
+        a,
+        a.City,
+        a.City.Country,
+    ),
+    by=JoinType.INNER_JOIN,
+)
+
 
 asdf = "TEST_DB"
 s_model.repository.create_database(asdf, "replace")
@@ -42,39 +53,36 @@ s_model.upsert(new_staff)
 
 staffs = s_model.where(lambda x: x.staff_id > 2).delete()
 
-a_model = AddressModel(database)
-s_model = StaffModel(database)
+
 res_tuple_3 = (
     a_model.order(lambda a: a.address_id, order_type="DESC")
-    .where(lambda x: x.city.country.country_id == 87)
+    .where(lambda x: x.City.Country.country_id == 87)
     .select(
         lambda a: (
             a,
-            a.city,
-            a.city.country,
+            a.City,
+            a.City.Country,
         )
     )
 )
 
-country, address, c = (
+result = (
     a_model.order(lambda a: a.address_id, order_type="DESC")
-    .where(lambda x: x.city.country.country_id == 87)
+    .where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[A]"))
+    .limit(100)
     .select(
         lambda a: (
-            a.city.country,
-            a,
-            a.city,
+            a.address_id,
+            a.City.city_id,
+            a.City.Country.country_id,
+            a.City.Country.country,
         ),
-        by=JoinType.LEFT_EXCLUSIVE,
+        flavour=dict,
     )
 )
 
 
-for co in country:
-    print(co.to_dict())
 
-for ad in address:
-    print(ad.to_dict())
 
 
 res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).limit(100).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a,))
@@ -87,13 +95,13 @@ SELECT address.address_id as `kkk`, country.country as `country_country`, city.c
 WHERE country.country REGEXP '^[FHA]' AND (city.city REGEXP '[^W]') AND (177 >= address.address_id) AND (address.address_id <= 28)
 ORDER BY address.address_id DESC
 """
-address = a_model._repository.read_sql(query, flavour=dict)
+address = a_model.repository.read_sql(query, flavour=dict)
 pass
 
 
 def pagination(page: int):
     limit = 20
-    total_register: int = a_model._repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")[0][0]
+    total_register: int = a_model.repository.read_sql(f"SELECT COUNT(*) FROM {a_model._model.__table_name__}")[0][0]
     total_pages = int(math.ceil(total_register / limit))
 
     if page > total_pages:
