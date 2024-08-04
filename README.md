@@ -66,7 +66,7 @@ from datetime import datetime
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
     ForeignKey,
 )
 from orm.common.interfaces import IStatements_two_generic, IRepositoryBase
@@ -110,17 +110,17 @@ class City(Table):
 Once created, you need to create a Model for each Table
 
 ```python
-class CountryModel(ModelBase[Country]):
+class CountryModel(BaseModel[Country]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Country, repository)
 
 
-class AddressModel(ModelBase[Address]):
+class AddressModel(BaseModel[Address]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Address, repository)
 
 
-class CityModel(ModelBase[City]):
+class CityModel(BaseModel[City]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, City, repository)
 ```

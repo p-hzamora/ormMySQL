@@ -3,7 +3,7 @@ from datetime import datetime
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
     ForeignKey,
 )
 from orm.common.interfaces import IRepositoryBase
@@ -26,6 +26,6 @@ class Address(Table):
     City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
 
-class AddressModel(ModelBase[Address]):
+class AddressModel(BaseModel[Address]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Address, repository)

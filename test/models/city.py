@@ -2,7 +2,7 @@ from typing import Self
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
     ForeignKey,
 )
 
@@ -23,6 +23,6 @@ class City(Table):
     Country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
 
 
-class CityModel(ModelBase[City]):
+class CityModel(BaseModel[City]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, City, repository)

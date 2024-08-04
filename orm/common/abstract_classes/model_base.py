@@ -12,7 +12,7 @@ from orm.utils import Table
 # endregion
 
 
-class ModelBase[T: Table]:
+class BaseModel[T: Table]:
     """
     Class to select the correct AbstractSQLStatements class depends on the repository.
 

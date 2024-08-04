@@ -2,7 +2,7 @@ from typing import Self
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
     ForeignKey,
 )
 
@@ -23,6 +23,6 @@ class Store(Table):
     Address = ForeignKey[Self, Address](__table_name__, Address, lambda s, a: s.store_id == a.address_id)
 
 
-class StoreModel(ModelBase[Store]):
+class StoreModel(BaseModel[Store]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Store, repository)

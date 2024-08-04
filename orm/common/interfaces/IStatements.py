@@ -117,7 +117,7 @@ class IStatements[T: Table](ABC):
 
         EXAMPLE
         -
-        mb = ModelBase()
+        mb = BaseModel()
         mb.where(lambda a: 10 <= a.city_id <= 100)
         """
         ...
@@ -128,7 +128,7 @@ class IStatements[T: Table](ABC):
         This method creates where clause by passing the Iterable in lambda function
         EXAMPLE
         -
-        mb = ModelBase()
+        mb = BaseModel()
         mb.where(lambda a: (a.city, ConditionType.REGEXP, r"^B"))
         """
         ...
@@ -143,7 +143,7 @@ class IStatements[T: Table](ABC):
 
         EXAMPLE
         -
-        mb = ModelBase()
+        mb = BaseModel()
 
         external_data = "
         mb.where(lambda a: a.city_id > external_data)
@@ -167,7 +167,7 @@ class IStatements[T: Table](ABC):
 
     # region select
     @overload
-    def select(self) -> tuple[T,...]: ...
+    def select(self) -> tuple[T, ...]: ...
     @overload
     def select[T1](self, selector: Callable[[T], tuple[T1]], *, by: Optional[Enum] = JoinType.INNER_JOIN) -> tuple[tuple[T1]]: ...
     @overload

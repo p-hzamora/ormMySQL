@@ -1,7 +1,7 @@
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
 )
 
 from datetime import datetime
@@ -17,6 +17,6 @@ class Actor(Table):
     last_update: datetime
 
 
-class ActorModel(ModelBase[Actor]):
+class ActorModel(BaseModel[Actor]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Actor, repository)

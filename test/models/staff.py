@@ -2,7 +2,7 @@ from typing import Self
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
     ForeignKey,
 )
 
@@ -32,6 +32,6 @@ class Staff(Table):
     Store = ForeignKey[Self, Store](__table_name__, Store, lambda staff, store: staff.staff_id == store.store_id)
 
 
-class StaffModel(ModelBase[Staff]):
+class StaffModel(BaseModel[Staff]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Staff, repository)

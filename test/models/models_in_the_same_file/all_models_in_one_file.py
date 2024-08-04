@@ -3,7 +3,7 @@ from datetime import datetime
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
     IRepositoryBase,
     ForeignKey,
 )
@@ -17,7 +17,7 @@ class Country(Table):
     last_update: datetime
 
 
-class CountryModel(ModelBase[Country]):
+class CountryModel(BaseModel[Country]):
     def __init__(self, repository: IRepositoryBase):
         super().__init__(Country, repository=repository)
 
@@ -33,7 +33,7 @@ class City(Table):
     country = ForeignKey["City", Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
 
 
-class CityModel(ModelBase[City]):
+class CityModel(BaseModel[City]):
     def __init__(self, repository: IRepositoryBase):
         super().__init__(City, repository=repository)
 
@@ -54,6 +54,6 @@ class Address(Table):
     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
 
-class AddressModel(ModelBase[Address]):
+class AddressModel(BaseModel[Address]):
     def __init__(self, repository: IRepositoryBase):
         super().__init__(Address, repository=repository)

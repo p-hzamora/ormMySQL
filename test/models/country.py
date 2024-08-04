@@ -1,7 +1,7 @@
 from orm import (
     Column,
     Table,
-    ModelBase,
+    BaseModel,
 )
 
 from datetime import datetime
@@ -16,6 +16,6 @@ class Country(Table):
     last_update: datetime
 
 
-class CountryModel(ModelBase[Country]):
+class CountryModel(BaseModel[Country]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Country, repository)
