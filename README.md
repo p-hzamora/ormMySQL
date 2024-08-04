@@ -111,17 +111,17 @@ Once created, you need to create a Model for each Table
 
 ```python
 class CountryModel(ModelBase[Country]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Country, TRepo]:
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Country, repository)
 
 
 class AddressModel(ModelBase[Address]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Address, TRepo]:
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Address, repository)
 
 
 class CityModel(ModelBase[City]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[City, TRepo]:
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, City, repository)
 ```
 

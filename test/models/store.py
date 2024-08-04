@@ -7,7 +7,7 @@ from orm import (
 )
 
 from datetime import datetime
-from orm.common.interfaces import IRepositoryBase, IStatements_two_generic
+from orm.common.interfaces import IRepositoryBase
 
 
 from .address import Address
@@ -25,5 +25,5 @@ class Store(Table):
 
 
 class StoreModel(ModelBase[Store]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Store, TRepo]:
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Store, repository)

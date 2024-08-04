@@ -6,7 +6,7 @@ from orm import (
     ModelBase,
     ForeignKey,
 )
-from orm.common.interfaces import IStatements_two_generic, IRepositoryBase
+from orm.common.interfaces import IRepositoryBase
 
 from .city import City
 
@@ -28,5 +28,5 @@ class Address(Table):
 
 
 class AddressModel(ModelBase[Address]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[Address, TRepo]:
+    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, Address, repository)
