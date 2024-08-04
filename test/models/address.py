@@ -7,7 +7,6 @@ from orm import (
     ForeignKey,
 )
 from orm.common.interfaces import IRepositoryBase
-
 from .city import City
 
 

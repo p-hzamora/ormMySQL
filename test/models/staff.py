@@ -9,8 +9,6 @@ from orm import (
 from datetime import datetime
 
 from orm.common.interfaces import IRepositoryBase
-
-
 from .address import Address
 from .store import Store
 
