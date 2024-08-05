@@ -2,11 +2,11 @@
 from typing import Type
 
 
-from orm.common.interfaces import IRepositoryBase, IStatements_two_generic
-from orm.databases.my_sql import MySQLStatements, MySQLRepository
-from orm.common.abstract_classes import AbstractSQLStatements
+from ..interfaces import IRepositoryBase, IStatements_two_generic
+from ...databases.my_sql import MySQLStatements, MySQLRepository
+from . import AbstractSQLStatements
 
-from orm.utils import Table
+from ...utils import Table
 
 
 # endregion

@@ -1,11 +1,11 @@
 from typing import override, Type
 
 
-from orm.common.abstract_classes import AbstractSQLStatements
-from orm.utils import Table
-from orm.common.interfaces import IQuery, IRepositoryBase
+from ...common.abstract_classes import AbstractSQLStatements
+from ...utils import Table
+from ...common.interfaces import IQuery, IRepositoryBase
 
-from orm.components.select import ISelect
+from ...components.select import ISelect
 
 from .clauses import DeleteQuery
 from .clauses import InsertQuery

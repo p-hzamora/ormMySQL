@@ -1,9 +1,9 @@
 from abc import abstractmethod
-from .IUpsert import IUpsert
-from orm.common.interfaces import IRepositoryBase
-from orm.common.abstract_classes import NonQueryBase
 
-from orm.utils import Table
+from .IUpsert import IUpsert
+from ...common.interfaces import IRepositoryBase
+from ...common.abstract_classes import NonQueryBase
+from ...utils import Table
 
 
 class UpsertQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpsert[T]):

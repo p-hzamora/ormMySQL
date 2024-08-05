@@ -1,8 +1,8 @@
-from orm.utils import Table
+from ...utils import Table
 from abc import abstractmethod
 
-from orm.common.interfaces import IRepositoryBase
-from orm.common.abstract_classes import NonQueryBase
+from ...common.interfaces import IRepositoryBase
+from ...common.abstract_classes import NonQueryBase
 
 from .IDelete import IDelete
 

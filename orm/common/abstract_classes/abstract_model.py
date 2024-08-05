@@ -4,16 +4,16 @@ from collections import defaultdict
 from abc import abstractmethod
 import inspect
 
-from orm.utils import ForeignKey, Table
+from ...utils import ForeignKey, Table
 
-from orm.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
-from orm.components.update import UpdateQueryBase
-from orm.components.select import ISelect
-from orm.components.delete import DeleteQueryBase
-from orm.components.upsert import UpsertQueryBase
-from orm.components.select import TableColumn
-from orm.components.insert import InsertQueryBase
-from orm.components.where.abstract_where import AbstractWhere
+from ..interfaces import IQuery, IRepositoryBase, IStatements_two_generic
+from ...components.update import UpdateQueryBase
+from ...components.select import ISelect
+from ...components.delete import DeleteQueryBase
+from ...components.upsert import UpsertQueryBase
+from ...components.select import TableColumn
+from ...components.insert import InsertQueryBase
+from ...components.where.abstract_where import AbstractWhere
 
 
 from ..interfaces.IStatements import OrderType

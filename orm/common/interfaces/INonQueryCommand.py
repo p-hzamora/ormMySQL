@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from orm.common.interfaces import IQuery
+from . import IQuery
 
 
 class INonQueryCommand(IQuery):

@@ -1,8 +1,8 @@
 from typing import override, Callable
-from orm.utils.lambda_disassembler.tree_instruction import TreeInstruction
-from orm.common.interfaces.IQueryCommand import IQuery
+from ....utils.lambda_disassembler.tree_instruction import TreeInstruction
+from ....common.interfaces.IQueryCommand import IQuery
 
-from orm.common.interfaces.IStatements import OrderType
+from ....common.interfaces.IStatements import OrderType
 
 ASC = "ASC"
 DESC = "DESC"

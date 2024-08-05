@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from orm.utils import Table
-from orm.common.interfaces import IQuery
+from ...utils import Table
+from ..interfaces import IQuery
 
 
 class QueryBase[T:Table](IQuery):

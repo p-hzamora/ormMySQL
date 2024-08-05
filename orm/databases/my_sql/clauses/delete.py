@@ -1,8 +1,8 @@
 from typing import Any, override, Iterable
 
-from orm.utils import Table, Column
-from orm.components.delete import DeleteQueryBase
-from orm.common.interfaces import IRepositoryBase
+from ....utils import Table, Column
+from ....components.delete import DeleteQueryBase
+from ....common.interfaces import IRepositoryBase
 from mysql.connector import MySQLConnection
 
 class DeleteQuery[T: Table](DeleteQueryBase[T, IRepositoryBase[MySQLConnection]]):

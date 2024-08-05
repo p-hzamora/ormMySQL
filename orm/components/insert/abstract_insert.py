@@ -1,9 +1,9 @@
 from abc import abstractmethod
-from orm.utils import Table
 
 from .IInsert import IInsert
-from orm.common.interfaces import IRepositoryBase
-from orm.common.abstract_classes import NonQueryBase
+from ...utils import Table
+from ...common.interfaces import IRepositoryBase
+from ...common.abstract_classes import NonQueryBase
 
 
 class InsertQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, IRepositoryBase], IInsert[T]):

@@ -2,9 +2,9 @@ from typing import Any, Callable, Iterable, Optional, Literal, Type, overload
 from enum import Enum
 from abc import abstractmethod, ABC
 
-from orm.common.enums import JoinType
-from orm.common.interfaces import IRepositoryBase
-from orm.utils import Table
+from ..enums import JoinType
+from . import IRepositoryBase
+from ...utils import Table
 
 OrderType = Literal["ASC", "DESC"]
 

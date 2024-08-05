@@ -1,10 +1,11 @@
 from typing import Any, Callable, Optional, override
 import inspect
-from orm.common.enums import ConditionType
-from orm.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction
-from orm.common.interfaces.IQueryCommand import IQuery
-from orm.components.where.abstract_where import AbstractWhere
-from orm.utils import Table
+
+from ....common.enums import ConditionType
+from ....utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction
+from ....common.interfaces.IQueryCommand import IQuery
+from ....components.where.abstract_where import AbstractWhere
+from ....utils import Table
 
 
 class WhereConditionByArg[TProp1, TProp2](IQuery):

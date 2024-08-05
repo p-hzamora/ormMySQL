@@ -1,10 +1,10 @@
 from collections.abc import Iterable
 from typing import override, Any
-
-from orm.utils import Table, Column
-from orm.components.upsert import UpsertQueryBase
-from orm.common.interfaces import IRepositoryBase
 from mysql.connector import MySQLConnection
+
+from ....utils import Table, Column
+from ....components.upsert import UpsertQueryBase
+from ....common.interfaces import IRepositoryBase
 
 from .insert import InsertQuery
 

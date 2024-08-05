@@ -7,8 +7,8 @@ from typing import Any, Type, override
 from mysql.connector import MySQLConnection
 
 # Custom libraries
-from orm.common.interfaces import IRepositoryBase
-from orm.utils.module_tree.dynamic_module import ModuleTree
+from ...common.interfaces import IRepositoryBase
+from ...utils.module_tree.dynamic_module import ModuleTree
 
 from .clauses import CreateDatabase, TypeExists
 from .clauses import DropDatabase
