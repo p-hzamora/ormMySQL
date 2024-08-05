@@ -17,6 +17,9 @@ class IRepositoryBase[T](ABC):
 
         return wrapper
 
+    def __repr__(self) -> str:
+        return f"{IRepositoryBase.__name__}: {self.__class__.__name__}"
+    
     @abstractmethod
     def is_connected(self) -> bool: ...
 
