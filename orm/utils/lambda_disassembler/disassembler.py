@@ -5,11 +5,11 @@ from .nested_element import NestedElement
 from .tree_instruction import TreeInstruction
 
 
-class Dissambler[TProp1, TProp2: Any]:
+class Disassembler[TProp1, TProp2: Any]:
     """
     class to dissambler lambda function to detach information from left to right of compare symbol.
 
-    >>> dis = Dissambler[DtoC, None](lambda d: d.c.b.b_data == "asdf")
+    >>> dis = Disassembler[DtoC, None](lambda d: d.c.b.b_data == "asdf")
 
     >>> dis.cond_1.name # b_data
     >>> dis.cond_1.parent.parent.parent.name # d

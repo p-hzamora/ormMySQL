@@ -1,7 +1,7 @@
 from typing import Callable, Iterator, Optional, Type, override
 import inspect
 
-from orm.utils.dissambler import TreeInstruction, TupleInstruction, NestedElement
+from orm.utils.lambda_disassembler import TreeInstruction, TupleInstruction, NestedElement
 from orm.components.select import ISelect
 from orm.utils import Table, ForeignKey
 from orm.utils.table_constructor import TableMeta

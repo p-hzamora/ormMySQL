@@ -3,10 +3,9 @@ from typing import override, Callable, overload, Optional, TypeVar
 # from ..table import Table
 
 from orm.common.interfaces.IQueryCommand import IQuery
-from orm.utils.dissambler import Dissambler
+from orm.utils.lambda_disassembler import Disassembler
 
 from orm.abstract_model import JoinType
-
 
 
 Table = TypeVar("Table")
@@ -30,8 +29,7 @@ class JoinSelector[TLeft, TRight](IQuery):
         col_left: str,
         col_right: str,
         by: JoinType,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -40,8 +38,7 @@ class JoinSelector[TLeft, TRight](IQuery):
         table_right: TRight,
         by: JoinType,
         where: Callable[[TLeft, TRight], bool],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,
@@ -64,7 +61,7 @@ class JoinSelector[TLeft, TRight](IQuery):
             self._right_col: str = col_right
             self._compareop: str = "="
         else:
-            _dis: Dissambler[TLeft, TRight] = Dissambler[TLeft, TRight](where)
+            _dis: Disassembler[TLeft, TRight] = Disassembler[TLeft, TRight](where)
             self._left_col: str = _dis.cond_1.name
             self._right_col: str = _dis.cond_2.name
             self._compareop: str = _dis.compare_op

@@ -5,8 +5,8 @@ import unittest
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm.utils.dissambler.tree_instruction import TreeInstruction  # noqa: E402
-from orm.utils.dissambler.nested_element import NestedElement  # noqa: E402
+from orm.utils.lambda_disassembler import TreeInstruction  # noqa: E402
+from orm.utils.lambda_disassembler import NestedElement  # noqa: E402
 
 
 class A:

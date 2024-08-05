@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Callable, NamedTuple, Type
 
 from .table_constructor import Table
-from .lambda_disassembler import Dissambler
+from .lambda_disassembler import Disassembler
 
 
 class RelationShip[T: Table](NamedTuple):
@@ -32,19 +32,19 @@ class ForeignKey[Tbl1: str, Tbl2: Table]:
     def create_query(cls, orig_table: Table) -> list[str]:
         clauses: list[str] = []
         for referenced_table, _lambda in ForeignKey.MAPPED[orig_table.__table_name__].items():
-            dissambler: Dissambler = Dissambler(_lambda)
+            dissambler: Disassembler = Disassembler(_lambda)
             orig_col: str = dissambler.cond_1.name
             referenced_col: str = dissambler.cond_2.name
 
             clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.__table_name__}({referenced_col})")
         return clauses
 
-    #TODOL: Checked in the future
+    # TODOL: Checked in the future
     @classmethod
     def get_fk_from_table(cls, table: Table) -> dict[Table, list[Table]]:
         fks: list[Table] = []
 
-        def loop(table: Table)->list[Table]:
+        def loop(table: Table) -> list[Table]:
             fk: dict[Table, Callable[[Tbl1, Tbl2], bool]] = cls.MAPPED.get(table.__table_name__, [])
 
             if not fk:
@@ -54,4 +54,4 @@ class ForeignKey[Tbl1: str, Tbl2: Table]:
                 loop(table)
             return fks
 
-        return {table:loop(table)}
+        return {table: loop(table)}

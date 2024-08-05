@@ -5,7 +5,7 @@ from datetime import datetime
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm.utils.dissambler import Dissambler  # noqa: E402
+from orm.utils.lambda_disassembler import Disassembler  # noqa: E402
 
 
 class A:
@@ -37,19 +37,19 @@ class DtoC:
 class TestDissambler(unittest.TestCase):
     # region Heritage_var_control
     def test_heritage_var_control_with_one_attr_to_the_right(self):
-        dis = Dissambler[DtoC, None](lambda d: "asdf" != d.c.b.b_data)
+        dis = Disassembler[DtoC, None](lambda d: "asdf" != d.c.b.b_data)
         self.assertEqual(dis.cond_1.name, "asdf")
         self.assertEqual(dis.cond_2.name, "b_data")
         self.assertEqual(dis.compare_op, "!=")
 
     def test_heritage_var_control_with_one_attr_to_the_left(self):
-        dis = Dissambler[DtoC, None](lambda d: d.c.b.b_data == "asdf")
+        dis = Disassembler[DtoC, None](lambda d: d.c.b.b_data == "asdf")
         self.assertEqual(dis.cond_1.name, "b_data")
         self.assertEqual(dis.cond_2.name, "asdf")
         self.assertEqual(dis.compare_op, "=")
 
     def test_heritage_var_control_with_two_attr(self):
-        dis = Dissambler[DtoC, CtoB](lambda d, c: d.c.b.b_data == c.b.b_data)
+        dis = Disassembler[DtoC, CtoB](lambda d, c: d.c.b.b_data == c.b.b_data)
 
         self.assertEqual(dis.cond_1.name, "b_data")
         self.assertEqual(dis.cond_1.name, "b_data")
@@ -62,7 +62,7 @@ class TestDissambler(unittest.TestCase):
     # endregion
     # region zero attributes
     def test_zero_attr(self):
-        dis = Dissambler(lambda: 5 > 1)
+        dis = Disassembler(lambda: 5 > 1)
         self.assertEqual(dis.cond_1.name, 5)
         self.assertEqual(dis.cond_2.name, 1)
         self.assertEqual(dis.compare_op, ">")
@@ -71,13 +71,13 @@ class TestDissambler(unittest.TestCase):
 
     # region one attribute
     def test_one_attr_to_left(self):
-        dis = Dissambler[A, None](lambda x: "foo_x" != x.a_id)
+        dis = Disassembler[A, None](lambda x: "foo_x" != x.a_id)
         self.assertEqual(dis.cond_1.name, "foo_x")
         self.assertEqual(dis.cond_2.name, "a_id")
         self.assertEqual(dis.compare_op, "!=")
 
     def test_one_attr_to_right(self):
-        dis = Dissambler[A, None](lambda a: "var_to_the_left" <= a.a_time)
+        dis = Disassembler[A, None](lambda a: "var_to_the_left" <= a.a_time)
         self.assertEqual(dis.cond_1.name, "var_to_the_left")
         self.assertEqual(dis.cond_2.name, "a_time")
         self.assertEqual(dis.compare_op, "<=")
@@ -86,13 +86,13 @@ class TestDissambler(unittest.TestCase):
 
     # region two attributes
     def test_two_attr_variable(self):
-        dis = Dissambler[A, B](lambda a, b: a.a_data < b.b_time)
+        dis = Disassembler[A, B](lambda a, b: a.a_data < b.b_time)
         self.assertEqual(dis.cond_1.name, "a_data")
         self.assertEqual(dis.cond_2.name, "b_time")
         self.assertEqual(dis.compare_op, "<")
 
     def test_two_attr_b_to_left_a_to_right(self):
-        dis = Dissambler[A, B](lambda a, b: b.b_data == a.a_data)
+        dis = Disassembler[A, B](lambda a, b: b.b_data == a.a_data)
         self.assertEqual(dis.cond_1.name, "b_data")
         self.assertEqual(dis.cond_2.name, "a_data")
         self.assertEqual(dis.compare_op, "=")
@@ -100,7 +100,7 @@ class TestDissambler(unittest.TestCase):
     # endregion
 
     def test_get_parent_class(self):
-        dis = Dissambler[DtoC, CtoB](lambda d, c: d.c.b.b_time == c.c_time)
+        dis = Disassembler[DtoC, CtoB](lambda d, c: d.c.b.b_time == c.c_time)
         self.assertEqual(dis.cond_2.parent.name, "c")
         self.assertEqual(dis.cond_2.name, "c_time")
 
@@ -110,7 +110,7 @@ class TestDissambler(unittest.TestCase):
         self.assertEqual(dis.cond_1.name, "b_time")
 
     def test_none_values(self):
-        dis = Dissambler[DtoC, CtoB](lambda d, c: d.c.b.b_time is None)
+        dis = Disassembler[DtoC, CtoB](lambda d, c: d.c.b.b_time is None)
         self.assertEqual(dis.cond_2.name, "NULL")
         self.assertEqual(dis.compare_op, "IS")
         self.assertEqual(dis.cond_1.parent.parent.parent.name, "d")
