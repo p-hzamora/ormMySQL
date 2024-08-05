@@ -1,36 +1,45 @@
 from typing import Any, Callable, Optional, Type, override, Iterable, Literal
+from enum import Enum
 from collections import defaultdict
 from abc import abstractmethod
 import inspect
 
 from orm.utils import ForeignKey, Table
 
-from orm.common.enums import JoinType
-from orm.common.interfaces import IQuery, IStatements, IRepositoryBase
-from orm.components.insert import InsertQueryBase
+from orm.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
 from orm.components.select import ISelect
 from orm.components.delete import DeleteQueryBase
 from orm.components.upsert import UpsertQueryBase
 from orm.components.select import TableColumn
+from orm.components.insert import InsertQueryBase
 from orm.components.where.abstract_where import AbstractWhere
 
 
-OrderType = Literal["ASC", "DESC"]
+from ..interfaces.IStatements import OrderType
 
+
+class JoinType(Enum):
+    RIGHT_INCLUSIVE = "RIGHT JOIN"
+    LEFT_INCLUSIVE = "LEFT JOIN"
+    RIGHT_EXCLUSIVE = "RIGHT JOIN"
+    LEFT_EXCLUSIVE = "LEFT JOIN"
+    FULL_OUTER_INCLUSIVE = "RIGHT JOIN"
+    FULL_OUTER_EXCLUSIVE = "RIGHT JOIN"
+    INNER_JOIN = "INNER JOIN"
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
 
 
-class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
+class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     __slots__ = ("_model", "_repository", "_query_list")
     __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
 
-    def __init__(self, model: T, repository: TRepo) -> None:
+    def __init__(self, model: T, repository: IRepositoryBase[TRepo]) -> None:
         self.valid_repository(repository)
 
         self._model: T = model
-        self._repository: TRepo = repository
+        self._repository: IRepositoryBase[TRepo] = repository
         self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
         if not issubclass(self._model, Table):
@@ -51,14 +60,12 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
     @property
     @abstractmethod
     def INSERT_QUERY(self) -> Type[InsertQueryBase[T, TRepo]]: ...
-
     @property
     @abstractmethod
-    def UPSERT_QUERY(self) -> Type[UpsertQueryBase[T]]: ...
-
+    def UPSERT_QUERY(self) -> Type[UpsertQueryBase[T, TRepo]]: ...
     @property
     @abstractmethod
-    def DELETE_QUERY(self) -> Type[DeleteQueryBase[T]]: ...
+    def DELETE_QUERY(self) -> Type[DeleteQueryBase[T, TRepo]]: ...
     @property
     @abstractmethod
     def LIMIT_QUERY(self) -> Type[IQuery]: ...
@@ -76,17 +83,18 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
     def ORDER_QUERY(self) -> Type[IQuery]: ...
     @property
     @abstractmethod
-    def SELECT_QUERY(self) -> ISelect: ...
+    def SELECT_QUERY(self) -> Type[ISelect]: ...
 
     @override
-    def insert(self, values: T | list[T]) -> None:
-        query, values = self.INSERT_QUERY(self._model, self._repository).insert(values)
-        self._repository.executemany_with_values(query, values)
+    def insert(self, instances: T | list[T]) -> None:
+        insert = self.INSERT_QUERY(self._model, self._repository)
+        insert.insert(instances)
+        insert.execute()
         return None
 
     @override
-    def delete(self, instance: Optional[T | list[T]] = None) -> None:
-        if instance is None:
+    def delete(self, instances: Optional[T | list[T]] = None) -> None:
+        if instances is None:
             response = self.select()
             if len(response) == 0:
                 return None
@@ -94,18 +102,20 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
             # We always going to have a tuple of one element
             return self.delete(response)
 
-        query, values = self.DELETE_QUERY(self._model).delete(instance)
-        self._repository.execute_with_values(query, values)
+        delete = self.DELETE_QUERY(self._model, self._repository)
+        delete.delete(instances)
+        delete.execute()
         return None
 
     @override
-    def upsert(self, values: T | list[T]) -> None:
-        query, values = self.UPSERT_QUERY(self._model).upsert(values)
-        self._repository.executemany_with_values(query, values)
+    def upsert(self, instances: T | list[T]) -> None:
+        upsert = self.UPSERT_QUERY(self._model, self._repository)
+        upsert.upsert(instances)
+        upsert.execute()
         return None
 
     @override
-    def limit(self, number: int) -> "IStatements[T]":
+    def limit(self, number: int) -> "IStatements_two_generic[T,TRepo]":
         limit = self.LIMIT_QUERY(number)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         limit_list = self._query_list["limit"]
@@ -116,27 +126,27 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
         return self
 
     @override
-    def offset(self, number: int) -> "IStatements[T]":
+    def offset(self, number: int) -> "IStatements_two_generic[T,TRepo]":
         offset = self.OFFSET_QUERY(number)
         self._query_list["offset"].append(offset)
         return self
 
     @override
-    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements[T]":
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements_two_generic[T,TRepo]":
         where = ForeignKey.MAPPED[table_left.__table_name__][table_right]
         join_query = self.JOIN_QUERY[table_left, Table](table_left, table_right, JoinType(by), where=where)
         self._query_list["join"].append(join_query)
         return self
 
     @override
-    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements[T]":
+    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements_two_generic[T,TRepo]":
         # FIXME [ ]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         where_query = self.WHERE_QUERY[T](function=lambda_, instances=(self._model,), **kwargs)
         self._query_list["where"].append(where_query)
         return self
 
     @override
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements[T]":
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements_two_generic[T,TRepo]":
         order = self.ORDER_QUERY[T](self._model, _lambda_col, order_type)
         self._query_list["order"].append(order)
         return self
@@ -146,8 +156,11 @@ class AbstractSQLStatements[T: Table, TRepo: IRepositoryBase](IStatements[T]):
         if len(inspect.signature(selector).parameters) == 0:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
             result = self.select(selector=lambda x: (x,), flavour=flavour, by=by)
+            # COMMENT: Always we want to retrieve tuple[tuple[Any]]. That's the reason to return result[0] when we ensure the user want only objects of the first table.
+            # Otherwise, we wil return the result itself
+            if flavour:
+                return result
             return () if not result else result[0]
-
         select: ISelect = self.SELECT_QUERY(self._model, select_lambda=selector, by=by)
         self._query_list["select"].append(select)
 
