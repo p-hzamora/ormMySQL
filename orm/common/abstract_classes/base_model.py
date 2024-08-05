@@ -4,7 +4,7 @@ from typing import Type
 
 from orm.common.interfaces import IRepositoryBase, IStatements_two_generic
 from orm.databases.my_sql import MySQLStatements, MySQLRepository
-from orm.abstract_model import AbstractSQLStatements
+from orm.common.abstract_classes import AbstractSQLStatements
 
 from orm.utils import Table
 
