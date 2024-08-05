@@ -104,7 +104,7 @@ class City(Table):
     country_id: int
     last_update: datetime
 
-    Country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
+    Country = ForeignKey["City", Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
 ```
 
 Once created, you need to create a Model for each Table
@@ -129,12 +129,25 @@ class CityModel(BaseModel[City]):
 
 We can use various methods such as `where`, `limit`, `offset`, `order`, etc... 
 
-Also you can use `ConditionType` enum for `regular expressions` and get, for example, all rows from different table where his `Country` name started by "A" something like:
+# Filter using `where` method
+To retrieve all `Address` object where the fk reference to the `City` table, and the fk reference to the `Country` table have a `country_id` value greater or equal than 50, ordered in `descending` order, then:
+
+```python
+result = (
+    AddressModel(database)
+    .order(lambda a: a.address_id, order_type="DESC")
+    .where(lambda x: x.City.Country.country_id >= 50)
+    .select(lambda a: (a))
+)
+
+```
+Also you can use `ConditionType` enum for `regular expressions` and get, for example, all rows from a different table where the `Country` name starts with `A`, limited to `100`:
 
 
 ```python
 address, city, country = (
-    AddressModel(database).order(lambda a: a.address_id, order_type="DESC")
+    AddressModel(database)
+    .order(lambda a: a.address_id, order_type="DESC")
     .where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[A]"))
     .limit(100)
     .select(
@@ -163,7 +176,7 @@ In the example above, we see that the `result` var returns a tuple of tuples. Ho
 
 ```python
 result = (
-    a_model.order(lambda a: a.address_id, order_type="DESC")
+    a_model
     .where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[A]"))
     .limit(100)
     .select(
