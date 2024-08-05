@@ -30,7 +30,7 @@ The `result` var will be of type `tuple[Address, ...]`
 Once the `AddressModel` class is created, we will not only be able to access all the information in that table, but also all the information in all the tables that have foreign keys related to it."
 
 ```python
-from orm.utils.condition_types import ConditionType
+from orm.common.enums import ConditionType
 from test.models.address import AddressModel
 
 
