@@ -1,11 +1,11 @@
 from typing import Any, Callable, Optional, Type, override, Iterable, Literal
-from enum import Enum
 from collections import defaultdict
 from abc import abstractmethod
 import inspect
 
 from orm.utils import ForeignKey, Table
 
+from orm.common.enums import JoinType
 from orm.common.interfaces import IQuery, IStatements, IRepositoryBase
 from orm.components.insert import InsertQueryBase
 from orm.components.select import ISelect
@@ -17,15 +17,6 @@ from orm.components.where.abstract_where import AbstractWhere
 
 OrderType = Literal["ASC", "DESC"]
 
-
-class JoinType(Enum):
-    RIGHT_INCLUSIVE = "RIGHT JOIN"
-    LEFT_INCLUSIVE = "LEFT JOIN"
-    RIGHT_EXCLUSIVE = "RIGHT JOIN"
-    LEFT_EXCLUSIVE = "LEFT JOIN"
-    FULL_OUTER_INCLUSIVE = "RIGHT JOIN"
-    FULL_OUTER_EXCLUSIVE = "RIGHT JOIN"
-    INNER_JOIN = "INNER JOIN"
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]

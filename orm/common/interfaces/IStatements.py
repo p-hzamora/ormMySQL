@@ -1,21 +1,12 @@
 from typing import Callable, Iterable, Optional, Literal, Type, overload
-from abc import abstractmethod, ABC
 from enum import Enum
+from abc import abstractmethod, ABC
 
+from orm.common.enums import JoinType
 from orm.common.interfaces import IRepositoryBase
 from orm.utils import Table
 
 OrderType = Literal["ASC", "DESC"]
-
-
-class JoinType(Enum):
-    RIGHT_INCLUSIVE = "RIGHT JOIN"
-    LEFT_INCLUSIVE = "LEFT JOIN"
-    RIGHT_EXCLUSIVE = "RIGHT JOIN"
-    LEFT_EXCLUSIVE = "LEFT JOIN"
-    FULL_OUTER_INCLUSIVE = "RIGHT JOIN"
-    FULL_OUTER_EXCLUSIVE = "RIGHT JOIN"
-    INNER_JOIN = "INNER JOIN"
 
 
 class IStatements[T: Table](ABC):
