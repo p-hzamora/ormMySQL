@@ -13,17 +13,27 @@ from test.models import (  # noqa: E402
 
 from orm.databases.my_sql.repository import MySQLRepository  # noqa: E402
 from orm.databases.my_sql.statements import MySQLStatements  # noqa: E402
-from orm.abstract_model import AbstractSQLStatements
 
-config = {"user": "root", "password": "1234", "database": "sakila"}
-db = MySQLRepository(**config)
+db = MySQLRepository(user="root", password="1234", database="sakila")
 
 
 class TestAbstractSQLStatements(unittest.TestCase):
     def test_constructor(self):
-        abstract = MySQLStatements[Address](Address, db)
-        address = abstract.select()
-        pass
+        address = MySQLStatements[Address](Address, db)
+        city = MySQLStatements[City](City, db)
+        country = MySQLStatements[Country](Country, db)
+
+        result_a = address.select(flavour=set)
+        rusult_ci = city.select(flavour=set)
+        result_co = country.select(flavour=set)
+        self.assertIsInstance(result_a,tuple)
+        self.assertIsInstance(result_a[0],set)
+
+        self.assertIsInstance(rusult_ci,tuple)
+        self.assertIsInstance(rusult_ci[0],set)
+
+        self.assertIsInstance(result_co,tuple)
+        self.assertIsInstance(result_co[0],set)
 
 
 if __name__ == "__main__":
