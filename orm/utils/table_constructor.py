@@ -3,7 +3,10 @@ import datetime
 from decimal import Decimal
 from typing import Any, Iterable, Optional, Type, dataclass_transform
 import json
+
+from orm.utils.dtypes import get_query_clausule
 from .column import Column
+
 
 MISSING = Column()
 
@@ -58,7 +61,7 @@ def get_fields[T](cls: Type[T]) -> Iterable[Field]:
         field_type = type_
         if hasattr(type_, "__origin__") and type_.__origin__ is Column:  # __origin__ to get type of Generic value
             field_type = type_.__args__[0]
-        default:Column = getattr(cls, name, MISSING)
+        default: Column = getattr(cls, name, MISSING)
         fields.append(Field(name, field_type, default))
 
         # Update __annotations__ to create Columns
@@ -220,5 +223,31 @@ class Table(metaclass=TableMeta):
         return None
 
     @classmethod
-    def get_columns(cls)->tuple[str,...]:
+    def get_columns(cls) -> tuple[str, ...]:
         return tuple(cls.__annotations__.keys())
+
+    @classmethod
+    def create_table_query(cls) -> str:
+        """It's classmethod because of it does not matter the columns values to create the table"""
+        from orm.utils import ForeignKey
+
+        all_clauses: list[str] = []
+
+        all_clauses.extend(cls._create_sql_column_query())
+        all_clauses.extend(ForeignKey.create_query(cls))
+
+        return f"CREATE TABLE {cls.__table_name__} ({', '.join(all_clauses)});"
+
+    @classmethod
+    def _create_sql_column_query(cls) -> list[str]:
+        """
+        It's imperative to instantiate cls() to initialize the 'Table' object and create private variables that will be Column objects.
+        Otherwise, we only can access to property method
+        """
+        table_init_ = cls()
+        annotations: dict[str, Column] = table_init_.__annotations__
+        all_columns: list = []
+        for col_name in annotations.keys():
+            col_object: Column = getattr(table_init_, f"_{col_name}")
+            all_columns.append(get_query_clausule(col_object))
+        return all_columns
