@@ -1,6 +1,6 @@
 from typing import Any, Callable, Optional, override
 import inspect
-from orm.utils.condition_types import ConditionType
+from orm.common.enums import ConditionType
 from orm.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction
 from orm.common.interfaces.IQueryCommand import IQuery
 from orm.components.where.abstract_where import AbstractWhere

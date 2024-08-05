@@ -5,7 +5,7 @@ from typing import override, Callable, overload, Optional, TypeVar
 from orm.common.interfaces.IQueryCommand import IQuery
 from orm.utils.lambda_disassembler import Disassembler
 
-from orm.abstract_model import JoinType
+from orm.common.enums import JoinType
 
 
 Table = TypeVar("Table")

@@ -2,7 +2,7 @@ from typing import override, Callable
 from orm.utils.lambda_disassembler.tree_instruction import TreeInstruction
 from orm.common.interfaces.IQueryCommand import IQuery
 
-from orm.abstract_model import OrderType
+from orm.common.interfaces.IStatements import OrderType
 
 ASC = "ASC"
 DESC = "DESC"

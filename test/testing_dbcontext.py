@@ -7,7 +7,7 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 from orm.databases.my_sql import MySQLRepository  # noqa: E402
 from orm.common.interfaces import IRepositoryBase  # noqa: E402
-from orm.utils.condition_types import ConditionType  # noqa: E402
+from orm.common.enums import ConditionType  # noqa: E402
 from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from test.models.address import AddressModel  # noqa: E402
 from test.models.actor import ActorModel  # noqa: E402

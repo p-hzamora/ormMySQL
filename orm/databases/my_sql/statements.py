@@ -1,7 +1,7 @@
 from typing import override, Type
 
 
-from orm.abstract_model import AbstractSQLStatements
+from orm.common.abstract_classes import AbstractSQLStatements
 from orm.utils import Table
 from orm.common.interfaces import IQuery, IRepositoryBase
 
