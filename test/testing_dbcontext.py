@@ -10,7 +10,7 @@ from orm.common.interfaces import IRepositoryBase  # noqa: E402
 from orm.common.enums import ConditionType  # noqa: E402
 from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from test.models.address import AddressModel  # noqa: E402
-from test.models.actor import ActorModel  # noqa: E402
+from test.models.actor import ActorModel,Actor  # noqa: E402
 from test.models.staff import StaffModel  # noqa: E402
 from test.models.store import StoreModel  # noqa: E402
 
@@ -37,6 +37,8 @@ res = a_model.where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[aA]")).
     by=JoinType.INNER_JOIN,
 )
 
+
+query = Actor.create_table_query()
 
 asdf = "TEST_DB"
 s_model.repository.create_database(asdf, "replace")
