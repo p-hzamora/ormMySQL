@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import functools
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Literal, Optional, Type
+
+TypeExists = Literal["fail", "replace", "append"]
 
 
 class IRepositoryBase[T](ABC):
@@ -45,7 +47,7 @@ class IRepositoryBase[T](ABC):
     def drop_database(self, name: str) -> None: ...
 
     @abstractmethod
-    def create_database(self, name: str) -> None: ...
+    def create_database(self, name: str, if_exists: TypeExists = "fail") -> None: ...
 
     @abstractmethod
     def drop_table(self, name: str) -> None: ...
