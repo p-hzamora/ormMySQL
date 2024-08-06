@@ -108,5 +108,3 @@ class UpsertQuery[T: Table](UpsertQueryBase[T, IRepositoryBase[MySQLConnection]]
                 result.extend(self.create_dict_list(x))
             return result
         return result
-
-    # FIXME [ ]: change interfaces to avoid override 'insert' method
