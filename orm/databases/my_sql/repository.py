@@ -64,7 +64,6 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def __init__(self, **kwargs: Any) -> None:
         self._data_config: dict[str, Any] = kwargs
         self._connection: MySQLConnection = MySQLConnection()
-        self.connect()
         # self._pool_connection: MySQLConnection = MySQLConnection(**kwargs)
         pass
 
