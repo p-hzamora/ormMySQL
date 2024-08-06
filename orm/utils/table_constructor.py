@@ -1,10 +1,13 @@
 import base64
+from collections import defaultdict
 import datetime
 from decimal import Decimal
 from typing import Any, Iterable, Optional, Type, dataclass_transform
 import json
 
 from orm.utils.dtypes import get_query_clausule
+
+from .module_tree.dfs_traversal import DFSTraversal
 from .column import Column
 
 
@@ -136,6 +139,7 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
 class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
+
         self = __init_constructor__(cls_object)
         return self
 
@@ -252,10 +256,22 @@ class Table(metaclass=TableMeta):
             all_columns.append(get_query_clausule(col_object))
         return all_columns
 
+    @classmethod
+    def find_dependent_tables(cls) -> tuple["Table", ...]:
+        from orm.utils import ForeignKey
+
+        graph = defaultdict(list)
+        for key, val in ForeignKey.MAPPED.items():
+            for sub_table in val:
+                graph[key] = [sub_table.__table_name__]
+
+        dfs = DFSTraversal.sort(graph)
+        return dfs[: dfs.index(cls.__table_name__)]
+
     def __hash__(self) -> int:
         return hash(self.to_dict().values())
-    
+
     def __eq__(self, __value: Any) -> bool:
-        if isinstance(__value,Table):
+        if isinstance(__value, Table):
             return hash(self) == hash(__value)
         return False

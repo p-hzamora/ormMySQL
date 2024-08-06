@@ -4,7 +4,6 @@ from typing import Callable, NamedTuple, Type
 from .table_constructor import Table
 from .lambda_disassembler import Disassembler
 
-
 class RelationShip[T: Table](NamedTuple):
     col: str
     object: T
@@ -38,20 +37,3 @@ class ForeignKey[Tbl1: str, Tbl2: Table]:
 
             clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.__table_name__}({referenced_col})")
         return clauses
-
-    # TODOL: Checked in the future
-    @classmethod
-    def get_fk_from_table(cls, table: Table) -> dict[Table, list[Table]]:
-        fks: list[Table] = []
-
-        def loop(table: Table) -> list[Table]:
-            fk: dict[Table, Callable[[Tbl1, Tbl2], bool]] = cls.MAPPED.get(table.__table_name__, [])
-
-            if not fk:
-                return []
-            for table, _lambda in fk.items():
-                fks.append(table)
-                loop(table)
-            return fks
-
-        return {table: loop(table)}

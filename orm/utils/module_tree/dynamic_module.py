@@ -4,7 +4,6 @@ from typing import Optional, Type
 import re
 
 from orm.utils.table_constructor import Table
-from orm.utils.foreign_key import ForeignKey
 
 import importlib
 import inspect
@@ -185,20 +184,17 @@ class ModuleTree:
         tables: list[tuple[str, Table]] = self.get_member_table(self.load_module("", self.module_path))
 
         for table_name, table_obj in tables:
-            fks = ForeignKey.get_fk_from_table(table_obj)
-            if not fks:
-                fks = []
-            else:
-                for _, lista in fks.items():
-                    unorder_module_list.append(
-                        Node(
-                            self.module_path,
-                            relative_path=self.module_path,
-                            class_name=table_name,
-                            fks=[(self.module_path, x.__name__) for x in lista],
-                        )
+            fks = table_obj.find_dependent_tables()
+            for lista in fks:
+                unorder_module_list.append(
+                    Node(
+                        self.module_path,
+                        relative_path=self.module_path,
+                        class_name=table_name,
+                        fks=[(self.module_path, x.__name__) for x in lista],
                     )
-        # FIXME [ ]: It's Broken. If test 'test_create_table_code_first_passing_file' passes, it's by CHANCE and we should not consider ti as valid
+                )
+        # FIXME [ ]: It's Broken. If test 'test_create_table_code_first_passing_file' passes, it's by CHANCE and we should not consider it as valid
         # self.sort_dicc(unorder_module_list, order_list)
         return tuple(unorder_module_list[::-1])
 
