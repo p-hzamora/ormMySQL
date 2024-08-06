@@ -251,3 +251,11 @@ class Table(metaclass=TableMeta):
             col_object: Column = getattr(table_init_, f"_{col_name}")
             all_columns.append(get_query_clausule(col_object))
         return all_columns
+
+    def __hash__(self) -> int:
+        return hash(self.to_dict().values())
+    
+    def __eq__(self, __value: Any) -> bool:
+        if isinstance(__value,Table):
+            return hash(self) == hash(__value)
+        return False
