@@ -23,7 +23,8 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
 
     @override
     def insert(self, instances: T | list[T]) -> None:
-        new_dict_list: list[dict[str, Any]] = self.__fill_dict_list(instances)
+        new_dict_list: list[dict[str, Any]] = []
+        self.__fill_dict_list(new_dict_list, instances)
         cols_tuple = new_dict_list[0].keys()
         join_cols = ", ".join(cols_tuple)
         unknown_rows = f'({", ".join(["%s"]*len(cols_tuple))})'  # The number of "%s" must match the dict 'dicc_0' length
@@ -51,18 +52,17 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         # not all to get False and deleted column
         return not all([cond_1, cond_2])
 
-    def __fill_dict_list(self, values: T | list[T]):
+    def __fill_dict_list(self, list_dict: list[dict], values: T | list[T]):
         if issubclass(values.__class__, Table):
-            new_dict_list = []
             dicc: dict = {}
             for col in values.__dict__.values():
                 if isinstance(col, Column) and self.__is_valid(col):
                     dicc.update({col.column_name: col.column_value})
-            new_dict_list.append(dicc)
-            return new_dict_list
+            list_dict.append(dicc)
+            return list_dict
 
         elif isinstance(values, list):
             for x in values:
-                self.__fill_dict_list(new_dict_list, x)
+                self.__fill_dict_list(list_dict, x)
         else:
             raise Exception(f"Tipo de dato'{type(values)}' no esperado")
