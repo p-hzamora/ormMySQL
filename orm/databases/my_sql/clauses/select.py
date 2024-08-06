@@ -189,7 +189,7 @@ class SelectQuery[T: Table, *Ts](ISelect):
 
         sub_query: str = ""
         for l_tbl, r_tbl in involved_tables:
-            join = JoinSelector[l_tbl, r_tbl](l_tbl, r_tbl, by=self._by, where=ForeignKey[l_tbl, r_tbl].MAPPED[l_tbl.__table_name__][r_tbl])
+            join = JoinSelector(l_tbl, r_tbl, by=self._by, where=ForeignKey.MAPPED[l_tbl.__table_name__][r_tbl])
             sub_query += f" {join.query}"
 
         query += sub_query
