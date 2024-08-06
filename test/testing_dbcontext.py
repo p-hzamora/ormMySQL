@@ -9,9 +9,9 @@ from orm.databases.my_sql import MySQLRepository  # noqa: E402
 from orm.common.interfaces import IRepositoryBase  # noqa: E402
 from orm.common.enums import ConditionType  # noqa: E402
 from orm.databases.my_sql.clauses.joins import JoinType  # noqa: E402
+from test.models.staff import StaffModel, Staff  # noqa: E402
 from test.models.address import AddressModel  # noqa: E402
-from test.models.actor import ActorModel,Actor  # noqa: E402
-from test.models.staff import StaffModel  # noqa: E402
+from test.models.actor import ActorModel, Actor  # noqa: E402
 from test.models.store import StoreModel  # noqa: E402
 
 
@@ -19,7 +19,7 @@ USERNAME = config("USERNAME")
 PASSWORD = config("PASSWORD")
 HOST = config("HOST")
 
-
+a = Staff.find_dependent_tables()
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
 
 actor_model = ActorModel(database)
@@ -82,9 +82,6 @@ result = (
         flavour=dict,
     )
 )
-
-
-
 
 
 res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).limit(100).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a,))
