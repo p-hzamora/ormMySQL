@@ -9,16 +9,15 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 # Custom libraries
 from orm.databases.my_sql import MySQLRepository  # noqa: E402
+from test.config import config_dict  # noqa: E402
 
 TDDBB_name = "__test_ddbb__"
 TTABLE_name = "__test_table__"
 
-data_config = {"user": "root", "password": "1234"}
-
 
 class Test_my_sql(unittest.TestCase):
     def setUp(self) -> None:
-        self.ddbb = MySQLRepository(**data_config)
+        self.ddbb = MySQLRepository(**config_dict)
         self.ddbb.create_database(TDDBB_name, "replace")
         self.ddbb.set_config({"database": TDDBB_name})
 
