@@ -45,11 +45,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
             # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
-
             raise Exception(f"'{model}' class does not inherit from Table class")
-
-        if model.__table_name__ is Ellipsis:
-            raise Exception(f"class variable '__table_name__' must be declared in '{model.__name__}' class")
 
     @staticmethod
     def valid_repository(repository: Any) -> bool:

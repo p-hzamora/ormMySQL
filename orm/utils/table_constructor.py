@@ -140,6 +140,9 @@ class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object = super().__new__(cls, name, bases, dct)
 
+        if cls_object.__table_name__ is Ellipsis:
+            raise Exception(f"class variable '__table_name__' must be declared in '{cls_object.__name__}' class")
+
         self = __init_constructor__(cls_object)
         return self
 
