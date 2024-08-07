@@ -111,7 +111,7 @@ class TestDissambler(unittest.TestCase):
 
     def test_none_values(self):
         dis = Disassembler[DtoC, CtoB](lambda d, c: d.c.b.b_time is None)
-        self.assertEqual(dis.cond_2.name, "NULL")
+        self.assertEqual(dis.cond_2.name, None)
         self.assertEqual(dis.compare_op, "IS")
         self.assertEqual(dis.cond_1.parent.parent.parent.name, "d")
         self.assertEqual(dis.cond_1.parent.parent.name, "c")

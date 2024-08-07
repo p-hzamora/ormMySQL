@@ -122,7 +122,7 @@ class TestTreeInstruction(unittest.TestCase):
         var_list = tree.to_list()
         self.assertListEqual(tree.compare_op, ["IS"])
         self.assertEqual(var_list[0].nested_element.name, "data")
-        self.assertEqual(var_list[1].nested_element.name, "NULL")
+        self.assertEqual(var_list[1].nested_element.name, None)
 
     def test_compare_op_is_not(self):
         tree = TreeInstruction(lambda x: x.data is not None)
@@ -130,7 +130,7 @@ class TestTreeInstruction(unittest.TestCase):
         var_list = tree.to_list()
         self.assertListEqual(tree.compare_op, ["IS NOT"])
         self.assertEqual(var_list[0].nested_element.name, "data")
-        self.assertEqual(var_list[1].nested_element.name, "NULL")
+        self.assertEqual(var_list[1].nested_element.name, None)
 
 
 if __name__ == "__main__":

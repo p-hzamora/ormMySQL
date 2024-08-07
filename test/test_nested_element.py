@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm.orm.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
+from orm.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
 
 
 class TestCondition(unittest.TestCase):
@@ -43,7 +43,7 @@ class TestCondition(unittest.TestCase):
 
     def test_none_value(self):
         con = NestedElement[int](None)
-        self.assertEqual(con.name, "NULL")
+        self.assertEqual(con.name, None)
 
 
 if __name__ == "__main__":
