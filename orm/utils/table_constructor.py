@@ -138,10 +138,15 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
 @dataclass_transform()
 class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
-        cls_object = super().__new__(cls, name, bases, dct)
+
+        if name == "Table":
+            return cls_object
 
         if cls_object.__table_name__ is Ellipsis:
             raise Exception(f"class variable '__table_name__' must be declared in '{cls_object.__name__}' class")
+
+        if not isinstance(cls_object.__table_name__, str):
+            raise Exception(f"class variable '__table_name__' of '{cls_object.__name__}' class must be 'str'")
 
         self = __init_constructor__(cls_object)
         return self
