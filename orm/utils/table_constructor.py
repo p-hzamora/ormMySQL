@@ -138,6 +138,7 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
 @dataclass_transform()
 class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
+        cls_object: Table = super().__new__(cls, name, bases, dct)
 
         if name == "Table":
             return cls_object
@@ -148,11 +149,23 @@ class TableMeta(type):
         if not isinstance(cls_object.__table_name__, str):
             raise Exception(f"class variable '__table_name__' of '{cls_object.__name__}' class must be 'str'")
 
+        TableMeta.__add_fk_if_exists__(cls_object)
         self = __init_constructor__(cls_object)
         return self
 
     def __repr__(cls: "Table") -> str:
         return f"{TableMeta.__name__}: {cls.__table_name__}"
+
+    @staticmethod
+    def __add_fk_if_exists__(cls: "Table") -> None:
+        """
+        When creating a Table class, we cannot pass the class itself as a parameter in a function that initializes a class variable.
+        To fix this, we first add the table name and then, when instantiating the object, we replace the table name with the class itself.
+        """
+        if data := ForeignKey.MAPPED.get(cls.__table_name__):
+            ForeignKey.MAPPED[cls] = data
+            del ForeignKey.MAPPED[cls.__table_name__]
+        return None
 
 
 @dataclass_transform(eq_default=False)
