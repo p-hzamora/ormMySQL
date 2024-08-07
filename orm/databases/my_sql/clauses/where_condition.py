@@ -105,8 +105,7 @@ class WhereCondition[*Inst](AbstractWhere):
 
     def __one_sign(self) -> str:
         """lambda x: x <= 10"""
-        conds, _ = self.create_conditions_list_and_compare_sign()
-        c1, c2 = conds
+        (c1, c2), _ = self.create_conditions_list_and_compare_sign()
 
         return f"{self.WHERE} {c1} {self._tree.compare_op[0]} {c2}"
 
