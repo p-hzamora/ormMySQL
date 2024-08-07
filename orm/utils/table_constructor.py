@@ -254,8 +254,6 @@ class Table(metaclass=TableMeta):
     @classmethod
     def create_table_query(cls) -> str:
         """It's classmethod because of it does not matter the columns values to create the table"""
-        from orm.utils import ForeignKey
-
         all_clauses: list[str] = []
 
         all_clauses.extend(cls._create_sql_column_query())
@@ -279,15 +277,13 @@ class Table(metaclass=TableMeta):
 
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:
-        from orm.utils import ForeignKey
-
-        graph = defaultdict(list)
-        for key, val in ForeignKey.MAPPED.items():
+        graph: dict[Table, list[Table]] = defaultdict(list)
+        for key, val in ForeignKey[Table, Table].MAPPED.items():
             for sub_table in val:
-                graph[key] = [sub_table.__table_name__]
+                graph[key] = [sub_table]
 
         dfs = DFSTraversal.sort(graph)
-        return dfs[: dfs.index(cls.__table_name__)]
+        return dfs[: dfs.index(cls)]
 
     def __hash__(self) -> int:
         return hash(self.to_dict().values())
