@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional, Type
 import re
 
-from orm.utils.table_constructor import Table
+from ..table_constructor import Table
 
 import importlib.util
 import inspect
