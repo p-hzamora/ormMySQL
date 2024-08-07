@@ -135,7 +135,6 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
     # return None
 
 
-@dataclass_transform()
 class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         cls_object: Table = super().__new__(cls, name, bases, dct)
