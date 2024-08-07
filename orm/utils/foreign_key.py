@@ -4,9 +4,7 @@ from typing import Callable, NamedTuple, Type
 from .table_constructor import Table
 from .lambda_disassembler import Disassembler
 
-class RelationShip[T: Table](NamedTuple):
-    col: str
-    object: T
+
 
 
 class ForeignKey[Tbl1: str, Tbl2: Table]:
