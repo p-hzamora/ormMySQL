@@ -14,7 +14,7 @@ class NestedElement[T]:
         if self._parent_list:
             return self._parent_list[-1]
         else:
-            return "NULL" if self._cond is None else self._cond
+            return self._cond
 
     @property
     def parent(self) -> "NestedElement":

@@ -208,6 +208,8 @@ class WhereCondition[*Inst](AbstractWhere):
         return conds, compare_sign
 
     def _wrapp_condition_id_str(self, name: Any):
+        if not name:
+            return "NULL"
         if not isinstance(name, str):
             return name
         return f"'{name}'"
