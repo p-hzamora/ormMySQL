@@ -6,7 +6,8 @@ import unittest
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
-from orm import MySQLRepository, IRepositoryBase  # noqa: E402
+from orm.databases.my_sql import MySQLRepository  # noqa: E402
+from orm.common.interfaces import IRepositoryBase  # noqa: E402
 from test.models.address import AddressModel  # noqa: E402
 from test.models import Address, City, Country  # noqa: E402
 
