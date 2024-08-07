@@ -10,6 +10,7 @@ from orm.utils.dtypes import get_query_clausule
 from .module_tree.dfs_traversal import DFSTraversal
 from .column import Column
 
+from .foreign_key import ForeignKey
 
 MISSING = Column()
 
