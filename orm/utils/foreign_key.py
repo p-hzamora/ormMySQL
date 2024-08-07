@@ -1,14 +1,14 @@
 from collections import defaultdict
-from typing import Callable, NamedTuple, Type
-
-from .table_constructor import Table
+from typing import Callable, TypeVar, Type
+#from .table_constructor import Table
 from .lambda_disassembler import Disassembler
 
+Table = TypeVar("Table")
 
 
 
-class ForeignKey[Tbl1: str, Tbl2: Table]:
-    MAPPED: dict[str, dict[Tbl2, Callable[[Tbl1, Tbl2], bool]]] = defaultdict(dict)
+class ForeignKey[Tbl1, Tbl2]:
+    MAPPED: dict[Tbl1, dict[Tbl2, Callable[[Tbl1, Tbl2], bool]]] = defaultdict(dict)
 
     def __new__(
         cls,
@@ -21,14 +21,14 @@ class ForeignKey[Tbl1: str, Tbl2: Table]:
         return referenced_table
 
     @classmethod
-    def add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
+    def add_foreign_key(cls, orig_table: str, referenced_table: "Table", relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
         cls.MAPPED[orig_table][referenced_table] = relationship
         return None
 
     @classmethod
-    def create_query(cls, orig_table: Table) -> list[str]:
+    def create_query(cls, orig_table: "Table") -> list[str]:
         clauses: list[str] = []
-        for referenced_table, _lambda in ForeignKey.MAPPED[orig_table.__table_name__].items():
+        for referenced_table, _lambda in ForeignKey[Tbl1, Tbl2].MAPPED[orig_table].items():
             dissambler: Disassembler = Disassembler(_lambda)
             orig_col: str = dissambler.cond_1.name
             referenced_col: str = dissambler.cond_2.name
