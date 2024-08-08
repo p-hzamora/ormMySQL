@@ -70,6 +70,8 @@ class TestSQLStatements(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
 
+        if self.ddbb.database_exists(DDBBNAME):
+            self.ddbb.drop_database(DDBBNAME)
         self.ddbb.create_database(DDBBNAME, "fail")
         self.ddbb.set_config({"database": DDBBNAME})
         self.tmodel = TestTableModel(self.ddbb)
