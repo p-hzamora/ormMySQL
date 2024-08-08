@@ -34,8 +34,11 @@ class TestTableConstructor(unittest.TestCase):
     def test_if_two_objects_are_not_the_same(self):
         self.assertIsNot(P1, P2)
 
-    def test_Person_is_subclass_of_Table(self):
+    def test_if_Person_is_subclass_of_Table(self):
         self.assertTrue(issubclass(Person, Table))
+
+    def test_if_instance_of_person_is_subclass_of_Table(self):
+        self.assertTrue(isinstance(P1, Table))
 
     def test_Person_is_type_of_TableMeta(self):
         self.assertTrue(type(Table), TableMeta)
