@@ -21,7 +21,7 @@ class IRepositoryBase[T](ABC):
 
     def __repr__(self) -> str:
         return f"{IRepositoryBase.__name__}: {self.__class__.__name__}"
-    
+
     @abstractmethod
     def is_connected(self) -> bool: ...
 
@@ -52,6 +52,9 @@ class IRepositoryBase[T](ABC):
     @abstractmethod
     def drop_table(self, name: str) -> None: ...
 
+    @abstractmethod
+    def database_exists(self, name: str) -> bool: ...
+    
     @property
     @abstractmethod
     def connection(self) -> T: ...

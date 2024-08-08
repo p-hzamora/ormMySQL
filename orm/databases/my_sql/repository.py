@@ -152,7 +152,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def drop_table(self, name: str) -> None:
         return DropTable(self).execute(name)
 
-    # FIXME [ ]: this method does not comply with the implemented interface
+    # FIXME [x]: this method does not comply with the implemented interface
     @IRepositoryBase.check_connection
     def database_exists(self, name: str) -> bool:
         query = "SHOW DATABASES LIKE %s;"
