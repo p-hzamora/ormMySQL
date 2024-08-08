@@ -129,7 +129,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
     @override
     def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements_two_generic[T,TRepo]":
-        where = ForeignKey.MAPPED[table_left.__table_name__][table_right]
+        where = ForeignKey.MAPPED[table_left][table_right]
         join_query = self.JOIN_QUERY[table_left, Table](table_left, table_right, JoinType(by), where=where)
         self._query_list["join"].append(join_query)
         return self
