@@ -28,12 +28,12 @@ class JoinType(Enum):
     INNER_JOIN = "INNER JOIN"
 
 
-ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "with_recursive", "limit", "offset"]
+ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
 
 
 class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     __slots__ = ("_model", "_repository", "_query_list")
-    __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "with_recursive", "limit", "offset")
+    __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
 
     def __init__(self, model: T, repository: IRepositoryBase[TRepo]) -> None:
         self.valid_repository(repository)
