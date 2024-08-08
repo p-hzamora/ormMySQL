@@ -6,7 +6,6 @@ TypeExists = Literal["fail", "replace", "append"]
 
 
 class IRepositoryBase[T](ABC):
-    @staticmethod
     def check_connection(func: Callable[..., Any]):
         @functools.wraps(func)
         def wrapper(self: "IRepositoryBase[T]", *args, **kwargs):
@@ -54,7 +53,7 @@ class IRepositoryBase[T](ABC):
 
     @abstractmethod
     def database_exists(self, name: str) -> bool: ...
-    
+
     @property
     @abstractmethod
     def connection(self) -> T: ...
