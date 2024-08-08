@@ -115,11 +115,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
         module_tree: ModuleTree = ModuleTree(path)
 
-        table_objects: tuple[Type[Table]] = module_tree.get_tables()
-
-        queries_list: list[str] = []
-        for table_object in table_objects:
-            queries_list.append(table_object().create_table_query())
+        queries_list: list[str] = module_tree.get_queries()
 
         for query in queries_list:
             with self._connection.cursor(buffered=True) as cursor:

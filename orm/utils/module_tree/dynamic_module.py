@@ -219,7 +219,7 @@ class ModuleTree:
         spec.loader.exec_module(module)
         return module
 
-    def get_tables(self) -> tuple[str, Type[Table]]:
+    def get_queries(self) -> tuple[str,...]:
         table_list: list[Table] = []
         for node in self.order_module_tuple:
             if node.class_name is None:
@@ -236,7 +236,7 @@ class ModuleTree:
             # we need to ensure that the object we going to add in table_list is the same
             for name, obj in table_class:
                 if name == node.class_name:
-                    table_list.append(obj)
+                    table_list.append(obj.create_table_query())
         return tuple(table_list)
 
     @staticmethod
