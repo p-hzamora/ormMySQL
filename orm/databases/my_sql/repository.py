@@ -8,7 +8,6 @@ from mysql.connector import MySQLConnection
 
 # Custom libraries
 from orm.common.interfaces import IRepositoryBase
-from orm.utils import Table
 from orm.utils.module_tree.dynamic_module import ModuleTree
 
 from .clauses import CreateDatabase, TypeExists
