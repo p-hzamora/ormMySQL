@@ -64,6 +64,16 @@ We can also return `Address`, `City` or `Country` if needed.
 result = AddressModel(database).where(lambda x: x.City.Country.country_id == 87).select(lambda x: (x, x.City, x.City.Country))
 ```
 
+### Pass variables to the `where` method
+Since we generally work with lambda methods, I often have to work with `bytecode` to retrieve the name of the string variables. For this reason, it's imperative that we map these variables to replace them with the actual values.
+
+```python
+LOWER = 10
+UPPER = 30
+AddressModel(database).where(lambda x: LOWER <= x.address_id <= UPPER, LOWER=LOWER, UPPER=UPPER).select()
+```
+That solution is somewhat `awkward` and not very clean, but it's necessary for automating queries.
+
 ## Writable methods INSERT, UPDATE, DELETE
 The easiest way to add or delete data in your database is by using its appropiate methods. You just need to instantiate an object with the data and pass it to the method
 
