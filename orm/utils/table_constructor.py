@@ -106,7 +106,7 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
     return cls
 
 
-def __create_properties[T](cls: Type[T], field: Field) -> property:
+def __create_properties(cls: Type["Table"], field: Field) -> property:
     _name: str = f"_{field.name}"
     type_ = field.type_
     # we need to get Table attributes (Column class) and then called __getattribute__ or __setattr__ to make changes inside of Column
