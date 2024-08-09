@@ -7,6 +7,8 @@ from orm.utils.table_constructor import Table
 
 import importlib
 import inspect
+from .dfs_traversal import DFSTraversal
+from collections import defaultdict
 
 
 class Node:
@@ -112,9 +114,9 @@ class ModuleTree:
             module_path = Path(module_path)
 
         self.module_path: Path = module_path
-        self.order_module_tuple: tuple[Node, ...] = self.get_order_module_tuple_from_path()
+        self.order_module_tuple: tuple[Node | str] = self.get_order_module_tuple_from_path()
 
-    def get_order_module_tuple_from_path(self) -> tuple[Node]:
+    def get_order_module_tuple_from_path(self) -> tuple[Node | str]:
         if self.module_path.is_dir():
             return self.order_modules_from_folder()
         return self.order_modules_from_file()
@@ -166,37 +168,26 @@ class ModuleTree:
 
         for node in list_nodes:
             add_children(list_nodes, new_list, node)
-            
+
             if node not in new_list and all([child_node in new_list for child_node in node.relative_modules]):
                 new_list.append(node)
 
         return None
 
-    def order_modules_from_file(self) -> tuple[Node]:
+    def order_modules_from_file(self) -> tuple[str]:
         """
         Method whose main used is sorting all .py inside of folder to avoid import errors and overall for the creation of tables in SQL, comply with foreign key referenced table
         This method's main purpose is to sort all .py inside a folder to avoid import errors and to ensure that tables referenced by foreign key in other tables are created first
         """
-        # FIXME [ ]: wip. Must be create a way to order all models when that classes are in the same file
-        # order_list: list[Node] = []
-        unorder_module_list: list[Node] = []
-
         tables: list[tuple[str, Table]] = self.get_member_table(self.load_module("", self.module_path))
 
-        for table_name, table_obj in tables:
-            fks = table_obj.find_dependent_tables()
-            for lista in fks:
-                unorder_module_list.append(
-                    Node(
-                        self.module_path,
-                        relative_path=self.module_path,
-                        class_name=table_name,
-                        fks=[(self.module_path, x.__name__) for x in lista],
-                    )
-                )
-        # FIXME [ ]: It's Broken. If test 'test_create_table_code_first_passing_file' passes, it's by CHANCE and we should not consider it as valid
-        # self.sort_dicc(unorder_module_list, order_list)
-        return tuple(unorder_module_list[::-1])
+        graph: dict[Type[Table], list[Type[Table]]] = defaultdict(list)
+        for _, tbl in tables:
+            graph[tbl] = tbl.find_dependent_tables()
+
+        sorted_tables = DFSTraversal.sort(graph)
+        res = [x.create_table_query() for x in sorted_tables]
+        return res
 
     @staticmethod
     def find_module(module_name: str, nodes: list["Node"]) -> Optional["Node"]:
@@ -219,8 +210,11 @@ class ModuleTree:
         spec.loader.exec_module(module)
         return module
 
-    def get_queries(self) -> tuple[str,...]:
+    def get_queries(self) -> tuple[str, ...]:
         table_list: list[Table] = []
+        if isinstance(self.order_module_tuple[0], str):
+            return self.order_module_tuple
+
         for node in self.order_module_tuple:
             if node.class_name is None:
                 continue
@@ -229,7 +223,7 @@ class ModuleTree:
                 continue
 
             # loop over order modules tuple to load it into sys.modules
-            #COMMENT!: Checked why changing 'class_name' by 'module_name' the method works
+            # COMMENT!: Checked why changing 'class_name' by 'module_name' the method works
             submodule = self.load_module(f"{self.module_path.stem}.{node.module_name}", node.file)
             table_class = self.get_member_table(submodule)
 
