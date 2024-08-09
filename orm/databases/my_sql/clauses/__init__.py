@@ -11,4 +11,3 @@ from .select import SelectQuery  # noqa: F401
 # from .update import UpdateQuery  # noqa: F401 #does not exist yet
 from .upsert import UpsertQuery  # noqa: F401
 from .where_condition import WhereCondition  # noqa: F401
-
