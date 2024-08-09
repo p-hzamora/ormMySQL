@@ -18,6 +18,8 @@ TTABLE_name = "__test_table__"
 class Test_my_sql(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb = MySQLRepository(**config_dict)
+        if self.ddbb.database_exists(TDDBB_name):
+            self.ddbb.drop_database(TDDBB_name)
         self.ddbb.create_database(TDDBB_name, "replace")
         self.ddbb.set_config({"database": TDDBB_name})
 
