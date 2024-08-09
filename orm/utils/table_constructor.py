@@ -117,6 +117,7 @@ def __create_properties(cls: Type["Table"], field: Field) -> property:
 
     # set property in public name
     setattr(cls, field.name, prop)
+    cls.__properties_mapped__[prop] = field.name
     return None
 
 
@@ -194,7 +195,8 @@ class Table(metaclass=TableMeta):
     >>>     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
     """
 
-    __table_name__ = ...
+    __table_name__: str = ...
+    __properties_mapped__: dict[property, str] = {}
 
     def __str__(self) -> str:
         params = self.to_dict()
