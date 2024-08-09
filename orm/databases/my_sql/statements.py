@@ -15,6 +15,7 @@ from .clauses import OffsetQuery
 from .clauses import OrderQuery
 from .clauses import SelectQuery
 from .clauses import UpsertQuery
+from .clauses import UpdateQuery
 from .clauses import WhereCondition
 
 from mysql.connector import MySQLConnection
@@ -39,6 +40,11 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     @override
     def UPSERT_QUERY(self) -> Type[UpsertQuery]:
         return UpsertQuery
+
+    @property
+    @override
+    def UPDATE_QUERY(self) -> Type[UpsertQuery]:
+        return UpdateQuery
 
     @override
     @property
