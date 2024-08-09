@@ -1,11 +1,11 @@
 from abc import abstractmethod
 from typing import Any, Optional
 from .IUpdate import IUpdate
-from orm.common.interfaces import IRepositoryBase
-from orm.common.abstract_classes import NonQueryBase
-from orm.components.where import AbstractWhere
+from ...common.interfaces import IRepositoryBase
+from ...common.abstract_classes import NonQueryBase
+from ..where import AbstractWhere
 
-from orm.utils import Table
+from ...utils import Table
 
 
 class UpdateQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpdate):
