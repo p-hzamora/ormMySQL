@@ -117,7 +117,56 @@ class TestSQLStatements(unittest.TestCase):
         select_query = self.tmodel.where(lambda x: x.Col1 == id, id=VERIFICATION.Col1).select_one()
         self.assertDictEqual(VERIFICATION.to_dict(), select_query.to_dict())
 
-    # TODOM: Add a test for update method once it has been created
+    # TODOM [x]: Add a test for update method once it has been created
+    def test_update_with_properties_as_keys(self):
+        self.create_test_table()
+
+        instance = self.create_instance_of_TestTable(5)
+        self.tmodel.insert(instance)
+
+        self.tmodel.where(lambda x: x.Col1 == 3).update(
+            {
+                TestTable.Col2: 2,
+                TestTable.Col5: 5,
+                TestTable.Col13: 13,
+            }
+        )
+        theorical_result = self.create_instance_of_TestTable(0)[0]
+        theorical_result.Col2 = 2
+        theorical_result.Col5 = 5
+        theorical_result.Col13 = 13
+
+        result = self.tmodel.where(lambda x: x.Col1 == 3).select_one()
+        self.assertEqual(result, theorical_result)
+
+    def test_update_with_str_as_keys(self):
+        ROW_TO_UPDATE = 3
+        self.create_test_table()
+
+        instance = self.create_instance_of_TestTable(3)
+        self.tmodel.insert(instance)
+
+        self.tmodel.where(lambda x: x.Col1 == ROW_TO_UPDATE, ROW_TO_UPDATE=ROW_TO_UPDATE).update({"Col2": 22, "Col5": 55, "Col13": 133})
+
+        result = self.tmodel.where(lambda x: x.Col1 == ROW_TO_UPDATE, ROW_TO_UPDATE=ROW_TO_UPDATE).select_one(lambda x: (x.Col2, x.Col5, x.Col13), flavour=tuple)
+        self.assertEqual(result, (22, 55, 133))
+
+    def test_update_raising_KeyError(self):
+        from test.models import Address
+
+        self.create_test_table()
+        instance = self.create_instance_of_TestTable(5)
+        self.tmodel.insert(instance)
+
+        with self.assertRaises(KeyError):
+            self.tmodel.where(lambda x: x.Col1 == 3).update(
+                {
+                    Address.address: 2,
+                    TestTable.Col5: 5,
+                    TestTable.Col13: 13,
+                }
+            )
+
     def test_upsert(self):
         self.create_test_table()
 
