@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Optional, Literal, Type, overload
+from typing import Any, Callable, Iterable, Optional, Literal, Type, overload
 from enum import Enum
 from abc import abstractmethod, ABC
 
@@ -65,6 +65,9 @@ class IStatements[T: Table](ABC):
         """
 
         ...
+
+    @abstractmethod
+    def update(self, dicc: dict[str|property, Any]) -> None: ...
 
     # endregion
 

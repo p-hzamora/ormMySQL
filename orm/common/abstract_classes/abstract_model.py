@@ -7,6 +7,7 @@ import inspect
 from orm.utils import ForeignKey, Table
 
 from orm.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
+from orm.components.update import UpdateQueryBase
 from orm.components.select import ISelect
 from orm.components.delete import DeleteQueryBase
 from orm.components.upsert import UpsertQueryBase
@@ -61,6 +62,9 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     def UPSERT_QUERY(self) -> Type[UpsertQueryBase[T, TRepo]]: ...
     @property
     @abstractmethod
+    def UPDATE_QUERY(self) -> Type[UpdateQueryBase[T, TRepo]]: ...
+    @property
+    @abstractmethod
     def DELETE_QUERY(self) -> Type[DeleteQueryBase[T, TRepo]]: ...
     @property
     @abstractmethod
@@ -108,6 +112,13 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         upsert = self.UPSERT_QUERY(self._model, self._repository)
         upsert.upsert(instances)
         upsert.execute()
+        return None
+
+    @override
+    def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
+        update = self.UPDATE_QUERY(self._model, self._repository, self._query_list["where"])
+        update.update(dicc)
+        update.execute()
         return None
 
     @override
