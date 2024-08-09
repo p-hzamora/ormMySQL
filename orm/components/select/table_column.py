@@ -1,5 +1,5 @@
 from typing import Any, Iterator
-from orm.utils import Table
+from ...utils import Table
 
 
 class TableColumn:
