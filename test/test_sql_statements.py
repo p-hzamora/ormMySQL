@@ -9,8 +9,8 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 from test.config import config_dict  # noqa: E402
 from orm.databases.my_sql import MySQLRepository  # noqa: E402
 from orm.common.interfaces import IRepositoryBase  # noqa: E402
-from orm import Table, Column, BaseModel, ForeignKey  # noqa: E402
-
+from orm import Table, Column, BaseModel  # noqa: E402
+from test.models import A, B, ModelAB  # noqa: F401
 
 DDBBNAME = "__test_ddbb__"
 TABLETEST = "__test_table__"
@@ -48,22 +48,6 @@ class TestTable(Table):
 class TestTableModel(BaseModel[TestTable]):
     def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, TestTable, repository)
-
-
-class B(Table):
-    __table_name__ = "b"
-    pk_b: int = Column[int](is_primary_key=True)
-
-
-class A(Table):
-    __table_name__ = "a"
-    pk_a: int = Column[int](is_primary_key=True)
-    B = ForeignKey["A", B](__table_name__, B, lambda a, b: a.pk_a == b.pk_b)
-
-
-class ModelAB[T](BaseModel[T]):
-    def __new__[TRepo](cls, model: T, repository: IRepositoryBase[TRepo]):
-        return super().__new__(cls, model, repository)
 
 
 class TestSQLStatements(unittest.TestCase):
