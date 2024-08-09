@@ -8,7 +8,7 @@ class DFSTraversal:
     """
 
     @staticmethod
-    def sort[T](graph: dict[T, Iterable[T]], raise_: bool = False) -> tuple[T]:
+    def sort[T](graph: dict[T, Iterable[T]], raise_: bool = False) -> tuple[T, ...]:
         indegree: dict[T, int] = defaultdict(int)
         for key, val in graph.items():
             for node in val:
