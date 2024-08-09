@@ -65,6 +65,9 @@ class WhereCondition[*Inst](AbstractWhere):
         self._lambda_param_map: dict[str, Table] = self._create_lambda_param_map()
 
     def _create_lambda_param_map(self) -> dict[str, Table]:
+        """
+        The method is responsible for mapping the variables present in the lambda function so that they are replaced with the instance of the model Table.
+        """
         assert len(lamda_param := inspect.signature(self._function).parameters) == len(self._instances)
 
         _temp_instances = list(self._instances)[::-1]  # we copied and translated tuple instance due to pop each value in order to param
