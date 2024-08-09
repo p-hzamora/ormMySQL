@@ -5,7 +5,7 @@ import re
 
 from orm.utils.table_constructor import Table
 
-import importlib
+import importlib.util
 import inspect
 from .dfs_traversal import DFSTraversal
 from collections import defaultdict

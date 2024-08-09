@@ -1,9 +1,8 @@
-import importlib.util
 import sys
 from decouple import config
 from pathlib import Path
 import unittest
-import importlib
+import importlib.util
 
 USERNAME = config("USERNAME")
 PASSWORD = config("PASSWORD")
