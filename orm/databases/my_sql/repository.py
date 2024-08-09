@@ -119,7 +119,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         for query in queries_list:
             with self._connection.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-            self._connection.commit()
+        self._connection.commit()
         return None
 
     @override
