@@ -46,7 +46,58 @@ The `result` var will be of type `tuple[tuple[Address], tuple[City], tuple[Count
 
 If we were used `select_one` method, we retrieved `tuple[Address, City, Country]`.
 
+## Filter by `where` condition
 
+```python
+result = AddressModel(database).where(lambda x: 10 <= x.address_id <= 30).select()
+```
+
+Additionally, we can filter by others tables. For example, we can return all addresses for each city where `country_id` = 87 (Spain)
+
+```python
+result = AddressModel(database).where(lambda x: x.City.Country.country_id  == 87).select()
+```
+
+We can also return `Address`, `City` or `Country` if needed.
+
+```python
+result = AddressModel(database).where(lambda x: x.City.Country.country_id == 87).select(lambda x: (x, x.City, x.City.Country))
+```
+
+## Writable methods INSERT, UPDATE, DELETE
+The easiest way to add or delete data in your database is by using its appropiate methods. You just need to instantiate an object with the data and pass it to the method
+
+### Insert
+```python
+address = Address(address_id=1, address="C/ ...", phone="XXXXXXXXX", postal_code="28026")
+
+AddressModel(database).insert(address)
+```
+
+### Update
+
+You can use either the properties of the same object or `str` values.
+```python
+
+AddressModel(database).where(lambda x: x.address_id == 1).update(
+    {
+        Address.phone: "YYYYYYYYY",
+        Address.postal_code: "28030",
+    }
+)
+
+AddressModel(database).where(lambda x: x.address_id == 1).update(
+    {
+        "phone": "YYYYYYYYY",
+        "postal_code": "28030",
+    }
+)
+```
+### Delete
+
+```python
+AddressModel(database).where(lambda x: x.address_id == 1).delete()
+```
 
 
 # Table Map
