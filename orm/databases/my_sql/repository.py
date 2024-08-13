@@ -167,6 +167,18 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     @override
     @IRepositoryBase.check_connection
+    def table_exists(self, name: str) -> bool:
+        if not self._connection.database:
+            raise Exception("No database selected")
+
+        query = "SHOW TABLES LIKE %s;"
+        with self._connection.cursor(buffered=True) as cursor:
+            cursor.execute(query, (name,))
+            res = cursor.fetchmany(1)
+        return len(res) > 0
+
+    @override
+    @IRepositoryBase.check_connection
     def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
         return CreateDatabase(self).execute(name, if_exists)
 

@@ -52,6 +52,9 @@ class IRepositoryBase[T](ABC):
     def drop_table(self, name: str) -> None: ...
 
     @abstractmethod
+    def table_exists(self, name: str) -> bool: ...
+
+    @abstractmethod
     def database_exists(self, name: str) -> bool: ...
 
     @property
