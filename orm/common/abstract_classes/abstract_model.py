@@ -157,7 +157,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
     @override
     def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements_two_generic[T,TRepo]":
-        # FIXME [ ]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
+        # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         where_query = self.WHERE_QUERY[T](function=lambda_, instances=(self._model,), **kwargs)
         self._query_list["where"].append(where_query)
         return self
