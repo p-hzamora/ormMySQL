@@ -28,7 +28,20 @@ store_model = StoreModel(database)
 a_model = AddressModel(database)
 s_model = StaffModel(database)
 
-result = AddressModel(database).select()
+
+result = (
+    AddressModel(database)
+    .where(lambda x: x.City.Country.country_id == 87)
+    .select(
+        lambda address: (
+            address.city_id,
+            address.City.city_id,
+            address.City.country_id,
+            address.City.Country.country_id,
+        ),
+        flavour=tuple,
+    )
+)
 res = a_model.where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[aA]")).select(
     lambda a: (
         a,
