@@ -4,7 +4,7 @@ from typing import Any, Type, override
 
 
 # from mysql.connector.pooling import MySQLConnectionPool
-from mysql.connector import MySQLConnection
+from mysql.connector import MySQLConnection, Error  # noqa: F401
 
 # Custom libraries
 from orm.common.interfaces import IRepositoryBase
