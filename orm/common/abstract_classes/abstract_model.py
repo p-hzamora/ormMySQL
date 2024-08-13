@@ -185,7 +185,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         if flavour:
             result = self._return_flavour(query, flavour)
             if issubclass(flavour, tuple) and len(selector(self._model)) == 1:
-                return [x[0] for x in result]
+                return tuple([x[0] for x in result])
             return result
         return self._return_model(select, query)
 
