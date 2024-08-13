@@ -281,10 +281,16 @@ class Table(metaclass=TableMeta):
 
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:
+        def get_involved_tables(graph: dict[Table, list[Table]], table: Table) -> None:
+            for tbl in ForeignKey[Table, Table].MAPPED[table].keys():
+                if ForeignKey.MAPPED[tbl]:
+                    get_involved_tables(graph, tbl)
+                graph[tbl] = list(ForeignKey.MAPPED[tbl].keys())
+                return None
+
         graph: dict[Table, list[Table]] = defaultdict(list)
-        for key, val in ForeignKey[Table, Table].MAPPED.items():
-            for sub_table in val:
-                graph[key] = [sub_table]
+        graph[cls] = list(ForeignKey.MAPPED[cls].keys())
+        get_involved_tables(graph, cls)
 
         dfs = DFSTraversal.sort(graph)
         return dfs[: dfs.index(cls)]
