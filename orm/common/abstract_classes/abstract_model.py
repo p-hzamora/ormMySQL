@@ -86,6 +86,16 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     def SELECT_QUERY(self) -> Type[ISelect]: ...
 
     @override
+    def create_table(self) -> None:
+        if not self._repository.table_exists(self._model.__table_name__):
+            self._repository.execute(self._model.create_table_query())
+        return None
+
+    @override
+    def table_exists(self) -> bool:
+        return self._repository.table_exists(self._model.__table_name__)
+
+    @override
     def insert(self, instances: T | list[T]) -> None:
         insert = self.INSERT_QUERY(self._model, self._repository)
         insert.insert(instances)
@@ -173,7 +183,10 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
         query: str = self.build()
         if flavour:
-            return self._return_flavour(query, flavour)
+            result = self._return_flavour(query, flavour)
+            if issubclass(flavour, tuple) and len(selector(self._model)) == 1:
+                return [x[0] for x in result]
+            return result
         return self._return_model(select, query)
 
     def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> tuple[TValue]:
