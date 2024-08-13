@@ -20,6 +20,7 @@ PASSWORD = config("PASSWORD")
 HOST = config("HOST")
 
 a = Staff.find_dependent_tables()
+
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
 
 actor_model = ActorModel(database)

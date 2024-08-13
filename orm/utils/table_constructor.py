@@ -76,8 +76,8 @@ def get_fields[T](cls: Type[T]) -> Iterable[Field]:
 @dataclass_transform()
 def __init_constructor__[T](cls: Type[T]) -> Type[T]:
     # create '__properties_mapped__' dictionary for each Table to avoid shared information
-    #TODOL: I don't know if it's better to create a global dictionary like in commit '7de69443d7a8e7264b8d5d604c95da0e5d7e9cc0'
-    setattr(cls,"__properties_mapped__",{})
+    # TODOL: I don't know if it's better to create a global dictionary like in commit '7de69443d7a8e7264b8d5d604c95da0e5d7e9cc0'
+    setattr(cls, "__properties_mapped__", {})
     fields = get_fields(cls)
     locals_ = {}
     init_args = []
