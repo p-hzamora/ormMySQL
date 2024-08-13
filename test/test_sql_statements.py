@@ -187,7 +187,7 @@ class TestSQLStatements(unittest.TestCase):
         self.tmodel.insert(instance)
 
         self.tmodel.where(lambda x: x.Col1 == 2).delete()
-        select_all = self.tmodel.select(lambda x: (x.Col1,), flavour=tuple)
+        select_all = self.tmodel.select(lambda x: x.Col1, flavour=tuple)
         self.assertTupleEqual((1, 3, 4, 5), select_all)
 
     # FIXME [ ]: Review this method in the future
