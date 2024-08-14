@@ -100,6 +100,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         insert = self.INSERT_QUERY(self._model, self._repository)
         insert.insert(instances)
         insert.execute()
+        self._query_list.clear()
         return None
 
     @override
@@ -115,6 +116,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         delete = self.DELETE_QUERY(self._model, self._repository)
         delete.delete(instances)
         delete.execute()
+        # not necessary to call self._query_list.clear() because select() method already call it
         return None
 
     @override
@@ -122,6 +124,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         upsert = self.UPSERT_QUERY(self._model, self._repository)
         upsert.upsert(instances)
         upsert.execute()
+        self._query_list.clear()
         return None
 
     @override
@@ -129,6 +132,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         update = self.UPDATE_QUERY(self._model, self._repository, self._query_list["where"])
         update.update(dicc)
         update.execute()
+        self._query_list.clear()
         return None
 
     @override
