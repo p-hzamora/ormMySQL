@@ -141,6 +141,11 @@ def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
 
 class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
+        """
+        That's the class we use to recreate the table's metadata.
+        It's useful because we can dynamically create the __init__ method just by using the type hints of the variables we want to use as column names.
+        We simply call '__init_constructor__' to create all the necessary variables and the method.
+        """
         cls_object: Table = super().__new__(cls, name, bases, dct)
 
         if name == "Table":
