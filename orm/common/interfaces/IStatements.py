@@ -22,7 +22,7 @@ class IStatements[T: Table](ABC):
         """
         PARAMS
         ------
-        - values: Recibe un unico objeto que ha de coincidir con el valor del modelo
+        - values: Recieves a single object that must match the model's type
         """
         ...
 
@@ -31,19 +31,12 @@ class IStatements[T: Table](ABC):
         """
         PARAMS
         ------
-        - values: Recibe una lista del mismo objeto que el modelo
+        - values: Recieves a list of the same objects as the model
         """
         ...
 
     @abstractmethod
-    def insert(self, values: T | list[T]) -> None:
-        """
-        Inserta valores en la bbdd parseando los datos a diccionarios
-        """
-
-        ...
-
-    # endregion
+    def insert(self, values: T | list[T]) -> None: ...
 
     # region upsert
     @overload
@@ -51,7 +44,7 @@ class IStatements[T: Table](ABC):
         """
         PARAMS
         ------
-        - values: Recibe un unico objeto que ha de coincidir con el valor del modelo
+        - values: Recieves a single object that must match the model's type
         """
         ...
 
@@ -60,16 +53,15 @@ class IStatements[T: Table](ABC):
         """
         PARAMS
         ------
-        - values: Recibe una lista del mismo objeto que el modelo
+        - values: Recieves a list of the same objects as the model
         """
         ...
 
     @abstractmethod
     def upsert(self, values: list[T]) -> None:
         """
-        Actualizar valores ya existentes en la bbdd parseando los datos a diccionarios. En caso de que existan, los inserta
+        Try to insert new values in the table, if they exist, update them
         """
-
         ...
 
     @abstractmethod
