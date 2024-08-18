@@ -1,13 +1,13 @@
 from collections import defaultdict
-from typing import Callable, TypeVar, Type
+from typing import Callable, TYPE_CHECKING, Type
 #from .table_constructor import Table
 from .lambda_disassembler import Disassembler
 
-Table = TypeVar("Table")
+if TYPE_CHECKING:
+    from .table_constructor import Table
 
 
-
-class ForeignKey[Tbl1, Tbl2]:
+class ForeignKey[Tbl1:Table, Tbl2:Table]:
     MAPPED: dict[Tbl1, dict[Tbl2, Callable[[Tbl1, Tbl2], bool]]] = defaultdict(dict)
 
     def __new__(
