@@ -1,7 +1,6 @@
-import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+from decouple import config
 import unittest
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
@@ -12,12 +11,9 @@ from test.models.address import AddressModel  # noqa: E402
 from test.models import Address, City, Country  # noqa: E402
 
 
-load_dotenv()
-
-
-USERNAME = os.getenv("USERNAME")
-PASSWORD = os.getenv("PASSWORD")
-HOST = os.getenv("HOST")
+USERNAME = config("USERNAME")
+PASSWORD = config("PASSWORD")
+HOST = config("HOST")
 
 
 database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
