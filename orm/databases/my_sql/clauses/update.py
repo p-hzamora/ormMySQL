@@ -2,7 +2,7 @@ from typing import Type, override, Any
 from mysql.connector import MySQLConnection
 
 from orm.components.update import UpdateQueryBase
-from orm.utils import Table
+from orm.utils import Table, Column
 from orm.common.interfaces import IRepositoryBase
 from .where_condition import WhereCondition
 
@@ -30,16 +30,23 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnec
         name_cols: list[str] = []
 
         for col, value in dicc.items():
-            if isinstance(col,str):
+            if isinstance(col, str):
                 string_col = col
             else:
                 string_col = self._model.__properties_mapped__.get(col, None)
                 if not string_col:
                     raise KeyError(f"Class '{self._model.__name__}' has not {col} mapped.")
-            name_cols.append(string_col)
-            self._values.append(value)
+            if self.__is_valid__(string_col, value):
+                name_cols.append(string_col)
+                self._values.append(value)
 
         set_query: str = ",".join(["=".join([col, "%s"]) for col in name_cols])
 
         self._query = f"{self.CLAUSE} {self._model.__table_name__} SET {set_query}"
         return None
+
+    def __is_valid__(self, col: str, value: Any) -> bool:
+        instance_table: Table = self._model(**{col: value})
+
+        column: Column = getattr(instance_table, f"_{col}")
+        return not column.is_auto_generated
