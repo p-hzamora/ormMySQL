@@ -1,7 +1,6 @@
-from collections.abc import Iterable
 from typing import override, Any
 
-from orm.utils import Table, Column
+from orm.utils import Table
 from orm.components.upsert import UpsertQueryBase
 from orm.common.interfaces import IRepositoryBase
 from mysql.connector import MySQLConnection
@@ -64,47 +63,6 @@ class UpsertQuery[T: Table](UpsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         alternative = ", ".join([f"{col}={ALIAS}({col})" for col in cols if col != pk_key])
         query = f"{insert._query} {self.CLAUSE} {alternative};"
 
-        new_dict_list = self.create_dict_list(instances)
-
-        values: list[Any] = []
-        for x in new_dict_list:
-            values.append(tuple(x.values()))
-
         self._query = query
-        self._values = values
+        self._values = insert.values
         return None
-
-    @staticmethod
-    def is_valid(column: Column) -> bool:
-        """
-        Eliminamos aquellas columnas autogeneradas y dejamos aquellas columnas unicas para que la consulta falle y realice un upsert
-
-        Aunque una pk sea autogenerada debemos eliminarla de la query ya que no podemos pasar un valor a una columna la cual no acepta valores nuevos.
-        Cuando se genere dicha columna y la base de datos detecte que el valor generado está repetido, será entonces cuando detecte la duplicidad y realice ON DUPLICATE KEY UPDATE
-
-        RETURN
-        -----
-
-        - True  -> No eliminamos la columna de la consulta
-        - False -> Eliminamos la columna
-        """
-        if (column.is_auto_increment and not column.is_primary_key) or column.is_auto_generated:
-            return False
-        return True
-
-    def create_dict_list(self, values: T | list[T]) -> list[dict[str, Any]]:
-        result: list[dict[str, Any]] = []
-        if isinstance(values, Table):
-            dicc: dict = {}
-            for col in values.__dict__.values():
-                if isinstance(col, Column) and self.is_valid(col):
-                    dicc.update({col.column_name: col.column_value})
-            result.append(dicc)
-
-        elif isinstance(values, Iterable):
-            result: list[dict[str, Any]] = []
-
-            for x in values:
-                result.extend(self.create_dict_list(x))
-            return result
-        return result
