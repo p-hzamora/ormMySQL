@@ -1,4 +1,4 @@
-from typing import Any, override
+from typing import Any, override, Iterable
 
 from orm.utils import Table, Column
 from orm.components.insert import InsertQueryBase
@@ -63,7 +63,7 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
             list_dict.append(dicc)
             return list_dict
 
-        elif isinstance(values, list):
+        elif isinstance(values, Iterable):
             for x in values:
                 self.__fill_dict_list(list_dict, x)
         else:
