@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 
-from orm.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
+from src.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
 from test.models import Address, City, Country  # noqa: E402ry
 
 

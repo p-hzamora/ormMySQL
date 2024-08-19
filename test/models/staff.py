@@ -1,5 +1,5 @@
 from typing import Self
-from orm import (
+from src import (
     Column,
     Table,
     BaseModel,
@@ -8,7 +8,7 @@ from orm import (
 
 from datetime import datetime
 
-from orm.common.interfaces import IRepositoryBase
+from src.common.interfaces import IRepositoryBase
 from .address import Address
 from .store import Store
 

@@ -1,11 +1,11 @@
-from orm import (
+from src import (
     Column,
     Table,
     BaseModel,
 )
 
 from datetime import datetime
-from orm.common.interfaces import IRepositoryBase
+from src.common.interfaces import IRepositoryBase
 
 
 class Country(Table):

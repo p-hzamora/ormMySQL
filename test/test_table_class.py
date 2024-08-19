@@ -5,8 +5,8 @@ from typing import Optional
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orm import Column
-from orm.utils.table_constructor import Table, TableMeta
+from src import Column
+from src.utils.table_constructor import Table, TableMeta
 
 
 class Person(Table):

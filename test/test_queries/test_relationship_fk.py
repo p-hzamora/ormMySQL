@@ -9,7 +9,7 @@ PASSWORD = config("PASSWORD")
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from orm.utils import ForeignKey, Table  # noqa: E402
+from src.utils import ForeignKey, Table  # noqa: E402
 
 
 def load_module(m_name: str, m_path: Path):

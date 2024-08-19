@@ -7,8 +7,8 @@ This ORM is designed to connect with a MySQL server, facilitating the management
 ```python
 from decouple import config
 
-from orm.common.interfaces import IRepositoryBase
-from orm.databases.my_sql import MySQLRepository
+from src.common.interfaces import IRepositoryBase
+from src.databases.my_sql import MySQLRepository
 
 USERNAME = config("USERNAME")
 PASSWORD = config("PASSWORD")
@@ -30,7 +30,7 @@ The `result` var will be of type `tuple[Address, ...]`
 Once the `AddressModel` class is created, we will not only be able to access all the information in that table, but also all the information in all the tables that have foreign keys related to it."
 
 ```python
-from orm.common.enums import ConditionType
+from src.common.enums import ConditionType
 from test.models.address import AddressModel
 
 
@@ -124,13 +124,13 @@ The easiest way to map your tables is:
 ```python
 from datetime import datetime
 
-from orm import (
+from src import (
     Column,
     Table,
     BaseModel,
     ForeignKey,
 )
-from orm.common.interfaces import IStatements_two_generic, IRepositoryBase
+from src.common.interfaces import IStatements_two_generic, IRepositoryBase
 
 
 class Country(Table):
