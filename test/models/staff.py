@@ -8,7 +8,7 @@ from src import (
 
 from datetime import datetime
 
-from ...common.interfaces import IRepositoryBase
+from src.common.interfaces import IRepositoryBase
 from .address import Address
 from .store import Store
 
