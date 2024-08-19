@@ -47,11 +47,12 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         - True  -> Do not delete the column from dict query
         - False -> Delete the column from dict query
         """
-        cond_1 = all([column.column_value is None, column.is_primary_key])
-        cond_2 = any([column.is_auto_increment, column.is_auto_generated])
 
-        # not all to get False and deleted column
-        return not all([cond_1, cond_2])
+        is_pk_none_and_auto_increment: bool = all([column.column_value is None, column.is_primary_key, column.is_auto_increment])
+
+        if is_pk_none_and_auto_increment or column.is_auto_generated:
+            return False
+        return True
 
     def __fill_dict_list(self, list_dict: list[dict], values: T | list[T]):
         if issubclass(values.__class__, Table):
