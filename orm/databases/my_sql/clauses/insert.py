@@ -36,15 +36,16 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
     @staticmethod
     def __is_valid(column: Column) -> bool:
         """
-        Validamos si la columna la debemos eliminar o no a la hora de insertar o actualizar valores.
+        We want to delete the column from table when it's specified with an 'AUTO_INCREMENT' or 'AUTO GENERATED ALWAYS AS (__) STORED' statement.
 
-        Querremos elimina un valor de nuestro objeto cuando especifiquemos un valor que en la bbdd sea AUTO_INCREMENT o AUTO GENERATED ALWAYS AS (__) STORED.
+        if the column is auto-generated, it means the database creates the value for that column, so we must deleted it.
+        if the column is primary key and auto-increment, we should be able to create an object with specific pk value.
 
         RETURN
         -----
 
-        - True  -> No eliminamos la columna de la consulta
-        - False -> Eliminamos la columna
+        - True  -> Do not delete the column from dict query
+        - False -> Delete the column from dict query
         """
         cond_1 = all([column.column_value is None, column.is_primary_key])
         cond_2 = any([column.is_auto_increment, column.is_auto_generated])
