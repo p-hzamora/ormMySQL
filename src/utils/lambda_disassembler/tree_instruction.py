@@ -1,10 +1,9 @@
 from collections import defaultdict
 from typing import Any, Callable, NamedTuple, Self, Optional
 from dis import Instruction, Bytecode
-from src.common.enums.condition_types import ConditionType
+from ...common.enums.condition_types import ConditionType
 from .dis_types import OpName
 from .nested_element import NestedElement
-import dis
 
 
 class Node[T]:
@@ -32,7 +31,7 @@ class TreeInstruction:
     def __init__[T, *Ts](self, lambda_: Callable[[T, *Ts], None]):
         self._root: Node[Instruction] = Node[Instruction](None)
 
-        self._bytecode: Bytecode = dis.Bytecode(lambda_)
+        self._bytecode: Bytecode = Bytecode(lambda_)
         self._compare_op: Optional[list[str]] = []
         self._set_root()
 

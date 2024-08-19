@@ -1,10 +1,9 @@
-from src.utils import Table
 from abc import abstractmethod
 
-from src.common.interfaces import IRepositoryBase
-from src.common.abstract_classes import NonQueryBase
-
 from .IDelete import IDelete
+from ...utils import Table
+from ...common.interfaces import IRepositoryBase
+from ...common.abstract_classes import NonQueryBase
 
 
 class DeleteQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IDelete[T]):

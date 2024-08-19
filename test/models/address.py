@@ -6,7 +6,7 @@ from src import (
     BaseModel,
     ForeignKey,
 )
-from src.common.interfaces import IRepositoryBase
+from ...common.interfaces import IRepositoryBase
 from .city import City
 
 

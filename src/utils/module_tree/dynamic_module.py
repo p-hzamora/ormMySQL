@@ -1,14 +1,13 @@
 import sys
 from pathlib import Path
 from typing import Optional, Type
-import re
-
-from src.utils.table_constructor import Table
-
+from collections import defaultdict
 import importlib.util
 import inspect
+import re
+
+from ..table_constructor import Table
 from .dfs_traversal import DFSTraversal
-from collections import defaultdict
 
 
 class Node:

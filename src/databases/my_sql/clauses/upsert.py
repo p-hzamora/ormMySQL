@@ -1,8 +1,8 @@
 from typing import override, Any
 
-from src.utils import Table
-from src.components.upsert import UpsertQueryBase
-from src.common.interfaces import IRepositoryBase
+from ....utils import Table
+from ....components.upsert import UpsertQueryBase
+from ....common.interfaces import IRepositoryBase
 from mysql.connector import MySQLConnection
 
 from .insert import InsertQuery

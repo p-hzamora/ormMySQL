@@ -5,7 +5,7 @@ from src import (
 )
 
 from datetime import datetime
-from src.common.interfaces import IRepositoryBase
+from ...common.interfaces import IRepositoryBase
 
 
 class Country(Table):

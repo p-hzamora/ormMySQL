@@ -1,5 +1,5 @@
 from typing import Any, Iterator
-from src.utils import Table
+from ...utils import Table
 
 
 class TableColumn:

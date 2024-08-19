@@ -1,6 +1,5 @@
 from collections import defaultdict
 from typing import Callable, TYPE_CHECKING, Type
-#from .table_constructor import Table
 from .lambda_disassembler import Disassembler
 
 if TYPE_CHECKING:

@@ -5,8 +5,7 @@ from decimal import Decimal
 from typing import Any, Iterable, Optional, Type, dataclass_transform
 import json
 
-from src.utils.dtypes import get_query_clausule
-
+from .dtypes import get_query_clausule
 from .module_tree.dfs_traversal import DFSTraversal
 from .column import Column
 

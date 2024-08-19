@@ -1,6 +1,6 @@
 from typing import override
 
-from src.common.interfaces.IQueryCommand import IQuery
+from ....common.interfaces.IQueryCommand import IQuery
 
 
 class OffsetQuery(IQuery):

@@ -1,8 +1,8 @@
 from typing import Any, override, Iterable
 
-from src.utils import Table, Column
-from src.components.delete import DeleteQueryBase
-from src.common.interfaces import IRepositoryBase
+from ....utils import Table, Column
+from ....common.interfaces import IRepositoryBase
+from ....components.delete import DeleteQueryBase
 from mysql.connector import MySQLConnection
 
 

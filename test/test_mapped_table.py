@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
-from src.utils import Table, Column  # noqa: E402
+from ...utils import Table, Column  # noqa: E402
 
 
 class Person(Table):
@@ -13,9 +13,6 @@ class Person(Table):
     title: int = Column[int]()
     content: int = Column[int]()
     dni_list: list = Column[list]()
-            
-        
-        
 
 
 class TestSQLMapping(unittest.TestCase):

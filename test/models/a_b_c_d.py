@@ -5,9 +5,9 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.common.interfaces import IRepositoryBase  # noqa: E402
+from ...common.interfaces import IRepositoryBase  # noqa: E402
 from src import BaseModel  # noqa: E402
-from src.utils import Table, Column, ForeignKey  # noqa: E402
+from ...utils import Table, Column, ForeignKey  # noqa: E402
 
 
 class A(Table):

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from src.common.interfaces import IQuery
+from ...common.interfaces import IQuery
 from .table_column import TableColumn
 
 

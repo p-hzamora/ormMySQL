@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from typing import Any, Optional, override
-from src.common.interfaces.INonQueryCommand import INonQueryCommand
 
-from src.common.interfaces import IRepositoryBase
-from src.utils import Table
+from ..interfaces.INonQueryCommand import INonQueryCommand
+
+from ..interfaces import IRepositoryBase
+from ...utils import Table
 
 
 class NonQueryBase[T: Table, TRepo: IRepositoryBase](INonQueryCommand):

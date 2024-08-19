@@ -2,10 +2,9 @@ from typing import override, Callable, overload, Optional, TypeVar
 
 # from ..table import Table
 
-from src.common.interfaces.IQueryCommand import IQuery
-from src.utils.lambda_disassembler import Disassembler
-
-from src.common.enums import JoinType
+from ....common.interfaces.IQueryCommand import IQuery
+from ....utils.lambda_disassembler import Disassembler
+from ....common.enums import JoinType
 
 # TODOL: Try to import Table module without circular import Error
 Table = TypeVar("Table")

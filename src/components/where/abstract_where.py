@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from src.utils import Table
+from ...utils import Table
 
-from src.common.interfaces import IQuery
+from ...common.interfaces import IQuery
 
 
 class AbstractWhere(IQuery):

@@ -6,8 +6,6 @@ This ORM is designed to connect with a MySQL server, facilitating the management
 ## Initialize MySQLRepository
 ```python
 from decouple import config
-
-from src.common.interfaces import IRepositoryBase
 from src.databases.my_sql import MySQLRepository
 
 USERNAME = config("USERNAME")

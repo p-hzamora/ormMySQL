@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from src.common.interfaces import IQuery
+from .IQueryCommand import IQuery
 
 
 class INonQueryCommand(IQuery):

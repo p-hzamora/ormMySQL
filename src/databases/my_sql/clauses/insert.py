@@ -1,9 +1,9 @@
 from typing import Any, override, Iterable
-
-from src.utils import Table, Column
-from src.components.insert import InsertQueryBase
-from src.common.interfaces import IRepositoryBase
 from mysql.connector import MySQLConnection
+
+from ....utils import Table, Column
+from ....components.insert import InsertQueryBase
+from ....common.interfaces import IRepositoryBase
 
 
 class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]):

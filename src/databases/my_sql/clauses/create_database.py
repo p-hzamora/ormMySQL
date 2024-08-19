@@ -1,7 +1,8 @@
 from typing import Literal, override
 from mysql.connector import Error, errorcode
-from src.common.interfaces import IRepositoryBase
 from mysql.connector import MySQLConnection
+
+from ....common.interfaces import IRepositoryBase
 
 TypeExists = Literal["fail", "replace", "append"]
 

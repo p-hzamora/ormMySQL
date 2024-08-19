@@ -4,19 +4,18 @@ from collections import defaultdict
 from abc import abstractmethod
 import inspect
 
-from src.utils import ForeignKey, Table
+from ...utils import ForeignKey, Table
 
-from src.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
-from src.components.update import UpdateQueryBase
-from src.components.select import ISelect
-from src.components.delete import DeleteQueryBase
-from src.components.upsert import UpsertQueryBase
-from src.components.select import TableColumn
-from src.components.insert import InsertQueryBase
-from src.components.where.abstract_where import AbstractWhere
-
-
+from ..interfaces import IQuery, IRepositoryBase, IStatements_two_generic
 from ..interfaces.IStatements import OrderType
+
+from ...components.update import UpdateQueryBase
+from ...components.select import ISelect
+from ...components.delete import DeleteQueryBase
+from ...components.upsert import UpsertQueryBase
+from ...components.select import TableColumn
+from ...components.insert import InsertQueryBase
+from ...components.where.abstract_where import AbstractWhere
 
 
 class JoinType(Enum):

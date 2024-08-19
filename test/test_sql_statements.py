@@ -9,7 +9,7 @@ sys.path = [str(Path(__file__).parent.parent), *sys.path]
 
 from test.config import config_dict  # noqa: E402
 from src.databases.my_sql import MySQLRepository  # noqa: E402
-from src.common.interfaces import IRepositoryBase  # noqa: E402
+from ...common.interfaces import IRepositoryBase  # noqa: E402
 from src import Table, Column, BaseModel  # noqa: E402
 from test.models import A, B, ModelAB  # noqa: F401
 

@@ -1,9 +1,8 @@
 from typing import override
-
-
-from src.common.interfaces import IRepositoryBase
-
 from mysql.connector import MySQLConnection
+
+
+from ....common.interfaces import IRepositoryBase
 
 
 class DropDatabase:
