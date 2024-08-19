@@ -11,7 +11,7 @@ from test.config import config_dict  # noqa: E402
 from src.databases.my_sql import MySQLRepository  # noqa: E402
 from src.common.interfaces import IRepositoryBase  # noqa: E402
 from src import Table, Column, BaseModel  # noqa: E402
-from test.models import A, B, ModelAB  # noqa: F401
+# from test.models import A, B, ModelAB  # noqa: F401
 
 DDBBNAME = "__test_ddbb__"
 TABLETEST = "__test_table__"
@@ -209,7 +209,7 @@ class TestSQLStatements(unittest.TestCase):
 
     # FIXME [ ]: Review this method in the future
     # def test_join(self):
-    #     modelA = ModelAB(A, self.ddbb)
+    # #     modelA = ModelAB(A, self.ddbb)
     #     modelB = ModelAB(B, self.ddbb)
 
     #     insert_a = modelA.insert()
