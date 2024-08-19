@@ -26,3 +26,7 @@ class NonQueryBase[T: Table, TRepo: IRepositoryBase](INonQueryCommand):
     @override
     def query(self) -> str:
         return self._query
+
+    @property
+    def values(self) -> list[tuple[Any, ...]]:
+        return self._values
