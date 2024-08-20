@@ -11,8 +11,8 @@ from src.test.models import (  # noqa: E402
 )
 
 
-from src.orm_mysql.databases.my_sql.repository import MySQLRepository  # noqa: E402
-from src.orm_mysql.databases.my_sql.statements import MySQLStatements  # noqa: E402
+from src.ormlambda.databases.my_sql.repository import MySQLRepository  # noqa: E402
+from src.ormlambda.databases.my_sql.statements import MySQLStatements  # noqa: E402
 
 db = MySQLRepository(user="root", password="1234", database="sakila")
 

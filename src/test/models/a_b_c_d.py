@@ -5,9 +5,9 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.orm_mysql.common.interfaces import IRepositoryBase  # noqa: E402
-from src.orm_mysql import BaseModel  # noqa: E402
-from src.orm_mysql.utils import Table, Column, ForeignKey  # noqa: E402
+from src.ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from src.ormlambda import BaseModel  # noqa: E402
+from src.ormlambda.utils import Table, Column, ForeignKey  # noqa: E402
 
 
 class A(Table):

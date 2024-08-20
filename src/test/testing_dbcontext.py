@@ -5,10 +5,10 @@ import math
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.orm_mysql.databases.my_sql import MySQLRepository  # noqa: E402
-from src.orm_mysql.common.interfaces import IRepositoryBase  # noqa: E402
-from src.orm_mysql.common.enums import ConditionType  # noqa: E402
-from src.orm_mysql.databases.my_sql.clauses.joins import JoinType  # noqa: E402
+from src.ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from src.ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from src.ormlambda.common.enums import ConditionType  # noqa: E402
+from src.ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from src.test.models.staff import StaffModel, Staff  # noqa: E402
 from src.test.models.address import AddressModel  # noqa: E402
 from src.test.models.actor import ActorModel, Actor  # noqa: E402

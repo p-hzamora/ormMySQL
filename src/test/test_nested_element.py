@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.orm_mysql.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
+from src.ormlambda.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
 
 
 class TestCondition(unittest.TestCase):

@@ -5,8 +5,8 @@ from typing import Optional
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.orm_mysql import Column  # noqa: E402
-from src.orm_mysql.utils.table_constructor import Table, TableMeta  # noqa: E402
+from src.ormlambda import Column  # noqa: E402
+from src.ormlambda.utils.table_constructor import Table, TableMeta  # noqa: E402
 
 
 class Person(Table):
