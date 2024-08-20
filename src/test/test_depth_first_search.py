@@ -2,11 +2,11 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent), *sys.path]
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 
-from src.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
-from test.models import Address, City, Country  # noqa: E402ry
+from src.ormmysql.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
+from src.test.models import Address, City, Country  # noqa: E402ry
 
 
 class TestDFS(unittest.TestCase):
@@ -16,7 +16,6 @@ class TestDFS(unittest.TestCase):
             City: [Country],
             Country: [],
         }
-        
 
         topological_sort = DFSTraversal.sort(graph)
         self.assertTupleEqual(topological_sort, (Country, City, Address))
@@ -30,7 +29,6 @@ class TestDFS(unittest.TestCase):
             4: [1],
             5: [0],
         }
-        
 
         topological_sort = DFSTraversal.sort(graph)
         possible_solutions = (
@@ -54,8 +52,6 @@ class TestDFS(unittest.TestCase):
             "K": [],
         }
 
-        
-
         topological_sort = DFSTraversal.sort(graph)
 
         possible_solutions = ("K", "J", "I", "H", "G", "F", "E", "D", "C", "B", "A")
@@ -76,8 +72,6 @@ class TestDFS(unittest.TestCase):
             "J": ["K"],
             "K": ["G"],
         }
-
-        
 
         topological_sort = DFSTraversal.sort(graph)
         possible_solutions = ("J", "I", "H", "F", "E", "D", "B", "A")

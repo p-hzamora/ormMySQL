@@ -4,9 +4,9 @@ from pathlib import Path
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.common.enums import ConditionType  # noqa: E402
-from src.databases.my_sql.clauses import WhereCondition  # noqa: E402
-from test.models import City, Country, Address, B, C  # noqa: E402
+from src.ormmysql.common.enums import ConditionType  # noqa: E402
+from src.ormmysql.databases.my_sql.clauses import WhereCondition  # noqa: E402
+from src.test.models import City, Country, Address, B, C  # noqa: E402
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", None, None, 1, "28026", "617128992", "Usera", None)
 

@@ -3,10 +3,10 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src import Column
-from src.utils.table_constructor import Table, TableMeta
+from src.ormmysql import Column  # noqa: E402
+from src.ormmysql.utils.table_constructor import Table, TableMeta  # noqa: E402
 
 
 class Person(Table):

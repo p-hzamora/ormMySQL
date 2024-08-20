@@ -2,7 +2,7 @@
 line-length = 320
 
 [tool.poetry]
-name = "orm-mysql"
+name = "ormmysql"
 version = "0.1.0"
 description = ""
 authors = ["p-hzamora <p.hzamora@icloud.com>"]

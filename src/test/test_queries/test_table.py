@@ -6,9 +6,9 @@ from typing import Type, get_type_hints, Self
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.utils import ForeignKey, Table, Column  # noqa: E402
-from src.utils.table_constructor import __init_constructor__  # noqa: E402
-from test.models import City  # noqa: E402
+from src.ormmysql.utils import ForeignKey, Table, Column  # noqa: E402
+from src.ormmysql.utils.table_constructor import __init_constructor__  # noqa: E402
+from src.test.models import City  # noqa: E402
 
 
 @__init_constructor__

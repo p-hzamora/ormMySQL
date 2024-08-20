@@ -1,5 +1,5 @@
 from typing import Self
-from src import (
+from src.ormmysql import (
     Column,
     Table,
     BaseModel,
@@ -8,7 +8,7 @@ from src import (
 
 from datetime import datetime
 
-from src.common.interfaces import IRepositoryBase
+from src.ormmysql.common.interfaces import IRepositoryBase
 from .address import Address
 
 

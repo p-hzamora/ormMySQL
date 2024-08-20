@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.utils.lambda_disassembler import Disassembler  # noqa: E402
+from src.ormmysql.utils.lambda_disassembler import Disassembler  # noqa: E402
 
 
 class A:

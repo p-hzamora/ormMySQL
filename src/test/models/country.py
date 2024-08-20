@@ -1,11 +1,11 @@
-from src import (
+from src.ormmysql import (
     Column,
     Table,
     BaseModel,
 )
 
 from datetime import datetime
-from src.common.interfaces import IRepositoryBase
+from src.ormmysql.common.interfaces import IRepositoryBase
 
 
 class Country(Table):

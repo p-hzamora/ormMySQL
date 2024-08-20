@@ -2,8 +2,8 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
-from src.utils import Table, Column  # noqa: E402
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+from src.ormmysql.utils import Table, Column  # noqa: E402
 
 
 class Person(Table):

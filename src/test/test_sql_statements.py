@@ -5,13 +5,13 @@ from mysql.connector import MySQLConnection, errors
 import pandas as pd
 from datetime import datetime
 
-sys.path = [str(Path(__file__).parent.parent), *sys.path]
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from test.config import config_dict  # noqa: E402
-from src.databases.my_sql import MySQLRepository  # noqa: E402
-from src.common.interfaces import IRepositoryBase  # noqa: E402
-from src import Table, Column, BaseModel  # noqa: E402
-# from test.models import A, B, ModelAB  # noqa: F401
+from src.test.config import config_dict  # noqa: E402
+from src.ormmysql.databases.my_sql import MySQLRepository  # noqa: E402
+from src.ormmysql.common.interfaces import IRepositoryBase  # noqa: E402
+from src.ormmysql import Table, Column, BaseModel  # noqa: E402
+# from src.test.models import A, B, ModelAB  # noqa: F401
 
 DDBBNAME = "__test_ddbb__"
 TABLETEST = "__test_table__"
@@ -153,7 +153,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertEqual(result, (22, 55, 133))
 
     def test_update_raising_KeyError(self):
-        from test.models import Address
+        from src.test.models import Address
 
         self.create_test_table()
         instance = self.create_instance_of_TestTable(5)

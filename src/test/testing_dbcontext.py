@@ -3,16 +3,16 @@ from pathlib import Path
 from decouple import config
 import math
 
-sys.path = [str(Path(__file__).parent.parent), *sys.path]
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.databases.my_sql import MySQLRepository  # noqa: E402
-from src.common.interfaces import IRepositoryBase  # noqa: E402
-from src.common.enums import ConditionType  # noqa: E402
-from src.databases.my_sql.clauses.joins import JoinType  # noqa: E402
-from test.models.staff import StaffModel, Staff  # noqa: E402
-from test.models.address import AddressModel  # noqa: E402
-from test.models.actor import ActorModel, Actor  # noqa: E402
-from test.models.store import StoreModel  # noqa: E402
+from src.ormmysql.databases.my_sql import MySQLRepository  # noqa: E402
+from src.ormmysql.common.interfaces import IRepositoryBase  # noqa: E402
+from src.ormmysql.common.enums import ConditionType  # noqa: E402
+from src.ormmysql.databases.my_sql.clauses.joins import JoinType  # noqa: E402
+from src.test.models.staff import StaffModel, Staff  # noqa: E402
+from src.test.models.address import AddressModel  # noqa: E402
+from src.test.models.actor import ActorModel, Actor  # noqa: E402
+from src.test.models.store import StoreModel  # noqa: E402
 
 
 USERNAME = config("USERNAME")

@@ -2,9 +2,9 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
+from src.ormmysql.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
 
 
 class TestCondition(unittest.TestCase):

@@ -4,11 +4,11 @@ from pathlib import Path
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.databases.my_sql.clauses import (  # noqa: E402
+from src.ormmysql.databases.my_sql.clauses import (  # noqa: E402
     JoinSelector,
     JoinType,
 )
-from test.models import City, Country, Address  # noqa: E402
+from src.test.models import City, Country, Address  # noqa: E402
 # from models.address import Address
 
 
@@ -82,7 +82,6 @@ class TestJoinSelector(unittest.TestCase):
         query = "LEFT JOIN city ON address.city_id = city.city_id\nLEFT JOIN country ON city.country_id = country.country_id"
         self.assertEqual(query, query_parser)
 
-
     def test__eq__method(self):
         s1 = JoinSelector[Address, City](
             table_left=Address,
@@ -97,9 +96,7 @@ class TestJoinSelector(unittest.TestCase):
             where=lambda a, c: a.city_id == c.city_id,
         )
 
-
-        self.assertEqual(s1,s2)
-
+        self.assertEqual(s1, s2)
 
 
 if __name__ == "__main__":

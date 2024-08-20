@@ -4,15 +4,16 @@ from pathlib import Path
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.databases.my_sql.clauses.select import SelectQuery, TableColumn  # noqa: E402
-from test.models import (  # noqa: E402
+from src.ormmysql.databases.my_sql.clauses.select import SelectQuery, TableColumn  # noqa: E402
+from src.test.models import (  # noqa: E402
     City,
     Address,
     Country,
 )
 
-from src.databases.my_sql.clauses import JoinType  # noqa: E402
-from test.models import A,B,C,D  # noqa: E402
+from src.ormmysql.databases.my_sql.clauses import JoinType  # noqa: E402
+from src.test.models import A, B, C, D  # noqa: E402
+
 
 class TestSelect(unittest.TestCase):
     def test_all_col_with_no_select_list_attr(self):
