@@ -4,7 +4,7 @@ line-length = 320
 [tool.poetry]
 name = "orm_mysql"
 version = "0.1.0"
-description = ""
+description = "ORM designed to interact with the database using lambda functions"
 authors = ["p-hzamora <p.hzamora@icloud.com>"]
 readme = "README.md"
 
