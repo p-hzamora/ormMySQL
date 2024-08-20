@@ -2,7 +2,7 @@
 line-length = 320
 
 [tool.poetry]
-name = "orm"
+name = "orm-mysql"
 version = "0.1.0"
 description = ""
 authors = ["p-hzamora <p.hzamora@icloud.com>"]
@@ -10,9 +10,12 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+mysql-connector = "^2.2.9"
+ruff = "^0.4.5"
+
+[tool.poetry.group.test.dependencies]
 pandas = "^2.2.2"
 mysql-connector = "^2.2.9"
-python-dotenv = "^1.0.1"
 ruff = "^0.4.5"
 python-decouple = "^3.8"
 
