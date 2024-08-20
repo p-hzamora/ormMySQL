@@ -1,11 +1,11 @@
-from src.ormmysql import (
+from src.orm_mysql import (
     Column,
     Table,
     BaseModel,
 )
 
 from datetime import datetime
-from src.ormmysql.common.interfaces import IRepositoryBase
+from src.orm_mysql.common.interfaces import IRepositoryBase
 
 
 class Actor(Table):

@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.ormmysql.databases.my_sql.clauses import (  # noqa: E402
+from src.orm_mysql.databases.my_sql.clauses import (  # noqa: E402
     JoinSelector,
     JoinType,
 )

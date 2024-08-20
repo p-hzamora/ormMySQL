@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from src.ormmysql import (
+from src.orm_mysql import (
     Column,
     Table,
     BaseModel,
     ForeignKey,
 )
-from src.ormmysql.common.interfaces import IRepositoryBase
+from src.orm_mysql.common.interfaces import IRepositoryBase
 from .city import City
 
 

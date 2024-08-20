@@ -5,7 +5,7 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.ormmysql.utils.lambda_disassembler import Disassembler  # noqa: E402
+from src.orm_mysql.utils.lambda_disassembler import Disassembler  # noqa: E402
 
 
 class A:

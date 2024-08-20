@@ -8,9 +8,9 @@ from datetime import datetime
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from src.test.config import config_dict  # noqa: E402
-from src.ormmysql.databases.my_sql import MySQLRepository  # noqa: E402
-from src.ormmysql.common.interfaces import IRepositoryBase  # noqa: E402
-from src.ormmysql import Table, Column, BaseModel  # noqa: E402
+from src.orm_mysql.databases.my_sql import MySQLRepository  # noqa: E402
+from src.orm_mysql.common.interfaces import IRepositoryBase  # noqa: E402
+from src.orm_mysql import Table, Column, BaseModel  # noqa: E402
 # from src.test.models import A, B, ModelAB  # noqa: F401
 
 DDBBNAME = "__test_ddbb__"

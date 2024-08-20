@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.ormmysql import (
+from src.orm_mysql import (
     Column,
     Table,
     BaseModel,

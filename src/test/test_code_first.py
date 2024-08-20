@@ -8,7 +8,7 @@ sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 
 # Custom libraries
-from src.ormmysql.databases.my_sql import MySQLRepository  # noqa: E402
+from src.orm_mysql.databases.my_sql import MySQLRepository  # noqa: E402
 from src.test.config import config_dict  # noqa: E402
 
 from src.test.models import Country, CountryModel  # noqa: E402

@@ -5,8 +5,8 @@ import unittest
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.ormmysql.utils.lambda_disassembler import TreeInstruction  # noqa: E402
-from src.ormmysql.utils.lambda_disassembler import NestedElement  # noqa: E402
+from src.orm_mysql.utils.lambda_disassembler import TreeInstruction  # noqa: E402
+from src.orm_mysql.utils.lambda_disassembler import NestedElement  # noqa: E402
 
 
 class A:
