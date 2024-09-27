@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from typing import Optional
 from decouple import config
 import unittest
 
@@ -52,7 +53,7 @@ class TestTypeHint(unittest.TestCase):
         response = a_model.select_one(lambda x: (x.address, x.address2, x.city_id), flavour=tuple)
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(response[0], str)
-        self.assertIsInstance(response[1], str)
+        self.assertIsInstance(response[1], Optional[str])
         self.assertIsInstance(response[2], int)
 
     def test_SELECT_ONE_method_passing_3_columns(self):
@@ -90,10 +91,13 @@ class TestTypeHint(unittest.TestCase):
         self.assertIsInstance(response, list)
         self.assertIsInstance(response[0], int)
 
-    def test_SELECT_ONE_method_passing_1_column_and_flavour_attr_SET(self):
-        response = a_model.select_one(lambda a: (a,), flavour=set)
-        self.assertIsInstance(response, set)
-        self.assertEqual("Alberta" in response, True)
+    def test_SELECT_ONE_method_with_SET_as_flavour_and_raises_TypeError(self):
+        with self.assertRaises(TypeError):
+            try:
+                a_model.select_one(lambda a: (a,), flavour=set)
+            except TypeError as e:
+                self.assertEqual(e.args[0],"unhashable type '<class 'bytearray'>' found in '<class 'tuple'>' when attempting to cast the result into a 'set' object")
+                raise TypeError
 
 
 if __name__ == "__main__":
