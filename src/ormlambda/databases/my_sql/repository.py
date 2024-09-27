@@ -51,10 +51,23 @@ class Response[TFlavour, *Ts]:
         def _tuple() -> list[tuple[*Ts]]:
             return data
 
+        def _set() -> list[tuple[*Ts]]:
+            for d in data:
+                n = len(d)
+                for i in range(n):
+                    try:
+                        hash(d[i])
+                    except TypeError:
+                        raise TypeError(f"unhashable type '{type(d[i])}' found in '{type(d)}' when attempting to cast the result into a '{set.__name__}' object")
+
         def _default() -> list[TFlavour]:
             return [self._flavour(x, **self._kwargs) for x in data]
 
-        selector: dict[Type[object], Any] = {dict: _dict, tuple: _tuple}
+        selector: dict[Type[object], Any] = {
+            dict: _dict,
+            tuple: _tuple,
+            set: _set,
+        }
 
         return selector.get(self._flavour, _default)()
 
