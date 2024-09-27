@@ -6,10 +6,10 @@ import unittest
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from src.ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
-from src.test.models.address import AddressModel  # noqa: E402
-from src.test.models import Address, City, Country  # noqa: E402
+from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from models.address import AddressModel  # noqa: E402
+from models import Address, City, Country  # noqa: E402
 
 
 USERNAME = config("USERNAME")
@@ -96,7 +96,7 @@ class TestTypeHint(unittest.TestCase):
             try:
                 a_model.select_one(lambda a: (a,), flavour=set)
             except TypeError as e:
-                self.assertEqual(e.args[0],"unhashable type '<class 'bytearray'>' found in '<class 'tuple'>' when attempting to cast the result into a 'set' object")
+                self.assertEqual(e.args[0], "unhashable type '<class 'bytearray'>' found in '<class 'tuple'>' when attempting to cast the result into a 'set' object")
                 raise TypeError
 
 

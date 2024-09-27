@@ -4,14 +4,14 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
 # Custom libraries
-from src.ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from src.test.config import config_dict  # noqa: E402
+from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from config import config_dict  # noqa: E402
 
-from src.test.models import Country, CountryModel  # noqa: E402
+from models import Country, CountryModel  # noqa: E402
 
 TDDBB_name = "__test_ddbb__"
 TTABLE_name = "__test_table__"

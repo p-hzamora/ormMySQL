@@ -2,11 +2,11 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from src.ormlambda.common.enums import ConditionType  # noqa: E402
-from src.ormlambda.databases.my_sql.clauses import WhereCondition  # noqa: E402
-from src.test.models import City, Country, Address, B, C  # noqa: E402
+from ormlambda.common.enums import ConditionType  # noqa: E402
+from ormlambda.databases.my_sql.clauses import WhereCondition  # noqa: E402
+from models import City, Country, Address, B, C  # noqa: E402
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", None, None, 1, "28026", "617128992", "Usera", None)
 

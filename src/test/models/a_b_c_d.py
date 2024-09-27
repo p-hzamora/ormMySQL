@@ -1,13 +1,13 @@
+from datetime import datetime
 import sys
 from pathlib import Path
-from datetime import datetime
+
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
-
-from src.ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
-from src.ormlambda import BaseModel  # noqa: E402
-from src.ormlambda.utils import Table, Column, ForeignKey  # noqa: E402
+from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from ormlambda import BaseModel  # noqa: E402
+from ormlambda import Table, Column, ForeignKey  # noqa: E402
 
 
 class A(Table):

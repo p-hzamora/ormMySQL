@@ -2,9 +2,9 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from src.ormlambda.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
+from ormlambda.utils.lambda_disassembler.disassembler import NestedElement  # noqa: E402
 
 
 class TestCondition(unittest.TestCase):

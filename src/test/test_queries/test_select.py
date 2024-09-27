@@ -2,17 +2,17 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from src.ormlambda.databases.my_sql.clauses.select import SelectQuery, TableColumn  # noqa: E402
-from src.test.models import (  # noqa: E402
+from ormlambda.databases.my_sql.clauses.select import SelectQuery, TableColumn  # noqa: E402
+from models import (  # noqa: E402
     City,
     Address,
     Country,
 )
 
-from src.ormlambda.databases.my_sql.clauses import JoinType  # noqa: E402
-from src.test.models import A, B, C, D  # noqa: E402
+from ormlambda.databases.my_sql.clauses import JoinType  # noqa: E402
+from models import A, B, C, D  # noqa: E402
 
 
 class TestSelect(unittest.TestCase):

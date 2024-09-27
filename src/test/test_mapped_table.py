@@ -2,8 +2,8 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
-from src.ormlambda.utils import Table, Column  # noqa: E402
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+from ormlambda.utils import Table, Column  # noqa: E402
 
 
 class Person(Table):

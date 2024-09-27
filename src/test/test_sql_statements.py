@@ -7,11 +7,11 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.test.config import config_dict  # noqa: E402
-from src.ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from src.ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
-from src.ormlambda import Table, Column, BaseModel  # noqa: E402
-# from src.test.models import A, B, ModelAB  # noqa: F401
+from config import config_dict  # noqa: E402
+from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from ormlambda import Table, Column, BaseModel  # noqa: E402
+# from models import A, B, ModelAB  # noqa: F401
 
 DDBBNAME = "__test_ddbb__"
 TABLETEST = "__test_table__"
@@ -166,7 +166,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertEqual(result, (22, 55, 133))
 
     def test_update_raising_KeyError(self):
-        from src.test.models import Address
+        from models import Address
 
         self.create_test_table()
         instance = self.create_instance_of_TestTable(5)

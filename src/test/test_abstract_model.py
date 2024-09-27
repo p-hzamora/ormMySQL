@@ -1,17 +1,17 @@
 import unittest
 import sys
 from pathlib import Path
+
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+
 from config import config_dict
-
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
-
-from src.test.models import (  # noqa: E402
+from models import (  # noqa: E402
     City,
     Country,
 )
 
-from src.ormlambda.databases.my_sql.repository import MySQLRepository  # noqa: E402
-from src.ormlambda.databases.my_sql.statements import MySQLStatements  # noqa: E402
+from ormlambda import MySQLRepository  # noqa: E402
+from ormlambda import MySQLStatements  # noqa: E402
 
 db = MySQLRepository(**config_dict)
 db.set_config({"database": "sakila"})

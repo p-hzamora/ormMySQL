@@ -1,5 +1,5 @@
 from typing import Self
-from src.ormlambda import (
+from ormlambda import (
     Column,
     Table,
     BaseModel,
@@ -8,7 +8,7 @@ from src.ormlambda import (
 
 from datetime import datetime
 
-from src.ormlambda.common.interfaces import IRepositoryBase
+from ormlambda.common.interfaces import IRepositoryBase
 from .country import Country
 
 

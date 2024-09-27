@@ -5,7 +5,7 @@ from datetime import datetime
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.ormlambda.utils.lambda_disassembler import Disassembler  # noqa: E402
+from ormlambda.utils.lambda_disassembler import Disassembler  # noqa: E402
 
 
 class A:

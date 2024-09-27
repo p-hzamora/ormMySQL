@@ -1,11 +1,11 @@
-from src.ormlambda import (
+from ormlambda import (
     Column,
     Table,
     BaseModel,
 )
 
 from datetime import datetime
-from src.ormlambda.common.interfaces import IRepositoryBase
+from ormlambda.common.interfaces import IRepositoryBase
 
 
 class Country(Table):

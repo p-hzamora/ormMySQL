@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from src.ormlambda import (
+from ormlambda import (
     Column,
     Table,
     BaseModel,
     ForeignKey,
 )
-from src.ormlambda.common.interfaces import IRepositoryBase
+from ormlambda.common.interfaces import IRepositoryBase
 from .city import City
 
 

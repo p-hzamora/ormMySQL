@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.ormlambda import (
+from ormlambda import (
     Column,
     Table,
     BaseModel,

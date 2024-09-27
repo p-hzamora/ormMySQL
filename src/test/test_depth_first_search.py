@@ -2,11 +2,11 @@ import unittest
 import sys
 from pathlib import Path
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
-from src.ormlambda.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
-from src.test.models import Address, City, Country  # noqa: E402ry
+from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
+from models import Address, City, Country  # noqa: E402ry
 
 
 class TestDFS(unittest.TestCase):

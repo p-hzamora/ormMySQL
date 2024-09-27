@@ -6,7 +6,7 @@ This ORM is designed to connect with a MySQL server, facilitating the management
 ## Initialize MySQLRepository
 ```python
 from decouple import config
-from src.ormmysql.databases.my_sql import MySQLRepository
+from ormlambda import MySQLRepository
 
 USERNAME = config("USERNAME")
 PASSWORD = config("PASSWORD")
@@ -18,7 +18,7 @@ database = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", 
 
 ## Select all columns
 ```python
-from src.test.models.address import AddressModel
+from models.address import AddressModel
 
 result = AddressModel(database).select()
 ```
@@ -28,8 +28,8 @@ The `result` var will be of type `tuple[Address, ...]`
 Once the `AddressModel` class is created, we will not only be able to access all the information in that table, but also all the information in all the tables that have foreign keys related to it."
 
 ```python
-from src.ormmysql.common.enums import ConditionType
-from src.test.models.address import AddressModel
+from ormlambda import ConditionType
+from models.address import AddressModel
 
 
 result = AddressModel(database).where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[aA]")).select(
@@ -122,13 +122,13 @@ The easiest way to map your tables is:
 ```python
 from datetime import datetime
 
-from src.ormmysql import (
+from ormlambda import (
     Column,
     Table,
     BaseModel,
     ForeignKey,
 )
-from src.ormmysql.common.interfaces import IStatements_two_generic, IRepositoryBase
+from ormlambda.common.interfaces import IStatements_two_generic, IRepositoryBase
 
 
 class Country(Table):

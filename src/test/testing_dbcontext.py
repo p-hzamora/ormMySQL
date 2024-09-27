@@ -5,14 +5,14 @@ import math
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
-from src.ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from src.ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
-from src.ormlambda.common.enums import ConditionType  # noqa: E402
-from src.ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
-from src.test.models.staff import StaffModel, Staff  # noqa: E402
-from src.test.models.address import AddressModel  # noqa: E402
-from src.test.models.actor import ActorModel, Actor  # noqa: E402
-from src.test.models.store import StoreModel  # noqa: E402
+from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from ormlambda.common.enums import ConditionType  # noqa: E402
+from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
+from models.staff import StaffModel, Staff  # noqa: E402
+from models.address import AddressModel  # noqa: E402
+from models.actor import ActorModel, Actor  # noqa: E402
+from models.store import StoreModel  # noqa: E402
 
 
 USERNAME = config("USERNAME")

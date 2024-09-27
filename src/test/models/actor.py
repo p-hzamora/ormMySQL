@@ -1,11 +1,16 @@
-from src.ormlambda import (
+import sys
+from pathlib import Path
+
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+
+from ormlambda import (
     Column,
     Table,
     BaseModel,
 )
 
 from datetime import datetime
-from src.ormlambda.common.interfaces import IRepositoryBase
+from ormlambda.common.interfaces import IRepositoryBase
 
 
 class Actor(Table):
