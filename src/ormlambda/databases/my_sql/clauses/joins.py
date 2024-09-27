@@ -1,13 +1,14 @@
-from typing import override, Callable, overload, Optional, TypeVar
+from __future__ import annotations
+from typing import override, Callable, overload, Optional, TYPE_CHECKING
 
-# from ..table import Table
 
 from ....common.interfaces.IQueryCommand import IQuery
 from ....utils.lambda_disassembler import Disassembler
 from ....common.enums import JoinType
 
-# TODOL: Try to import Table module without circular import Error
-Table = TypeVar("Table")
+# TODOL [x]: Try to import Table module without circular import Error
+if TYPE_CHECKING:
+    from ormlambda import Table
 
 
 class JoinSelector[TLeft, TRight](IQuery):
