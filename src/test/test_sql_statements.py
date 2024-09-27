@@ -147,9 +147,22 @@ class TestSQLStatements(unittest.TestCase):
         instance = self.create_instance_of_TestTable(3)
         self.tmodel.insert(instance)
 
-        self.tmodel.where(lambda x: x.Col1 == ROW_TO_UPDATE, ROW_TO_UPDATE=ROW_TO_UPDATE).update({"Col2": 22, "Col5": 55, "Col13": 133})
+        self.tmodel.where(lambda x: x.Col1 == ROW_TO_UPDATE, ROW_TO_UPDATE=ROW_TO_UPDATE).update(
+            {
+                "Col2": 22,
+                "Col5": 55,
+                "Col13": 133,
+            },
+        )
 
-        result = self.tmodel.where(lambda x: x.Col1 == ROW_TO_UPDATE, ROW_TO_UPDATE=ROW_TO_UPDATE).select_one(lambda x: (x.Col2, x.Col5, x.Col13), flavour=tuple)
+        result = self.tmodel.where(lambda x: x.Col1 == ROW_TO_UPDATE, ROW_TO_UPDATE=ROW_TO_UPDATE).select_one(
+            lambda x: (
+                x.Col2,
+                x.Col5,
+                x.Col13,
+            ),
+            flavour=tuple,
+        )
         self.assertEqual(result, (22, 55, 133))
 
     def test_update_raising_KeyError(self):
