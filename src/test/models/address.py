@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from src.ormlambda import (
     Column,
@@ -15,7 +16,7 @@ class Address(Table):
 
     address_id: int = Column[int](is_primary_key=True)
     address: str
-    address2: str
+    address2: Optional[str]
     district: str
     city_id: int
     postal_code: str
