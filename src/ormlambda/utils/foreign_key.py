@@ -1,4 +1,5 @@
-from collections import defaultdict
+from __future__ import annotations
+from dataclasses import dataclass
 from typing import Callable, TYPE_CHECKING, Type
 from .lambda_disassembler import Disassembler
 
@@ -6,8 +7,15 @@ if TYPE_CHECKING:
     from .table_constructor import Table
 
 
-class ForeignKey[Tbl1:Table, Tbl2:Table]:
-    MAPPED: dict[Tbl1, dict[Tbl2, Callable[[Tbl1, Tbl2], bool]]] = defaultdict(dict)
+@dataclass
+class TableInfo[T1: Table, T2: Table]:
+    orig_table: T1
+    referenced_table: T2
+    relationship: Callable[[T1, T2], bool]
+
+
+class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
+    MAPPED: dict[str, dict[str, TableInfo[Tbl1, Tbl2]]] = {}
 
     def __new__(
         cls,
@@ -20,17 +28,23 @@ class ForeignKey[Tbl1:Table, Tbl2:Table]:
         return referenced_table
 
     @classmethod
-    def add_foreign_key(cls, orig_table: str, referenced_table: "Table", relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
-        cls.MAPPED[orig_table][referenced_table] = relationship
+    def add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
+        if orig_table not in cls.MAPPED:
+            cls.MAPPED[orig_table] = {referenced_table.__table_name__: TableInfo(None, referenced_table, relationship)}
+        else:
+            cls.MAPPED[orig_table].update({referenced_table.__table_name__: TableInfo(None, referenced_table, relationship)})
+
         return None
 
     @classmethod
-    def create_query(cls, orig_table: "Table") -> list[str]:
+    def create_query(cls, orig_table: Table) -> list[str]:
         clauses: list[str] = []
-        for referenced_table, _lambda in ForeignKey[Tbl1, Tbl2].MAPPED[orig_table].items():
-            dissambler: Disassembler = Disassembler(_lambda)
+
+        fk:dict[str,TableInfo[Tbl1, Tbl2]] = ForeignKey[Tbl1, Tbl2].MAPPED.get(orig_table.__table_name__, {})
+        for table_info in fk.values():
+            dissambler: Disassembler = Disassembler(table_info.relationship)
             orig_col: str = dissambler.cond_1.name
             referenced_col: str = dissambler.cond_2.name
 
-            clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.__table_name__}({referenced_col})")
+            clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {table_info.referenced_table.__table_name__}({referenced_col})")
         return clauses

@@ -167,11 +167,11 @@ class TableMeta(type):
     def __add_fk_if_exists__(cls: "Table") -> None:
         """
         When creating a Table class, we cannot pass the class itself as a parameter in a function that initializes a class variable.
-        To fix this, we first add the table name and then, when instantiating the object, we replace the table name with the class itself.
+        To fix this, we first add the table name as key and then, we add the class itself in the TableInfo class.
         """
         if data := ForeignKey.MAPPED.get(cls.__table_name__):
-            ForeignKey.MAPPED[cls] = data
-            del ForeignKey.MAPPED[cls.__table_name__]
+            for value in data.values():
+                value.orig_table = cls
         return None
 
 
