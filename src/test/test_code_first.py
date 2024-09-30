@@ -14,8 +14,6 @@ from config import config_dict  # noqa: E402
 from models import Country, CountryModel  # noqa: E402
 
 TDDBB_name = "__test_ddbb__"
-TTABLE_name = "__test_table__"
-
 
 class Test_my_sql(unittest.TestCase):
     def setUp(self) -> None:
