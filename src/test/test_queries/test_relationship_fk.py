@@ -26,6 +26,8 @@ def _path(n: str) -> Path:
 
 class TestForeignKey(unittest.TestCase):
     def setUp(self) -> None:
+        self.current_fk = ForeignKey.MAPPED.copy()
+
         ForeignKey.MAPPED.clear()
 
     def tearDown(self) -> None:
@@ -35,6 +37,8 @@ class TestForeignKey(unittest.TestCase):
             _name = f"models.{name}"
             if sys.modules.get(_name):
                 del sys.modules[_name]
+
+        ForeignKey.MAPPED = self.current_fk
 
     def test_fk_empty_if_not_modules(self):
         self.assertDictEqual(ForeignKey.MAPPED, {})
@@ -53,7 +57,12 @@ class TestForeignKey(unittest.TestCase):
             Staff: ...,
         }
 
-        self.assertTupleEqual(tuple(ForeignKey.MAPPED), tuple(map))
+        original_values = []
+        for orig_table in ForeignKey.MAPPED.values():
+            for referenced_table in orig_table.values():
+                if referenced_table.orig_table not in original_values:
+                    original_values.append(referenced_table.orig_table)
+        self.assertTupleEqual(tuple(original_values), tuple(map))
 
     def test_if_fk_replace_table_name_by_table_object(self):
         """
@@ -66,8 +75,8 @@ class TestForeignKey(unittest.TestCase):
         _ = load_module("models.country", _path("country")).Country
         City = load_module("models.city", _path("city")).City
 
-        self.assertIsNone(ForeignKey.MAPPED.get("city", None), None)
-        self.assertIn(City, ForeignKey.MAPPED)
+        self.assertIsNone(ForeignKey.MAPPED.get(City, None), None)
+        self.assertIn("city", ForeignKey.MAPPED)
 
 
 if __name__ == "__main__":
