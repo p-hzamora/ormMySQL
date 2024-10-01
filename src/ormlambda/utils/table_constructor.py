@@ -1,5 +1,4 @@
 import base64
-from collections import defaultdict
 import datetime
 from decimal import Decimal
 from typing import Any, Iterable, Optional, Type, dataclass_transform
@@ -307,5 +306,10 @@ class Table(metaclass=TableMeta):
 
     def __eq__(self, __value: Any) -> bool:
         if isinstance(__value, Table):
-            return hash(self) == hash(__value)
+            return all(
+                (
+                    self.__table_name__ == __value.__table_name__,
+                    tuple(self.to_dict().items()),
+                )
+            )
         return False
