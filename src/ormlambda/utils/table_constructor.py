@@ -9,7 +9,7 @@ from .dtypes import get_query_clausule
 from .module_tree.dfs_traversal import DFSTraversal
 from .column import Column
 
-from .foreign_key import ForeignKey
+from .foreign_key import ForeignKey, TableInfo
 
 MISSING = Column()
 
@@ -156,7 +156,7 @@ class TableMeta(type):
         if not isinstance(cls_object.__table_name__, str):
             raise Exception(f"class variable '__table_name__' of '{cls_object.__name__}' class must be 'str'")
 
-        TableMeta.__add_fk_if_exists__(cls_object)
+        TableMeta.__add_to_ForeignKey(cls_object)
         self = __init_constructor__(cls_object)
         return self
 
@@ -164,14 +164,17 @@ class TableMeta(type):
         return f"{TableMeta.__name__}: {cls.__table_name__}"
 
     @staticmethod
-    def __add_fk_if_exists__(cls: "Table") -> None:
+    def __add_to_ForeignKey(cls: "Table") -> None:
         """
         When creating a Table class, we cannot pass the class itself as a parameter in a function that initializes a class variable.
         To fix this, we first add the table name as key and then, we add the class itself in the TableInfo class.
         """
-        if data := ForeignKey.MAPPED.get(cls.__table_name__):
-            for value in data.values():
-                value.orig_table = cls
+        if table_info := ForeignKey.MAPPED.get(cls.__table_name__, None):
+            table_info.table_object = cls
+        else:
+            ForeignKey.MAPPED[cls.__table_name__] = TableInfo()
+            ForeignKey.MAPPED[cls.__table_name__].table_object = cls
+
         return None
 
 
