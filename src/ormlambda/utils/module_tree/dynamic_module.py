@@ -6,6 +6,8 @@ import importlib.util
 import inspect
 import re
 
+from ormlambda.utils.foreign_key import ForeignKey
+
 from ..table_constructor import Table
 from .dfs_traversal import DFSTraversal
 
@@ -180,12 +182,12 @@ class ModuleTree:
         """
         tables: list[tuple[str, Table]] = self.get_member_table(self.load_module("", self.module_path))
 
-        graph: dict[Type[Table], list[Type[Table]]] = defaultdict(list)
+        graph: dict[str, list[str]] = defaultdict(list)
         for _, tbl in tables:
-            graph[tbl] = tbl.find_dependent_tables()
+            graph[tbl.__table_name__] = [x.__table_name__ for x in tbl.find_dependent_tables()]
 
         sorted_tables = DFSTraversal.sort(graph)
-        res = [x.create_table_query() for x in sorted_tables]
+        res = [ForeignKey.MAPPED[x].table_object.create_table_query() for x in sorted_tables]
         return res
 
     @staticmethod
