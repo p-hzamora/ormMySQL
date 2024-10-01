@@ -10,6 +10,7 @@ PASSWORD = config("PASSWORD")
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from ormlambda.utils import ForeignKey, Table  # noqa: E402
+from ormlambda.utils.foreign_key import TableInfo  # noqa: E402
 
 
 def load_module(m_name: str, m_path: Path):
@@ -44,31 +45,33 @@ class TestForeignKey(unittest.TestCase):
         self.assertDictEqual(ForeignKey.MAPPED, {})
 
     def test_fk_with_staff_table_in_imports(self):
-        _ = load_module("models.country", _path("country")).Country
+        Country = load_module("models.country", _path("country")).Country
         City: Table = load_module("models.city", _path("city")).City
         Address: Table = load_module("models.address", _path("address")).Address
         Store: Table = load_module("models.store", _path("store")).Store
         Staff: Table = load_module("models.staff", _path("staff")).Staff
 
-        map = {
-            City: ...,
-            Address: ...,
-            Store: ...,
-            Staff: ...,
-        }
+        set_ = set(
+            [
+                Country,
+                City,
+                Address,
+                Store,
+                Staff,
+            ]
+        )
 
-        original_values = []
-        for orig_table in ForeignKey.MAPPED.values():
-            for referenced_table in orig_table.values():
-                if referenced_table.orig_table not in original_values:
-                    original_values.append(referenced_table.orig_table)
-        self.assertTupleEqual(tuple(original_values), tuple(map))
+        original_values = set()
+        for table in ForeignKey.MAPPED:
+                table = ForeignKey.MAPPED[table]
+                original_values.add(table.table_object)
+        self.assertSetEqual(original_values, set_)
 
     def test_if_fk_replace_table_name_by_table_object(self):
         """
         Testing if ForeignKey.MAPPED replaces 'str' keys with 'Table' object only when the keys match the table name of the 'Table' obejct they are being replaced by.
         """
-        ForeignKey[Table, Table].MAPPED["city"] = {}
+        ForeignKey[Table, Table].MAPPED["city"] = TableInfo()
 
         self.assertIn("city", ForeignKey.MAPPED)
 
