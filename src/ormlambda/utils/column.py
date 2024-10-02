@@ -1,5 +1,6 @@
 from typing import Type
 
+
 class Column[T]:
     __slots__ = (
         "dtype",
@@ -13,7 +14,7 @@ class Column[T]:
 
     def __init__(
         self,
-        dtype:Type[T] = None,
+        dtype: Type[T] = None,
         column_name: str = None,
         column_value: T = None,
         *,
@@ -35,9 +36,9 @@ class Column[T]:
 
     def __to_string__(self, name: str, var_name: T, type_: str):
         dicc: dict = {
-            "dtype":type_,
+            "dtype": type_,
             "column_name": f"'{name}'",
-            "column_value": var_name, # must be the same variable name as the instance variable name in Table's __init__ class
+            "column_value": var_name,  # must be the same variable name as the instance variable name in Table's __init__ class
         }
         exec_str: str = f"{Column.__name__}[{type_}]("
         for x in self.__slots__:

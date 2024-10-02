@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 from .IUpdate import IUpdate
 
+
 class UpdateQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpdate):
     def __init__(self, model: T, repository: TRepo, where: AbstractWhere = list[AbstractWhere]) -> None:
         super().__init__(model, repository)

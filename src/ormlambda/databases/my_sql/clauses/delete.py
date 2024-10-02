@@ -2,7 +2,7 @@ from typing import Any, override, Iterable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ormlambda import Column
-    
+
 from ormlambda import Table
 from ormlambda import IRepositoryBase
 from ormlambda.components.delete import DeleteQueryBase

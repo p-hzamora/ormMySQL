@@ -10,7 +10,6 @@ from ormlambda.common.abstract_classes import NonQueryBase
 from .IUpsert import IUpsert
 
 
-
 class UpsertQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpsert[T]):
     def __init__(self, model: T, repository: TRepo) -> None:
         super().__init__(model, repository)

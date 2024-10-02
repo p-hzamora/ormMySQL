@@ -63,8 +63,8 @@ class TestForeignKey(unittest.TestCase):
 
         original_values = set()
         for table in ForeignKey.MAPPED:
-                table = ForeignKey.MAPPED[table]
-                original_values.add(table.table_object)
+            table = ForeignKey.MAPPED[table]
+            original_values.add(table.table_object)
         self.assertSetEqual(original_values, set_)
 
     def test_if_fk_replace_table_name_by_table_object(self):

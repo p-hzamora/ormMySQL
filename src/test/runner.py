@@ -17,7 +17,7 @@ from test_queries import (
     test_select,
     test_table,
     test_where_condition,
-    test_count
+    test_count,
 )
 
 loader = unittest.TestLoader()

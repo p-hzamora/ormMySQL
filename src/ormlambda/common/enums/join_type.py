@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class JoinType(Enum):
     RIGHT_INCLUSIVE = "RIGHT JOIN"
     LEFT_INCLUSIVE = "LEFT JOIN"

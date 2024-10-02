@@ -49,7 +49,7 @@ MySQL 8.0 does not support year in two-digit format.
 
 from decimal import Decimal
 import datetime
-from typing import Any,Literal
+from typing import Any, Literal
 import numpy as np
 
 from .column import Column
@@ -61,29 +61,14 @@ NUMERIC_UNSIGNED = Literal["BIT(size)", "TINYINT(size)", "BOOL", "BOOLEAN", "SMA
 DATE = Literal["DATE", "DATETIME(fsp)", "TIMESTAMP(fsp)", "TIME(fsp)", "YEAR"]
 
 
-
-
-
-
 # FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
 @staticmethod
 def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
     # TODOL: must be found a better way to convert python data type into SQL clauses
     # float -> DECIMAL(5,2) is an error
-    dicc: dict[Any, str] = {
-        int: "INTEGER",
-        float: "FLOAT(5,2)",
-        Decimal: "FLOAT",
-        datetime.datetime: "DATETIME",
-        datetime.date: "DATE",
-        bytes: "BLOB",
-        str: "VARCHAR(255)",
-        np.uint64: "BIGINT UNSIGNED"
-    }
+    dicc: dict[Any, str] = {int: "INTEGER", float: "FLOAT(5,2)", Decimal: "FLOAT", datetime.datetime: "DATETIME", datetime.date: "DATE", bytes: "BLOB", str: "VARCHAR(255)", np.uint64: "BIGINT UNSIGNED"}
 
     return dicc[dtype]
-
-
 
 
 # FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
