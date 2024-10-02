@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional, override
+from typing import Any, Optional, Type, override
 
 from ..interfaces.INonQueryCommand import INonQueryCommand
 
@@ -7,7 +7,7 @@ from ..interfaces import IRepositoryBase
 from ...utils import Table
 
 
-class NonQueryBase[T: Table, TRepo: IRepositoryBase](INonQueryCommand):
+class NonQueryBase[T: Type[Table], TRepo: IRepositoryBase](INonQueryCommand):
     __slots__: tuple[str, ...] = ("_model", "_repository", "_values", "_query")
 
     def __init__(self, model: T, repository: TRepo) -> None:
