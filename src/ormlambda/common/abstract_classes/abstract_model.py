@@ -17,6 +17,7 @@ from ...components.select import TableColumn
 from ...components.insert import InsertQueryBase
 from ...components.where.abstract_where import AbstractWhere
 
+    from ormlambda.databases.my_sql.clauses.count import CountQuery
 
 class JoinType(Enum):
     RIGHT_INCLUSIVE = "RIGHT JOIN"
@@ -86,7 +87,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
     @property
     @abstractmethod
-    def COUNT(self) -> Type[IQuery]: ...
+    def COUNT(self) -> Type[CountQuery]: ...
 
     @override
     def create_table(self) -> None:
@@ -157,7 +158,9 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
     @override
     def count(self) -> int:
-        query = self.COUNT(self._model, self._repository).query
+        count_select: IQuery = self.COUNT(self._model)
+        self._query_list["select"].append(count_select)
+        query = self.build()
         return self.repository.read_sql(query)[0][0]
 
     @override

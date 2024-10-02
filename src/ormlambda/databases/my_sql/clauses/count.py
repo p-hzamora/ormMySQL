@@ -1,24 +1,38 @@
-from typing import Type, override
+from typing import Callable, Type, override
 
-from ormlambda.common.abstract_classes.non_query_base import NonQueryBase
-from ormlambda.common.interfaces.IRepositoryBase import IRepositoryBase
 from ormlambda.utils.table_constructor import Table
-from mysql.connector import MySQLConnection
+
+from ormlambda.common.enums.join_type import JoinType
+from ormlambda.databases.my_sql.clauses.joins import JoinSelector
+from ormlambda.databases.my_sql.clauses.select import SelectQuery
+from ormlambda.utils.foreign_key import ForeignKey
 
 
-class CountQuery[T:Type[Table]](NonQueryBase[T, IRepositoryBase[MySQLConnection]]):
+class CountQuery[T: Type[Table]](SelectQuery[T]):
     CLAUSE: str = "COUNT"
 
-    def __init__(self, model: T, repository: IRepositoryBase[MySQLConnection]) -> None:
-        super().__init__(model, repository)
+    def __init__(
+        self,
+        tables: T | tuple[T] = (),
+        select_lambda: Callable[[T], None] | None = lambda: None,
+        *,
+        by: JoinType = JoinType.INNER_JOIN,
+    ) -> None:
+        super().__init__(tables, select_lambda, by=by)
 
     @override
     @property
     def query(self) -> str:
-        return f"SELECT {self.CLAUSE}(*) FROM {self._model.__table_name__}"
+        query: str = f"{self.SELECT} {self.CLAUSE}(*) FROM {self._first_table.__table_name__}"
 
-    @override
-    def execute(self) -> int:
-        if not self.query:
-            raise ValueError
-        return self._repository.read_sql(self.query)
+        involved_tables = self.get_involved_tables()
+        if not involved_tables:
+            return query
+
+        sub_query: str = ""
+        for l_tbl, r_tbl in involved_tables:
+            join = JoinSelector(l_tbl, r_tbl, by=self._by, where=ForeignKey.MAPPED[l_tbl.__table_name__].referenced_tables[r_tbl.__table_name__].relationship)
+            sub_query += f" {join.query}"
+
+        query += sub_query
+        return query
