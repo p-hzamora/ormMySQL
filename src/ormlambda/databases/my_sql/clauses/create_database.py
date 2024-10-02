@@ -18,12 +18,19 @@ class CreateDatabase:
 
     @override
     def execute(self, name: str, if_exists: TypeExists = "fail") -> None:
-        with self._repository.connection.cursor() as cursor:
-            try:
-                cursor.execute(f"{self.CLAUSE} {name} DEFAULT CHARACTER SET 'utf8'")
-            except Error as err:
-                if err.errno == errorcode.ER_DB_CREATE_EXISTS and if_exists != "fail":
-                    cursor.execute(f"USE {name};")
-                else:
-                    raise err
+        if self._repository.database_exists(name):
+            if if_exists == "replace":
+                self._repository.drop_database(name)
+            elif if_exists == "fail":
+                raise Error(msg=f"Database '{name}' already exists", errno=errorcode.ER_DB_CREATE_EXISTS)
+            elif if_exists == "append":
+                counter: int = 0
+                char: str = ""
+                while self._repository.database_exists(name + char):
+                    counter += 1
+                    char = f"_{counter}"
+                name += char
+
+        query = f"{self.CLAUSE} {name} DEFAULT CHARACTER SET 'utf8'"
+        self._repository.execute(query)
         return None
