@@ -17,6 +17,7 @@ from test_queries import (
     test_select,
     test_table,
     test_where_condition,
+    test_count
 )
 
 loader = unittest.TestLoader()
@@ -39,6 +40,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_select),
         *loader.loadTestsFromModule(test_table),
         *loader.loadTestsFromModule(test_where_condition),
+        *loader.loadTestsFromModule(test_count),
     )
 )
 
