@@ -1,3 +1,7 @@
+![PyPI version](https://img.shields.io/pypi/v/ormlambda.svg)
+![downloads](https://img.shields.io/pypi/dm/ormlambda?label=downloads)
+![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
+
 # ormMySQL
 This ORM is designed to connect with a MySQL server, facilitating the management of various database queries. Built with flexibility and efficiency in mind, this ORM empowers developers to interact with the database using lambda functions, allowing for concise and expressive query construction. 
 
