@@ -38,6 +38,8 @@ class IStatements[T: Table](ABC):
     @abstractmethod
     def insert(self, values: T | list[T]) -> None: ...
 
+    # endregion
+
     # region upsert
     @overload
     def upsert(self, values: T) -> None:
