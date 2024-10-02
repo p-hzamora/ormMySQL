@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Callable, Iterable, Optional, Literal, Type, overload
 from enum import Enum
 from abc import abstractmethod, ABC
@@ -73,13 +74,15 @@ class IStatements[T: Table](ABC):
 
     # region limit
     @abstractmethod
-    def limit(self, number: int) -> "IStatements[T]": ...
+    def limit(self, number: int) -> IStatements[T]: ...
 
     # endregion
 
     # region offset
     @abstractmethod
-    def offset(self, number: int) -> "IStatements[T]": ...
+    def offset(self, number: int) -> IStatements[T]: ...
+
+    # endregion
 
     # endregion
 
@@ -99,13 +102,13 @@ class IStatements[T: Table](ABC):
 
     # region join
     @abstractmethod
-    def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements[T]": ...
+    def join(self, table_left: Table, table_right: Table, *, by: str) -> IStatements[T]: ...
 
     # endregion
 
     # region where
     @overload
-    def where(self, lambda_: Callable[[T], bool]) -> "IStatements[T]":
+    def where(self, lambda_: Callable[[T], bool]) -> IStatements[T]:
         """
         This method creates where clause by passing the lambda's condition
 
@@ -117,7 +120,7 @@ class IStatements[T: Table](ABC):
         ...
 
     @overload
-    def where(self, lambda_: Callable[[T], Iterable]) -> "IStatements[T]":
+    def where(self, lambda_: Callable[[T], Iterable]) -> IStatements[T]:
         """
         This method creates where clause by passing the Iterable in lambda function
         EXAMPLE
@@ -128,7 +131,7 @@ class IStatements[T: Table](ABC):
         ...
 
     @overload
-    def where(self, lambda_: Callable[[T], bool], **kwargs) -> "IStatements[T]":
+    def where(self, lambda_: Callable[[T], bool], **kwargs) -> IStatements[T]:
         """
         PARAM
         -
@@ -145,17 +148,17 @@ class IStatements[T: Table](ABC):
         ...
 
     @abstractmethod
-    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> "IStatements[T]": ...
+    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> IStatements[T]: ...
 
     # endregion
 
     # region order
     @overload
-    def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> "IStatements[T]": ...
+    def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> IStatements[T]: ...
     @overload
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements[T]": ...
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> IStatements[T]: ...
     @abstractmethod
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> "IStatements[T]": ...
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> IStatements[T]: ...
 
     # endregion
 
