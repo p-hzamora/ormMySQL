@@ -2,7 +2,7 @@ from typing import Literal, override
 from mysql.connector import errorcode, errors
 from mysql.connector import MySQLConnection
 
-from ....common.interfaces import IRepositoryBase
+from ormlambda import IRepositoryBase
 
 TypeExists = Literal["fail", "replace", "append"]
 

@@ -1,6 +1,6 @@
 from typing import override
 
-from ....common.interfaces.IQueryCommand import IQuery
+from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
 class LimitQuery(IQuery):

@@ -1,9 +1,14 @@
+from __future__ import annotations
 from abc import abstractmethod
-from .IUpsert import IUpsert
-from ...common.interfaces import IRepositoryBase
-from ...common.abstract_classes import NonQueryBase
+from typing import TYPE_CHECKING
 
-from ...utils import Table
+if TYPE_CHECKING:
+    from ormlambda import IRepositoryBase
+    from ormlambda import Table
+
+from ormlambda.common.abstract_classes import NonQueryBase
+from .IUpsert import IUpsert
+
 
 
 class UpsertQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpsert[T]):

@@ -1,10 +1,13 @@
-from typing import override, Type
+from __future__ import annotations
+from typing import override, Type, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from ormlambda import Table
+    from ormlambda.components.select import ISelect
 
-from ...common.abstract_classes import AbstractSQLStatements
-from ...utils import Table
-from ...common.interfaces import IQuery, IRepositoryBase
-from ...components.select import ISelect
+from ormlambda.common.abstract_classes import AbstractSQLStatements
+
+from ormlambda.common.interfaces import IQuery, IRepositoryBase
 
 from .clauses import DeleteQuery
 from .clauses import InsertQuery

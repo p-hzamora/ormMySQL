@@ -1,10 +1,12 @@
+from __future__ import annotations
 from abc import abstractmethod
-from typing import Any, Optional, Type, override
+from typing import Any, Optional, Type, override, TYPE_CHECKING
 
-from ..interfaces.INonQueryCommand import INonQueryCommand
+from ormlambda.common.interfaces.INonQueryCommand import INonQueryCommand
 
-from ..interfaces import IRepositoryBase
-from ...utils import Table
+if TYPE_CHECKING:
+    from ormlambda import IRepositoryBase
+    from ormlambda import Table
 
 
 class NonQueryBase[T: Type[Table], TRepo: IRepositoryBase](INonQueryCommand):

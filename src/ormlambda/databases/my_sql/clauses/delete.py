@@ -1,8 +1,11 @@
-from typing import Any, override, Iterable
+from typing import Any, override, Iterable, TYPE_CHECKING
 
-from ....utils import Table, Column
-from ....common.interfaces import IRepositoryBase
-from ....components.delete import DeleteQueryBase
+if TYPE_CHECKING:
+    from ormlambda import Column
+    
+from ormlambda import Table
+from ormlambda import IRepositoryBase
+from ormlambda.components.delete import DeleteQueryBase
 from mysql.connector import MySQLConnection
 
 

@@ -5,7 +5,7 @@ from ormlambda import (
 )
 
 from datetime import datetime
-from ormlambda.common.interfaces import IRepositoryBase
+from ormlambda import IRepositoryBase
 
 
 class Country(Table):

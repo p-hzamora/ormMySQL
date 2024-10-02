@@ -4,13 +4,13 @@ from pathlib import Path
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda import (
+    IRepositoryBase,
     Column,
     Table,
     BaseModel,
 )
 
 from datetime import datetime
-from ormlambda.common.interfaces import IRepositoryBase
 
 
 class Actor(Table):

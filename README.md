@@ -6,7 +6,7 @@ This ORM is designed to connect with a MySQL server, facilitating the management
 ## Initialize MySQLRepository
 ```python
 from decouple import config
-from ormlambda import MySQLRepository
+from ormlambda.databases.my_sql import MySQLRepository
 
 USERNAME = config("USERNAME")
 PASSWORD = config("PASSWORD")

@@ -6,7 +6,8 @@ from typing import Optional
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from ormlambda import Column  # noqa: E402
-from ormlambda.utils.table_constructor import Table, TableMeta  # noqa: E402
+from ormlambda import Table  # noqa: E402
+from ormlambda.utils.table_constructor import TableMeta  # noqa: E402
 
 
 class Person(Table):

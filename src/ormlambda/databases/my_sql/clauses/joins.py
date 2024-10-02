@@ -2,9 +2,9 @@ from __future__ import annotations
 from typing import override, Callable, overload, Optional, TYPE_CHECKING
 
 
-from ....common.interfaces.IQueryCommand import IQuery
-from ....utils.lambda_disassembler import Disassembler
-from ....common.enums import JoinType
+from ormlambda.common.interfaces.IQueryCommand import IQuery
+from ormlambda import Disassembler
+from ormlambda import JoinType
 
 # TODOL [x]: Try to import Table module without circular import Error
 if TYPE_CHECKING:

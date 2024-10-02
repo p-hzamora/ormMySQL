@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from ...common.interfaces import IQuery
+from ormlambda.common.interfaces import IQuery
 from .table_column import TableColumn
 
 

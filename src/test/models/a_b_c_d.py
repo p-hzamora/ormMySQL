@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
-from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from ormlambda import IRepositoryBase  # noqa: E402
 from ormlambda import BaseModel  # noqa: E402
 from ormlambda import Table, Column, ForeignKey  # noqa: E402
 

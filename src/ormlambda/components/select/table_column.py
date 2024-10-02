@@ -1,5 +1,9 @@
+from __future__ import annotations
 from typing import Any, Iterator
-from ...utils import Table
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ormlambda import Table
 
 
 class TableColumn:

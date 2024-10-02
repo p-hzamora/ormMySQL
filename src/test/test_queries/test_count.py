@@ -7,7 +7,8 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from config import config_dict
-from ormlambda import MySQLRepository, Table, BaseModel, IRepositoryBase, Column
+from ormlambda import Table, BaseModel, IRepositoryBase, Column
+from ormlambda.databases.my_sql import MySQLRepository
 
 DATABASE_NAME = "__ddbb_test__"
 
@@ -72,7 +73,7 @@ class CountTest(unittest.TestCase):
     def test_clean_query_list(self):
         n = self.model.where(lambda x: x.a == 10).count()
 
-        self.assertEqual(n,0)
+        self.assertEqual(n, 0)
         self.assertEqual(self.model._query_list, {})
 
 

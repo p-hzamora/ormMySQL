@@ -6,7 +6,7 @@ import math
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from ormlambda import IRepositoryBase  # noqa: E402
 from ormlambda.common.enums import ConditionType  # noqa: E402
 from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from models.staff import StaffModel, Staff  # noqa: E402

@@ -5,20 +5,20 @@ from collections import defaultdict
 from abc import abstractmethod
 import inspect
 
-from ...utils import ForeignKey, Table
+from ormlambda.utils import ForeignKey, Table
 
-from ..interfaces import IQuery, IRepositoryBase, IStatements_two_generic
+from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
 
 if TYPE_CHECKING:
-    from ..interfaces.IStatements import OrderType
+    from ormlambda.common.interfaces.IStatements import OrderType
 
-    from ...components.update import UpdateQueryBase
-    from ...components.select import ISelect
-    from ...components.delete import DeleteQueryBase
-    from ...components.upsert import UpsertQueryBase
-    from ...components.select import TableColumn
-    from ...components.insert import InsertQueryBase
-    from ...components.where.abstract_where import AbstractWhere
+    from ormlambda.components.update import UpdateQueryBase
+    from ormlambda.components.select import ISelect
+    from ormlambda.components.delete import DeleteQueryBase
+    from ormlambda.components.upsert import UpsertQueryBase
+    from ormlambda.components.select import TableColumn
+    from ormlambda.components.insert import InsertQueryBase
+    from ormlambda.components.where.abstract_where import AbstractWhere
 
     from ormlambda.databases.my_sql.clauses.select import SelectQuery
     from ormlambda.databases.my_sql.clauses.count import CountQuery

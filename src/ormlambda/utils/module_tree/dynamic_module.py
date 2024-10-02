@@ -6,9 +6,9 @@ import importlib.util
 import inspect
 import re
 
-from ...utils.foreign_key import ForeignKey
+from ormlambda import ForeignKey
 
-from ..table_constructor import Table
+from ormlambda import Table
 from .dfs_traversal import DFSTraversal
 
 

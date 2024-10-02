@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import Any, Callable, Iterable, Optional, Literal, Type, overload
+from typing import Any, Callable, Iterable, Optional, Literal, Type, overload, TYPE_CHECKING
 from enum import Enum
 from abc import abstractmethod, ABC
 
 from .IRepositoryBase import IRepositoryBase
-from ..enums import JoinType
-from ...utils import Table
+from ormlambda.common.enums import JoinType
+
+if TYPE_CHECKING:
+    from ormlambda import Table
 
 OrderType = Literal["ASC", "DESC"]
 

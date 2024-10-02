@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Any, Callable, NamedTuple, Self, Optional
 from dis import Instruction, Bytecode
-from ...common.enums.condition_types import ConditionType
+from ormlambda.common.enums.condition_types import ConditionType
 from .dis_types import OpName
 from .nested_element import NestedElement
 

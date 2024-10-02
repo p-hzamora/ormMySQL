@@ -7,7 +7,7 @@ import unittest
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
+from ormlambda import IRepositoryBase  # noqa: E402
 from models.address import AddressModel  # noqa: E402
 from models import Address, City, Country  # noqa: E402
 

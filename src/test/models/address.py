@@ -6,7 +6,7 @@ from ormlambda import (
     BaseModel,
     ForeignKey,
 )
-from ormlambda.common.interfaces import IRepositoryBase
+from ormlambda import IRepositoryBase
 from .city import City
 
 

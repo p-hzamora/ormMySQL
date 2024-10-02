@@ -1,12 +1,15 @@
+from __future__ import annotations
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
+
+from ormlambda.components.where import AbstractWhere
+from ormlambda.common.abstract_classes import NonQueryBase
+
+if TYPE_CHECKING:
+    from ormlambda import IRepositoryBase
+    from ormlambda import Table
 
 from .IUpdate import IUpdate
-from ..where import AbstractWhere
-from ...common.interfaces import IRepositoryBase
-from ...common.abstract_classes import NonQueryBase
-from ...utils import Table
-
 
 class UpdateQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpdate):
     def __init__(self, model: T, repository: TRepo, where: AbstractWhere = list[AbstractWhere]) -> None:

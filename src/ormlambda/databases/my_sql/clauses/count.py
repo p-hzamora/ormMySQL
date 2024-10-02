@@ -1,11 +1,8 @@
 from typing import Callable, Type, override
 
-from ....utils.table_constructor import Table
-
-from ....common.enums.join_type import JoinType
-from ....databases.my_sql.clauses.joins import JoinSelector
-from ....databases.my_sql.clauses.select import SelectQuery
-from ....utils.foreign_key import ForeignKey
+from ormlambda import Table, JoinType, ForeignKey
+from ormlambda.databases.my_sql.clauses.joins import JoinSelector
+from ormlambda.databases.my_sql.clauses.select import SelectQuery
 
 
 class CountQuery[T: Type[Table]](SelectQuery[T]):

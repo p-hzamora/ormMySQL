@@ -1,4 +1,3 @@
-# region imports
 from typing import Type
 
 
@@ -6,7 +5,6 @@ from .utils import Table
 from .common.interfaces import IRepositoryBase, IStatements_two_generic
 from .common.abstract_classes import AbstractSQLStatements
 from .databases.my_sql import MySQLStatements, MySQLRepository
-
 
 
 # endregion

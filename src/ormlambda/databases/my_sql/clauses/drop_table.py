@@ -1,6 +1,6 @@
 from typing import Literal, override
 
-from ....common.interfaces import IRepositoryBase
+from ormlambda import IRepositoryBase
 
 from mysql.connector import MySQLConnection
 

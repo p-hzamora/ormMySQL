@@ -7,8 +7,8 @@ from typing import Any, Optional, Type, override
 from mysql.connector import MySQLConnection, Error  # noqa: F401
 
 # Custom libraries
-from ...common.interfaces import IRepositoryBase
-from ...utils.module_tree.dynamic_module import ModuleTree
+from ormlambda import IRepositoryBase
+from ormlambda.utils.module_tree.dynamic_module import ModuleTree
 
 from .clauses import CreateDatabase, TypeExists
 from .clauses import DropDatabase
@@ -206,9 +206,9 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return self._data_config.update(value)
 
     @property
-    def database(self)->Optional[str]:
-        return self._data_config.get("database",None)
-    
+    def database(self) -> Optional[str]:
+        return self._data_config.get("database", None)
+
     @database.setter
-    def database(self,value:str)->None:
+    def database(self, value: str) -> None:
         self._data_config["database"] = value

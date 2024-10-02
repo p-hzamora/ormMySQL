@@ -1,9 +1,10 @@
 from typing import Any, override, Iterable
 from mysql.connector import MySQLConnection
 
-from ....utils import Table, Column
-from ....components.insert import InsertQueryBase
-from ....common.interfaces import IRepositoryBase
+from ormlambda import Table
+from ormlambda import Column
+from ormlambda.components.insert import InsertQueryBase
+from ormlambda import IRepositoryBase
 
 
 class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]):

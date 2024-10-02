@@ -1,9 +1,9 @@
 from typing import Type, override, Any
 from mysql.connector import MySQLConnection
 
-from ....components.update import UpdateQueryBase
-from ....utils import Table, Column
-from ....common.interfaces import IRepositoryBase
+from ormlambda.components.update import UpdateQueryBase
+from ormlambda import Table, Column
+from ormlambda import IRepositoryBase
 from .where_condition import WhereCondition
 
 

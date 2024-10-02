@@ -1,10 +1,10 @@
 from typing import Callable, Optional, Type, override
 import inspect
 
-from ....utils.lambda_disassembler import TreeInstruction, TupleInstruction, NestedElement
-from ....components.select import ISelect, TableColumn
-from ....utils import Table, ForeignKey
-from ....utils.table_constructor import TableMeta
+from ormlambda.utils.lambda_disassembler import TreeInstruction, TupleInstruction, NestedElement
+from ormlambda.components.select import ISelect, TableColumn
+from ormlambda import Table, ForeignKey
+from ormlambda.utils.table_constructor import TableMeta
 
 from . import JoinSelector, JoinType
 

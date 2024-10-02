@@ -1,7 +1,11 @@
+from __future__ import annotations
 from abc import abstractmethod
-from ...utils import Table
+from typing import TYPE_CHECKING
 
-from ...common.interfaces import IQuery
+if TYPE_CHECKING:
+    from ormlambda import Table
+
+from ormlambda.common.interfaces import IQuery
 
 
 class AbstractWhere(IQuery):
