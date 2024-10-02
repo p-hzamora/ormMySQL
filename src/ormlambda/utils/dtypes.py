@@ -66,8 +66,21 @@ DATE = Literal["DATE", "DATETIME(fsp)", "TIMESTAMP(fsp)", "TIME(fsp)", "YEAR"]
 def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
     # TODOL: must be found a better way to convert python data type into SQL clauses
     # float -> DECIMAL(5,2) is an error
-    dicc: dict[Any, str] = {int: "INTEGER", float: "FLOAT(5,2)", Decimal: "FLOAT", datetime.datetime: "DATETIME", datetime.date: "DATE", bytes: "BLOB", str: "VARCHAR(255)", np.uint64: "BIGINT UNSIGNED"}
+    dicc: dict[Any, str] = {
+        int: "INTEGER",
+        float: "FLOAT(5,2)",
+        Decimal: "FLOAT",
+        datetime.datetime: "DATETIME",
+        datetime.date: "DATE",
+        bytes: "BLOB",
+        bytearray: "BLOB",
+        str: "VARCHAR(255)",
+        np.uint64: "BIGINT UNSIGNED",
+    }
 
+    res = dicc.get(dtype, None)
+    if res is None:
+        raise ValueError(f"datatype '{dtype}' is not expected.")
     return dicc[dtype]
 
 
