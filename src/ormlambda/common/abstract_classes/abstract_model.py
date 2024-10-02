@@ -1,4 +1,5 @@
-from typing import Any, Callable, Optional, Type, override, Iterable, Literal
+from __future__ import annotations
+from typing import Any, Callable, Optional, Type, override, Iterable, Literal, TYPE_CHECKING
 from enum import Enum
 from collections import defaultdict
 from abc import abstractmethod
@@ -7,17 +8,21 @@ import inspect
 from ...utils import ForeignKey, Table
 
 from ..interfaces import IQuery, IRepositoryBase, IStatements_two_generic
-from ..interfaces.IStatements import OrderType
 
-from ...components.update import UpdateQueryBase
-from ...components.select import ISelect
-from ...components.delete import DeleteQueryBase
-from ...components.upsert import UpsertQueryBase
-from ...components.select import TableColumn
-from ...components.insert import InsertQueryBase
-from ...components.where.abstract_where import AbstractWhere
+if TYPE_CHECKING:
+    from ..interfaces.IStatements import OrderType
 
+    from ...components.update import UpdateQueryBase
+    from ...components.select import ISelect
+    from ...components.delete import DeleteQueryBase
+    from ...components.upsert import UpsertQueryBase
+    from ...components.select import TableColumn
+    from ...components.insert import InsertQueryBase
+    from ...components.where.abstract_where import AbstractWhere
+
+    from ormlambda.databases.my_sql.clauses.select import SelectQuery
     from ormlambda.databases.my_sql.clauses.count import CountQuery
+
 
 class JoinType(Enum):
     RIGHT_INCLUSIVE = "RIGHT JOIN"
@@ -83,7 +88,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     def ORDER_QUERY(self) -> Type[IQuery]: ...
     @property
     @abstractmethod
-    def SELECT_QUERY(self) -> Type[ISelect]: ...
+    def SELECT_QUERY(self) -> Type[SelectQuery]: ...
 
     @property
     @abstractmethod
