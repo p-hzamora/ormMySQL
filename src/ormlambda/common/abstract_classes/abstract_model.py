@@ -84,6 +84,10 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     @abstractmethod
     def SELECT_QUERY(self) -> Type[ISelect]: ...
 
+    @property
+    @abstractmethod
+    def COUNT(self) -> Type[IQuery]: ...
+
     @override
     def create_table(self) -> None:
         if not self._repository.table_exists(self._model.__table_name__):
@@ -150,6 +154,11 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         offset = self.OFFSET_QUERY(number)
         self._query_list["offset"].append(offset)
         return self
+
+    @override
+    def count(self) -> int:
+        query = self.COUNT(self._model, self._repository).query
+        return self.repository.read_sql(query)[0][0]
 
     @override
     def join(self, table_left: Table, table_right: Table, *, by: str) -> "IStatements_two_generic[T,TRepo]":

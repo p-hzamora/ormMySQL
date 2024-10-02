@@ -16,6 +16,7 @@ from .clauses import SelectQuery
 from .clauses import UpsertQuery
 from .clauses import UpdateQuery
 from .clauses import WhereCondition
+from .clauses import CountQuery
 
 from mysql.connector import MySQLConnection
 
@@ -59,6 +60,11 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     @override
     def OFFSET_QUERY(self) -> Type[IQuery]:
         return OffsetQuery
+
+    @property
+    @override
+    def COUNT(self) -> int:
+        return CountQuery
 
     @property
     @override

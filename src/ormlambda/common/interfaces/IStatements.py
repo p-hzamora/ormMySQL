@@ -84,6 +84,10 @@ class IStatements[T: Table](ABC):
 
     # endregion
 
+    # region count
+    @abstractmethod
+    def count(self) -> int: ...
+
     # endregion
 
     # region delete
