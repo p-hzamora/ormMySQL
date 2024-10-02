@@ -1,6 +1,6 @@
 # Standard libraries
 from pathlib import Path
-from typing import Any, Type, override
+from typing import Any, Optional, Type, override
 
 
 # from mysql.connector.pooling import MySQLConnectionPool
@@ -204,3 +204,11 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @override
     def set_config(self, value: dict[str, Any]) -> dict[str, Any]:
         return self._data_config.update(value)
+
+    @property
+    def database(self)->Optional[str]:
+        return self._data_config.get("database",None)
+    
+    @database.setter
+    def database(self,value:str)->None:
+        self._data_config["database"] = value
