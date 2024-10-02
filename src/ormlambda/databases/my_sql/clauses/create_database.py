@@ -1,5 +1,5 @@
 from typing import Literal, override
-from mysql.connector import Error, errorcode
+from mysql.connector import errorcode, errors
 from mysql.connector import MySQLConnection
 
 from ....common.interfaces import IRepositoryBase
@@ -22,7 +22,7 @@ class CreateDatabase:
             if if_exists == "replace":
                 self._repository.drop_database(name)
             elif if_exists == "fail":
-                raise Error(msg=f"Database '{name}' already exists", errno=errorcode.ER_DB_CREATE_EXISTS)
+                raise errors.DatabaseError(msg=f"Database '{name}' already exists", errno=errorcode.ER_DB_CREATE_EXISTS)
             elif if_exists == "append":
                 counter: int = 0
                 char: str = ""
