@@ -3,14 +3,14 @@ line-length = 320
 
 [tool.poetry]
 name = "ormlambda"
-version = "1.2.1"
+version = "1.2.2"
 description = "ORM designed to interact with the database (currently with MySQL) using lambda functions and nested functions"
 authors = ["p-hzamora <p.hzamora@icloud.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-mysql-connector-python= "^2.2.9"
+mysql-connector-python= "^9.0.0"
 fluent-validation = "^3.1.0"
 
 [tool.poetry.group.test.dependencies]
