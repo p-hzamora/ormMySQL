@@ -229,7 +229,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
             response = self.select(selector=selector, flavour=flavour, by=by)
 
         if flavour:
-            return response[0]
+            return response[0] if response else None
 
         # response var could be return more than one element when we work with models an we
         # select columns from different tables using a join query
