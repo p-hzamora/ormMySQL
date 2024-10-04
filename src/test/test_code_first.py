@@ -22,7 +22,7 @@ class Test_my_sql(unittest.TestCase):
         if self.ddbb.database_exists(TDDBB_name):
             self.ddbb.drop_database(TDDBB_name)
         self.ddbb.create_database(TDDBB_name, "replace")
-        self.ddbb.set_config({"database": TDDBB_name})
+        self.ddbb.database = TDDBB_name
 
     def tearDown(self) -> None:
         self.ddbb.drop_database(TDDBB_name)

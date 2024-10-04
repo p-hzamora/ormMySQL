@@ -14,7 +14,6 @@ from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda.databases.my_sql import MySQLStatements  # noqa: E402
 
 db = MySQLRepository(**config_dict)
-db.set_config({"database": "sakila"})
 
 
 class TestAbstractSQLStatements(unittest.TestCase):
