@@ -82,6 +82,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             try:
                 foo = func(self, *args, **kwargs)
             finally:
+                self.connection.rollback()
                 self.close_connection()
             return foo
 
