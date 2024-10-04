@@ -77,15 +77,14 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def get_connection(func: Callable[..., Any]):
         @functools.wraps(func)
         def wrapper(self: IRepositoryBase[MySQLConnection], *args, **kwargs):
-            if not self.is_connected():
-                self.connect()
-
-            foo = func(self, *args, **kwargs)
-            self.close_connection()
+            self.connect()
+            try:
+                foo = func(self, *args, **kwargs)
+            finally:
+                self.close_connection()
             return foo
 
         return wrapper
-
 
     def __init__(self, **kwargs: Any) -> None:
         self._data_config: dict[str, Any] = kwargs
