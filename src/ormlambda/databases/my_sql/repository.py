@@ -1,7 +1,7 @@
-# Standard libraries
+from __future__ import annotations
 from pathlib import Path
-from typing import Any, Optional, Type, override
-
+from typing import Any, Optional, Type, override, Callable
+import functools
 
 # from mysql.connector.pooling import MySQLConnectionPool
 from mysql.connector import MySQLConnection, Error  # noqa: F401
@@ -74,6 +74,19 @@ class Response[TFlavour, *Ts]:
 
 
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
+    def check_connection(func: Callable[..., Any]):
+        @functools.wraps(func)
+        def wrapper(self: IRepositoryBase[MySQLConnection], *args, **kwargs):
+            if not self.is_connected():
+                self.connect()
+
+            foo = func(self, *args, **kwargs)
+            self.close_connection()
+            return foo
+
+        return wrapper
+
+
     def __init__(self, **kwargs: Any) -> None:
         self._data_config: dict[str, Any] = kwargs
         self._connection: MySQLConnection = MySQLConnection()
@@ -97,7 +110,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """
         Return tuple of tuples by default.
@@ -115,7 +128,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     # FIXME [ ]: this method does not comply with the implemented interface
-    @IRepositoryBase.check_connection
+    @check_connection
     def create_tables_code_first(self, path: str | Path) -> None:
         if not isinstance(path, Path | str):
             raise ValueError
@@ -137,7 +150,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def executemany_with_values(self, query: str, values) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
@@ -145,7 +158,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def execute_with_values(self, query: str, values) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
@@ -153,7 +166,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def execute(self, query: str) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
@@ -161,12 +174,12 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def drop_table(self, name: str) -> None:
         return DropTable(self).execute(name)
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def database_exists(self, name: str) -> bool:
         query = "SHOW DATABASES LIKE %s;"
         with self._connection.cursor(buffered=True) as cursor:
@@ -175,12 +188,12 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return len(res) > 0
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def drop_database(self, name: str) -> None:
         return DropDatabase(self).execute(name)
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def table_exists(self, name: str) -> bool:
         if not self._connection.database:
             raise Exception("No database selected")
@@ -192,7 +205,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return len(res) > 0
 
     @override
-    @IRepositoryBase.check_connection
+    @check_connection
     def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
         return CreateDatabase(self).execute(name, if_exists)
 
