@@ -11,10 +11,13 @@ if TYPE_CHECKING:
 
 OrderType = Literal["ASC", "DESC"]
 
+# TODOH: This var is duplicated from 'src\ormlambda\databases\my_sql\clauses\create_database.py'
+TypeExists = Literal["fail", "replace", "append"]
+
 
 class IStatements[T: Table](ABC):
     @abstractmethod
-    def create_table(self) -> None: ...
+    def create_table(self, if_exists: TypeExists) -> None: ...
 
     @abstractmethod
     def table_exists(self) -> bool: ...

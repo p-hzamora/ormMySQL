@@ -7,7 +7,8 @@ if TYPE_CHECKING:
     from ormlambda.components.where.abstract_where import AbstractWhere
     from ormlambda.common.interfaces.IStatements import OrderType
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
-    
+    from src.ormlambda.common.interfaces.IRepositoryBase import TypeExists
+
     from ormlambda.databases.my_sql.clauses.select import SelectQuery
     from ormlambda.databases.my_sql.clauses.count import CountQuery
 
@@ -25,15 +26,13 @@ from .clauses import UpdateQuery
 from .clauses import WhereCondition
 from .clauses import CountQuery
 
-from mysql.connector import MySQLConnection
-
+from mysql.connector import MySQLConnection, errors, errorcode
 
 
 import inspect
 
 from ormlambda.utils import ForeignKey, Table
 from ormlambda.common.enums import JoinType
-
 
 
 class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
@@ -46,9 +45,26 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return self._repository
 
     @override
-    def create_table(self) -> None:
-        if not self._repository.table_exists(self._model.__table_name__):
-            self._repository.execute(self._model.create_table_query())
+    def create_table(self, if_exists: TypeExists = "fail") -> None:
+        name: str = self._model.__table_name__
+        if self._repository.table_exists(name):
+            if if_exists == "replace":
+                self._repository.drop_table(name)
+
+            elif if_exists == "fail":
+                raise errors.ProgrammingError(msg=f"Table '{self._model.__table_name__}' already exists", errno=errorcode.ER_TABLE_EXISTS_ERROR)
+
+            elif if_exists == "append":
+                counter: int = 0
+                char: str = ""
+                while self._repository.table_exists(name + char):
+                    counter += 1
+                    char = f"_{counter}"
+                name += char
+                self._model.__table_name__ = name
+
+        query = self._model.create_table_query()
+        self._repository.execute(query)
         return None
 
     @override
