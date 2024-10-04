@@ -85,7 +85,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return self._connection.is_connected()
 
     @override
-    def connect(self) -> IRepositoryBase[MySQLConnection]:
+    def connect(self) -> None:
         # return MySQLConnectionPool(pool_name="mypool", pool_size=5, **kwargs)
         self._connection.connect(**self._data_config)
         return None
