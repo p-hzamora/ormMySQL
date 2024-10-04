@@ -10,7 +10,7 @@ from .databases.my_sql import MySQLStatements, MySQLRepository
 # endregion
 
 
-class BaseModel[T: Table]:
+class BaseModel[T: Type[Table]]:
     """
     Class to select the correct AbstractSQLStatements class depends on the repository.
 
