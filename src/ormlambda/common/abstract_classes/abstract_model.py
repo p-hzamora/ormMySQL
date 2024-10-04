@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Type, override, Iterable, Literal, TYPE_CHECKING
 from collections import defaultdict
+import abc
 
 
 from ormlambda.utils import Table
@@ -54,6 +55,8 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
         return response_sql
 
+    @abc.abstractmethod
+    def _build(sef): ...
 
 class ClusterQuery:
     def __init__(self, select: ISelect, response_sql: tuple[dict[str, Any]]) -> None:

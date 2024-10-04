@@ -132,7 +132,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     def count(self) -> int:
         count_select: IQuery = CountQuery(self._model)
         self._query_list["select"].append(count_select)
-        query = self.build()
+        query = self._build()
         return self.repository.read_sql(query)[0][0]
 
     @override
@@ -168,7 +168,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         select: ISelect = SelectQuery(self._model, select_lambda=selector, by=by)
         self._query_list["select"].append(select)
 
-        query: str = self.build()
+        query: str = self._build()
         if flavour:
             result = self._return_flavour(query, flavour)
             if issubclass(flavour, tuple) and isinstance(selector(self._model), property):
@@ -194,7 +194,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return tuple([res[0] for res in response])
 
     @override
-    def build(self) -> str:
+    def _build(self) -> str:
         query: str = ""
 
         self.__create_necessary_inner_join()

@@ -236,7 +236,7 @@ class IStatements[T: Table](ABC):
     # endregion
 
     @abstractmethod
-    def build(self) -> str: ...
+    def _build(self) -> str: ...
 
 
 class IStatements_two_generic[T: Table, TRepo](IStatements[T]):
