@@ -123,7 +123,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
-        with self._connection.cursor(buffered=True) as cursor:
+        with self._connection._cnx.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
@@ -146,33 +146,33 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         queries_list: list[str] = module_tree.get_queries()
 
         for query in queries_list:
-            with self._connection.cursor(buffered=True) as cursor:
+            with self._connection._cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-        self._connection.commit()
+        self._connection._cnx.commit()
         return None
 
     @override
     @get_connection
     def executemany_with_values(self, query: str, values) -> None:
-        with self._connection.cursor(buffered=True) as cursor:
+        with self._connection._cnx.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
-        self._connection.commit()
+        self._connection._cnx.commit()
         return None
 
     @override
     @get_connection
     def execute_with_values(self, query: str, values) -> None:
-        with self._connection.cursor(buffered=True) as cursor:
+        with self._connection._cnx.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
-        self._connection.commit()
+        self._connection._cnx.commit()
         return None
 
     @override
     @get_connection
     def execute(self, query: str) -> None:
-        with self._connection.cursor(buffered=True) as cursor:
+        with self._connection._cnx.cursor(buffered=True) as cursor:
             cursor.execute(query)
-        self._connection.commit()
+        self._connection._cnx.commit()
         return None
 
     @override
@@ -183,7 +183,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @get_connection
     def database_exists(self, name: str) -> bool:
         query = "SHOW DATABASES LIKE %s;"
-        with self._connection.cursor(buffered=True) as cursor:
+        with self._connection._cnx.cursor(buffered=True) as cursor:
             cursor.execute(query, (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
@@ -195,11 +195,11 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @override
     @get_connection
     def table_exists(self, name: str) -> bool:
-        if not self._connection.database:
+        if not self._connection._cnx.database:
             raise Exception("No database selected")
 
         query = "SHOW TABLES LIKE %s;"
-        with self._connection.cursor(buffered=True) as cursor:
+        with self._connection._cnx.cursor(buffered=True) as cursor:
             cursor.execute(query, (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
