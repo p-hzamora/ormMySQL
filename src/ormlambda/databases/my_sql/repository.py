@@ -105,7 +105,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     @override
     def close_connection(self) -> None:
-        if self._connection.is_connected():
+        if self.is_connected():
             self._connection.close()
         return None
 
