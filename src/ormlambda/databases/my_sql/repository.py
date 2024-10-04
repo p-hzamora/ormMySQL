@@ -74,7 +74,7 @@ class Response[TFlavour, *Ts]:
 
 
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
-    def check_connection(func: Callable[..., Any]):
+    def get_connection(func: Callable[..., Any]):
         @functools.wraps(func)
         def wrapper(self: IRepositoryBase[MySQLConnection], *args, **kwargs):
             if not self.is_connected():
@@ -110,7 +110,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @check_connection
+    @get_connection
     def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """
         Return tuple of tuples by default.
@@ -128,7 +128,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
 
     # FIXME [ ]: this method does not comply with the implemented interface
-    @check_connection
+    @get_connection
     def create_tables_code_first(self, path: str | Path) -> None:
         if not isinstance(path, Path | str):
             raise ValueError
@@ -150,7 +150,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @check_connection
+    @get_connection
     def executemany_with_values(self, query: str, values) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
@@ -158,7 +158,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @check_connection
+    @get_connection
     def execute_with_values(self, query: str, values) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
@@ -166,7 +166,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @check_connection
+    @get_connection
     def execute(self, query: str) -> None:
         with self._connection.cursor(buffered=True) as cursor:
             cursor.execute(query)
@@ -179,7 +179,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return DropTable(self).execute(name)
 
     @override
-    @check_connection
+    @get_connection
     def database_exists(self, name: str) -> bool:
         query = "SHOW DATABASES LIKE %s;"
         with self._connection.cursor(buffered=True) as cursor:
@@ -193,7 +193,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return DropDatabase(self).execute(name)
 
     @override
-    @check_connection
+    @get_connection
     def table_exists(self, name: str) -> bool:
         if not self._connection.database:
             raise Exception("No database selected")
