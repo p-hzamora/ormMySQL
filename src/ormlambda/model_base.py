@@ -27,7 +27,7 @@ class BaseModel[T: Type[Table]]:
         cls: AbstractSQLStatements[T, TRepo] = cls.statements_dicc.get(type(repository), None)
 
         if not cls:
-            raise Exception(f"Repository selected does not exits '{repository}'")
+            raise Exception(f"The selected repository '{repository}' does not exist.")
 
         self = object().__new__(cls)
         cls.__init__(self, model, repository)
