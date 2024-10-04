@@ -48,11 +48,6 @@ class IRepositoryBase[T](ABC):
     @abstractmethod
     def connection(self) -> T: ...
 
-    @abstractmethod
-    def set_config(self, value: dict[str, Any]) -> dict[str, Any]:
-        """Method to update database config"""
-        ...
-
     @property
     @abstractmethod
     def database(self) -> Optional[str]: ...

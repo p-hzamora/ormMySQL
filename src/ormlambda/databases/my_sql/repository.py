@@ -212,10 +212,6 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def connection(self) -> MySQLConnection:
         return self._connection
 
-    @override
-    def set_config(self, value: dict[str, Any]) -> dict[str, Any]:
-        return self._data_config.update(value)
-
     @property
     def database(self) -> Optional[str]:
         return self._data_config.get("database", None)
