@@ -5,6 +5,7 @@ import functools
 
 # from mysql.connector.pooling import MySQLConnectionPool
 from mysql.connector import MySQLConnection, Error  # noqa: F401
+from mysql.connector.pooling import PooledMySQLConnection, MySQLConnectionPool  # noqa: F401
 
 # Custom libraries
 from ormlambda import IRepositoryBase
@@ -88,18 +89,18 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     def __init__(self, **kwargs: Any) -> None:
         self._data_config: dict[str, Any] = kwargs
-        self._connection: MySQLConnection = MySQLConnection()
-        # self._pool_connection: MySQLConnection = MySQLConnection(**kwargs)
-        pass
+        self._pool: MySQLConnectionPool = self.__create_MySQLConnectionPool()
+        self._connection: PooledMySQLConnection = None
 
+    def __create_MySQLConnectionPool(self):
+        return MySQLConnectionPool(pool_name="mypool",pool_size=10, **self._data_config)
     @override
     def is_connected(self) -> bool:
-        return self._connection.is_connected()
+        return self._connection._cnx is not None if self._connection else False
 
     @override
     def connect(self) -> None:
-        # return MySQLConnectionPool(pool_name="mypool", pool_size=5, **kwargs)
-        self._connection.connect(**self._data_config)
+        self._connection = self._pool.get_connection()
         return None
 
     @override
@@ -224,3 +225,4 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @database.setter
     def database(self, value: str) -> None:
         self._data_config["database"] = value
+        self._pool = self.__create_MySQLConnectionPool() 
