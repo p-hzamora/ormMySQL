@@ -71,45 +71,46 @@ class TestSQLStatements(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
 
-        if self.ddbb.database_exists(DDBBNAME):
-            self.ddbb.drop_database(DDBBNAME)
-        self.ddbb.create_database(DDBBNAME, "fail")
-        self.ddbb.set_config({"database": DDBBNAME})
+        self.ddbb.create_database(DDBBNAME, "replace")
+        self.ddbb.database = DDBBNAME
         self.tmodel = TestTableModel(self.ddbb)
         self.t_auto_model = TestTableAUTOModel(self.ddbb)
 
     def tearDown(self) -> None:
         self.ddbb.drop_database(DDBBNAME)
 
-    def create_test_table(self) -> None:
-        return self.ddbb.execute(TestTable.create_table_query())
-
     def create_instance_of_TestTable(self, number: int) -> list[TestTable]:
         if number <= 0:
             number = 1
         return [TestTable(*[x] * len(TestTable.__annotations__)) for x in range(1, number + 1)]
 
-    def test_database_already_exists(self):
+    def test_AAdatabase_already_exists(self):
         with self.assertRaises(errors.DatabaseError):
             self.ddbb.create_database(DDBBNAME)
 
     def test_create_table(self):
-        self.create_test_table()
+        CORRECT_RESPONSE = (TABLETEST,)
+        self.tmodel.create_table("replace")
         self.ddbb.connect()
-        cursor = self.ddbb.connection.cursor()
-        cursor.execute(f"SHOW TABLES LIKE '{TABLETEST}'")
-        table_exists = cursor.fetchone()
-        cursor.close()
-        self.assertTupleEqual(table_exists, (TABLETEST,), msg=f"Table '{TABLETEST}' should exist after creation.")
+        with self.ddbb.connection.cursor() as cursor:
+            cursor.execute(f"SHOW TABLES LIKE '{TABLETEST}'")
+            table_exists = cursor.fetchone()
+        self.ddbb.close_connection()
+
+        self.assertTupleEqual(
+            table_exists,
+            CORRECT_RESPONSE,
+            msg=f"failed 'test_create_table' due to Table '{TABLETEST}' should exist after creation.",
+        )
 
     def test_create_table_already_exists_fail(self):
-        self.create_test_table()
+        self.tmodel.create_table()
         with self.assertRaises(errors.ProgrammingError):
-            self.create_test_table()
+            self.tmodel.create_table()
 
     def test_insert(self):
         csv_data = pd.read_csv(Path(__file__).parent / "csv_table.csv").to_dict("records")
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = [TestTable(**x) for x in csv_data]
 
         VERIFICATION = instance[15]
@@ -121,7 +122,7 @@ class TestSQLStatements(unittest.TestCase):
 
     # TODOM [x]: Add a test for update method once it has been created
     def test_update_with_properties_as_keys(self):
-        self.create_test_table()
+        self.tmodel.create_table()
 
         instance = self.create_instance_of_TestTable(5)
         self.tmodel.insert(instance)
@@ -143,7 +144,7 @@ class TestSQLStatements(unittest.TestCase):
 
     def test_update_with_str_as_keys(self):
         ROW_TO_UPDATE = 3
-        self.create_test_table()
+        self.tmodel.create_table()
 
         instance = self.create_instance_of_TestTable(3)
         self.tmodel.insert(instance)
@@ -169,7 +170,7 @@ class TestSQLStatements(unittest.TestCase):
     def test_update_raising_KeyError(self):
         from models import Address
 
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = self.create_instance_of_TestTable(5)
         self.tmodel.insert(instance)
 
@@ -183,7 +184,7 @@ class TestSQLStatements(unittest.TestCase):
             )
 
     def test_upsert(self):
-        self.create_test_table()
+        self.tmodel.create_table()
 
         instance = self.create_instance_of_TestTable(0)[0]
         self.tmodel.insert(instance)
@@ -195,7 +196,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertEqual(999, select_row_0.Col10)
 
     def test_limit(self):
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = self.create_instance_of_TestTable(20)
         self.tmodel.insert(instance)
 
@@ -204,7 +205,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertEqual(limit[0], select_one)
 
     def test_offset(self):
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = self.create_instance_of_TestTable(21)
         self.tmodel.insert(instance)
 
@@ -213,7 +214,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertEqual(offset, select_row_11)
 
     def test_delete(self):
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = self.create_instance_of_TestTable(5)
         self.tmodel.insert(instance)
 
@@ -233,14 +234,14 @@ class TestSQLStatements(unittest.TestCase):
     #     self.assertEqual(join, None)
 
     def test_where(self):
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = self.create_instance_of_TestTable(3)
         self.tmodel.insert(instance)
         where_clause = self.tmodel.where(lambda x: x.Col1 == 2).select_one()
         self.assertEqual(2, where_clause.Col13)
 
     def test_order(self):
-        self.create_test_table()
+        self.tmodel.create_table()
         instance = self.create_instance_of_TestTable(3)
         self.tmodel.insert(instance)
 
@@ -257,7 +258,7 @@ class TestSQLStatementsWithAutoGenerated(unittest.TestCase):
         self.ddbb.create_database(DDBBNAME, "fail")
         self.ddbb.set_config({"database": DDBBNAME})
         self.tmodel = TestTableAUTOModel(self.ddbb)
-        self.create_test_table()
+        self.tmodel.create_table()
 
     def tearDown(self) -> None:
         self.ddbb.drop_database(DDBBNAME)
@@ -414,4 +415,4 @@ class TestSQLStatementsWithAutoGenerated(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(failfast=True)
