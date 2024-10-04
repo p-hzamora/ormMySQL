@@ -174,7 +174,6 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return None
 
     @override
-    @check_connection
     def drop_table(self, name: str) -> None:
         return DropTable(self).execute(name)
 
@@ -188,7 +187,6 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return len(res) > 0
 
     @override
-    @check_connection
     def drop_database(self, name: str) -> None:
         return DropDatabase(self).execute(name)
 
@@ -205,7 +203,6 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return len(res) > 0
 
     @override
-    @check_connection
     def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
         return CreateDatabase(self).execute(name, if_exists)
 
