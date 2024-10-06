@@ -40,11 +40,11 @@ class SelectQuery[T: Table, *Ts](ISelect):
 
         >>> # convert lambda expression into list of values
         >>> select_list = [
-        >>>     "a.pk_address",
-        >>>     "a.city",
-        >>>     "a.city.pk_city",
-        >>>     "a.city.country",
-        >>>     "a.city.country.pk_country",
+        >>>     lambda a: a.pk_address,
+        >>>     lambda a: a.city,
+        >>>     lambda a: a.city.pk_city,
+        >>>     lambda a: a.city.country,
+        >>>     lambda a: a.city.country.pk_country,
         >>> ]
         >>> result = _rename_recursive_column_list(select_list)
         >>> print(result)
