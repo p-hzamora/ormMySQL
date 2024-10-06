@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from ormlambda.components.where.abstract_where import AbstractWhere
     from ormlambda.common.interfaces.IStatements import OrderType
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
-    from src.ormlambda.common.interfaces.IRepositoryBase import TypeExists
+    from ormlambda.common.interfaces.IRepositoryBase import TypeExists
 
     from ormlambda.databases.my_sql.clauses.select import SelectQuery
     from ormlambda.databases.my_sql.clauses.count import CountQuery
