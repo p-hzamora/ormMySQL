@@ -14,9 +14,9 @@ MISSING = Column()
 
 
 class Field:
-    def __init__(self, name: str, type_: type, default: object) -> None:
+    def __init__(self, name: str, type_: Type, default: object) -> None:
         self.name: str = name
-        self.type_: type = type_
+        self.type_: Type = type_
         self.default: Column = default
 
     def __repr__(self) -> str:
