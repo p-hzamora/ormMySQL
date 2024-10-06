@@ -12,3 +12,4 @@ from .update import UpdateQuery  # noqa: F401
 from .upsert import UpsertQuery  # noqa: F401
 from .where_condition import WhereCondition  # noqa: F401
 from .count import CountQuery  # noqa: F401
+from .group_by import GroupBy  # noqa: F401

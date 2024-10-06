@@ -25,6 +25,7 @@ from .clauses import UpsertQuery
 from .clauses import UpdateQuery
 from .clauses import WhereCondition
 from .clauses import CountQuery
+from .clauses import GroupBy
 
 from mysql.connector import MySQLConnection, errors, errorcode
 
@@ -192,6 +193,10 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         if len(response) == 1 and len(response[0]) == 1:
             return response[0][0]
         return tuple([res[0] for res in response])
+
+    @override
+    def group_by[TRepo, *Ts](self, column: Callable[[T], TRepo], select_query: Callable[[T], tuple[*Ts]]) -> tuple[tuple[*Ts]]:
+        return GroupBy[T, TRepo, tuple[*Ts]](self._model, column, select_query)
 
     @override
     def _build(self) -> str:
