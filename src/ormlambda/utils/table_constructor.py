@@ -1,7 +1,7 @@
 import base64
 import datetime
 from decimal import Decimal
-from typing import Any, Iterable, Optional, Type, dataclass_transform
+from typing import Any, Iterable, Optional, Type, dataclass_transform, get_type_hints
 import json
 
 from .dtypes import get_query_clausule
@@ -54,7 +54,8 @@ def delete_special_variables(dicc: dict[str, object]) -> None:
 
 
 def get_fields[T](cls: Type[T]) -> Iterable[Field]:
-    annotations = getattr(cls, "__annotations__", {})
+    # COMMENT: Used the 'get_type_hints' method to resolve typing when 'from __future__ import annotations' is in use
+    annotations = {key: val for key, val in get_type_hints(cls).items() if not key.startswith("_")}
 
     # delete_special_variables(annotations)
     fields = []
