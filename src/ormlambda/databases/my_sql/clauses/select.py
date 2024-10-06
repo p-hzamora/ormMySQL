@@ -170,3 +170,29 @@ class SelectQuery[T: Table, *Ts](ISelect):
 
     def get_involved_tables(self) -> tuple[tuple[Table, Table]]:
         return tuple(self._tables_heritage)
+
+
+from typing import overload, Any
+from ormlambda.common.interfaces import IAggregate
+from .decomposition_query import DecompositionQuery
+
+
+class Select(IAggregate):
+    @overload
+    def __init__[T](self, table: T, query: str, *, alias: Optional[str] = None) -> None: ...
+    @overload
+    def __init__[T](self, table: T, query: Callable[[T], Any], *, alias: Optional[str] = None) -> None: ...
+
+    def __init__[T](self, table: T, query: str | Callable[[T], Any], *, alias: Optional[str] = None) -> None:
+        self._table: Type[Table] = table
+        self._query: DecompositionQuery | str | Callable[[T], Any] = query
+        self._alias: str = alias
+
+    @property
+    def query(self) -> str:
+        decom = DecompositionQuery(self._table, self._query, alias=True)
+        col = decom.query
+
+        alias = f" as `{self._table.__table_name__}_{str(self._alias)}`" if self._alias else ""
+
+        return f"SELECT {col} FROM {self._table.__table_name__}{alias}"
