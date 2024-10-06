@@ -12,14 +12,14 @@ class Concat(IAggregate):
     CLAUSE = "CONCAT"
 
     @typing.overload
-    def __init__(self, columns: str, *, alias: str = "concat") -> None: ...
+    def __init__[T](self, table: T, columns: str, *, alias: str = "concat") -> None: ...
 
     @typing.overload
     def __init__[T: typing.Type[Table], *Ts](self, table: T, columns: typing.Callable[[T], tuple[*Ts]], *, alias: str = "concat") -> None: ...
 
     def __init__[T: typing.Type[Table], *Ts](self, table: T, column: str | typing.Callable[[T], tuple[*Ts]] = "*", *, alias: str = "concat") -> None:
         self._table: T = table
-        self._column: DecompositionQuery | str | typing.Callable[[T], typing.Any] = column
+        self._column: str | typing.Callable[[T], typing.Any] = column
         self._alias: str = alias
 
     @property
