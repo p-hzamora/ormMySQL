@@ -30,9 +30,9 @@ class SelectQuery[T: Table, *Ts](ISelect):
         self._tables_heritage: list[tuple[Table, Table]] = []
         self._lambda_var_to_table_dicc: dict[str, Table] = self._assign_lambda_variables_to_table(select_lambda)
 
-        self._select_list: list[TableColumn] = self._rename_recursive_column_list(select_lambda)
+        self._select_list: list[TableColumn] = self._rename_recursive_query_list(select_lambda)
 
-    def _rename_recursive_column_list(self, _lambda: Optional[Callable[[T], None]]) -> list[TableColumn]:
+    def _rename_recursive_query_list(self, _lambda: Optional[Callable[[T], None]]) -> list[TableColumn]:
         """
         Recursive function tu replace variable names by Select Query
 
@@ -46,7 +46,7 @@ class SelectQuery[T: Table, *Ts](ISelect):
         >>>     lambda a: a.city.country,
         >>>     lambda a: a.city.country.pk_country,
         >>> ]
-        >>> result = _rename_recursive_column_list(select_list)
+        >>> result = _rename_recursive_query_list(select_list)
         >>> print(result)
         >>> # result = [
         >>> #   "address.pk_address"
@@ -57,7 +57,7 @@ class SelectQuery[T: Table, *Ts](ISelect):
         ]
         """
         instruction_list: list[TupleInstruction] = TreeInstruction(_lambda).to_list()
-        column_list: list[TableColumn] = []
+        query_list: list[TableColumn] = []
 
         for ti in instruction_list:
             obj = self._lambda_var_to_table_dicc[ti.var]
@@ -66,18 +66,18 @@ class SelectQuery[T: Table, *Ts](ISelect):
             new_nested = ti.nested_element.parents
             new_nested[0] = var
             ti = TupleInstruction(var, NestedElement(new_nested))
-            self._get_parents(obj, ti, column_list)
-        return column_list
+            self._get_parents(obj, ti, query_list)
+        return query_list
 
-    def _get_parents(self, tbl_obj: Table, tuple_inst: TupleInstruction, column_list: list[TableColumn]) -> None:
+    def _get_parents(self, tbl_obj: Table, tuple_inst: TupleInstruction, query_list: list[TableColumn]) -> None:
         if self._user_want_all_col(tbl_obj, tuple_inst):
-            column_list.extend(list(TableColumn.all_columns(tbl_obj)))
+            query_list.extend(list(TableColumn.all_querys(tbl_obj)))
             return None
 
         # if the 'last_el' var is a property, we'll know the user will want retrieve a column of the same instance of the 'tbl_obj'. Otherwise the user will want to get a column of the other instance
         last_el: str = tuple_inst.nested_element.name
-        if self._user_want_column_of_the_same_table(tbl_obj, tuple_inst):
-            return column_list.append(TableColumn(tbl_obj, last_el))
+        if self._user_want_query_of_the_same_table(tbl_obj, tuple_inst):
+            return query_list.append(TableColumn(tbl_obj, last_el))
 
         parents: list[str] = tuple_inst.nested_element.parents
         first_el = parents[1]
@@ -85,7 +85,7 @@ class SelectQuery[T: Table, *Ts](ISelect):
         new_attr = self.get_attribute_of(tbl_obj, first_el)  # could be Table or property
 
         self._add_fk_relationship(tbl_obj, new_attr)
-        return self._get_parents(new_attr, new_ti, column_list)
+        return self._get_parents(new_attr, new_ti, query_list)
 
     def _add_fk_relationship(self, t1: Table, t2: Table) -> None:
         tuple_ = tuple([t1, t2])
@@ -100,7 +100,7 @@ class SelectQuery[T: Table, *Ts](ISelect):
         """
         return issubclass(tbl.__class__, Table | TableMeta) and len(ti.nested_element.parents) == 1
 
-    def _user_want_column_of_the_same_table(self, table: Table, ti: TupleInstruction) -> bool:
+    def _user_want_query_of_the_same_table(self, table: Table, ti: TupleInstruction) -> bool:
         last_el: str = ti.nested_element.name
         first_el = ti.nested_element.parents[1]
 
