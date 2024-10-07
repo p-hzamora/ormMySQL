@@ -96,7 +96,8 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         self._connection: PooledMySQLConnection = None
 
     def __create_MySQLConnectionPool(self):
-        return MySQLConnectionPool(pool_name="mypool",pool_size=10, **self._data_config)
+        return MySQLConnectionPool(pool_name="mypool", pool_size=10, **self._data_config)
+
     @override
     def is_connected(self) -> bool:
         return self._connection._cnx is not None if self._connection else False
@@ -221,4 +222,4 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @database.setter
     def database(self, value: str) -> None:
         self._data_config["database"] = value
-        self._pool = self.__create_MySQLConnectionPool() 
+        self._pool = self.__create_MySQLConnectionPool()

@@ -26,4 +26,3 @@ class Max(IAggregate):
         col = decom.query
 
         return f"{self.NAME}({col}) as `{self._alias}`"
-     

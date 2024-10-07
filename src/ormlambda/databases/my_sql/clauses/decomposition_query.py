@@ -21,7 +21,7 @@ class DecompositionQuery[T: tp.Type[Table]]:
     def create_list[*Ts](self, query: tuple[*Ts]) -> list[str]:
         tree_list = TreeInstruction(self._callback).to_list()
         result: list[str] = []
-        
+
         for index, value in enumerate(query):
             # if property is attached to self._table, we create string
             if isinstance(value, property) and value in self._table.__properties_mapped__:

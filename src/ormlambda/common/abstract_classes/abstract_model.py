@@ -58,6 +58,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     @abc.abstractmethod
     def _build(sef): ...
 
+
 class ClusterQuery:
     def __init__(self, select: ISelect, response_sql: tuple[dict[str, Any]]) -> None:
         self._select: ISelect = select
