@@ -6,10 +6,12 @@ import abc
 
 from ormlambda.utils import Table
 from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
+from ormlambda.common.interfaces.IAggregate import IAggregate
 
 if TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
     from ormlambda.components.select import ISelect
-    from ormlambda.components.select import TableColumn
+    from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
@@ -51,7 +53,7 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         response_sql = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
 
         if isinstance(response_sql, Iterable):
-            return ClusterQuery(select, response_sql).clean_response()
+            return ClusterQuery[T](select, response_sql).clean_response()
 
         return response_sql
 
@@ -59,27 +61,36 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     def _build(sef): ...
 
 
-class ClusterQuery:
-    def __init__(self, select: ISelect, response_sql: tuple[dict[str, Any]]) -> None:
-        self._select: ISelect = select
+class ClusterQuery[T]:
+    def __init__(self, select: DecompositionQueryBase[T], response_sql: tuple[dict[str, Any]]) -> None:
+        self._select: DecompositionQueryBase[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
 
     def loop_foo(self) -> dict[Type[Table], list[Table]]:
         #  We must ensure to get the valid attributes for each instance
         table_initialize = defaultdict(list)
 
-        unic_table: dict[Table, list[TableColumn]] = defaultdict(list)
-        for table_col in self._select.select_list:
-            unic_table[table_col._table].append(table_col)
-
-        for table_, table_col in unic_table.items():
+        for table, clauses in self._select._clauses_group_by_tables.items():
             for dicc_cols in self._response_sql:
                 valid_attr: dict[str, Any] = {}
-                for col in table_col:
-                    valid_attr[col.real_column] = dicc_cols[col.alias]
+                for clause in clauses:
+                    if not hasattr(table, clause.column):
+                        agg_methods = self.get_all_aggregate_method(clauses)
+                        raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects")
+                    valid_attr[clause.column] = dicc_cols[clause.alias]
+
                 # COMMENT: At this point we are going to instantiate Table class with specific attributes getting directly from database
-                table_initialize[table_].append(table_(**valid_attr))
+                table_initialize[table].append(table(**valid_attr))
         return table_initialize
+
+    def get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
+        res: set[str] = set()
+
+        for clause in clauses:
+            row = clause._row_column
+            if isinstance(row, IAggregate):
+                res.add(row.__class__.__name__)
+        return ", ".join(res)
 
     def clean_response(self) -> tuple[dict[Type[Table], tuple[Table]]]:
         tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
