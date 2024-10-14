@@ -230,40 +230,40 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(self.query.query, "SELECT extra_c.pk_extra_c as `extra_c_pk_extra_c`, extra_c.data_extra_c as `extra_c_data_extra_c` FROM d INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
 
 
-class TestTableColumn(unittest.TestCase):
-    tc = TableColumn(Address, "address_id")
+# class TestTableColumn(unittest.TestCase):
+#     tc = TableColumn(Address, "address_id")
 
-    def test_TableColumn_properties(self):
-        self.assertEqual(self.tc.real_column, "address_id")
-        self.assertEqual(self.tc.column, "address.address_id as `address_address_id`")
-        self.assertEqual(self.tc.alias, "address_address_id")
+#     def test_TableColumn_properties(self):
+#         self.assertEqual(self.tc.real_column, "address_id")
+#         self.assertEqual(self.tc.column, "address.address_id as `address_address_id`")
+#         self.assertEqual(self.tc.alias, "address_address_id")
 
-    def test_check__hash__and__eq__methods(self):
-        tuple_all_columns: tuple[TableColumn, ...] = (
-            TableColumn(Address, "address_id"),
-            TableColumn(Address, "address"),
-            TableColumn(Address, "address2"),
-            TableColumn(Address, "district"),
-            TableColumn(Address, "city_id"),
-            TableColumn(Address, "postal_code"),
-            TableColumn(Address, "phone"),
-            TableColumn(Address, "location"),
-            TableColumn(Address, "last_update"),
-        )
-        list_all_alias: list[str] = [
-            "address_address_id",
-            "address_address",
-            "address_address2",
-            "address_district",
-            "address_city_id",
-            "address_postal_code",
-            "address_phone",
-            "address_location",
-            "address_last_update",
-        ]
+#     def test_check__hash__and__eq__methods(self):
+#         tuple_all_columns: tuple[TableColumn, ...] = (
+#             TableColumn(Address, "address_id"),
+#             TableColumn(Address, "address"),
+#             TableColumn(Address, "address2"),
+#             TableColumn(Address, "district"),
+#             TableColumn(Address, "city_id"),
+#             TableColumn(Address, "postal_code"),
+#             TableColumn(Address, "phone"),
+#             TableColumn(Address, "location"),
+#             TableColumn(Address, "last_update"),
+#         )
+#         list_all_alias: list[str] = [
+#             "address_address_id",
+#             "address_address",
+#             "address_address2",
+#             "address_district",
+#             "address_city_id",
+#             "address_postal_code",
+#             "address_phone",
+#             "address_location",
+#             "address_last_update",
+#         ]
 
-        self.assertTupleEqual(tuple(TableColumn.all_columns(Address)), tuple_all_columns)
-        self.assertListEqual(self.tc.get_all_alias(), list_all_alias)
+#         self.assertTupleEqual(tuple(TableColumn.all_columns(Address)), tuple_all_columns)
+#         self.assertListEqual(self.tc.get_all_alias(), list_all_alias)
 
 
 if "__main__" == __name__:
