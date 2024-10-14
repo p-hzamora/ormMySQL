@@ -1,30 +1,41 @@
-from ormlambda.common.interfaces import IAggregate
-from ormlambda.databases.my_sql.clauses.decomposition_query import DecompositionQuery
+from ormlambda.common.interfaces.IAggregate import IAggregate
+from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase, ClauseInfo
 
 
-import typing
+import typing as tp
+from ormlambda.common.enums.join_type import JoinType
 
-if typing.TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ormlambda import Table
 
 
-class Concat(IAggregate):
+class Concat[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):
     CLAUSE = "CONCAT"
 
-    @typing.overload
-    def __init__[T](self, table: T, columns: str, *, alias: str = "concat") -> None: ...
+    def __init__[*Ts](
+        self,
+        table: T,
+        lambda_query: str | tp.Callable[[T], tuple[*Ts]],
+        *,
+        alias: bool = True,
+        alias_name: str = "CONCAT",
+        by: JoinType = JoinType.INNER_JOIN,
+    ) -> None:
+        super().__init__(
+            table,
+            lambda_query,
+            alias=alias,
+            alias_name=alias_name,
+            by=by,
+        )
 
-    @typing.overload
-    def __init__[T: typing.Type[Table], *Ts](self, table: T, columns: typing.Callable[[T], tuple[*Ts]], *, alias: str = "concat") -> None: ...
-
-    def __init__[T: typing.Type[Table], *Ts](self, table: T, column: str | typing.Callable[[T], tuple[*Ts]] = "*", *, alias: str = "concat") -> None:
-        self._table: T = table
-        self._column: str | typing.Callable[[T], typing.Any] = column
-        self._alias: str = alias
+    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
+        if isinstance(clause_info._row_column, IAggregate):
+            return clause_info._row_column.alias
+        return None
 
     @property
     def query(self) -> str:
-        decom = DecompositionQuery(self._table, self._column, alias=False)
-        col = decom.query
+        col: str = ", ".join([x.query for x in self.all_clauses])
 
-        return f"{self.CLAUSE}({col}) as `{self._alias}`"
+        return f"{self.CLAUSE}({col})"
