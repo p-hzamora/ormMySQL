@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
 
-    from ormlambda.databases.my_sql.clauses.select import SelectQuery
     from ormlambda.databases.my_sql.clauses.count import CountQuery
 
 
@@ -20,7 +19,8 @@ from .clauses import JoinSelector
 from .clauses import LimitQuery
 from .clauses import OffsetQuery
 from .clauses import OrderQuery
-from .clauses import SelectQuery
+from .clauses.new_select import Select
+
 from .clauses import UpsertQuery
 from .clauses import UpdateQuery
 from .clauses import WhereCondition
@@ -166,7 +166,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
             if flavour:
                 return result
             return () if not result else result[0]
-        select: ISelect = SelectQuery(self._model, select_lambda=selector, by=by)
+        select = Select[T](self._model, lambda_query=selector, by=by, alias=False)
         self._query_list["select"].append(select)
 
         query: str = self._build()
@@ -202,9 +202,10 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     def _build(self) -> str:
         query: str = ""
 
-        self.__create_necessary_inner_join()
+        # self.__create_necessary_inner_join()
         for x in self.__order__:
-            if sub_query := self._query_list.get(x, None):
+            sub_query: Optional[list[IQuery]] = self._query_list.get(x, None)
+            if sub_query is not None:
                 if isinstance(sub_query[0], WhereCondition):
                     query_ = self.__build_where_clause(sub_query)
 
