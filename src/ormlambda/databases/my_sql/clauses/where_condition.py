@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, override
+from typing import Any, Callable, Optional, override, Type
 import inspect
 
 from ormlambda.common.enums import ConditionType
@@ -19,7 +19,7 @@ class WhereConditionByArg[TProp1, TProp2](IQuery):
         return f"WHERE {self.cond1} {self.symbol.value} {self.cond2}"
 
 
-class WhereCondition[*Inst](AbstractWhere):
+class WhereCondition[T: Type[Table], *Inst](AbstractWhere):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.
 
