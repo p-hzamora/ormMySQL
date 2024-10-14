@@ -1,27 +1,38 @@
-from typing import Any, Callable, Type, overload, TYPE_CHECKING
+import typing as tp
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ormlambda import Table
 from ormlambda.common.interfaces import IAggregate
-from ormlambda.databases.my_sql.clauses.decomposition_query import DecompositionQuery
+from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase, ClauseInfo
+from ormlambda import JoinType
 
 
-class Count(IAggregate):
+class Count[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):
     NAME: str = "COUNT"
 
-    @overload
-    def __init__[T: Type[Table]](self, table: T, column: str, *, alias: str = "count") -> None: ...
-    @overload
-    def __init__[T: Type[Table]](self, table: T, column: Callable[[T], Any], *, alias: str = "count") -> None: ...
+    def __init__(
+        self,
+        table: T,
+        lambda_query: str | tp.Callable[[T], tuple],
+        *,
+        alias: bool = True,
+        alias_name: str = "count",
+        by: JoinType = JoinType.INNER_JOIN,
+    ) -> None:
+        super().__init__(
+            table,
+            lambda_query=lambda_query,
+            alias=alias,
+            alias_name=alias_name,
+            by=by,
+        )
 
-    def __init__[T: Type[Table]](self, table: T, column: str | Callable[[T], Any] = "*", *, alias: str = "count") -> None:
-        self._table: T = table
-        self._column: DecompositionQuery | str | Callable[[T], Any] = column
-        self._alias: str = alias
+    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
+        if isinstance(clause_info._row_column, IAggregate):
+            return clause_info._row_column.alias
+        return None
 
     @property
     def query(self) -> str:
-        decom = DecompositionQuery(self._table, self._column, alias=False)
-        col = decom.query
-
-        return f"{self.NAME}({col}) as `{self._alias}`"
+        col = ", ".join([x.query for x in self.all_clauses])
+        return f"{self.NAME}({col})"
