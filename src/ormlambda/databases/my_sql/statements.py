@@ -15,12 +15,12 @@ from .clauses import JoinSelector
 from .clauses import LimitQuery
 from .clauses import OffsetQuery
 from .clauses import OrderQuery
-from .clauses.new_select import Select
+from .clauses.select import Select
 
 from .clauses import UpsertQuery
 from .clauses import UpdateQuery
 from .clauses import WhereCondition
-from .clauses import CountQuery
+from .clauses import Count
 from .clauses import GroupBy
 
 from mysql.connector import MySQLConnection, errors, errorcode
@@ -126,8 +126,8 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return self
 
     @override
-    def count(self) -> int:
-        count_select: IQuery = CountQuery(self._model)
+    def count(self, selection: Callable[[T], tuple] = lambda x: "*") -> int:
+        count_select: IQuery = Select[T](self._model, lambda x: Count[T](self._model, selection))
         self._query_list["select"].append(count_select)
         query = self._build()
         return self.repository.read_sql(query)[0][0]

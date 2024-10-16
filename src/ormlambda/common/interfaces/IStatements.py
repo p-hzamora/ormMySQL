@@ -91,7 +91,7 @@ class IStatements[T: Table](ABC):
 
     # region count
     @abstractmethod
-    def count(self) -> int: ...
+    def count(self, selection: Callable[[T], property]) -> int: ...
 
     # endregion
 
