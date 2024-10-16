@@ -14,11 +14,8 @@ class TestConcat(unittest.TestCase):
     def test_Concat(self) -> None:
         concat = func.Concat(
             D,
-            lambda d: (
-                d.data_d,
-                "-",
-                d.data_d
-            ),alias=True
+            lambda d: (d.data_d, "-", d.data_d),
+            alias=True,
         )
 
         query = "CONCAT(d.data_d, '-', d.data_d) as `CONCAT`"

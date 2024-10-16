@@ -174,8 +174,8 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
             if self._replace_asterisk_char and (replace_value := self.alias_cache.get(value, None)) is not None:
                 return self._identify_value_type(index, replace_value(self._table), function)
             return ClauseInfo[T](self._table, value, alias_children_resolver=self.alias_children_resolver)
-        
-        elif isinstance(value,bool):
+
+        elif isinstance(value, bool):
             ...
 
         raise NotImplementedError(f"type of value '{value}' is not implemented.")
