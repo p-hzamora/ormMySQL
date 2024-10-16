@@ -146,6 +146,9 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
         return None
 
     def _identify_value_type[TProp](self, index: int, value: TProp, function) -> ClauseInfo[T]:
+        """
+        A method that behaves based on the variable's type
+        """
         if isinstance(value, property):
             if value in self._table.__properties_mapped__:
                 return ClauseInfo[T](self._table, value, self.alias_children_resolver)
