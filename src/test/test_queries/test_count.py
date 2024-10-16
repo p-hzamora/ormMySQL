@@ -40,11 +40,11 @@ class CountTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.ddbb.drop_database(DATABASE_NAME)
 
-    def TableCount_generator(self, n: int) -> None:
+    def TableCount_generator(self, n: int) -> list[TableCount]:
         if not n > 0:
             raise ValueError(f"'n' must not be less than '0'. You passed '{n}'")
 
-        insert_values = []
+        insert_values: list[TableCount] = []
         for x in range(0, n):
             rnd = lambda: random.randint(0, 1_000_000)  # noqa: E731
             insert_values.append(TableCount(x, rnd(), rnd(), rnd()))
@@ -71,9 +71,29 @@ class CountTest(unittest.TestCase):
         self.assertEqual(n_select, 21)
 
     def test_clean_query_list(self):
-        n = self.model.where(lambda x: x.a == 10).count()
+        insert: list[TableCount] = []
 
-        self.assertEqual(n, 0)
+        for x in range(1, 101):
+            if x < 21:
+                table_count: TableCount = TableCount(x, 20, x, x)
+            elif 21 <= x < 81:
+                table_count: TableCount = TableCount(x, 80, x, x)
+            elif 81 <= x < 101:
+                table_count: TableCount = TableCount(x, 100, x, x)
+
+            insert.append(table_count)
+
+        self.model.insert(insert)
+        n = self.model.count(lambda x: x.a)
+        n_20 = self.model.where(lambda x: x.a == 20).count()
+        n_80 = self.model.where(lambda x: x.a == 80).count()
+        n_100 = self.model.where(lambda x: x.a == 100).count()
+
+        self.assertEqual(n, 100)
+        self.assertEqual(n_20, 20)
+        self.assertEqual(n_80, 60)
+        self.assertEqual(n_100, 20)
+
         self.assertEqual(self.model._query_list, {})
 
 
