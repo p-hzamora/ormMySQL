@@ -53,7 +53,8 @@ class ClauseInfo[T: tp.Type[Table]]:
             return data.alias_name
 
         elif isinstance(data, str):
-            return f"'{data}'"
+            # TODOL: refactor to base the condition in dict with '*' as key. '*' must to work as special character
+            return f"'{data}'" if data != "*" else data
 
     def __create_value_string(self, name: str) -> str:
         if isinstance(self._row_column, property):
@@ -81,6 +82,7 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
         alias: bool = True,
         alias_name: tp.Optional[str] = None,
         by: JoinType = JoinType.INNER_JOIN,
+        replace_asterisk_char: bool = True,
     ) -> None:
         self._table: T = table
         self._lambda_query: tp.Callable[[T], tuple[Ts]] = lambda_query
@@ -92,6 +94,7 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
         self._clauses_group_by_tables: dict[tp.Type[Table], list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
         self.alias_cache: dict[str, tp.Any] = {"*": lambda x: x}
+        self._replace_asterisk_char: bool = replace_asterisk_char
         self.__assign_lambda_variables_to_table(lambda_query)
 
         self.__clauses_list_generetor(lambda_query)
@@ -128,7 +131,8 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
 
         resolved_function = function(self._table)
 
-        if not isinstance(resolved_function, tp.Iterable):
+        # Python treats string objects as iterable, so we need to prevent this behavior
+        if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
             resolved_function = (resolved_function,)
 
         for index, value in enumerate(resolved_function):
@@ -164,7 +168,7 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
 
         elif isinstance(value, str):
             # TODOM: alias_cache to replace '*' by all columns
-            if (replace_value := self.alias_cache.get(value, None)) is not None:
+            if self._replace_asterisk_char and (replace_value := self.alias_cache.get(value, None)) is not None:
                 return self._identify_value_type(index, replace_value(self._table), function)
             return ClauseInfo[T](self._table, value, alias_children_resolver=self.alias_children_resolver)
         
