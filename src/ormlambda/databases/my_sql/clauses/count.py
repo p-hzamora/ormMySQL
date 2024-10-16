@@ -1,35 +1,39 @@
-from typing import Callable, Type, override
+import typing as tp
 
-from ormlambda import Table, JoinType, ForeignKey
-from ormlambda.databases.my_sql.clauses.joins import JoinSelector
-from ormlambda.databases.my_sql.clauses.select import SelectQuery
+if tp.TYPE_CHECKING:
+    from ormlambda import Table
+from ormlambda.common.interfaces import IAggregate
+from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase, ClauseInfo
+from ormlambda import JoinType
 
 
-class CountQuery[T: Type[Table]](SelectQuery[T]):
-    CLAUSE: str = "COUNT"
+class Count[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):
+    NAME: str = "COUNT"
 
     def __init__(
         self,
-        tables: T | tuple[T] = (),
-        select_lambda: Callable[[T], None] | None = lambda: None,
+        table: T,
+        lambda_query: str | tp.Callable[[T], tuple],
         *,
+        alias: bool = True,
+        alias_name: str = "count",
         by: JoinType = JoinType.INNER_JOIN,
     ) -> None:
-        super().__init__(tables, select_lambda, by=by)
+        super().__init__(
+            table,
+            lambda_query=lambda_query,
+            alias=alias,
+            alias_name=alias_name,
+            by=by,
+            replace_asterisk_char=False,
+        )
 
-    @override
+    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
+        if isinstance(clause_info._row_column, IAggregate):
+            return clause_info._row_column.alias
+        return None
+
     @property
     def query(self) -> str:
-        query: str = f"{self.SELECT} {self.CLAUSE}(*) FROM {self._first_table.__table_name__}"
-
-        involved_tables = self.get_involved_tables()
-        if not involved_tables:
-            return query
-
-        sub_query: str = ""
-        for l_tbl, r_tbl in involved_tables:
-            join = JoinSelector(l_tbl, r_tbl, by=self._by, where=ForeignKey.MAPPED[l_tbl.__table_name__].referenced_tables[r_tbl.__table_name__].relationship)
-            sub_query += f" {join.query}"
-
-        query += sub_query
-        return query
+        col = ", ".join([x.query for x in self.all_clauses])
+        return f"{self.NAME}({col})"
