@@ -3,14 +3,10 @@ from typing import override, Type, TYPE_CHECKING, Any, Callable, Optional
 
 if TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.components.select import ISelect
     from ormlambda.components.where.abstract_where import AbstractWhere
     from ormlambda.common.interfaces.IStatements import OrderType
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
-
-    from ormlambda.databases.my_sql.clauses.count import CountQuery
-
 
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
@@ -231,19 +227,3 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
             and_, clause = q.split(" ", maxsplit=1)
             query += f" {and_} ({clause})"
         return query
-
-    def __create_necessary_inner_join(self) -> None:
-        # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
-        if "where" not in self._query_list:
-            return None
-
-        where: AbstractWhere = self._query_list["where"][0]
-        involved_tables = where.get_involved_tables()
-
-        select: ISelect = self._query_list["select"][0]
-        if not involved_tables or (set(involved_tables) == set(select.tables_heritage)):
-            return None
-
-        for l_tbl, r_tbl in involved_tables:
-            # FIXME [ ]: Checked what function was called by the self.join method before the change
-            self.join(l_tbl, r_tbl, by="INNER JOIN")
