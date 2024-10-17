@@ -97,17 +97,12 @@ class TestSQLStatements(unittest.TestCase):
             self.ddbb.create_database(DDBBNAME)
 
     def test_create_table(self):
-        CORRECT_RESPONSE = (TABLETEST,)
         self.tmodel.create_table("replace")
-        self.ddbb.connect()
-        with self.ddbb.connection.cursor() as cursor:
-            cursor.execute(f"SHOW TABLES LIKE '{TABLETEST}'")
-            table_exists = cursor.fetchone()
-        self.ddbb.close_connection()
+        table_exists = self.ddbb.read_sql(f"SHOW TABLES LIKE '{TABLETEST}'")[0][0]
 
-        self.assertTupleEqual(
+        self.assertEqual(
             table_exists,
-            CORRECT_RESPONSE,
+            TABLETEST,
             msg=f"failed 'test_create_table' due to Table '{TABLETEST}' should exist after creation.",
         )
 
