@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
 TypeExists = Literal["fail", "replace", "append"]
 
@@ -7,15 +7,6 @@ TypeExists = Literal["fail", "replace", "append"]
 class IRepositoryBase[T](ABC):
     def __repr__(self) -> str:
         return f"{IRepositoryBase.__name__}: {self.__class__.__name__}"
-
-    @abstractmethod
-    def is_connected(self) -> bool: ...
-
-    @abstractmethod
-    def connect(self, **kwargs: Any) -> None: ...
-
-    @abstractmethod
-    def close_connection(self) -> None: ...
 
     @abstractmethod
     def read_sql[TFlavour](self, query: str, flavour: Optional[Type[TFlavour]], **kwargs) -> tuple[TFlavour]: ...

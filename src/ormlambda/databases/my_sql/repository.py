@@ -77,45 +77,27 @@ class Response[TFlavour, *Ts]:
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def get_connection(func: Callable[..., Any]):
         @functools.wraps(func)
-        def wrapper(self: IRepositoryBase[MySQLConnection], *args, **kwargs):
-            self.connect()
-            try:
-                foo = func(self, *args, **kwargs)
-            except Exception as e:
-                self.connection.rollback()
-                raise e
-            finally:
-                self.close_connection()
-            return foo
+        def wrapper(self: MySQLRepository, *args, **kwargs):
+            with self._pool.get_connection() as cnx:
+                try:
+                    foo = func(self, cnx, *args, **kwargs)
+                    return foo
+                except Exception as e:
+                    self.connection.rollback()
+                    raise e
 
         return wrapper
 
     def __init__(self, **kwargs: Any) -> None:
         self._data_config: dict[str, Any] = kwargs
         self._pool: MySQLConnectionPool = self.__create_MySQLConnectionPool()
-        self._connection: PooledMySQLConnection = None
 
     def __create_MySQLConnectionPool(self):
         return MySQLConnectionPool(pool_name="mypool", pool_size=10, **self._data_config)
 
     @override
-    def is_connected(self) -> bool:
-        return self._connection._cnx is not None if self._connection else False
-
-    @override
-    def connect(self) -> None:
-        self._connection = self._pool.get_connection()
-        return None
-
-    @override
-    def close_connection(self) -> None:
-        if self.is_connected():
-            self._connection.close()
-        return None
-
-    @override
     @get_connection
-    def read_sql[TFlavour](self, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
+    def read_sql[TFlavour](self, cnx: MySQLConnection, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
         """
         Return tuple of tuples by default.
 
@@ -125,7 +107,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
-        with self._connection._cnx.cursor(buffered=True) as cursor:
+        with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
@@ -133,7 +115,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     # FIXME [ ]: this method does not comply with the implemented interface
     @get_connection
-    def create_tables_code_first(self, path: str | Path) -> None:
+    def create_tables_code_first(self, cnx: MySQLConnection, path: str | Path) -> None:
         if not isinstance(path, Path | str):
             raise ValueError
 
@@ -148,33 +130,33 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         queries_list: list[str] = module_tree.get_queries()
 
         for query in queries_list:
-            with self._connection._cnx.cursor(buffered=True) as cursor:
+            with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-        self._connection._cnx.commit()
+        cnx.commit()
         return None
 
     @override
     @get_connection
-    def executemany_with_values(self, query: str, values) -> None:
-        with self._connection._cnx.cursor(buffered=True) as cursor:
+    def executemany_with_values(self, cnx: MySQLConnection, query: str, values) -> None:
+        with cnx.cursor(buffered=True) as cursor:
             cursor.executemany(query, values)
-        self._connection._cnx.commit()
+        cnx.commit()
         return None
 
     @override
     @get_connection
-    def execute_with_values(self, query: str, values) -> None:
-        with self._connection._cnx.cursor(buffered=True) as cursor:
+    def execute_with_values(self, cnx: MySQLConnection, query: str, values) -> None:
+        with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query, values)
-        self._connection._cnx.commit()
+        cnx.commit()
         return None
 
     @override
     @get_connection
-    def execute(self, query: str) -> None:
-        with self._connection._cnx.cursor(buffered=True) as cursor:
+    def execute(self, cnx: MySQLConnection, query: str) -> None:
+        with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query)
-        self._connection._cnx.commit()
+        cnx.commit()
         return None
 
     @override
@@ -183,9 +165,9 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     @override
     @get_connection
-    def database_exists(self, name: str) -> bool:
+    def database_exists(self, cnx: MySQLConnection, name: str) -> bool:
         query = "SHOW DATABASES LIKE %s;"
-        with self._connection._cnx.cursor(buffered=True) as cursor:
+        with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query, (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
@@ -196,12 +178,12 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     @override
     @get_connection
-    def table_exists(self, name: str) -> bool:
-        if not self._connection._cnx.database:
+    def table_exists(self, cnx: MySQLConnection, name: str) -> bool:
+        if not cnx.database:
             raise Exception("No database selected")
 
         query = "SHOW TABLES LIKE %s;"
-        with self._connection._cnx.cursor(buffered=True) as cursor:
+        with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query, (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
