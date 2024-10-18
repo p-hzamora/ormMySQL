@@ -76,7 +76,7 @@ class ClusterQuery[T]:
                 for clause in clauses:
                     if not hasattr(table, clause.column):
                         agg_methods = self.get_all_aggregate_method(clauses)
-                        raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects")
+                        raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'.")
                     valid_attr[clause.column] = dicc_cols[clause.alias]
 
                 # COMMENT: At this point we are going to instantiate Table class with specific attributes getting directly from database
