@@ -30,6 +30,7 @@ import inspect
 
 from ormlambda.utils import ForeignKey, Table
 from ormlambda.common.enums import JoinType
+from . import functions as func
 
 
 class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
@@ -151,6 +152,10 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         order = OrderQuery[T](self._model, _lambda_col, order_type)
         self._query_list["order"].append(order)
         return self
+
+    @override
+    def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]], alias: bool = True, alias_name: str = "CONCAT") -> IAggregate[T]:
+        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name)
 
     @override
     def max[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "max") -> TProp:
