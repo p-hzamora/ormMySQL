@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import unittest
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda.utils.lambda_disassembler import TreeInstruction  # noqa: E402
 from ormlambda.utils.lambda_disassembler import NestedElement  # noqa: E402

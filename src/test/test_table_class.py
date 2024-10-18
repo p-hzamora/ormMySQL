@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda import Column  # noqa: E402
 from ormlambda import Table  # noqa: E402
