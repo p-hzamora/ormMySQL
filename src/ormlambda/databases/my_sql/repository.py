@@ -192,10 +192,6 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
         return CreateDatabase(self).execute(name, if_exists)
 
-    @override
-    @property
-    def connection(self) -> MySQLConnection:
-        return self._connection
 
     @property
     def database(self) -> Optional[str]:

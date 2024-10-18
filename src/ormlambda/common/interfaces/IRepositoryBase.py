@@ -37,8 +37,4 @@ class IRepositoryBase[T](ABC):
 
     @property
     @abstractmethod
-    def connection(self) -> T: ...
-
-    @property
-    @abstractmethod
     def database(self) -> Optional[str]: ...
