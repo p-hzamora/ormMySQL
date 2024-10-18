@@ -111,7 +111,7 @@ class IStatements[T: Table](ABC):
     # region where
 
     @overload
-    def where(self, lambda_: Callable[[T], Iterable]) -> IStatements[T]:
+    def where(self, conditions: Iterable[Callable[[T], bool]]) -> IStatements[T]:
         """
         This method creates where clause by passing the Iterable in lambda function
         EXAMPLE
@@ -122,7 +122,7 @@ class IStatements[T: Table](ABC):
         ...
 
     @overload
-    def where(self, lambda_: Callable[[T], bool], **kwargs) -> IStatements[T]:
+    def where(self, conditions: Callable[[T], bool], **kwargs) -> IStatements[T]:
         """
         PARAM
         -
@@ -139,7 +139,7 @@ class IStatements[T: Table](ABC):
         ...
 
     @abstractmethod
-    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> IStatements[T]: ...
+    def where(self, conditions: WhereTypes = lambda: None, **kwargs) -> IStatements[T]: ...
 
     # endregion
     # region order
