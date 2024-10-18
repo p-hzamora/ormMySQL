@@ -28,7 +28,6 @@ class ClauseInfo[T: tp.Type[Table]]:
         self._alias: tp.Optional[str] = self._alias_children_resolver(self)
 
         self._query: str = self.__create_value_string(self._column)
-        pass
 
     def __repr__(self) -> str:
         return f"{ClauseInfo.__name__}: {self.query}"
