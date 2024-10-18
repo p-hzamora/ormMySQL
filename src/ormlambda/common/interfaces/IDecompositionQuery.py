@@ -31,7 +31,7 @@ class IDecompositionQuery[T: tp.Type[Table]](IQuery):
 
     @property
     @abc.abstractmethod
-    def fk_relationship(self) -> tuple[tuple[tp.Type[Table], tp.Type[Table]]]: ...
+    def fk_relationship(self) -> set[tuple[tp.Type[Table], tp.Type[Table]]]: ...
 
     @property
     @abc.abstractmethod
