@@ -1,5 +1,8 @@
 from __future__ import annotations
-from typing import override, Type, TYPE_CHECKING, Any, Callable, Optional
+from typing import Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
+import inspect
+from mysql.connector import MySQLConnection, errors, errorcode
+
 
 if TYPE_CHECKING:
     from ormlambda import Table
@@ -7,6 +10,7 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces.IStatements import OrderType
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
+    from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
 
 from ormlambda import AbstractSQLStatements
@@ -24,10 +28,6 @@ from .clauses import WhereCondition
 from .clauses import Count
 from .clauses import GroupBy
 
-from mysql.connector import MySQLConnection, errors, errorcode
-
-
-import inspect
 
 from ormlambda.utils import ForeignKey, Table
 from ormlambda.common.enums import JoinType
@@ -218,24 +218,33 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     def _build(self) -> str:
         query: str = ""
 
-        # self.__create_necessary_inner_join()
         for x in self.__order__:
             sub_query: Optional[list[IQuery]] = self._query_list.get(x, None)
-            if sub_query is not None:
-                if isinstance(sub_query[0], WhereCondition):
-                    query_ = self.__build_where_clause(sub_query)
+            if sub_query is None:
+                continue
 
-                # we must check if any join already exists on query string
-                elif isinstance(sub_query[0], JoinSelector):
-                    select_query: str = self._query_list["select"][0].query
-                    query_ = ""
-                    for join in sub_query:
-                        if join.query not in select_query:
-                            query_ += f"\n{join.query}"
-                else:
-                    query_ = "\n".join([x.query for x in sub_query])
+            if isinstance(sub_query[0], WhereCondition):
+                query_ = self.__build_where_clause(sub_query)
 
-                query += f"\n{query_}" if query != "" else query_
+            # we must check if any join already exists on query string
+            elif isinstance(sub_query[0], JoinSelector):
+                select_query: str = self._query_list["select"][0].query
+                query_ = ""
+                for join in sub_query:
+                    if join.query not in select_query:
+                        query_ += f"\n{join.query}"
+
+            elif isinstance((select := sub_query[0]), Select):
+                query_: str = ""
+                where_joins = self.__create_necessary_inner_join()
+                if where_joins:
+                    select._fk_relationship.update(where_joins)
+                query_ = select.query
+
+            else:
+                query_ = "\n".join([x.query for x in sub_query])
+
+            query += f"\n{query_}" if query != "" else query_
         self._query_list.clear()
         return query
 
@@ -247,3 +256,19 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
             and_, clause = q.split(" ", maxsplit=1)
             query += f" {and_} ({clause})"
         return query
+
+    def __create_necessary_inner_join(self) -> Optional[set[tuple[Type[Table], Type[Table]]]]:
+        # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
+        if "where" not in self._query_list:
+            return None
+
+        res = []
+        for where in self._query_list["where"]:
+            where: AbstractWhere
+
+            tables = where.get_involved_tables()
+
+            if tables:
+                [res.append(x) for x in tables]
+
+        return set(res)
