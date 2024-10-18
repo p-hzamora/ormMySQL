@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces.IStatements import OrderType
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
+    from ormlambda.common.interfaces.IStatements import WhereTypes
 
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
@@ -141,9 +142,15 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return self
 
     @override
-    def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> IStatements_two_generic[T, MySQLConnection]:
+    def where(self, conditions: WhereTypes = lambda: None, **kwargs) -> IStatements_two_generic[T, MySQLConnection]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
-        where_query = WhereCondition[T](function=lambda_, instances=(self._model,), **kwargs)
+
+        if isinstance(conditions, Iterable):
+            for x in conditions:
+                self._query_list["where"].append(WhereCondition[T](function=x, instances=(self._model,), **kwargs))
+            return self
+
+        where_query = WhereCondition[T](function=conditions, instances=(self._model,), **kwargs)
         self._query_list["where"].append(where_query)
         return self
 
