@@ -1,4 +1,8 @@
-from typing import override, Callable
+from __future__ import annotations
+from typing import override, Callable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ormlambda import Table
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
 from ormlambda.common.interfaces.IQueryCommand import IQuery
@@ -8,7 +12,7 @@ ASC = "ASC"
 DESC = "DESC"
 
 
-class OrderQuery[T](IQuery):
+class OrderQuery[T:Table](IQuery):
     ORDER = "ORDER BY"
 
     def __init__(self, instance: T, order_lambda: Callable[[T], None], order_type: OrderType) -> None:
