@@ -45,7 +45,6 @@ class IStatements[T: Table](ABC):
     def insert(self, values: T | list[T]) -> None: ...
 
     # endregion
-
     # region upsert
     @overload
     def upsert(self, values: T) -> None:
@@ -76,25 +75,21 @@ class IStatements[T: Table](ABC):
     def update(self, dicc: dict[str | property, Any]) -> None: ...
 
     # endregion
-
     # region limit
     @abstractmethod
     def limit(self, number: int) -> IStatements[T]: ...
 
     # endregion
-
     # region offset
     @abstractmethod
     def offset(self, number: int) -> IStatements[T]: ...
 
     # endregion
-
     # region count
     @abstractmethod
     def count(self, selection: Callable[[T], property]) -> int: ...
 
     # endregion
-
     # region delete
     @overload
     def delete(self) -> None: ...
@@ -108,25 +103,12 @@ class IStatements[T: Table](ABC):
     def delete(self, instance: Optional[T | list[T]] = None) -> None: ...
 
     # endregion
-
     # region join
     @abstractmethod
     def join(self, table_left: Table, table_right: Table, *, by: str) -> IStatements[T]: ...
 
     # endregion
-
     # region where
-    @overload
-    def where(self, lambda_: Callable[[T], bool]) -> IStatements[T]:
-        """
-        This method creates where clause by passing the lambda's condition
-
-        EXAMPLE
-        -
-        mb = BaseModel()
-        mb.where(lambda a: 10 <= a.city_id <= 100)
-        """
-        ...
 
     @overload
     def where(self, lambda_: Callable[[T], Iterable]) -> IStatements[T]:
@@ -160,7 +142,6 @@ class IStatements[T: Table](ABC):
     def where(self, lambda_: Callable[[T], bool] = lambda: None, **kwargs) -> IStatements[T]: ...
 
     # endregion
-
     # region order
     @overload
     def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> IStatements[T]: ...
@@ -212,7 +193,6 @@ class IStatements[T: Table](ABC):
     def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Type[TFlavour] = None, by: JoinType = JoinType.INNER_JOIN): ...
 
     # endregion
-
     # region select_one
     @overload
     def select_one(self) -> T: ...
@@ -234,7 +214,6 @@ class IStatements[T: Table](ABC):
     def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Type[TFlavour] = None, by: Optional[Enum] = JoinType.INNER_JOIN): ...
 
     # endregion
-
     # region group_by
     @abstractmethod
     def group_by[TRepo, *Ts](self, column: Callable[[T], TRepo], select_query: Callable[[T], tuple[*Ts]]) -> tuple[tuple[*Ts]]: ...
