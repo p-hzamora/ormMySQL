@@ -151,7 +151,18 @@ class IStatements[T: Table](ABC):
     def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> IStatements[T]: ...
 
     # endregion
+    # region concat
+    @overload
+    def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]]) -> IAggregate[T]: ...
 
+    # endregion
+    # region max
+    @overload
+    def max[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "max") -> TProp: ...
+    @overload
+    def min[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "min") -> TProp: ...
+
+    # endregion
     # region select
     @overload
     def select(self) -> tuple[T, ...]: ...
