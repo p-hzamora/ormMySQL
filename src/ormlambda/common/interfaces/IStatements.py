@@ -163,9 +163,10 @@ class IStatements[T: Table](ABC):
     # region max
     @overload
     def max[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "max") -> TProp: ...
+    # endregion
+    # region min
     @overload
     def min[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "min") -> TProp: ...
-
     # endregion
     # region select
     @overload
