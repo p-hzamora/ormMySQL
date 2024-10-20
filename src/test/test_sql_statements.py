@@ -1,4 +1,5 @@
 from __future__ import annotations
+from decimal import Decimal
 import unittest
 import sys
 from pathlib import Path
@@ -516,9 +517,9 @@ class TestAggregateFunctions(unittest.TestCase):
         self.assertDictEqual(select, dicc)
 
     def test_sum_function(self) -> None:
-        select = self.model.select(lambda x: self.model.sum(lambda x: x.Col10, alias_name="custom_sum"), flavour=dict)
-        dicc = {"custom_sum": ""}
-        self.assertEqual(select, "")
+        select = self.model.select_one(lambda x: self.model.sum(lambda x: x.Col10, alias_name="custom_sum"), flavour=dict)
+        dicc = {"custom_sum": Decimal("55")}
+        self.assertEqual(select, dicc)
 
 
 if __name__ == "__main__":
