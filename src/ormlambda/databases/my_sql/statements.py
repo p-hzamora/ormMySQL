@@ -215,8 +215,14 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return tuple([res[0] for res in response])
 
     @override
-    def group_by[TRepo, *Ts](self, column: Callable[[T], TRepo], select_query: Callable[[T], tuple[*Ts]]) -> tuple[tuple[*Ts]]:
-        return GroupBy[T, TRepo, tuple[*Ts]](self._model, column, select_query)
+    def group_by[*Ts](self, column: str | Callable[[T], Any]) -> IStatements_two_generic[T, MySQLConnection]:
+        if isinstance(column, str):
+            groupby = GroupBy[T, tuple[*Ts]](self._model, lambda x: column)
+        else:
+            groupby = GroupBy[T, tuple[*Ts]](self._model, column)
+        # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
+        self._query_list["group by"].append(groupby)
+        return self
 
     @override
     def _build(self) -> str:

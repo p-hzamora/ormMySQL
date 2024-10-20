@@ -239,7 +239,7 @@ class IStatements[T: Table](ABC):
     # endregion
     # region group_by
     @abstractmethod
-    def group_by[TRepo, *Ts](self, column: Callable[[T], TRepo], select_query: Callable[[T], tuple[*Ts]]) -> tuple[tuple[*Ts]]: ...
+    def group_by[TRepo, *Ts](self, column: Callable[[T], TRepo]) -> IStatements[T]: ...
 
     # endregion
 

@@ -25,8 +25,6 @@ class GroupBy[T: tp.Type[Table], TProp](DecompositionQueryBase[T], IAggregate[T]
             by=by,
         )
 
-        self._column: TProp = column
-
     def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
         return None
 
