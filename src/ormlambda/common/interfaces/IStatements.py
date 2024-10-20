@@ -166,7 +166,14 @@ class IStatements[T: Table](ABC):
     # endregion
     # region min
     @overload
-    def min[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "min") -> TProp: ...
+    # region sum
+    @overload
+    def sum[TProp](
+        self,
+        column: Callable[[T], TProp],
+        alias: bool = ...,
+        alias_name: Optional[str] = ...,
+    ) -> TProp: ...
     # endregion
     # region select
     @overload

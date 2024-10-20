@@ -173,6 +173,10 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return func.Min[T](self._model, column=column, alias=alias, alias_name=alias_name)
 
     @override
+    def sum[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "sum") -> TProp:
+        return func.Sum[T](self._model, column=column, alias=alias, alias_name=alias_name)
+
+    @override
     def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
         if len(inspect.signature(selector).parameters) == 0:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
