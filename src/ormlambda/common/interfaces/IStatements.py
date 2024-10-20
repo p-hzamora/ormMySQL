@@ -91,7 +91,12 @@ class IStatements[T: Table](ABC):
     # endregion
     # region count
     @abstractmethod
-    def count(self, selection: Callable[[T], property]) -> int: ...
+    def count(
+        self,
+        selection: Callable[[T], property],
+        alias: bool = ...,
+        alias_name: Optional[str] = ...,
+    ) -> int: ...
 
     # endregion
     # region delete
@@ -162,10 +167,22 @@ class IStatements[T: Table](ABC):
     # endregion
     # region max
     @overload
-    def max[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "max") -> TProp: ...
+    def max[TProp](
+        self,
+        column: Callable[[T], TProp],
+        alias: bool = ...,
+        alias_name: Optional[str] = ...,
+    ) -> TProp: ...
     # endregion
     # region min
     @overload
+    def min[TProp](
+        self,
+        column: Callable[[T], TProp],
+        alias: bool = ...,
+        alias_name: Optional[str] = ...,
+    ) -> TProp: ...
+    # endregion
     # region sum
     @overload
     def sum[TProp](
