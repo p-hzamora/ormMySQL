@@ -51,13 +51,13 @@ class CountTest(unittest.TestCase):
         return insert_values
 
     def test_count_all_rows(self):
-        n_before_insert = self.model.count()
+        n_before_insert = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
 
         self.model.insert(self.TableCount_generator(4))
-        n_after_insert = self.model.count()
+        n_after_insert = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
 
         self.model.delete()
-        n_after_delete = self.model.count()
+        n_after_delete = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
 
         self.assertEqual(n_before_insert, 0)
         self.assertEqual(n_after_insert, 4)
@@ -66,7 +66,7 @@ class CountTest(unittest.TestCase):
     def test_count_when_filtering(self):
         self.model.insert(self.TableCount_generator(100))
 
-        n_select = self.model.where(lambda x: 50 <= x.pos <= 70).count()
+        n_select = self.model.where(lambda x: 50 <= x.pos <= 70).select_one(lambda x: self.model.count(), flavour=tuple)[0]
 
         self.assertEqual(n_select, 21)
 
@@ -84,10 +84,10 @@ class CountTest(unittest.TestCase):
             insert.append(table_count)
 
         self.model.insert(insert)
-        n = self.model.count(lambda x: x.a)
-        n_20 = self.model.where(lambda x: x.a == 20).count()
-        n_80 = self.model.where(lambda x: x.a == 80).count()
-        n_100 = self.model.where(lambda x: x.a == 100).count()
+        n = self.model.select_one(lambda x: self.model.count(),flavour=tuple)[0]
+        n_20 = self.model.where(lambda x: x.a == 20).select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n_80 = self.model.where(lambda x: x.a == 80).select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n_100 = self.model.where(lambda x: x.a == 100).select_one(lambda x: self.model.count(), flavour=tuple)[0]
 
         self.assertEqual(n, 100)
         self.assertEqual(n_20, 20)
