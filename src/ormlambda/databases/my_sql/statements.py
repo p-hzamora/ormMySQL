@@ -128,11 +128,13 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return self
 
     @override
-    def count(self, selection: Callable[[T], tuple] = lambda x: "*") -> int:
-        count_select: IQuery = Select[T](self._model, lambda x: Count[T](self._model, selection))
-        self._query_list["select"].append(count_select)
-        query = self._build()
-        return self.repository.read_sql(query)[0][0]
+    def count(
+        self,
+        selection: Callable[[T], tuple] = lambda x: "*",
+        alias=True,
+        alias_name=None,
+    ) -> IQuery:
+        return Count[T](self._model, selection, alias=alias, alias_name=alias_name)
 
     @override
     def join(self, table_left: Table, table_right: Table, *, by: str) -> IStatements_two_generic[T, MySQLConnection]:
