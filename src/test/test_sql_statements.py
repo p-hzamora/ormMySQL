@@ -515,6 +515,11 @@ class TestAggregateFunctions(unittest.TestCase):
         self.assertTrue("min_with_alias" in select)
         self.assertDictEqual(select, dicc)
 
+    def test_sum_function(self) -> None:
+        select = self.model.select(lambda x: self.model.sum(lambda x: x.Col10, alias_name="custom_sum"), flavour=dict)
+        dicc = {"custom_sum": ""}
+        self.assertEqual(select, "")
+
 
 if __name__ == "__main__":
     unittest.main(failfast=True)
