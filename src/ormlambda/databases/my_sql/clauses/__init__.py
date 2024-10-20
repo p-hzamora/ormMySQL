@@ -13,4 +13,4 @@ from .update import UpdateQuery as UpdateQuery
 from .upsert import UpsertQuery as UpsertQuery
 from .where_condition import WhereCondition as WhereCondition
 from .count import Count as Count
-from ..functions.group_by import GroupBy as GroupBy
+from .group_by import GroupBy as GroupBy
