@@ -66,7 +66,16 @@ class ClusterQuery[T]:
         self._select: DecompositionQueryBase[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
 
-    def loop_foo(self) -> dict[Type[Table], list[Table]]:
+    def clean_response(self) -> tuple[dict[Type[Table], tuple[Table]]]:
+        tbl_dicc: dict[Type[Table], list[Table]] = self.__loop_foo()
+
+        # it not depend of flavour attr
+        for key, val in tbl_dicc.items():
+            tbl_dicc[key] = tuple(val)
+
+        return tuple(tbl_dicc.values())
+    
+    def __loop_foo(self) -> dict[Type[Table], list[Table]]:
         #  We must ensure to get the valid attributes for each instance
         table_initialize = defaultdict(list)
 
@@ -75,7 +84,7 @@ class ClusterQuery[T]:
                 valid_attr: dict[str, Any] = {}
                 for clause in clauses:
                     if not hasattr(table, clause.column):
-                        agg_methods = self.get_all_aggregate_method(clauses)
+                        agg_methods = self.__get_all_aggregate_method(clauses)
                         raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'.")
                     valid_attr[clause.column] = dicc_cols[clause.alias]
 
@@ -83,7 +92,7 @@ class ClusterQuery[T]:
                 table_initialize[table].append(table(**valid_attr))
         return table_initialize
 
-    def get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
+    def __get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
         res: set[str] = set()
 
         for clause in clauses:
@@ -92,11 +101,3 @@ class ClusterQuery[T]:
                 res.add(row.__class__.__name__)
         return ", ".join(res)
 
-    def clean_response(self) -> tuple[dict[Type[Table], tuple[Table]]]:
-        tbl_dicc: dict[Type[Table], list[Table]] = self.loop_foo()
-
-        # it not depend of flavour attr
-        for key, val in tbl_dicc.items():
-            tbl_dicc[key] = tuple(val)
-
-        return tuple(tbl_dicc.values())
