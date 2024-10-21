@@ -114,17 +114,13 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     def limit(self, number: int) -> IStatements_two_generic[T, MySQLConnection]:
         limit = LimitQuery(number)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
-        limit_list = self._query_list["limit"]
-        if len(limit_list) > 0:
-            self._query_list["limit"] = [limit]
-        else:
-            self._query_list["limit"].append(limit)
+        self._query_list["limit"] = [limit]
         return self
 
     @override
     def offset(self, number: int) -> IStatements_two_generic[T, MySQLConnection]:
         offset = OffsetQuery(number)
-        self._query_list["offset"].append(offset)
+        self._query_list["offset"] = [offset]
         return self
 
     @override
@@ -228,8 +224,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
 
     @override
     def _build(self) -> str:
-        query: str = ""
-
+        query_list:list[str] = []
         for x in self.__order__:
             sub_query: Optional[list[IQuery]] = self._query_list.get(x, None)
             if sub_query is None:
@@ -256,9 +251,9 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
             else:
                 query_ = "\n".join([x.query for x in sub_query])
 
-            query += f"\n{query_}" if query != "" else query_
+            query_list.append(query_)
         self._query_list.clear()
-        return query
+        return "\n".join(query_list)
 
     def __build_where_clause(self, where_condition: list[AbstractWhere]) -> str:
         query: str = where_condition[0].query
