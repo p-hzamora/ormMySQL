@@ -205,11 +205,27 @@ class TestSQLStatements(unittest.TestCase):
         select_one = self.tmodel.select_one()
         self.assertEqual(limit[0], select_one)
 
+    def test_only_last_added_limit_is_available(self):
+        instance = create_instance_of_TestTable(20)
+        self.tmodel.insert(instance)
+
+        limit = self.tmodel.limit(10).limit(5).limit(1).select()
+        select_one = self.tmodel.select_one()
+        self.assertEqual(limit[0], select_one)
+
     def test_offset(self):
         instance = create_instance_of_TestTable(21)
         self.tmodel.insert(instance)
 
         offset = self.tmodel.offset(10).select_one()
+        select_row_11 = self.tmodel.where(lambda x: x.Col1 == 11).select_one()
+        self.assertEqual(offset, select_row_11)
+
+    def test_only_last_offset_is_available(self):
+        instance = create_instance_of_TestTable(21)
+        self.tmodel.insert(instance)
+
+        offset = self.tmodel.offset(10).offset(5).offset(10).select_one()
         select_row_11 = self.tmodel.where(lambda x: x.Col1 == 11).select_one()
         self.assertEqual(offset, select_row_11)
 
