@@ -73,6 +73,17 @@ class ClauseInfo[T: tp.Type[Table]]:
 
 
 class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
+    @tp.overload
+    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]]) -> None: ...
+    @tp.overload
+    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ...) -> None: ...
+    @tp.overload
+    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ..., alias_name: tp.Optional[str] = ...) -> None: ...
+    @tp.overload
+    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ...) -> None: ...
+    @tp.overload
+    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
+
     def __init__[*Ts](
         self,
         table: T,
