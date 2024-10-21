@@ -10,6 +10,7 @@ import test_sql_statements
 import test_table_class
 import test_tree_instruction
 import test_type_hint
+import test_order
 
 from test_queries import (
     test_join_selector,
@@ -41,6 +42,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_table),
         *loader.loadTestsFromModule(test_where_condition),
         *loader.loadTestsFromModule(test_count),
+        *loader.loadTestsFromModule(test_order),
     )
 )
 
