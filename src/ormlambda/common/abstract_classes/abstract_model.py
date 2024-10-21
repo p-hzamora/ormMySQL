@@ -74,7 +74,7 @@ class ClusterQuery[T]:
             tbl_dicc[key] = tuple(val)
 
         return tuple(tbl_dicc.values())
-    
+
     def __loop_foo(self) -> dict[Type[Table], list[Table]]:
         #  We must ensure to get the valid attributes for each instance
         table_initialize = defaultdict(list)
@@ -100,4 +100,3 @@ class ClusterQuery[T]:
             if isinstance(row, IAggregate):
                 res.add(row.__class__.__name__)
         return ", ".join(res)
-

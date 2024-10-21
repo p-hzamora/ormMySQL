@@ -238,7 +238,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     @override
     @clear_list
     def _build(self) -> str:
-        query_list:list[str] = []
+        query_list: list[str] = []
         for x in self.__order__:
             sub_query: Optional[list[IQuery]] = self._query_list.get(x, None)
             if sub_query is None:

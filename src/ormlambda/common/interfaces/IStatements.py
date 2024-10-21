@@ -19,7 +19,7 @@ class OrderType(enum.Enum):
 
 OrderTypeString = Literal["ASC", "DESC"]
 
-OrderTypes = OrderTypeString | OrderType| Iterable[OrderType]
+OrderTypes = OrderTypeString | OrderType | Iterable[OrderType]
 
 # TODOH: This var is duplicated from 'src\ormlambda\databases\my_sql\clauses\create_database.py'
 TypeExists = Literal["fail", "replace", "append"]

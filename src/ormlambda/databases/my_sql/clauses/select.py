@@ -35,13 +35,12 @@ class Select[T: Type[Table]](DecompositionQueryBase[T]):
     @override
     @property
     def query(self) -> str:
-        cols:list[str] = []
+        cols: list[str] = []
         for x in self.all_clauses:
             cols.append(x.query)
 
-            if isinstance(x._row_column,IAggregate) and x._row_column.has_foreign_keys:
+            if isinstance(x._row_column, IAggregate) and x._row_column.has_foreign_keys:
                 self._fk_relationship.update(x._row_column.fk_relationship)
-
 
         col: str = ", ".join(cols)
         query: str = f"{self.CLAUSE} {col} FROM {self._table.__table_name__}"

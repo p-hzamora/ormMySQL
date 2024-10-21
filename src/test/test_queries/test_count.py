@@ -84,7 +84,7 @@ class CountTest(unittest.TestCase):
             insert.append(table_count)
 
         self.model.insert(insert)
-        n = self.model.select_one(lambda x: self.model.count(),flavour=tuple)[0]
+        n = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
         n_20 = self.model.where(lambda x: x.a == 20).select_one(lambda x: self.model.count(), flavour=tuple)[0]
         n_80 = self.model.where(lambda x: x.a == 80).select_one(lambda x: self.model.count(), flavour=tuple)[0]
         n_100 = self.model.where(lambda x: x.a == 100).select_one(lambda x: self.model.count(), flavour=tuple)[0]
