@@ -7,7 +7,7 @@ import functools
 if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.components.where.abstract_where import AbstractWhere
-    from ormlambda.common.interfaces.IStatements import OrderType
+    from ormlambda.common.interfaces.IStatements import OrderTypes
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
     from ormlambda.common.interfaces import IAggregate
@@ -166,7 +166,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return self
 
     @override
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> IStatements_two_generic[T, MySQLConnection]:
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, MySQLConnection]:
         order = OrderQuery[T](self._model, _lambda_col, order_type)
         self._query_list["order"].append(order)
         return self

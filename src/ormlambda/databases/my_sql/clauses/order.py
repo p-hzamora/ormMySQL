@@ -1,33 +1,47 @@
 from __future__ import annotations
-from typing import override, Callable, TYPE_CHECKING
+from typing import override, Callable, TYPE_CHECKING, Any, Iterable
+
+from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+
 
 if TYPE_CHECKING:
     from ormlambda import Table
 
-from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
-from ormlambda.common.interfaces.IQueryCommand import IQuery
+from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 from ormlambda.common.interfaces.IStatements import OrderType
 
-ASC = "ASC"
-DESC = "DESC"
 
-
-class OrderQuery[T:Table](IQuery):
+class OrderQuery[T: Table](DecompositionQueryBase[T]):
     ORDER = "ORDER BY"
 
-    def __init__(self, instance: T, order_lambda: Callable[[T], None], order_type: OrderType) -> None:
-        if not self._valid_order_type(order_type):
-            raise Exception("order_type only can be 'ASC' or 'DESC'")
+    def __init__[*Ts](self, instance: T, lambda_query: Callable[[Any], tuple[*Ts]], order_type: Iterable[OrderType]) -> None:
+        super().__init__(instance, lambda_query)
 
-        self._instance: T = instance
-        self._order_lambda: Callable[[T], None] = order_lambda
-        self._order_type: str = order_type
-        self._column: str = TreeInstruction(order_lambda).to_list()[0].nested_element.name
+        if isinstance(order_type, str) or not isinstance(order_type, Iterable):
+            order_type = (order_type,)
 
-    def _valid_order_type(self, _value: str) -> bool:
-        return _value in (ASC, DESC)
+        self._order_type: list[OrderType] = [self.__cast_to_OrderType(x) for x in order_type]
+
+    def __cast_to_OrderType(self, _value: Any) -> Iterable[OrderType]:
+        if isinstance(_value, OrderType):
+            return _value
+
+        if isinstance(_value, str):
+            try:
+                return OrderType(_value)
+            except Exception:
+                pass
+        raise Exception(f"order_type param only can be 'ASC' or 'DESC' string or '{OrderType.__name__}' enum")
+
+    def alias_children_resolver[Tclause](self, clause_info: ClauseInfo[Tclause]):
+        return None
 
     @override
     @property
     def query(self) -> str:
-        return f"{self.ORDER} {self._instance.__table_name__}.{self._column} {self._order_type}"
+        assert len(self.all_clauses) == len(self._order_type)
+
+        query: list[str] = []
+        for index, x in enumerate(self.all_clauses):
+            query.append(f"{x.query} {self._order_type[index].value}")
+        return f"{self.ORDER} {", ".join(query)}"

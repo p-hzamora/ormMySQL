@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Callable, Iterable, Optional, Literal, Type, Union, overload, TYPE_CHECKING, TypeVar
 from enum import Enum
 from abc import abstractmethod, ABC
+import enum
 
 from .IRepositoryBase import IRepositoryBase
 from ormlambda.common.enums import JoinType
@@ -10,7 +11,15 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from .IAggregate import IAggregate
 
-OrderType = Literal["ASC", "DESC"]
+
+class OrderType(enum.Enum):
+    ASC = "ASC"
+    DESC = "DESC"
+
+
+OrderTypeString = Literal["ASC", "DESC"]
+
+OrderTypes = OrderTypeString | OrderType| Iterable[OrderType]
 
 # TODOH: This var is duplicated from 'src\ormlambda\databases\my_sql\clauses\create_database.py'
 TypeExists = Literal["fail", "replace", "append"]
@@ -155,9 +164,9 @@ class IStatements[T: Table](ABC):
     @overload
     def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> IStatements[T]: ...
     @overload
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> IStatements[T]: ...
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderTypes) -> IStatements[T]: ...
     @abstractmethod
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderType) -> IStatements[T]: ...
+    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderTypes) -> IStatements[T]: ...
 
     # endregion
     # region concat
