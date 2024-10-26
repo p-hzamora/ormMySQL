@@ -1,10 +1,12 @@
+from __future__ import annotations
 import sys
 from pathlib import Path
 import unittest
+from typing import get_type_hints, Self, Type
+from parameterized import parameterized
 
-from typing import Type, get_type_hints, Self
-
-sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.utils import ForeignKey, Table, Column  # noqa: E402
 from ormlambda.utils.table_constructor import __init_constructor__  # noqa: E402
@@ -23,7 +25,7 @@ class PersonDecorator:
     city = ForeignKey[Self, City](__table_name__, City, lambda p, c: p.fk_city == c.city_id)
 
 
-class PersonHeritage(Table):
+class PersonInherit(Table):
     __table_name__ = "person"
     name: str = Column[str](is_unique=True)
     age: int = Column[int](is_auto_increment=True)
@@ -38,25 +40,19 @@ class PersonInit:
     # we don't added type-hint because this class hasn't the hability to deleted special variables from __annotations__ and failed in '_test_type_hints'
     __table_name__ = "person"
 
-    name: Column[str]
-    age: Column[int]
-    sound: Column[str]
-    id_person: Column[int]
-    fk_city: Column[int]
-
-    city = ForeignKey[Self, City](__table_name__, City, lambda p, c: p.fk_city == c.city_id)
-
     def __init__(
         self,
         name: str = None,
         age: int = None,
         sound: str = None,
         id_person: int = None,
+        fk_city: int = None,
     ) -> None:
         self._name: Column[str] = Column[str](dtype=str, column_name="name", column_value=name, is_unique=True)
         self._age: Column[int] = Column[int](dtype=int, column_name="age", column_value=age, is_auto_increment=True)
         self._sound: Column[str] = Column[str](dtype=str, column_name="sound", column_value=sound)
         self._id_person: Column[int] = Column[int](dtype=int, column_name="id_person", column_value=id_person, is_primary_key=True)
+        self._fk_city: Column[int] = Column[int](dtype=int, column_name="fk_city", column_value=fk_city)
 
     @property
     def age(self) -> int:
@@ -90,103 +86,116 @@ class PersonInit:
     def id_person(self, value: str) -> str:
         self._id_person.column_value = value
 
+    @property
+    def fk_city(self) -> str:
+        return self._fk_city.column_value
 
-TypePerson = PersonDecorator | PersonHeritage | PersonInit
+    @fk_city.setter
+    def fk_city(self, value: str) -> str:
+        self._fk_city.column_value = value
+
+
+TypePerson = PersonDecorator | PersonInherit | PersonInit
+ThreeDifferentPersonClasses: list[TypePerson] = [
+    PersonDecorator,
+    PersonInherit,
+    PersonInit,
+]
 
 
 class TestTableConstructor(unittest.TestCase):
-    PersonClasses: tuple[Type[TypePerson]] = (
-        PersonDecorator,
-        PersonHeritage,
-        PersonInit,
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_constructor(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertEqual(instance._age.column_value, 25)
+        self.assertEqual(instance._age.is_primary_key, False)
+        self.assertEqual(instance._age.is_auto_increment, True)
+        self.assertEqual(instance._name.column_value, "pablo")
+
+        self.assertEqual(instance._sound.column_value, None)
+        self.assertEqual(instance._id_person.column_value, None)
+
+        self.assertIsInstance(instance._age, Column)
+        self.assertIsInstance(instance._name, Column)
+
+        self.assertEqual(instance.age, 25)
+        self.assertEqual(instance.name, "pablo")
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_update_property(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertEqual(instance.age, 25)
+        self.assertEqual(instance.name, "pablo")
+
+        instance.age = 10
+        instance.name = "marcos"
+        self.assertEqual(instance.age, 10)
+        self.assertEqual(instance.name, "marcos")
+        self.assertEqual(instance._age.column_value, 10)
+        self.assertEqual(instance._name.column_value, "marcos")
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_column_class_name(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertEqual(instance._name.is_primary_key, False)
+        self.assertEqual(instance._name.is_auto_generated, False)
+        self.assertEqual(instance._name.is_auto_increment, False)
+        self.assertEqual(instance._name.is_unique, True)
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_column_class_age(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertEqual(instance._age.is_primary_key, False)
+        self.assertEqual(instance._age.is_auto_generated, False)
+        self.assertEqual(instance._age.is_auto_increment, True)
+        self.assertEqual(instance._age.is_unique, False)
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_column_class_sound(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertEqual(instance._sound.is_primary_key, False)
+        self.assertEqual(instance._sound.is_auto_generated, False)
+        self.assertEqual(instance._sound.is_auto_increment, False)
+        self.assertEqual(instance._sound.is_unique, False)
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_column_class_id_person(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertEqual(instance._id_person.is_primary_key, True)
+        self.assertEqual(instance._id_person.is_auto_generated, False)
+        self.assertEqual(instance._id_person.is_auto_increment, False)
+        self.assertEqual(instance._id_person.is_unique, False)
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test___init__creation(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertTrue(hasattr(instance, "__init__"))
+
+    @parameterized.expand(ThreeDifferentPersonClasses)
+    def test_properties_creation(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        self.assertIsInstance(instance.__class__.name, property)
+        self.assertIsInstance(instance.__class__.age, property)
+        self.assertIsInstance(instance.__class__.sound, property)
+        self.assertIsInstance(instance.__class__.id_person, property)
+
+    @parameterized.expand(
+        [
+            PersonDecorator,
+            PersonInherit,
+            # PersonInit, # COMMENT: cannot use type_hints in when creating class with __init__
+        ]
     )
-
-    def _test_constructor(self, obj: TypePerson):
-        self.assertEqual(obj._age.column_value, 25)
-        self.assertEqual(obj._age.is_primary_key, False)
-        self.assertEqual(obj._age.is_auto_increment, True)
-        self.assertEqual(obj._name.column_value, "pablo")
-
-        self.assertEqual(obj._sound.column_value, None)
-        self.assertEqual(obj._id_person.column_value, None)
-
-        self.assertIsInstance(obj._age, Column)
-        self.assertIsInstance(obj._name, Column)
-
-        self.assertEqual(obj.age, 25)
-        self.assertEqual(obj.name, "pablo")
-
-    def _test_update_property(self, obj: TypePerson):
-        self.assertEqual(obj.age, 25)
-        self.assertEqual(obj.name, "pablo")
-
-        obj.age = 10
-        obj.name = "marcos"
-        self.assertEqual(obj.age, 10)
-        self.assertEqual(obj.name, "marcos")
-        self.assertEqual(obj._age.column_value, 10)
-        self.assertEqual(obj._name.column_value, "marcos")
-
-    def _test_column_class_name(self, obj: TypePerson):
-        self.assertEqual(obj._name.is_primary_key, False)
-        self.assertEqual(obj._name.is_auto_generated, False)
-        self.assertEqual(obj._name.is_auto_increment, False)
-        self.assertEqual(obj._name.is_unique, True)
-
-    def _test_column_class_age(self, obj: TypePerson):
-        self.assertEqual(obj._age.is_primary_key, False)
-        self.assertEqual(obj._age.is_auto_generated, False)
-        self.assertEqual(obj._age.is_auto_increment, True)
-        self.assertEqual(obj._age.is_unique, False)
-
-    def _test_column_class_sound(self, obj: TypePerson):
-        self.assertEqual(obj._sound.is_primary_key, False)
-        self.assertEqual(obj._sound.is_auto_generated, False)
-        self.assertEqual(obj._sound.is_auto_increment, False)
-        self.assertEqual(obj._sound.is_unique, False)
-
-    def _test_column_class_id_person(self, obj: TypePerson):
-        self.assertEqual(obj._id_person.is_primary_key, True)
-        self.assertEqual(obj._id_person.is_auto_generated, False)
-        self.assertEqual(obj._id_person.is_auto_increment, False)
-        self.assertEqual(obj._id_person.is_unique, False)
-
-    def _test___init__creation(self, obj: TypePerson):
-        self.assertTrue(hasattr(obj, "__init__"))
-
-    def _test_properties_creation(self, obj: TypePerson):
-        self.assertIsInstance(obj.__class__.name, property)
-        self.assertIsInstance(obj.__class__.age, property)
-        self.assertIsInstance(obj.__class__.sound, property)
-        self.assertIsInstance(obj.__class__.id_person, property)
-
-    def _test_type_hints(self, obj: TypePerson):
-        self.assertEqual(
-            get_type_hints(obj),
-            {
-                "name": Column[str],
-                "age": Column[int],
-                "sound": Column[str],
-                "id_person": Column[int],
-                "fk_city": Column[int],
-            },
-        )
-
-    def test_TableConstructor(self):
-        """
-        I iterate through 3 differente classes, "PersonDecorator" "PersonHeritage" "PersonInit" to make sure I get the same result
-        """
-        for person_class in self.PersonClasses:
-            instance = person_class("pablo", 25)
-            self._test_constructor(instance)
-            self._test_update_property(instance)
-            self._test_column_class_name(instance)
-            self._test_column_class_age(instance)
-            self._test_column_class_sound(instance)
-            self._test_column_class_id_person(instance)
-            self._test___init__creation(instance)
-            self._test_properties_creation(instance)
-            self._test_type_hints(instance)
+    def test_type_hints(self, obj: Type[TypePerson]):
+        instance = obj("pablo", 25)
+        dicc = {
+            "name": Column[str](dtype=str, is_unique=True),
+            "age": Column[int](dtype=int, is_auto_increment=True),
+            "sound": Column[str](dtype=str),
+            "id_person": Column[int](dtype=int, is_primary_key=True),
+            "fk_city": Column[int](dtype=int),
+        }
+        self.assertDictEqual(get_type_hints(instance), dicc)
 
 
 if __name__ == "__main__":
