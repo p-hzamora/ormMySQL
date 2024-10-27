@@ -1,4 +1,4 @@
-from typing import Any, override, Iterable
+from typing import override, Iterable
 from mysql.connector import MySQLConnection
 
 from ormlambda import Table
@@ -24,13 +24,24 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
 
     @override
     def insert(self, instances: T | list[T]) -> None:
-        new_dict_list: list[dict[str, Any]] = []
-        self.__fill_dict_list(new_dict_list, instances)
-        cols_tuple = new_dict_list[0].keys()
-        join_cols = ", ".join(cols_tuple)
-        unknown_rows = f'({", ".join(["%s"]*len(cols_tuple))})'  # The number of "%s" must match the dict 'dicc_0' length
+        valid_cols: list[list[Column]] = []
+        self.__fill_dict_list(valid_cols, instances)
 
-        self._values = [tuple(x.values()) for x in new_dict_list]
+        col_names: list[str] = []
+        wildcards: list[str] = []
+        col_values: list[list[str]] = []
+        for i, cols in enumerate(valid_cols):
+            col_values.append([])
+            for col in cols:
+                if i == 0:
+                    col_names.append(col.column_name)
+                    wildcards.append(col.placeholder)
+                col_values[-1].append(col.column_value_to_query)
+
+        join_cols = ", ".join(col_names)
+        unknown_rows = f'({", ".join(wildcards)})'  # The number of "%s" must match the dict 'dicc_0' length
+
+        self._values = [tuple(x) for x in col_values]
         self._query = f"{self.CLAUSE} {self._model.__table_name__} {f'({join_cols})'} VALUES {unknown_rows}"
         return None
 
@@ -55,17 +66,18 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
             return False
         return True
 
-    def __fill_dict_list(self, list_dict: list[dict], values: T | list[T]):
+    def __fill_dict_list[TProp](self, list_dict: list[str, TProp], values: T | list[T]) -> list[Column]:
         if issubclass(values.__class__, Table):
-            dicc: dict = {}
+            new_list = []
             for col in values.__dict__.values():
                 if isinstance(col, Column) and self.__is_valid(col):
-                    dicc.update({col.column_name: col.column_value})
-            list_dict.append(dicc)
-            return list_dict
+                    new_list.append(col)
+
+            list_dict.append(new_list)
 
         elif isinstance(values, Iterable):
             for x in values:
                 self.__fill_dict_list(list_dict, x)
         else:
             raise Exception(f"Tipo de dato'{type(values)}' no esperado")
+        return None
