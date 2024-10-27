@@ -10,7 +10,6 @@ from ormlambda.common.interfaces.IAggregate import IAggregate
 
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
-    from ormlambda.components.select import ISelect
     from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
 
 
@@ -46,11 +45,11 @@ class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     @override
     def repository(self) -> IRepositoryBase[TRepo]: ...
 
-    def _return_flavour[TValue](self, query, flavour: Type[TValue]) -> tuple[TValue]:
-        return self._repository.read_sql(query, flavour=flavour)
+    def _return_flavour[TValue](self, query, flavour: Type[TValue], select) -> tuple[TValue]:
+        return self._repository.read_sql(query, flavour=flavour, model=self._model, select=select)
 
-    def _return_model(self, select: ISelect, query: str):
-        response_sql = self._repository.read_sql(query, flavour=dict)  # store all columns of the SQL query
+    def _return_model(self, select, query: str):
+        response_sql = self._repository.read_sql(query, flavour=dict, model=self._model, select=select)  # store all columns of the SQL query
 
         if isinstance(response_sql, Iterable):
             return ClusterQuery[T](select, response_sql).clean_response()
