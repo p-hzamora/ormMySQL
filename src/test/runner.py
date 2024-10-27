@@ -11,6 +11,7 @@ import test_table_class
 import test_tree_instruction
 import test_type_hint
 import test_order
+import test_queries_with_different_datatypes
 
 from test_queries import (
     test_join_selector,
@@ -43,6 +44,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_where_condition),
         *loader.loadTestsFromModule(test_count),
         *loader.loadTestsFromModule(test_order),
+        *loader.loadTestsFromModule(test_queries_with_different_datatypes),
     )
 )
 
