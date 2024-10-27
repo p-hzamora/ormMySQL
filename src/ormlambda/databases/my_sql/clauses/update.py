@@ -27,26 +27,20 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnec
         if not isinstance(dicc, dict):
             raise TypeError
 
-        name_cols: list[str] = []
+        name_cols: list[Column] = []
 
         for col, value in dicc.items():
-            if isinstance(col, str):
-                string_col = col
-            else:
-                string_col = self._model.__properties_mapped__.get(col, None)
-                if not string_col:
-                    raise KeyError(f"Class '{self._model.__name__}' has not {col} mapped.")
-            if self.__is_valid__(string_col, value):
-                name_cols.append(string_col)
-                self._values.append(value)
+            col: Column = self._model.get_column(col, value)
 
-        set_query: str = ",".join(["=".join([col, "%s"]) for col in name_cols])
+            if self.__is_valid__(col):
+                name_cols.append(col)
+                self._values.append(col.column_value_to_query)
+
+        set_query: str = ",".join(["=".join([col.column_name, col.placeholder]) for col in name_cols])
 
         self._query = f"{self.CLAUSE} {self._model.__table_name__} SET {set_query}"
+        self._values = tuple(self._values)
         return None
 
-    def __is_valid__(self, col: str, value: Any) -> bool:
-        instance_table: Table = self._model(**{col: value})
-
-        column: Column = getattr(instance_table, f"_{col}")
-        return not column.is_auto_generated
+    def __is_valid__(self, col: Column) -> bool:
+        return not col.is_auto_generated
