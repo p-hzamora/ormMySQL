@@ -109,6 +109,11 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
 
         self.__clauses_list_generetor(lambda_query)
 
+    def __getitem__(self, key: str) -> ClauseInfo:
+        for clause in self._all_clauses:
+            if clause.alias == key:
+                return clause
+
     def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
         DEFAULT_ALIAS: str = f"{clause_info._table.__table_name__}_{clause_info._column}"
 
