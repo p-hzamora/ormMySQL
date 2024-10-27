@@ -1,75 +1,21 @@
+from __future__ import annotations
+from decimal import Decimal
+from typing import Any, Optional, Type, dataclass_transform, overload, TYPE_CHECKING
 import base64
 import datetime
-from decimal import Decimal
-from typing import Any, Iterable, Optional, Type, dataclass_transform, get_type_hints
 import json
 
-from .dtypes import get_query_clausule
-from .module_tree.dfs_traversal import DFSTraversal
+import shapely as sph
+
+
 from .column import Column
-
+from .dtypes import get_query_clausule
+from .fields import get_fields
 from .foreign_key import ForeignKey, TableInfo
+from .module_tree.dfs_traversal import DFSTraversal
 
-MISSING = Column()
-
-
-class Field:
-    def __init__(self, name: str, type_: Type, default: object) -> None:
-        self.name: str = name
-        self.type_: Type = type_
-        self.default: Column = default
-
-    def __repr__(self) -> str:
-        return f"{Field.__name__}(name = {self.name}, type_ = {self.type_}, default = {self.default})"
-
-    @property
-    def has_default(self) -> bool:
-        return self.default is not MISSING
-
-    @property
-    def init_arg(self) -> str:
-        # default = f"={self.default_name if self.has_default else None}"
-        default = f"={None}"
-
-        return f"{self.name}: {self.type_name}{default}"
-
-    @property
-    def default_name(self) -> str:
-        return f"_dflt_{self.name}"
-
-    @property
-    def type_name(self) -> str:
-        return f"_type_{self.name}"
-
-    @property
-    def assginment(self) -> str:
-        return f"self._{self.name} = {self.default.__to_string__(self.name,self.name,self.type_name)}"
-
-
-def delete_special_variables(dicc: dict[str, object]) -> None:
-    keys = tuple(dicc.keys())
-    for key in keys:
-        if key.startswith("__"):
-            del dicc[key]
-
-
-def get_fields[T](cls: Type[T]) -> Iterable[Field]:
-    # COMMENT: Used the 'get_type_hints' method to resolve typing when 'from __future__ import annotations' is in use
-    annotations = {key: val for key, val in get_type_hints(cls).items() if not key.startswith("_")}
-
-    # delete_special_variables(annotations)
-    fields = []
-    for name, type_ in annotations.items():
-        # type_ must by Column object
-        field_type = type_
-        if hasattr(type_, "__origin__") and type_.__origin__ is Column:  # __origin__ to get type of Generic value
-            field_type = type_.__args__[0]
-        default: Column = getattr(cls, name, MISSING)
-        fields.append(Field(name, field_type, default))
-
-        # Update __annotations__ to create Columns
-        cls.__annotations__[name] = Column[field_type]
-    return fields
+if TYPE_CHECKING:
+    from .fields import Field
 
 
 @dataclass_transform()
@@ -78,23 +24,32 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
     # TODOL: I don't know if it's better to create a global dictionary like in commit '7de69443d7a8e7264b8d5d604c95da0e5d7e9cc0'
     setattr(cls, "__properties_mapped__", {})
     fields = get_fields(cls)
-    locals_ = {}
-    init_args = []
+
+    locals_: dict[str, Any] = {}
+    init_args: list[str] = ["self"]
+    assignments: list[str] = []
 
     for field in fields:
-        if not field.name.startswith("__"):
-            locals_[field.type_name] = field.type_
+        if field.name.startswith("__"):
+            continue
 
-            init_args.append(field.init_arg)
-            locals_[field.default_name] = None  # field.default.column_value
-            __create_properties(cls, field)
+        locals_[field.type_name] = field.type_
+        locals_[field.default_name] = field.default.column_value
+
+        init_args.append(field.init_arg)
+        assignments.append(field.assginment)
+        __create_properties(cls, field)
+
+    string_locals_ = ", ".join(locals_)
+    string_init_args = ", ".join(init_args)
+    string_assignments = "\n\t\t".join(assignments)
 
     wrapper_fn = "\n".join(
         [
-            f"def wrapper({', '.join(locals_.keys())}):",
-            f" def __init__(self, {', '.join(init_args)}):",
-            "\n".join([f"  {f.assginment}" for f in fields]) or "  pass",
-            " return __init__",
+            f"def wrapper({string_locals_}):",
+            f"\n\tdef __init__({string_init_args}):",
+            f"\n\t\t{string_assignments}",
+            "\treturn __init__",
         ]
     )
 
@@ -109,33 +64,17 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
 
 def __create_properties(cls: Type["Table"], field: Field) -> property:
     _name: str = f"_{field.name}"
-    type_ = field.type_
+
     # we need to get Table attributes (Column class) and then called __getattribute__ or __setattr__ to make changes inside of Column
     prop = property(
-        fget=lambda self: __transform_getter(getattr(self, _name), type_),
-        fset=lambda self, value: __transform_setter(getattr(self, _name), value, type_),
+        fget=lambda self: getattr(self, _name).__getattribute__("column_value"),
+        fset=lambda self, value: getattr(self, _name).__setattr__("column_value", value),
     )
 
     # set property in public name
     setattr(cls, field.name, prop)
     cls.__properties_mapped__[prop] = field.name
     return None
-
-
-def __transform_getter[T](obj: object, type_: T) -> T:
-    return obj.__getattribute__("column_value")
-
-    # if type_ is str and isinstance(eval(obj), Iterable):
-    #     getter = eval(obj)
-    # return getter
-
-
-def __transform_setter[T](obj: object, value: Any, type_: T) -> None:
-    return obj.__setattr__("column_value", value)
-
-    # if type_ is list:
-    #     setter = str(setter)
-    # return None
 
 
 class TableMeta(type):
@@ -244,6 +183,7 @@ class Table(metaclass=TableMeta):
             Decimal: str,
             bytes: byte_to_string,
             set: list,
+            sph.Point: lambda x: sph.to_wkt(x, rounding_precision=-1),
         }
 
         if (dtype := type(_value)) in transform_map:
@@ -324,3 +264,35 @@ class Table(metaclass=TableMeta):
                 )
             )
         return False
+
+    @classmethod
+    def get_property_name(cls, _property: property) -> str:
+        name: str = cls.__properties_mapped__.get(_property, None)
+        if not name:
+            raise KeyError(f"Class '{cls.__name__}' has not propery '{_property}' mapped.")
+        return name
+
+    @overload
+    @classmethod
+    def get_column(cls, column: str) -> Column: ...
+    @overload
+    @classmethod
+    def get_column(cls, column: property) -> Column: ...
+    @overload
+    @classmethod
+    def get_column[TProp](cls, column: property, value: TProp) -> Column[TProp]: ...
+    @overload
+    @classmethod
+    def get_column[TProp](cls, column: str, value: TProp) -> Column[TProp]: ...
+    @classmethod
+    def get_column[TProp](cls, column: str | property, value: Optional[TProp] = None) -> Column[TProp]:
+        if isinstance(column, property):
+            _column = cls.get_property_name(column)
+        elif isinstance(column, str) and column in cls.get_columns():
+            _column = column
+        else:
+            raise ValueError(f"'Column' param with value'{column}' is not expected.")
+
+        instance_table: Table = cls(**{_column: value})
+
+        return getattr(instance_table, f"_{_column}")
