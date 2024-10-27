@@ -1,7 +1,8 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, Optional, Type, override, Callable
+from typing import Any, Optional, Type, override, Callable, TYPE_CHECKING
 import functools
+import shapely as shp
 
 # from mysql.connector.pooling import MySQLConnectionPool
 from mysql.connector import MySQLConnection, Error  # noqa: F401
@@ -16,12 +17,20 @@ from .clauses import DropDatabase
 from .clauses import DropTable
 
 
+if TYPE_CHECKING:
+    from src.ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+    from ormlambda import Table
+    from src.ormlambda.databases.my_sql.clauses.select import Select
+
+
 class Response[TFlavour, *Ts]:
-    def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], **kwargs) -> None:
+    def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], model: Optional[Table] = None, select: Optional[Select] = None, **kwargs) -> None:
         self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
         self._flavour: Type[TFlavour] = flavour
         self._kwargs: dict[str, Any] = kwargs
+        self._model: Table = model
+        self._select: Select = select
 
         self._response_values_index: int = len(self._response_values)
         # self.select_values()
@@ -42,8 +51,10 @@ class Response[TFlavour, *Ts]:
     def response(self) -> tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]:
         if not self.is_there_response:
             return tuple([])
-
-        return tuple(self._cast_to_flavour(self._response_values))
+        clean_response = self._response_values
+        if self._select is not None:
+            clean_response = self._parser_response()
+        return tuple(self._cast_to_flavour(clean_response))
 
     def _cast_to_flavour(self, data: list[tuple[*Ts]]) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
         def _dict() -> list[dict[str, tuple[*Ts]]]:
@@ -72,6 +83,38 @@ class Response[TFlavour, *Ts]:
         }
 
         return selector.get(self._flavour, _default)()
+
+    def _parser_response(self) -> TFlavour:
+        new_response: list[list] = []
+        for row in self._response_values:
+            new_row: list = []
+            for i, data in enumerate(row):
+                alias = self._columns[i]
+                clause_info = self._select[alias]
+                if not self._is_parser_required(clause_info):
+                    new_row = row
+                    break
+                else:
+                    parser_data = self.parser_data(clause_info, data)
+                    new_row.append(parser_data)
+            if not isinstance(new_row, tuple):
+                new_row = tuple(new_row)
+
+            new_response.append(new_row)
+        return new_response
+
+    @staticmethod
+    def _is_parser_required[T: Table](clause_info: ClauseInfo[T]) -> bool:
+        if clause_info is None:
+            return False
+
+        return clause_info.dtype is shp.Point
+
+    @staticmethod
+    def parser_data[T: Table, TProp](clause_info: ClauseInfo[T], data: TProp):
+        if clause_info.dtype is shp.Point:
+            return shp.from_wkt(data)
+        return data
 
 
 class MySQLRepository(IRepositoryBase[MySQLConnection]):
@@ -107,11 +150,19 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
+        def get_and_drop_key(key: str) -> Optional[Any]:
+            if key in kwargs:
+                return kwargs.pop(key)
+            return None
+
+        model: Table = get_and_drop_key("model")
+        select: Select = get_and_drop_key("select")
+
         with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[TFlavour](response_values=values, columns=columns, flavour=flavour, **kwargs).response
+            return Response[TFlavour](model=model, response_values=values, columns=columns, flavour=flavour, select=select, **kwargs).response
 
     # FIXME [ ]: this method does not comply with the implemented interface
     @get_connection
