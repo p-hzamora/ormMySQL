@@ -44,6 +44,13 @@ class ClauseInfo[T: tp.Type[Table]]:
     def query(self) -> str:
         return self._query
 
+    @property
+    def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
+        try:
+            return self._table.get_column(self.column).dtype
+        except ValueError:
+            return None
+
     def _resolve_column(self, data: ClauseDataType) -> str:
         if isinstance(data, property):
             return self._table.__properties_mapped__[data]
