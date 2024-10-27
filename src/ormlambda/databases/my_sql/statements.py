@@ -202,7 +202,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
 
         query: str = self._build()
         if flavour:
-            result = self._return_flavour(query, flavour)
+            result = self._return_flavour(query, flavour, select)
             if issubclass(flavour, tuple) and isinstance(selector(self._model), property):
                 return tuple([x[0] for x in result])
             return result
