@@ -5,12 +5,14 @@ import inspect
 import abc
 from ormlambda import Table
 
-from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
+from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery
 from ormlambda import JoinType, ForeignKey
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
-from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
 
+from ..errors import DifferentTablesAndVariablesError
+
+type ClauseDataType = property | str
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
 
 
@@ -60,7 +62,7 @@ class ClauseInfo[T: tp.Type[Table]]:
 
         elif isinstance(data, str):
             # TODOL: refactor to base the condition in dict with '*' as key. '*' must to work as special character
-            return f"'{data}'" if data != "*" else data
+            return f"'{data}'" if data != DecompositionQueryBase.CHAR else data
 
     def __create_value_string(self, name: str) -> str:
         if isinstance(self._row_column, property):
@@ -108,12 +110,12 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         replace_asterisk_char: bool = True,
     ) -> None:
         self._tables: tuple[T, *Ts] = tables if isinstance(tables, tp.Iterable) else (tables,)
-        self._lambda_query: tp.Callable[[T], tuple[Ts]] = lambda_query
+        self._lambda_query: tp.Callable[[T], tuple] = lambda_query
         self._alias: bool = alias
         self._alias_name: tp.Optional[str] = alias_name
         self._by: JoinType = by
+        self._joins: set[JoinSelector] = set()
 
-        self._fk_relationship: set[tuple[tp.Type[Table], tp.Type[Table]]] = set()
         self._clauses_group_by_tables: dict[tp.Type[Table], list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
         self.alias_cache: dict[str, AliasType] = {self.CHAR: self._asterik_resolver}
@@ -157,15 +159,20 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
     def __clauses_list_generetor(self, function: tp.Callable[[T], tp.Any]) -> None:
         if not callable(function):
             return None
+        try:
+            resolved_function = function(*self._tables)
+        except TypeError:
+            raise DifferentTablesAndVariablesError
 
-        resolved_function = function(self._table)
-
+        tree_list = TreeInstruction(function).to_list()
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
             resolved_function = (resolved_function,)
 
-        for index, value in enumerate(resolved_function):
-            values: ClauseInfo | list[ClauseInfo] = self._identify_value_type(index, value, function)
+        for col_index, last_data in enumerate(resolved_function):
+            ti = tree_list[col_index] if tree_list else TupleInstruction(self.CHAR, NestedElement(self.CHAR))
+
+            values: ClauseInfo | list[ClauseInfo] = self._identify_value_type(last_data, ti)
 
             if isinstance(values, tp.Iterable):
                 [self.add_clause(x) for x in values]
@@ -174,53 +181,65 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         return None
 
-    def _identify_value_type[TProp](self, index: int, value: TProp, function) -> ClauseInfo[T]:
+    def _identify_value_type[TProp](self, last_data: TProp, tuple_instruction: TupleInstruction) -> ClauseInfo[T]:
         """
         A method that behaves based on the variable's type
         """
-        if isinstance(value, property):
-            if value in self._table.__properties_mapped__:
-                return ClauseInfo[T](self._table, value, self.alias_children_resolver)
 
-            return self._search_correct_table_for_prop(index, function, value)
+        if isinstance(last_data, property):
+            if tuple_instruction.var == self.CHAR:
+                table_left = self.table
+            else:
+                table_left = self.alias_cache[tuple_instruction.var]
 
-        elif isinstance(value, IAggregate):
-            return ClauseInfo[T](self._table, value, self.alias_children_resolver)
+            if last_data in table_left.__properties_mapped__:
+                # if self.table != table_left:
+                #     self._add_fk_relationship(self.table, table_left)
+                return ClauseInfo[T](table_left, last_data, self.alias_children_resolver)
 
-        # if value is a Table instance (when you need to retrieve all columns) we'll ensure that all INNER JOINs are added
-        elif isinstance(value, type) and issubclass(value, Table):
-            if self._table != value:
-                self._add_necessary_fk(index, function, value)
+            for table in self.tables:
+                try:
+                    return self._search_correct_table_for_prop(table, tuple_instruction, last_data)
+                except ValueError:
+                    continue
+
+        elif isinstance(last_data, IAggregate):
+            return ClauseInfo[T](self.table, last_data, self.alias_children_resolver)
+
+        # if value is a Table instance (when you need to retrieve all columns) we'll ensure that all JOINs are added
+        elif isinstance(last_data, type) and issubclass(last_data, Table):
+            if last_data not in self._tables:
+                self._add_necessary_fk(tuple_instruction, last_data)
             # all columns
             clauses: list[ClauseInfo] = []
-            for prop in value.__properties_mapped__:
+            for prop in last_data.__properties_mapped__:
                 if isinstance(prop, property):
-                    clauses.append(self._identify_value_type(index, prop, function))
+                    clauses.append(self._identify_value_type(prop, tuple_instruction))
             return clauses
 
-        elif isinstance(value, str):
-            # TODOM: alias_cache to replace '*' by all columns
-            if self._replace_asterisk_char and (replace_value := self.alias_cache.get(value, None)) is not None:
-                return self._identify_value_type(index, replace_value(self._table), function)
-            return ClauseInfo[T](self._table, value, alias_children_resolver=self.alias_children_resolver)
+        elif isinstance(last_data, str):
+            # COMMENT: use self.table instead self._tables because if we hit this conditional, means that
+            # COMMENT: alias_cache to replace '*' by all columns
+            if self._replace_asterisk_char and (replace_value := self.alias_cache.get(last_data, None)) is not None:
+                return self._identify_value_type(replace_value(self.table), tuple_instruction)
+            return ClauseInfo[T](self.table, last_data, alias_children_resolver=self.alias_children_resolver)
 
-        elif isinstance(value, bool):
+        elif isinstance(last_data, bool):
             ...
 
-        raise NotImplementedError(f"type of value '{value}' is not implemented.")
+        raise NotImplementedError(f"type of value '{last_data}' is not implemented.")
 
-    def _search_correct_table_for_prop[TTable](self, index: int, function: tp.Callable[[T], tp.Any], prop: property) -> ClauseInfo[TTable]:
-        tree_list = TreeInstruction(function).to_list()
-        temp_table: tp.Type[Table] = self._table
+    def _search_correct_table_for_prop[TTable](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
+        temp_table: tp.Type[Table] = table
 
-        table_list: list[Table] = tree_list[index].nested_element.parents[1:]
+        _, *table_list = tuple_instruction.nested_element.parents
         counter: int = 0
         while prop not in temp_table.__properties_mapped__:
             new_table: TTable = getattr(temp_table(), table_list[counter])
 
             if not isinstance(new_table, type) or not issubclass(new_table, Table):
                 raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
-            self.__add_fk_relationship(temp_table, new_table)
+            self._add_fk_relationship(temp_table, new_table)
 
             temp_table = new_table
             counter += 1
@@ -228,40 +247,38 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
             if prop in new_table.__properties_mapped__:
                 return ClauseInfo[TTable](new_table, prop, self.alias_children_resolver)
 
-        raise ValueError(f"property '{prop}' does not exist in any inherit table.")
+        raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
 
     def add_clause[Tc: tp.Type[Table]](self, clause: ClauseInfo[Tc]) -> None:
         self._all_clauses.append(clause)
         self._clauses_group_by_tables[clause._table].append(clause)
-
         return None
 
-    def _add_necessary_fk(self, index: int, function: tp.Callable[[T], tp.Any], table: tp.Type[Table]) -> None:
-        tree_list = TreeInstruction(function).to_list()
-        old_table: tp.Type[Table] = self._table
+    def _add_necessary_fk(self, tuple_instruction: TupleInstruction, tables: tp.Type[Table]) -> None:
+        old_table = self.table
 
-        table_list: list[Table] = tree_list[index].nested_element.parents[1:]
+        table_inherit_list: list[Table] = tuple_instruction.nested_element.parents[1:]
         counter: int = 0
-        while table not in old_table.__dict__.values():
-            new_table: tp.Type[Table] = getattr(old_table(), table_list[counter])
+        while tables not in old_table.__dict__.values():
+            new_table: tp.Type[Table] = getattr(old_table(), table_inherit_list[counter])
 
             if not issubclass(new_table, Table):
                 raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
 
-            self.__add_fk_relationship(old_table, new_table)
+            self._add_fk_relationship(old_table, new_table)
 
-            if table in new_table.__dict__.values():
-                self.__add_fk_relationship(new_table, table)
-                return None
+            if tables in new_table.__dict__.values():
+                return self._add_fk_relationship(new_table, tables)
 
             old_table = new_table
             counter += 1
 
-        self.__add_fk_relationship(old_table, table)
-        return None
+        return self._add_fk_relationship(old_table, tables)
 
     @property
     def table(self) -> T:
+        return self.tables[0] if isinstance(self.tables, tp.Iterable) else self.tables
+
     @property
     def tables(self) -> T:
         return self._tables
@@ -280,11 +297,11 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
     @property
     def has_foreign_keys(self) -> bool:
-        return len(self._fk_relationship) > 0
+        return len(self._joins) > 0
 
     @property
     def fk_relationship(self) -> set[tuple[tp.Type[Table], tp.Type[Table]]]:
-        return self._fk_relationship
+        return self._joins
 
     @property
     @abc.abstractmethod
@@ -308,25 +325,14 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         self._alias_name = value
 
     def stringify_foreign_key(self, sep: str = "\n") -> str:
-        graph: dict[tp.Type[Table], list[tp.Type[Table]]] = defaultdict(list)
-        for left, right in self.fk_relationship:
-            graph[left].append(right)
+        sorted_joins = JoinSelector.sort_join_selectors(self._joins)
+        return f"{sep}".join([join.query for join in sorted_joins])
 
-        dfs = DFSTraversal.sort(graph)[::-1]
-        query: list = []
-        for l_tbl in dfs:
-            list_r_tbl = graph[l_tbl]
-            if not list_r_tbl:
-                continue
+    def _add_fk_relationship[T1: tp.Type[Table], T2: tp.Type[Table]](self, t1: T1, t2: T2) -> None:
+        lambda_relationship = ForeignKey.MAPPED[t1.__table_name__].referenced_tables[t2.__table_name__].relationship
 
-            for r_tbl in list_r_tbl:
-                lambda_relationship = ForeignKey.MAPPED[l_tbl.__table_name__].referenced_tables[r_tbl.__table_name__].relationship
-
-                join = JoinSelector(l_tbl, r_tbl, by=self._by, where=lambda_relationship)
-                query.append(join.query)
-
-        return f"{sep}".join(query)
-
-    def __add_fk_relationship(self, t1: Table, t2: Table) -> None:
-        self._fk_relationship.add((t1, t2))
-        return None
+        tables = list(self._tables)
+        if t2 not in tables:
+            tables.append(t2)
+        self._tables = tuple(tables)
+        return self._joins.add(JoinSelector[T1, T2](t1, t2, self._by, where=lambda_relationship))

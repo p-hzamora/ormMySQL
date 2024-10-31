@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import override, Callable, overload, Optional, TYPE_CHECKING
+from collections import defaultdict
+from typing import override, Callable, overload, Optional, TYPE_CHECKING, Type
 
 
+from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import Disassembler
 from ormlambda import JoinType
@@ -102,3 +104,17 @@ class JoinSelector[TLeft, TRight](IQuery):
             right_col,  # second_col
         ]
         return " ".join(list_)
+
+    @classmethod
+    def sort_join_selectors(cls, joins: set[JoinSelector]) -> tuple[JoinSelector]:
+        # FIXME [x]: How to sort when needed because it's not necessary at this point. It is for testing purpouse
+        if len(joins) == 1:
+            return tuple(joins)
+
+        join_object_map: dict[str, JoinSelector] = {obj._orig_table: obj for obj in joins}
+        graph: dict[Type[Table], list[Type[Table]]] = defaultdict(list)
+        for join in joins:
+            graph[join._orig_table].append(join._table_right)
+
+        sorted_graph = DFSTraversal.sort(graph)[::-1]
+        return tuple([join_object_map[table] for table in sorted_graph if len(graph[table]) != 0])
