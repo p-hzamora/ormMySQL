@@ -224,9 +224,6 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 return self.__identify_value_type(replace_value(self.table), tuple_instruction)
             return ClauseInfo[T](self.table, last_data, alias_children_resolver=self.alias_children_resolver)
 
-        elif isinstance(last_data, bool):
-            ...
-
         raise NotImplementedError(f"type of value '{last_data}' is not implemented.")
 
     def _search_correct_table_for_prop[TTable](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
