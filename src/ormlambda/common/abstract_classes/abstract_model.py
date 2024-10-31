@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Type, override, Iterable, Literal, TYPE_CHECKING
+from typing import Any, Type, override, Iterable, Literal, TYPE_CHECKING, Optional
 from collections import defaultdict
 import abc
 
@@ -23,6 +23,7 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
     def __init__(self, model: tuple[T, *Ts], repository: IRepositoryBase[TRepo]) -> None:
         self.__valid_repository(repository)
 
+        self._query: Optional[str] = None
         self._model: T = model[0] if isinstance(model, Iterable) else model
         self._models: tuple[T, *Ts] = self._model if isinstance(model, Iterable) else (model,)
         self._repository: IRepositoryBase[TRepo] = repository
@@ -42,10 +43,6 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
     def __repr__(self):
         return f"<Model: {self.__class__.__name__}>"
 
-    @property
-    @override
-    def repository(self) -> IRepositoryBase[TRepo]: ...
-
     def _return_flavour[TValue](self, query, flavour: Type[TValue], select) -> tuple[TValue]:
         return self._repository.read_sql(query, flavour=flavour, model=self._model, select=select)
 
@@ -59,6 +56,22 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
 
     @abc.abstractmethod
     def _build(sef): ...
+
+    @property
+    def query(self) -> str:
+        return self._query
+
+    @property
+    def model(self) -> Type[T]:
+        return self._model
+
+    @property
+    def models(self) -> tuple[*Ts]:
+        return self._models
+
+    @property
+    @override
+    def repository(self) -> IRepositoryBase[TRepo]: ...
 
 
 class ClusterQuery[T]:
