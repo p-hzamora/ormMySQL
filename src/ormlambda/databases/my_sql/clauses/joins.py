@@ -23,6 +23,13 @@ class JoinSelector[TLeft, TRight](IQuery):
         "_compareop",
     )
 
+    @override
+    def __repr__(self) -> str:
+        table_col_left: str = f"{self._orig_table.__table_name__}.{self._left_col}"
+        table_col_right: str = f"{self._table_right.__table_name__}.{self._right_col}"
+
+        return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
+
     @overload
     def __init__(
         self,
