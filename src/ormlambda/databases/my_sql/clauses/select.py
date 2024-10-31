@@ -31,9 +31,8 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts]):
             alias=alias,
             alias_name=alias_name,
             by=by,
+            joins=joins,
         )
-
-        self.joins = joins
 
     # @classmethod
     # def alias_children_resolver[Tclause: Type[Table]](self, clause_info: ClauseInfo[Tclause]):
