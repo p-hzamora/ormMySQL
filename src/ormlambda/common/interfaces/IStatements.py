@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Iterable, Optional, Literal, Type, Union, overload, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, Iterable, Optional, Literal, Type, Union, overload, TYPE_CHECKING
 from enum import Enum
 from abc import abstractmethod, ABC
 import enum
