@@ -16,14 +16,15 @@ if TYPE_CHECKING:
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
 
 
-class AbstractSQLStatements[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
+class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts, TRepo]):
     __slots__ = ("_model", "_repository", "_query_list")
     __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
 
-    def __init__(self, model: T, repository: IRepositoryBase[TRepo]) -> None:
+    def __init__(self, model: tuple[T, *Ts], repository: IRepositoryBase[TRepo]) -> None:
         self.__valid_repository(repository)
 
-        self._model: T = model
+        self._model: T = model[0] if isinstance(model, Iterable) else model
+        self._models: tuple[T, *Ts] = self._model if isinstance(model, Iterable) else (model,)
         self._repository: IRepositoryBase[TRepo] = repository
         self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
 
@@ -82,7 +83,7 @@ class ClusterQuery[T]:
             for dicc_cols in self._response_sql:
                 valid_attr: dict[str, Any] = {}
                 for clause in clauses:
-                    if not hasattr(table, clause.column):
+                    if clause.column is None or not hasattr(table, clause.column):
                         agg_methods = self.__get_all_aggregate_method(clauses)
                         raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'.")
                     valid_attr[clause.column] = dicc_cols[clause.alias]
