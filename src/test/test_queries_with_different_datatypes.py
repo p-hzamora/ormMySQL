@@ -28,16 +28,14 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
 
     def setUp(self) -> None:
-
         self.ddbb.create_database(DDBBNAME, "replace")
         self.ddbb.database = DDBBNAME
         self.model = TableTypeModel(self.ddbb)
-        self.model.create_table('replace')
+        self.model.create_table("replace")
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.ddbb.drop_database(DDBBNAME)
-
 
     def test_insert_different_types(self):
         instance = TableType(

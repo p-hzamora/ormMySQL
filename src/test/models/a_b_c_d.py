@@ -54,6 +54,6 @@ class D(Table):
     ExtraC = ForeignKey["D", ExtraC](__table_name__, ExtraC, lambda self, extra_c: self.fk_extra_c == extra_c.pk_extra_c)
 
 
-class ModelAB[T,*Ts](BaseModel[T,*Ts]):
+class ModelAB[T, *Ts](BaseModel[T, *Ts]):
     def __new__[TRepo](cls, model: T, repository: IRepositoryBase[TRepo]):
         return super().__new__(cls, model, repository)

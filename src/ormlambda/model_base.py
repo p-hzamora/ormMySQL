@@ -10,7 +10,7 @@ from .databases.my_sql import MySQLStatements, MySQLRepository
 # endregion
 
 
-class BaseModel[T: Type[Table],*Ts]:
+class BaseModel[T: Type[Table], *Ts]:
     """
     Class to select the correct AbstractSQLStatements class depends on the repository.
 
@@ -23,7 +23,7 @@ class BaseModel[T: Type[Table],*Ts]:
 
     # region Constructor
 
-    def __new__[TRepo](cls, model: tuple[T,*Ts], repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[T, *Ts, TRepo]:
+    def __new__[TRepo](cls, model: tuple[T, *Ts], repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[T, *Ts, TRepo]:
         if repository is None:
             raise ValueError("`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class")
         cls: AbstractSQLStatements[T, TRepo] = cls.statements_dicc.get(type(repository), None)

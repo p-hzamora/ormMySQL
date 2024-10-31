@@ -299,7 +299,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             if tables:
                 # FIXME [ ]: Refactor to avoid copy and paste the same code of the '_add_fk_relationship' method
                 joins = []
-                for ltable,rtable in tables:
+                for ltable, rtable in tables:
                     lambda_relationship = ForeignKey.MAPPED[ltable.__table_name__].referenced_tables[rtable.__table_name__].relationship
                     joins.append(JoinSelector(ltable, rtable, JoinType.INNER_JOIN, where=lambda_relationship))
                 return set(joins)

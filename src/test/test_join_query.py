@@ -58,12 +58,7 @@ class TestSQLStatements(unittest.TestCase):
         modelA.insert(a_insert)
         modelB.insert(b_insert)
 
-        result= modelB.join(
-            (
-                (A, lambda b, a: b.fk_a == a.pk_a),
-                (B, lambda b, bb: b.pk_b == bb.pk_b)
-            )
-        ).select(lambda b,a: (b.data_b, a.data_a) )
+        result = modelB.join(((A, lambda b, a: b.fk_a == a.pk_a), (B, lambda b, bb: b.pk_b == bb.pk_b))).select(lambda b, a: (b.data_b, a.data_a))
 
         result[0]
         self.ddbb.drop_table(modelA._model.__table_name__)

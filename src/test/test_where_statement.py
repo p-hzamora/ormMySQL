@@ -30,8 +30,7 @@ class TestWhereStatement(unittest.TestCase):
     def test_where(self):
         co = "Spain"
         select = (
-            self.tmodel
-            .offset(3)
+            self.tmodel.offset(3)
             .where(lambda x: x.City.Country.country == co, co=co)
             .limit(2)
             .order(lambda x: x.City.city, "ASC")
