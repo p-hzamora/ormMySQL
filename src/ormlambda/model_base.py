@@ -10,20 +10,20 @@ from .databases.my_sql import MySQLStatements, MySQLRepository
 # endregion
 
 
-class BaseModel[T: Type[Table]]:
+class BaseModel[T: Type[Table],*Ts]:
     """
     Class to select the correct AbstractSQLStatements class depends on the repository.
 
     Contiene los metodos necesarios para hacer consultas a una tabla
     """
 
-    statements_dicc: dict[Type[IRepositoryBase], Type[AbstractSQLStatements[T, IRepositoryBase]]] = {
+    statements_dicc: dict[Type[IRepositoryBase], Type[AbstractSQLStatements[T, *Ts, IRepositoryBase]]] = {
         MySQLRepository: MySQLStatements,
     }
 
     # region Constructor
 
-    def __new__[TRepo](cls, model: T, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[T, TRepo]:
+    def __new__[TRepo](cls, model: tuple[T,*Ts], repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[T, *Ts, TRepo]:
         if repository is None:
             raise ValueError("`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class")
         cls: AbstractSQLStatements[T, TRepo] = cls.statements_dicc.get(type(repository), None)
