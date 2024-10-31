@@ -175,9 +175,9 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
             values: ClauseInfo | list[ClauseInfo] = self._identify_value_type(last_data, ti)
 
             if isinstance(values, tp.Iterable):
-                [self.add_clause(x) for x in values]
+                [self.__add_clause(x) for x in values]
             else:
-                self.add_clause(values)
+                self.__add_clause(values)
 
         return None
 
@@ -249,7 +249,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
 
-    def add_clause[Tc: tp.Type[Table]](self, clause: ClauseInfo[Tc]) -> None:
+    def __add_clause[Tc: tp.Type[Table]](self, clause: ClauseInfo[Tc]) -> None:
         self._all_clauses.append(clause)
         self._clauses_group_by_tables[clause._table].append(clause)
         return None
