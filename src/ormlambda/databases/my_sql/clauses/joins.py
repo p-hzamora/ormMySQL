@@ -124,4 +124,8 @@ class JoinSelector[TLeft, TRight](IQuery):
             graph[join._orig_table].append(join._table_right)
 
         sorted_graph = DFSTraversal.sort(graph)[::-1]
+
+        if not sorted_graph:
+            return tuple(joins)
+
         return tuple([join_object_map[table] for table in sorted_graph if len(graph[table]) != 0])
