@@ -79,21 +79,21 @@ class ClauseInfo[T: tp.Type[Table]]:
         return f"{column_name} as `{alias}`"
 
 
-class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
+class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
-    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]]) -> None: ...
+    def __init__(self, tables: T, lambda_query: tp.Callable[[T], tuple]) -> None: ...
     @tp.overload
-    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ...) -> None: ...
+    def __init__(self, tables: T, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ...) -> None: ...
     @tp.overload
-    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ..., alias_name: tp.Optional[str] = ...) -> None: ...
+    def __init__(self, tables: T, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ...) -> None: ...
     @tp.overload
-    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ...) -> None: ...
+    def __init__(self, tables: T, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ...) -> None: ...
     @tp.overload
-    def __init__[*Ts](self, table: T, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
+    def __init__(self, tables: T, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
 
-    def __init__[*Ts](
+    def __init__(
         self,
-        table: T,
+        tables: tuple[T, *Ts],
         lambda_query: tp.Callable[[T], tuple[*Ts]],
         *,
         alias: bool = True,
@@ -101,7 +101,7 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
         by: JoinType = JoinType.INNER_JOIN,
         replace_asterisk_char: bool = True,
     ) -> None:
-        self._table: T = table
+        self._tables: tuple[T, *Ts] = tables if isinstance(tables, tp.Iterable) else (tables,)
         self._lambda_query: tp.Callable[[T], tuple[Ts]] = lambda_query
         self._alias: bool = alias
         self._alias_name: tp.Optional[str] = alias_name
@@ -255,7 +255,9 @@ class DecompositionQueryBase[T: tp.Type[Table]](IDecompositionQuery[T]):
 
     @property
     def table(self) -> T:
-        return self._table
+    @property
+    def tables(self) -> T:
+        return self._tables
 
     @property
     def lambda_query[*Ts](self) -> tp.Callable[[T], tuple[*Ts]]:

@@ -12,10 +12,14 @@ if tp.TYPE_CHECKING:
 from .IQueryCommand import IQuery
 
 
-class IDecompositionQuery[T: tp.Type[Table]](IQuery):
+class IDecompositionQuery[T: tp.Type[Table], *Ts](IQuery):
     @property
     @abc.abstractmethod
     def table(self) -> T: ...
+
+    @property
+    @abc.abstractmethod
+    def tables(self) -> tuple[*Ts]: ...
 
     @property
     @abc.abstractmethod
