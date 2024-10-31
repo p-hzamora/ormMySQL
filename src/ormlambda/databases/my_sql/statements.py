@@ -4,6 +4,7 @@ import inspect
 from mysql.connector import MySQLConnection, errors, errorcode
 import functools
 
+
 if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.components.where.abstract_where import AbstractWhere
@@ -12,6 +13,8 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
     from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
+
+from ormlambda.utils.foreign_key import ForeignKey
 
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
@@ -29,7 +32,7 @@ from .clauses import Count
 from .clauses import GroupBy
 
 
-from ormlambda.utils import ForeignKey, Table
+from ormlambda.utils import Table
 from ormlambda.common.enums import JoinType
 from . import functions as func
 
@@ -46,8 +49,8 @@ def clear_list(f: Callable[..., Any]):
     return wrapper
 
 
-class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
-    def __init__(self, model: T, repository: IRepositoryBase[MySQLConnection]) -> None:
+class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnection]):
+    def __init__(self, model: tuple[T, *Ts], repository: IRepositoryBase[MySQLConnection]) -> None:
         super().__init__(model, repository=repository)
 
     @property
@@ -141,16 +144,9 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         self,
         selection: Callable[[T], tuple] = lambda x: "*",
         alias=True,
-        alias_name=None,
+        alias_name="count",
     ) -> IQuery:
         return Count[T](self._model, selection, alias=alias, alias_name=alias_name)
-
-    @override
-    def join(self, table_left: Table, table_right: Table, *, by: str) -> IStatements_two_generic[T, MySQLConnection]:
-        where = ForeignKey.MAPPED[table_left.__table_name__][table_right.__table_name__]
-        join_query = JoinSelector[table_left, Table](table_left, table_right, JoinType(by), where=where)
-        self._query_list["join"].append(join_query)
-        return self
 
     @override
     def where(self, conditions: WhereTypes = lambda: None, **kwargs) -> IStatements_two_generic[T, MySQLConnection]:
@@ -188,7 +184,17 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return func.Sum[T](self._model, column=column, alias=alias, alias_name=alias_name)
 
     @override
-    def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
+    def join[*FKTables](self, joins) -> IStatements_two_generic[T, *FKTables, MySQLConnection]:
+        new_tables: list[Type[Table]] = [self._model]
+        for table, where in joins:
+            new_tables.append(table)
+            join_query = JoinSelector[T, type(table)](self._model, table, by=JoinType.INNER_JOIN, where=where)
+            self._query_list["join"].append(join_query)
+        self._models = new_tables
+        return self
+
+    @override
+    def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
         if len(inspect.signature(selector).parameters) == 0:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
             result = self.select(selector=lambda x: (x,), flavour=flavour, by=by)
@@ -197,7 +203,15 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
             if flavour:
                 return result
             return () if not result else result[0]
-        select = Select[T](self._model, lambda_query=selector, by=by, alias=False)
+
+        joins = self._query_list.pop("join", None)
+        select = Select[T, *Ts](
+            self._models,
+            lambda_query=selector,
+            by=by,
+            alias=False,
+            joins=joins,
+        )
         self._query_list["select"].append(select)
 
         query: str = self._build()
@@ -209,7 +223,7 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
         return self._return_model(select, query)
 
     @override
-    def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
+    def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
         self.limit(1)
         if len(inspect.signature(selector).parameters) == 0:
             response = self.select(selector=lambda x: (x,), flavour=flavour, by=by)
@@ -240,26 +254,21 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
     def _build(self) -> str:
         query_list: list[str] = []
         for x in self.__order__:
-            sub_query: Optional[list[IQuery]] = self._query_list.get(x, None)
+            if len(self._query_list) == 0:
+                break
+
+            sub_query: Optional[list[IQuery]] = self._query_list.pop(x, None)
             if sub_query is None:
                 continue
 
             if isinstance(sub_query[0], WhereCondition):
                 query_ = self.__build_where_clause(sub_query)
 
-            # we must check if any join already exists on query string
-            elif isinstance(sub_query[0], JoinSelector):
-                select_query: str = self._query_list["select"][0].query
-                query_ = ""
-                for join in sub_query:
-                    if join.query not in select_query:
-                        query_ += f"\n{join.query}"
-
             elif isinstance((select := sub_query[0]), Select):
                 query_: str = ""
                 where_joins = self.__create_necessary_inner_join()
                 if where_joins:
-                    select._fk_relationship.update(where_joins)
+                    select._joins.update(where_joins)
                 query_ = select.query
 
             else:
@@ -277,18 +286,21 @@ class MySQLStatements[T: Table](AbstractSQLStatements[T, MySQLConnection]):
             query += f" {and_} ({clause})"
         return query
 
-    def __create_necessary_inner_join(self) -> Optional[set[tuple[Type[Table], Type[Table]]]]:
+    def __create_necessary_inner_join(self) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
         if "where" not in self._query_list:
             return None
 
-        res = []
         for where in self._query_list["where"]:
             where: AbstractWhere
 
             tables = where.get_involved_tables()
 
             if tables:
-                [res.append(x) for x in tables]
-
-        return set(res)
+                # FIXME [ ]: Refactor to avoid copy and paste the same code of the '_add_fk_relationship' method
+                joins = []
+                for ltable,rtable in tables:
+                    lambda_relationship = ForeignKey.MAPPED[ltable.__table_name__].referenced_tables[rtable.__table_name__].relationship
+                    joins.append(JoinSelector(ltable, rtable, JoinType.INNER_JOIN, where=lambda_relationship))
+                return set(joins)
+        return None
