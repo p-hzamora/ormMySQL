@@ -11,7 +11,7 @@ from ormlambda import JoinType, ForeignKey
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
 
-ClauseDataType = tp.TypeVar("ClauseDataType", bound=tp.Union[property, str])
+type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
 
 
 class ClauseInfo[T: tp.Type[Table]]:
@@ -80,6 +80,12 @@ class ClauseInfo[T: tp.Type[Table]]:
 
 
 class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]):
+    CHAR: str = "*"
+
+    @staticmethod
+    def _asterik_resolver(table: tp.Type[Table]):
+        return table
+
     @tp.overload
     def __init__(self, tables: T, lambda_query: tp.Callable[[T], tuple]) -> None: ...
     @tp.overload
@@ -110,7 +116,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         self._fk_relationship: set[tuple[tp.Type[Table], tp.Type[Table]]] = set()
         self._clauses_group_by_tables: dict[tp.Type[Table], list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
-        self.alias_cache: dict[str, tp.Any] = {"*": lambda x: x}
+        self.alias_cache: dict[str, AliasType] = {self.CHAR: self._asterik_resolver}
         self._replace_asterisk_char: bool = replace_asterisk_char
         self.__assign_lambda_variables_to_table(lambda_query)
 
