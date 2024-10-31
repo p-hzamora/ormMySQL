@@ -172,7 +172,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         for col_index, last_data in enumerate(resolved_function):
             ti = tree_list[col_index] if tree_list else TupleInstruction(self.CHAR, NestedElement(self.CHAR))
 
-            values: ClauseInfo | list[ClauseInfo] = self._identify_value_type(last_data, ti)
+            values: ClauseInfo | list[ClauseInfo] = self.__identify_value_type(last_data, ti)
 
             if isinstance(values, tp.Iterable):
                 [self.__add_clause(x) for x in values]
@@ -181,7 +181,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         return None
 
-    def _identify_value_type[TProp](self, last_data: TProp, tuple_instruction: TupleInstruction) -> ClauseInfo[T]:
+    def __identify_value_type[TProp](self, last_data: TProp, tuple_instruction: TupleInstruction) -> ClauseInfo[T]:
         """
         A method that behaves based on the variable's type
         """
@@ -209,19 +209,19 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         # if value is a Table instance (when you need to retrieve all columns) we'll ensure that all JOINs are added
         elif isinstance(last_data, type) and issubclass(last_data, Table):
             if last_data not in self._tables:
-                self._add_necessary_fk(tuple_instruction, last_data)
+                self.__add_necessary_fk(tuple_instruction, last_data)
             # all columns
             clauses: list[ClauseInfo] = []
             for prop in last_data.__properties_mapped__:
                 if isinstance(prop, property):
-                    clauses.append(self._identify_value_type(prop, tuple_instruction))
+                    clauses.append(self.__identify_value_type(prop, tuple_instruction))
             return clauses
 
         elif isinstance(last_data, str):
             # COMMENT: use self.table instead self._tables because if we hit this conditional, means that
             # COMMENT: alias_cache to replace '*' by all columns
             if self._replace_asterisk_char and (replace_value := self.alias_cache.get(last_data, None)) is not None:
-                return self._identify_value_type(replace_value(self.table), tuple_instruction)
+                return self.__identify_value_type(replace_value(self.table), tuple_instruction)
             return ClauseInfo[T](self.table, last_data, alias_children_resolver=self.alias_children_resolver)
 
         elif isinstance(last_data, bool):
@@ -254,7 +254,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         self._clauses_group_by_tables[clause._table].append(clause)
         return None
 
-    def _add_necessary_fk(self, tuple_instruction: TupleInstruction, tables: tp.Type[Table]) -> None:
+    def __add_necessary_fk(self, tuple_instruction: TupleInstruction, tables: tp.Type[Table]) -> None:
         old_table = self.table
 
         table_inherit_list: list[Table] = tuple_instruction.nested_element.parents[1:]
