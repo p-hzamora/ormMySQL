@@ -214,13 +214,14 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         )
         self._query_list["select"].append(select)
 
-        query: str = self._build()
+        self._query: str = self._build()
+        
         if flavour:
-            result = self._return_flavour(query, flavour, select)
+            result = self._return_flavour(self.query, flavour, select)
             if issubclass(flavour, tuple) and isinstance(selector(self._model), property):
                 return tuple([x[0] for x in result])
             return result
-        return self._return_model(select, query)
+        return self._return_model(select, self.query)
 
     @override
     def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
