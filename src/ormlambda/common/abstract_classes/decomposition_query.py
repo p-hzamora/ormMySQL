@@ -143,8 +143,9 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         """
         lambda_vars = tuple(inspect.signature(_lambda).parameters)
 
-        for param in lambda_vars:
-            self.alias_cache[param] = lambda x: self._table
+        # COMMENT: We don't pass a lambda method because lambda reads the las value of 'i'
+        for i, param in enumerate(lambda_vars):
+            self.alias_cache[param] = self._tables[i]
         return None
 
     def __clauses_list_generetor(self, function: tp.Callable[[T], tp.Any]) -> None:
