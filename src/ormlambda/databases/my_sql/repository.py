@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from src.ormlambda.databases.my_sql.clauses.select import Select
 
+type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]
+
 
 class Response[TFlavour, *Ts]:
     def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], model: Optional[Table] = None, select: Optional[Select] = None) -> None:
@@ -46,13 +48,19 @@ class Response[TFlavour, *Ts]:
     def is_many(self) -> bool:
         return self._response_values_index > 1
 
-    def response(self, **kwargs) -> tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]:
+    def response(self, _tuple: bool, **kwargs) -> TResponse[TFlavour, *Ts]:
         if not self.is_there_response:
             return tuple([])
-        clean_response = self._response_values
+        cleaned_response = self._response_values
+
         if self._select is not None:
-            clean_response = self._parser_response()
-        cast_flavour = self._cast_to_flavour(clean_response, **kwargs)
+            cleaned_response = self._parser_response()
+
+        cast_flavour = self._cast_to_flavour(cleaned_response, **kwargs)
+        if _tuple is not True:
+            return cast_flavour
+
+        return tuple(cast_flavour)
 
     def _cast_to_flavour(self, data: list[tuple[*Ts]], **kwargs) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
         def _dict(**kwargs) -> list[dict[str, tuple[*Ts]]]:
@@ -71,6 +79,9 @@ class Response[TFlavour, *Ts]:
                         raise TypeError(f"unhashable type '{type(d[i])}' found in '{type(d)}' when attempting to cast the result into a '{set.__name__}' object")
             return [set(x) for x in data]
 
+        def _list(**kwargs) -> list[list]:
+            return [list(x) for x in data]
+
         def _default(**kwargs) -> list[TFlavour]:
             return self._flavour(data, **kwargs)
 
@@ -78,6 +89,7 @@ class Response[TFlavour, *Ts]:
             dict: _dict,
             tuple: _tuple,
             set: _set,
+            list: _list,
         }
 
         return selector.get(self._flavour, _default)(**kwargs)
@@ -148,19 +160,13 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
-        def get_and_drop_key(key: str) -> Optional[Any]:
-            if key in kwargs:
-                return kwargs.pop(key)
-            return None
-
-        model: Table = get_and_drop_key("model")
-        select: Select = get_and_drop_key("select")
+        cast_to_tuple: bool = kwargs.pop("cast_to_tuple", True)
 
         with cnx.cursor(buffered=True) as cursor:
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[TFlavour](model=model, response_values=values, columns=columns, flavour=flavour, select=select).response(**kwargs)
+            return Response[TFlavour](model=model, response_values=values, columns=columns, flavour=flavour, select=select).response(_tuple=cast_to_tuple, **kwargs)
 
     # FIXME [ ]: this method does not comply with the implemented interface
     @get_connection
