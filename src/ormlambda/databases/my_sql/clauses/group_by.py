@@ -5,13 +5,13 @@ from ormlambda.common.interfaces.IAggregate import IAggregate
 from ormlambda import Table
 
 
-class GroupBy[T: tp.Type[Table], TProp](DecompositionQueryBase[T], IAggregate[T]):
+class GroupBy[T: tp.Type[Table], *Ts, TProp](DecompositionQueryBase[T], IAggregate[T]):
     CLAUSE: str = "GROUP BY"
 
     def __init__(
         self,
         table: T,
-        column: tp.Callable[[T], TProp],
+        column: tp.Callable[[T, *Ts], TProp],
         *,
         alias: bool = True,
         alias_name: str | None = None,
