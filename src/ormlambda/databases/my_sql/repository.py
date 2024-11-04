@@ -149,7 +149,13 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
 
     @override
     @get_connection
-    def read_sql[TFlavour](self, cnx: MySQLConnection, query: str, flavour: Type[TFlavour] = tuple, **kwargs) -> tuple[TFlavour]:
+    def read_sql[TFlavour](
+        self,
+        cnx: MySQLConnection,
+        query: str,
+        flavour: Type[TFlavour] = tuple,
+        **kwargs,
+    ) -> tuple[TFlavour]:
         """
         Return tuple of tuples by default.
 
@@ -159,6 +165,8 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
+        model: Table = kwargs.pop("model", None)
+        select: Select = kwargs.pop("select", None)
         cast_to_tuple: bool = kwargs.pop("cast_to_tuple", True)
 
         with cnx.cursor(buffered=True) as cursor:
