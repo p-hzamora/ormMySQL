@@ -55,6 +55,10 @@ class IStatements[T, *Ts](ABC):
     @abstractmethod
     def create_table(self, if_exists: TypeExists) -> None: ...
 
+    # #TODOL [ ]: We must to implement this mehtod
+    # @abstractmethod
+    # def drop_table(self)->None: ...
+
     @abstractmethod
     def table_exists(self) -> bool: ...
 
