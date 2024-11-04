@@ -13,6 +13,7 @@ import test_type_hint
 import test_order
 import test_queries_with_different_datatypes
 import test_where_statement
+import test_join_query
 
 from test_queries import (
     test_join_selector,
@@ -28,6 +29,7 @@ suite = unittest.TestSuite()
 
 suite.addTests(
     (
+        *loader.loadTestsFromModule(test_join_query),
         *loader.loadTestsFromModule(test_abstract_model),
         *loader.loadTestsFromModule(test_code_first),
         *loader.loadTestsFromModule(test_depth_first_search),
