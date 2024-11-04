@@ -154,7 +154,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
         if isinstance(conditions, Iterable):
             for x in conditions:
-                self._query_list["where"].append(WhereCondition[T](function=x, instances=(self._model,), **kwargs))
+                self._query_list["where"].append(WhereCondition[T](function=x, instances=self._models, **kwargs))
             return self
 
         where_query = WhereCondition[T](function=conditions, instances=(self._model,), **kwargs)
@@ -220,7 +220,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
-            if issubclass(flavour, tuple) and isinstance(selector(self._model), property):
+            if issubclass(flavour, tuple) and isinstance(selector(*self._models), property):
                 return tuple([x[0] for x in result])
             return result
         return self._return_model(select, self.query)
