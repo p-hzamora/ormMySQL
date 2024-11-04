@@ -24,11 +24,10 @@ if TYPE_CHECKING:
 
 
 class Response[TFlavour, *Ts]:
-    def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], model: Optional[Table] = None, select: Optional[Select] = None, **kwargs) -> None:
+    def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], model: Optional[Table] = None, select: Optional[Select] = None) -> None:
         self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
         self._flavour: Type[TFlavour] = flavour
-        self._kwargs: dict[str, Any] = kwargs
         self._model: Table = model
         self._select: Select = select
 
@@ -47,23 +46,22 @@ class Response[TFlavour, *Ts]:
     def is_many(self) -> bool:
         return self._response_values_index > 1
 
-    @property
-    def response(self) -> tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]:
+    def response(self, **kwargs) -> tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]:
         if not self.is_there_response:
             return tuple([])
         clean_response = self._response_values
         if self._select is not None:
             clean_response = self._parser_response()
-        return tuple(self._cast_to_flavour(clean_response))
+        cast_flavour = self._cast_to_flavour(clean_response, **kwargs)
 
-    def _cast_to_flavour(self, data: list[tuple[*Ts]]) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
-        def _dict() -> list[dict[str, tuple[*Ts]]]:
+    def _cast_to_flavour(self, data: list[tuple[*Ts]], **kwargs) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
+        def _dict(**kwargs) -> list[dict[str, tuple[*Ts]]]:
             return [dict(zip(self._columns, x)) for x in data]
 
-        def _tuple() -> list[tuple[*Ts]]:
+        def _tuple(**kwargs) -> list[tuple[*Ts]]:
             return data
 
-        def _set() -> list[set]:
+        def _set(**kwargs) -> list[set]:
             for d in data:
                 n = len(d)
                 for i in range(n):
@@ -73,8 +71,8 @@ class Response[TFlavour, *Ts]:
                         raise TypeError(f"unhashable type '{type(d[i])}' found in '{type(d)}' when attempting to cast the result into a '{set.__name__}' object")
             return [set(x) for x in data]
 
-        def _default() -> list[TFlavour]:
-            return [self._flavour(x, **self._kwargs) for x in data]
+        def _default(**kwargs) -> list[TFlavour]:
+            return self._flavour(data, **kwargs)
 
         selector: dict[Type[object], Any] = {
             dict: _dict,
@@ -82,7 +80,7 @@ class Response[TFlavour, *Ts]:
             set: _set,
         }
 
-        return selector.get(self._flavour, _default)()
+        return selector.get(self._flavour, _default)(**kwargs)
 
     def _parser_response(self) -> TFlavour:
         new_response: list[list] = []
@@ -162,7 +160,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             cursor.execute(query)
             values: list[tuple] = cursor.fetchall()
             columns: tuple[str] = cursor.column_names
-            return Response[TFlavour](model=model, response_values=values, columns=columns, flavour=flavour, select=select, **kwargs).response
+            return Response[TFlavour](model=model, response_values=values, columns=columns, flavour=flavour, select=select).response(**kwargs)
 
     # FIXME [ ]: this method does not comply with the implemented interface
     @get_connection
