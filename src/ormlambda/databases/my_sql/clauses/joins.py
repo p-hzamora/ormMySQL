@@ -118,7 +118,11 @@ class JoinSelector[TLeft, TRight](IQuery):
         if len(joins) == 1:
             return tuple(joins)
 
-        join_object_map: dict[str, JoinSelector] = {obj._orig_table: obj for obj in joins}
+        join_object_map: dict[str, list[JoinSelector]] = defaultdict(list)
+
+        for obj in joins:
+            join_object_map[obj._orig_table].append(obj)
+
         graph: dict[Type[Table], list[Type[Table]]] = defaultdict(list)
         for join in joins:
             graph[join._orig_table].append(join._table_right)
@@ -128,4 +132,11 @@ class JoinSelector[TLeft, TRight](IQuery):
         if not sorted_graph:
             return tuple(joins)
 
-        return tuple([join_object_map[table] for table in sorted_graph if len(graph[table]) != 0])
+        res = []
+        for table in sorted_graph:
+            tables = join_object_map[table]
+
+            if not tables:
+                continue
+            res.extend(tables)
+        return res
