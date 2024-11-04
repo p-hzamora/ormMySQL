@@ -185,6 +185,8 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def join[*FKTables](self, joins) -> IStatements_two_generic[T, *FKTables, MySQLConnection]:
+        if not isinstance(joins[0], tuple):
+            joins = (joins,)
         new_tables: list[Type[Table]] = [self._model]
         for table, where in joins:
             new_tables.append(table)
