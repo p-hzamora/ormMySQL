@@ -194,7 +194,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         return self
 
     @override
-    def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
+    def select[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN, **kwargs):
         if len(inspect.signature(selector).parameters) == 0:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
             result = self.select(selector=lambda x: (x,), flavour=flavour, by=by)
@@ -217,7 +217,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         self._query: str = self._build()
         
         if flavour:
-            result = self._return_flavour(self.query, flavour, select)
+            result = self._return_flavour(self.query, flavour, select, **kwargs)
             if issubclass(flavour, tuple) and isinstance(selector(self._model), property):
                 return tuple([x[0] for x in result])
             return result
