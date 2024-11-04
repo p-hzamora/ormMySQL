@@ -133,8 +133,7 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         def wrapper(self: MySQLRepository, *args, **kwargs):
             with self._pool.get_connection() as cnx:
                 try:
-                    foo = func(self, cnx._cnx, *args, **kwargs)
-                    return foo
+                    return func(self, cnx._cnx, *args, **kwargs)
                 except Exception as e:
                     cnx._cnx.rollback()
                     raise e
