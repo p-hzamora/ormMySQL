@@ -241,7 +241,11 @@ class TestJoinQueries(unittest.TestCase):
             ),
             flavour=dict,
         )
+
+        mssg: str = "SELECT b.data_b as `data_b_de b`, b.fk_a as `fk_a de b` FROM b\nLIMIT 1"
+        
         self.assertTupleEqual(tuple(keys), ("data_b_de b", "fk_a de b"))
+        self.assertEqual(mssg, self.model_b.query)
 
 
 if __name__ == "__main__":
