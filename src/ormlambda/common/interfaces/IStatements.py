@@ -311,7 +311,13 @@ class IStatements[T, *Ts](ABC):
     @overload
     def select_one[TFlavour](self, selector: Callable[[T, *Ts], tuple], *, by: Optional[Enum] = ..., flavour: Type[TFlavour]) -> TFlavour: ...
     @abstractmethod
-    def select_one[TValue, TFlavour, *Ts](self, selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None, *, flavour: Type[TFlavour] = ..., by: Optional[Enum] = ...): ...
+    def select_one[TValue, TFlavour, *Ts](
+        self,
+        selector: Optional[Callable[[T, *Ts], tuple[TValue, *Ts]]] = lambda: None,
+        *,
+        flavour: Type[TFlavour] = ...,
+        by: Optional[Enum] = ...,
+    ): ...
 
     # endregion
     # region group_by
