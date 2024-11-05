@@ -158,7 +158,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
                 self._query_list["where"].append(WhereCondition[T](function=x, instances=self._models, **kwargs))
             return self
 
-        where_query = WhereCondition[T](function=conditions, instances=(self._model,), **kwargs)
+        where_query = WhereCondition[T](function=conditions, instances=self._models, **kwargs)
         self._query_list["where"].append(where_query)
         return self
 
