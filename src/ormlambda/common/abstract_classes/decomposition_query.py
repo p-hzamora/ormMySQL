@@ -172,10 +172,10 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
             resolved_function = (resolved_function,)
 
-        for col_index, last_data in enumerate(resolved_function):
+        for col_index, data in enumerate(resolved_function):
             ti = tree_list[col_index] if tree_list else TupleInstruction(self.CHAR, NestedElement(self.CHAR))
 
-            values: ClauseInfo | list[ClauseInfo] = self.__identify_value_type(last_data, ti)
+            values: ClauseInfo | list[ClauseInfo] = self.__identify_value_type(data, ti)
 
             if isinstance(values, tp.Iterable):
                 [self.__add_clause(x) for x in values]
@@ -184,50 +184,74 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         return None
 
-    def __identify_value_type[TProp](self, last_data: TProp, tuple_instruction: TupleInstruction) -> ClauseInfo[T]:
+    def __identify_value_type[TProp](self, data: TProp, tuple_instruction: TupleInstruction) -> ClauseInfo[T]:
         """
         A method that behaves based on the variable's type
         """
 
-        if isinstance(last_data, property):
-            if tuple_instruction.var == self.CHAR:
-                table_left = self.table
-            else:
-                table_left = self.alias_cache[tuple_instruction.var]
+        def validation(data: TProp, type_: ValueType):
+            is_table: bool = isinstance(data, type) and issubclass(data, type_)
+            return any(
+                [
+                    isinstance(data, type_),
+                    is_table,
+                ]
+            )
 
-            if last_data in table_left.__properties_mapped__:
-                # if self.table != table_left:
-                #     self._add_fk_relationship(self.table, table_left)
-                return ClauseInfo[T](table_left, last_data, self.alias_children_resolver)
+        value_type_mapped: dict[tp.Type[ValueType], tp.Callable[[TProp, TupleInstruction], ClauseInfo[T]]] = {
+            property: self._property_type,
+            IAggregate: self._IAggregate_type,
+            Table: self._table_type,
+            str: self._str_type,
+            ICustomAlias: self._ICustomAlias_type,
+        }
 
-            for table in self.tables:
-                try:
-                    return self._search_correct_table_for_prop(table, tuple_instruction, last_data)
-                except ValueError:
-                    continue
+        function = next((handler for cls, handler in value_type_mapped.items() if validation(data, cls)), None)
 
-        elif isinstance(last_data, IAggregate):
-            return ClauseInfo[T](self.table, last_data, self.alias_children_resolver)
+        if not function:
+            raise NotImplementedError(f"type of value '{data}' is not implemented.")
 
-        # if value is a Table instance (when you need to retrieve all columns) we'll ensure that all JOINs are added
-        elif isinstance(last_data, type) and issubclass(last_data, Table):
-            if last_data not in self._tables:
-                self.__add_necessary_fk(tuple_instruction, last_data)
-            # all columns
-            clauses: list[ClauseInfo] = []
-            for prop in last_data.__properties_mapped__:
-                if isinstance(prop, property):
-                    clauses.append(self.__identify_value_type(prop, tuple_instruction))
-            return clauses
+        return function(data, tuple_instruction)
 
-        elif isinstance(last_data, str):
-            # COMMENT: use self.table instead self._tables because if we hit this conditional, means that
-            # COMMENT: alias_cache to replace '*' by all columns
-            if self._replace_asterisk_char and (replace_value := self.alias_cache.get(last_data, None)) is not None:
-                return self.__identify_value_type(replace_value(self.table), tuple_instruction)
-            return ClauseInfo[T](self.table, last_data, alias_children_resolver=self.alias_children_resolver)
+    def _property_type(self, data: property, ti: TupleInstruction):
+        if ti.var == self.CHAR:
+            table_left = self.table
+        else:
+            table_left = self.alias_cache[ti.var]
 
-        raise NotImplementedError(f"type of value '{last_data}' is not implemented.")
+        if data in table_left.__properties_mapped__:
+            # if self.table != table_left:
+            #     self._add_fk_relationship(self.table, table_left)
+            return ClauseInfo[T](table_left, data, self.alias_children_resolver)
+
+        for table in self.tables:
+            try:
+                return self._search_correct_table_for_prop(table, ti, data)
+            except ValueError:
+                continue
+
+    def _IAggregate_type(self, data: IAggregate, ti: TupleInstruction):
+        return ClauseInfo[T](self.table, data, self.alias_children_resolver)
+
+    def _table_type(self, data: tp.Type[Table], ti: TupleInstruction):
+        if data not in self._tables:
+            self.__add_necessary_fk(ti, data)
+        # all columns
+        clauses: list[ClauseInfo] = []
+        for prop in data.__properties_mapped__:
+            if isinstance(prop, property):
+                clauses.append(self.__identify_value_type(prop, ti))
+        return clauses
+
+    def _str_type(self, data: str, ti: TupleInstruction):
+        # COMMENT: use self.table instead self._tables because if we hit this conditional, means that
+        # COMMENT: alias_cache to replace '*' by all columns
+        if self._replace_asterisk_char and (replace_value := self.alias_cache.get(data, None)) is not None:
+            return self.__identify_value_type(replace_value(self.table), ti)
+        return ClauseInfo[T](self.table, data, alias_children_resolver=self.alias_children_resolver)
+
+    def _ICustomAlias_type(self, data: ICustomAlias, ti: TupleInstruction):
+        return ClauseInfo(data.table, data, data.alias_children_resolver)
 
     def _search_correct_table_for_prop[TTable](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
         temp_table: tp.Type[Table] = table
@@ -251,7 +275,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
     def __add_clause[Tc: tp.Type[Table]](self, clause: ClauseInfo[Tc]) -> None:
         self._all_clauses.append(clause)
-        self._clauses_group_by_tables[clause._table].append(clause)
+        self._clauses_group_by_tables[clause.table].append(clause)
         return None
 
     def __add_necessary_fk(self, tuple_instruction: TupleInstruction, tables: tp.Type[Table]) -> None:
