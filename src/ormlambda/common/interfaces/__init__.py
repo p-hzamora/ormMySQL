@@ -1,6 +1,7 @@
-from .IQueryCommand import IQuery  # noqa: F401
-from .INonQueryCommand import INonQueryCommand  # noqa: F401
-from .IRepositoryBase import IRepositoryBase  # noqa: F401
-from .IStatements import IStatements, IStatements_two_generic  # noqa: F401
-from .IDecompositionQuery import IDecompositionQuery  # noqa: F401
-from .IAggregate import IAggregate  # noqa: F401
+from .IQueryCommand import IQuery as IQuery
+from .INonQueryCommand import INonQueryCommand as INonQueryCommand
+from .IRepositoryBase import IRepositoryBase as IRepositoryBase
+from .IStatements import IStatements as IStatements, IStatements_two_generic as IStatements_two_generic
+from .IDecompositionQuery import IDecompositionQuery as IDecompositionQuery
+from .IAggregate import IAggregate as IAggregate
+from .ICustomAlias import ICustomAlias as ICustomAlias
