@@ -184,13 +184,24 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         return func.Sum[T](self._model, column=column, alias=alias, alias_name=alias_name)
 
     @override
-    def join[*FKTables](self, joins) -> IStatements_two_generic[T, *FKTables, MySQLConnection]:
-        if not isinstance(joins[0], tuple):
-            joins = (joins,)
+    def join[*FKTables](
+        self,
+        table: Optional[T] = None,
+        relation: Optional[WhereCondition[T, *FKTables]] = None,
+        join_type: Optional[JoinType] = None,
+    ) -> IStatements_two_generic[T, *FKTables, MySQLConnection]:
+        if isinstance(table, type) and issubclass(table, Table):
+            joins = ((table, relation, join_type),)
+        else:
+            if any(len(x) != 3 for x in table):
+                raise ValueError("Each tuple inside of 'join' method must contain the referenced table, relation between columns and join type")
+            joins = table
+
         new_tables: list[Type[Table]] = [self._model]
-        for table, where in joins:
+
+        for table, where, by in joins:
             new_tables.append(table)
-            join_query = JoinSelector[T, type(table)](self._model, table, by=JoinType.INNER_JOIN, where=where)
+            join_query = JoinSelector[T, type(table)](self._model, table, by=by, where=where)
             self._query_list["join"].append(join_query)
         self._models = new_tables
         return self
@@ -217,7 +228,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         self._query_list["select"].append(select)
 
         self._query: str = self._build()
-        
+
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
             if issubclass(flavour, tuple) and isinstance(selector(*self._models), property):
