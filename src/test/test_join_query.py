@@ -9,7 +9,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import IRepositoryBase, Table, Column, BaseModel  # noqa: E402
+from ormlambda import IRepositoryBase, Table, Column, BaseModel, JoinType  # noqa: E402
 
 
 DDBBNAME = "__test_ddbb__"
@@ -91,12 +91,12 @@ class TestJoinQueries(unittest.TestCase):
         cls.ddbb.drop_database(DDBBNAME)
 
     # FIXME [x]: Review this method in the future
-    def test_join(self):
+    def test_pass_multiple_joins(self):
         result1 = (
             self.model_b.join(
                 (
-                    (JoinA, lambda b, a: b.fk_a == a.pk_a),
-                    (JoinC, lambda b, c: b.fk_c == c.pk_c),
+                    (JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN),
+                    (JoinC, lambda b, c: b.fk_c == c.pk_c, JoinType.INNER_JOIN),
                 )
             )
             .where(
@@ -110,8 +110,8 @@ class TestJoinQueries(unittest.TestCase):
         result2 = (
             self.model_b.join(
                 (
-                    (JoinA, lambda b, a: b.fk_a == a.pk_a),
-                    (JoinC, lambda b, c: b.fk_c == c.pk_c),
+                    (JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN),
+                    (JoinC, lambda b, c: b.fk_c == c.pk_c, JoinType.INNER_JOIN),
                 )
             )
             .where(
@@ -125,9 +125,28 @@ class TestJoinQueries(unittest.TestCase):
 
         self.assertTupleEqual(result1, result2)
 
+    def test_pass_one_join(self):
+        select = (
+            self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
+            .where(
+                [
+                    lambda b_var, _: b_var.fk_a == 2,
+                ]
+            )
+            .select(lambda b, a: (b.data_b, a.data_a), flavour=dict)
+        )
+
+        theorical_result = (
+            {"b_data_b": "data_b_pk_5", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_6", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_7", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_8", "a_data_a": "data_a_pk2"},
+        )
+        self.assertTupleEqual(select, theorical_result)
+
     def test_used_of_count_agg_with_join_deleting_NULL(self):
         result = (
-            self.model_b.join(((JoinA, lambda b, a: b.fk_a == a.pk_a),))
+            self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
             .where(
                 [
                     lambda b, a_foreign: a_foreign.pk_a == 1,
@@ -144,7 +163,7 @@ class TestJoinQueries(unittest.TestCase):
 
     def test_used_of_count_agg_with_join_allowing_NULL(self):
         result = (
-            self.model_b.join(((JoinA, lambda b, a: b.fk_a == a.pk_a),))
+            self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN)
             .where(
                 [
                     lambda b, a_foreign: a_foreign.pk_a == 1,
@@ -163,7 +182,7 @@ class TestJoinQueries(unittest.TestCase):
 
         columns = [["ff", "aa", "count"]]
         result = (
-            self.model_b.join((JoinA, lambda b, a: b.fk_a == a.pk_a))
+            self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN)
             .group_by(lambda b, a: b.fk_a)
             .select(
                 lambda b, a: (
@@ -177,7 +196,7 @@ class TestJoinQueries(unittest.TestCase):
             )
         )
         result_to_tuple = (
-            self.model_b.join((JoinA, lambda b, a: b.fk_a == a.pk_a))
+            self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN)
             .group_by(lambda b, a: b.fk_a)
             .select(
                 lambda b, a: (

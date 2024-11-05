@@ -11,7 +11,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import IRepositoryBase  # noqa: E402
+from ormlambda import IRepositoryBase, JoinType  # noqa: E402
 
 from models import (
     AddressModel,
@@ -285,7 +285,10 @@ class TestSQLStatements(unittest.TestCase):
         modelA.insert(a_insert)
         modelB.insert(b_insert)
 
-        join = modelB.join(((A, lambda b, a: b.fk_a == a.pk_a),)).select_one(lambda x, q: modelB.count(), flavour=dict)
+        join = modelB.join(A, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN).select_one(
+            lambda x, q: (modelB.count(),),
+            flavour=dict,
+        )
         self.assertEqual(join["count"], 36)
 
         self.ddbb.drop_table(modelB._model.__table_name__)
