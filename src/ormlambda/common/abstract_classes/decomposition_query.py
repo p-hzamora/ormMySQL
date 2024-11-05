@@ -6,14 +6,23 @@ import abc
 from ormlambda import Table
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
+from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
 from ormlambda.common.interfaces.IDecompositionQuery import IDecompositionQuery_one_arg
 from ormlambda import JoinType, ForeignKey
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 
 from ..errors import DifferentTablesAndVariablesError
 
-type ClauseDataType = property | str
+type ClauseDataType = property | str | ICustomAlias
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
+
+type ValueType = tp.Union[
+    property,
+    IAggregate,
+    Table,
+    str,
+    ICustomAlias,
+]
 
 
 class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
