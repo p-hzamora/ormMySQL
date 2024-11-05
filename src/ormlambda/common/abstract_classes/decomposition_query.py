@@ -11,7 +11,7 @@ from ormlambda.common.interfaces.IDecompositionQuery import IDecompositionQuery_
 from ormlambda import JoinType, ForeignKey
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 
-from ..errors import DifferentTablesAndVariablesError
+from ..errors import UnmatchedLambdaParameterError
 
 type ClauseDataType = property | str | ICustomAlias
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
@@ -171,6 +171,9 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         """
         lambda_vars = tuple(inspect.signature(_lambda).parameters)
 
+        if len(lambda_vars) != (expected := len(self._tables)):
+            raise UnmatchedLambdaParameterError(expected, found_param=lambda_vars)
+
         # COMMENT: We don't pass a lambda method because lambda reads the las value of 'i'
         for i, param in enumerate(lambda_vars):
             self.alias_cache[param] = self._tables[i]
@@ -179,10 +182,8 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
     def __clauses_list_generetor(self, function: tp.Callable[[T], tp.Any]) -> None:
         if not callable(function):
             return None
-        try:
-            resolved_function = function(*self._tables)
-        except TypeError:
-            raise DifferentTablesAndVariablesError
+
+        resolved_function = function(*self._tables)
 
         tree_list = TreeInstruction(function).to_list()
         # Python treats string objects as iterable, so we need to prevent this behavior

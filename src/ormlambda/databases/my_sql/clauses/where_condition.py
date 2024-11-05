@@ -5,6 +5,7 @@ from ormlambda.common.enums import ConditionType
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.components.where.abstract_where import AbstractWhere
+from ormlambda.common.errors import UnmatchedLambdaParameterError
 from ormlambda import Table
 
 
@@ -69,7 +70,9 @@ class WhereCondition[T: Type[Table], *Inst](AbstractWhere):
         """
         The method is responsible for mapping the variables present in the lambda function so that they are replaced with the instance of the model Table.
         """
-        assert len(lamda_param := inspect.signature(self._function).parameters) == len(self._instances)
+        lamda_param = inspect.signature(self._function).parameters
+        if len(lamda_param) != (expected := len(self._instances)):
+            raise UnmatchedLambdaParameterError(expected, found_param=tuple(lamda_param))
 
         _temp_instances = list(self._instances)[::-1]  # we copied and translated tuple instance due to pop each value in order to param
         new_dicc: dict[str, Table] = {}
