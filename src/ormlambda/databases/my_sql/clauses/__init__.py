@@ -14,3 +14,4 @@ from .upsert import UpsertQuery as UpsertQuery
 from .where_condition import WhereCondition as WhereCondition
 from .count import Count as Count
 from .group_by import GroupBy as GroupBy
+from .alias import Alias as Alias

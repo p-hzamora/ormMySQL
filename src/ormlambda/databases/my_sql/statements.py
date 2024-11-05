@@ -30,6 +30,7 @@ from .clauses import UpdateQuery
 from .clauses import WhereCondition
 from .clauses import Count
 from .clauses import GroupBy
+from .clauses import Alias
 
 
 from ormlambda.utils import Table
@@ -262,6 +263,10 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         self._query_list["group by"].append(groupby)
         return self
+
+    @override
+    def alias(self, column: Callable[[T, *Ts], Any], alias: str) -> IStatements_two_generic[T, *Ts, MySQLConnection]:
+        return Alias[T, *Ts](self.models, column, alias_name=alias)
 
     @override
     @clear_list

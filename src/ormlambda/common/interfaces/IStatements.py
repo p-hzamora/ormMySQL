@@ -323,6 +323,9 @@ class IStatements[T, *Ts](ABC):
     @abstractmethod
     def _build(self) -> str: ...
 
+    @abstractmethod
+    def alias(self, column: Callable[[T, *Ts], Any], alias: str) -> IStatements[T, *Ts]: ...
+
 
 class IStatements_two_generic[T: Table, *Ts, TRepo](IStatements[T, *Ts]):
     @property
