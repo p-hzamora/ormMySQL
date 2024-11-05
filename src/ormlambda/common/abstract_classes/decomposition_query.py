@@ -6,7 +6,7 @@ import abc
 from ormlambda import Table
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
-from ormlambda.common.interfaces import IAggregate, IDecompositionQuery
+from ormlambda.common.interfaces.IDecompositionQuery import IDecompositionQuery_one_arg
 from ormlambda import JoinType, ForeignKey
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 
@@ -16,7 +16,7 @@ type ClauseDataType = property | str
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
 
 
-class ClauseInfo[T: tp.Type[Table]]:
+class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
     @tp.overload
     def __init__(self, table: T, column: property, alias_children_resolver: tp.Callable[..., str]): ...
     @tp.overload
@@ -33,6 +33,10 @@ class ClauseInfo[T: tp.Type[Table]]:
 
     def __repr__(self) -> str:
         return f"{ClauseInfo.__name__}: {self.query}"
+
+    @property
+    def table(self) -> T:
+        return self._table
 
     @property
     def column(self) -> ClauseDataType:
@@ -64,6 +68,12 @@ class ClauseInfo[T: tp.Type[Table]]:
             # TODOL: refactor to base the condition in dict with '*' as key. '*' must to work as special character
             return f"'{data}'" if data != DecompositionQueryBase.CHAR else data
 
+        elif isinstance(data, ICustomAlias):
+            return data.all_clauses[0].column
+
+        else:
+            raise NotImplementedError(f"type of value '{type(data)}' is not implemented.")
+
     def __create_value_string(self, name: str) -> str:
         if isinstance(self._row_column, property):
             return self.concat_with_alias(f"{self._table.__table_name__}.{name}")
@@ -74,11 +84,9 @@ class ClauseInfo[T: tp.Type[Table]]:
         return self.concat_with_alias(self.column)
 
     def concat_with_alias(self, column_name: str) -> str:
-        alias: None | str = self._alias_children_resolver(self)
-
-        if not alias:
+        if not self._alias:
             return column_name
-        return f"{column_name} as `{alias}`"
+        return f"{column_name} as `{self._alias}`"
 
 
 class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]):
