@@ -269,7 +269,11 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         return ClauseInfo[T](self.table, data, alias_children_resolver=self.alias_children_resolver)
 
     def _ICustomAlias_type(self, data: ICustomAlias, ti: TupleInstruction):
-        return ClauseInfo(data.table, data, data.alias_children_resolver)
+        # TODOM: Chech why I have to modify "clause_info._query" with 'data.query' to work as expected
+        clause_info = ClauseInfo(data.table, data, data.alias_children_resolver)
+
+        clause_info._query = data.query
+        return clause_info
 
     def _search_correct_table_for_prop[TTable](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
         temp_table: tp.Type[Table] = table
