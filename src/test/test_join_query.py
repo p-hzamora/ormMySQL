@@ -144,6 +144,27 @@ class TestJoinQueries(unittest.TestCase):
         )
         self.assertTupleEqual(select, theorical_result)
 
+    def test_pass_one_join_with_where(self):
+        select = (
+            self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
+            .where(lambda b_var, _: b_var.fk_a == 2)
+            .select(
+                lambda b, a: (
+                    b.data_b,
+                    a.data_a,
+                ),
+                flavour=dict,
+            )
+        )
+
+        theorical_result = (
+            {"b_data_b": "data_b_pk_5", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_6", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_7", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_8", "a_data_a": "data_a_pk2"},
+        )
+        self.assertTupleEqual(select, theorical_result)
+
     def test_used_of_count_agg_with_join_deleting_NULL(self):
         result = (
             self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
@@ -211,6 +232,16 @@ class TestJoinQueries(unittest.TestCase):
 
         df2 = pd.DataFrame(columns=columns, data=result_to_tuple)
         self.assertTrue(result.equals(df2))
+
+    def test_alias(self):
+        keys = self.model_b.select_one(
+            lambda x: (
+                self.model_b.alias(lambda x: x.data_b, "data_b_de b"),
+                self.model_b.alias(lambda x: x.fk_a, "fk_a de b"),
+            ),
+            flavour=dict,
+        )
+        self.assertTupleEqual(tuple(keys), ("data_b_de b", "fk_a de b"))
 
 
 if __name__ == "__main__":
