@@ -16,7 +16,7 @@ from models import (  # noqa: E402
     Country,
 )
 
-from ormlambda.common.errors import DifferentTablesAndVariablesError
+from ormlambda.common.errors import UnmatchedLambdaParameterError
 
 from ormlambda.databases.my_sql.clauses.select import Select
 from ormlambda.databases.my_sql.clauses import JoinType  # noqa: E402
@@ -98,8 +98,8 @@ class TestSelect(unittest.TestCase):
     #         "SELECT address.address_id as `address_address_id`, address.address as `address_address`, address.address2 as `address_address2`, address.district as `address_district`, address.city_id as `address_city_id`, address.postal_code as `address_postal_code`, address.phone as `address_phone`, address.location as `address_location`, address.last_update as `address_last_update`, city.city_id as `city_city_id`, city.city as `city_city`, city.country_id as `city_country_id`, city.last_update as `city_last_update`, country.country_id as `country_country_id`, country.country as `country_country`, country.last_update as `country_last_update` FROM address INNER JOIN city ON address.city_id = city.city_id INNER JOIN country ON city.country_id = country.country_id",
     #     )
 
-    def test_d_c_b_a_models_raiseDifferentTablesAndVariablesError(self):
-        with self.assertRaises(DifferentTablesAndVariablesError) as err:
+    def test_d_c_b_a_models_raiseUnmatchedLambdaParameterError(self):
+        with self.assertRaises(UnmatchedLambdaParameterError) as err:
             Select[D, C, B, A](
                 (D, C, B, A),
                 lambda_query=lambda d: (
@@ -110,7 +110,9 @@ class TestSelect(unittest.TestCase):
                     d.C.B.A.data_a,
                 ),
             )
-        self.assertEqual(str(err.exception), str(DifferentTablesAndVariablesError()))
+
+        mssg: str = "Unmatched number of parameters in lambda function with the number of tables: Expected 4 parameters but found ('d',)."
+        self.assertEqual(str(err.exception), mssg)
 
     def test_d_c_b_a_models(self):
         q = Select[D, C, B, A](
