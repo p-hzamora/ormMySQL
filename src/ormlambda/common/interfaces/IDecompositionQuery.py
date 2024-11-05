@@ -12,11 +12,17 @@ if tp.TYPE_CHECKING:
 from .IQueryCommand import IQuery
 
 
-class IDecompositionQuery[T: tp.Type[Table], *Ts](IQuery):
+class IDecompositionQuery_one_arg[T: tp.Type[Table]](IQuery):
     @property
     @abc.abstractmethod
     def table(self) -> T: ...
 
+    @property
+    @abc.abstractmethod
+    def alias(self) -> bool: ...
+
+
+class IDecompositionQuery[T: tp.Type[Table], *Ts](IDecompositionQuery_one_arg[T], IQuery):
     @property
     @abc.abstractmethod
     def tables(self) -> tuple[*Ts]: ...
@@ -36,14 +42,6 @@ class IDecompositionQuery[T: tp.Type[Table], *Ts](IQuery):
     @property
     @abc.abstractmethod
     def fk_relationship(self) -> set[tuple[tp.Type[Table], tp.Type[Table]]]: ...
-
-    @property
-    @abc.abstractmethod
-    def query(self) -> str: ...
-
-    @property
-    @abc.abstractmethod
-    def alias(self) -> bool: ...
 
     @property
     @abc.abstractmethod
