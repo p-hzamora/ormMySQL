@@ -7,8 +7,7 @@ from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
 if TYPE_CHECKING:
     from ormlambda import Table
 
-from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
-from ormlambda.common.interfaces.IStatements import OrderType
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 
 class OrderQuery[T: Table](DecompositionQueryBase[T]):

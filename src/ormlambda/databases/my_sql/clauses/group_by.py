@@ -4,6 +4,7 @@ from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo, De
 from ormlambda.common.interfaces.IAggregate import IAggregate
 from ormlambda import Table
 
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 class GroupBy[T: tp.Type[Table], *Ts, TProp](DecompositionQueryBase[T], IAggregate[T]):
     CLAUSE: str = "GROUP BY"

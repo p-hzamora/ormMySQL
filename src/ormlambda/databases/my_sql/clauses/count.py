@@ -5,6 +5,7 @@ if tp.TYPE_CHECKING:
 from ormlambda.common.interfaces import IAggregate
 from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase, ClauseInfo
 from ormlambda import JoinType
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 
 class Count[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):

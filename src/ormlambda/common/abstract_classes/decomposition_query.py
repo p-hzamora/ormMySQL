@@ -12,9 +12,7 @@ from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 from .clause_info import ClauseInfo
 from ..errors import UnmatchedLambdaParameterError
 
-type ClauseDataType = property | str | ICustomAlias
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
-
 type ValueType = tp.Union[
     property,
     IAggregate,

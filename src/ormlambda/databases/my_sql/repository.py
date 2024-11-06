@@ -18,7 +18,7 @@ from .clauses import DropTable
 
 
 if TYPE_CHECKING:
-    from src.ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+    from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
     from ormlambda import Table
     from src.ormlambda.databases.my_sql.clauses.select import Select
 
