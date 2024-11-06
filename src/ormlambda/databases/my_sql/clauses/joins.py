@@ -21,6 +21,7 @@ class JoinSelector[TLeft, TRight](IQuery):
         "_left_col",
         "_right_col",
         "_compareop",
+        "_alias",
     )
 
     @override
@@ -75,6 +76,9 @@ class JoinSelector[TLeft, TRight](IQuery):
             self._right_col: str = _dis.cond_2.name
             self._compareop: str = _dis.compare_op
 
+        # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
+        self._alias: Optional[str] = f"{self._table_right.__table_name__}_{self._left_col}"
+
     def __eq__(self, __value: "JoinSelector") -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
 
@@ -110,7 +114,13 @@ class JoinSelector[TLeft, TRight](IQuery):
             self._compareop,  # =
             right_col,  # second_col
         ]
-        return " ".join(list_)
+    @property
+    def alias(self) -> str:
+        return self._alias
+
+    @alias.setter
+    def alias(self, value: str) -> str:
+        self._alias = value
 
     @classmethod
     def sort_join_selectors(cls, joins: set[JoinSelector]) -> tuple[JoinSelector]:
