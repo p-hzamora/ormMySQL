@@ -42,7 +42,7 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
         cols: list[str] = []
         for x in self.all_clauses:
             if x.dtype is shp.Point:
-                cols.append(x.concat_with_alias(f"ST_AsText({self.table.__table_name__}.{x.column})"))
+                cols.append(x.concat_with_alias(f"ST_AsText({self.table.table_alias()}.{x.column})"))
             else:
                 cols.append(x.query)
 
@@ -51,7 +51,7 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
                 self._joins.update(x._row_column.fk_relationship)
 
         col: str = ", ".join(cols)
-        query: str = f"{self.CLAUSE} {col} FROM {self.table.__table_name__}"
+        query: str = f"{self.CLAUSE} {col} FROM {self.table.__table_name__} AS `{self.table.table_alias()}`"
 
         if self.has_foreign_keys:
             query += " " + self.stringify_foreign_key(" ")

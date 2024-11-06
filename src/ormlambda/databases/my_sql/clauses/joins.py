@@ -27,8 +27,8 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
 
     @override
     def __repr__(self) -> str:
-        table_col_left: str = f"{self._orig_table.__table_name__}.{self._left_col}"
-        table_col_right: str = f"{self._table_right.__table_name__}.{self._right_col}"
+        table_col_left: str = f"{self._orig_table.table_alias()}.{self._left_col}"
+        table_col_right: str = f"{self._table_right.table_alias()}.{self._right_col}"
 
         return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
 
@@ -78,7 +78,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
             self._compareop: str = _dis.compare_op
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
-        self._alias: Optional[str] = f"{self._table_right.__table_name__}_{self._left_col}"
+        self._alias: Optional[str] = f"{self._table_right.table_alias()}_{self._left_col}"
 
     def __eq__(self, __value: "JoinSelector") -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
@@ -102,7 +102,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     @property
     @override
     def query(self) -> str:
-        ltable = self._orig_table.__table_name__
+        ltable = self._orig_table.table_alias()
         left_col = f"{ltable}.{self._left_col}"
 
         rtable = self.use_alias_if_exists()
@@ -110,7 +110,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
         # return f"{self._by.value} {rtable} {alias}ON {left_col} {self._compareop} {right_col}"
         list_ = [
             self._by.value,  # inner join
-            self._table_right.__table_name__,  # table_name
+            self._table_right.table_alias(),  # table_name
             f"AS `{self.alias}`" if self.alias is not None else None,
             "ON",
             left_col,  # first_col
@@ -122,7 +122,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     def use_alias_if_exists(self) -> str:
         if self._alias is not None:
             return self.alias
-        return self._table_right.__table_name__
+        return self._table_right.table_alias()
 
     @property
     def alias(self) -> str:

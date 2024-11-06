@@ -72,7 +72,7 @@ class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
 
     def __create_value_string(self) -> str:
         if isinstance(self._row_column, property):
-            return self.concat_with_alias(f"{self._table.__table_name__}.{self._column}")
+            return self.concat_with_alias(f"{self._table.table_alias()}.{self._column}")
 
         if isinstance(self._row_column, IAggregate):
             return self.concat_with_alias(self._row_column.query)
