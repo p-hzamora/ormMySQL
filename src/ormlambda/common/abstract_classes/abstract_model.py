@@ -10,7 +10,7 @@ from ormlambda.common.interfaces.IAggregate import IAggregate
 
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
-    from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+    from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]

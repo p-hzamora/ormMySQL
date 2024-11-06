@@ -7,7 +7,7 @@ if tp.TYPE_CHECKING:
     from ormlambda import Table
 
     # TODOH: Changed to avoid mysql dependency
-    from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+    from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 from .IQueryCommand import IQuery
 

@@ -9,13 +9,11 @@ from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
 from ormlambda.common.interfaces.IDecompositionQuery import IDecompositionQuery_one_arg
 from ormlambda import JoinType, ForeignKey
-from ormlambda.databases.my_sql.clauses.joins import JoinSelector
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 from ..errors import UnmatchedLambdaParameterError
 
-type ClauseDataType = property | str | ICustomAlias
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
-
 type ValueType = tp.Union[
     property,
     IAggregate,
@@ -23,79 +21,6 @@ type ValueType = tp.Union[
     str,
     ICustomAlias,
 ]
-
-
-class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
-    @tp.overload
-    def __init__(self, table: T, column: property, alias_children_resolver: tp.Callable[..., str]): ...
-    @tp.overload
-    def __init__(self, table: T, column: str, alias_children_resolver: tp.Callable[..., str]): ...
-
-    def __init__(self, table: T, column: ClauseDataType, alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str]):
-        self._table: T = table
-        self._row_column: ClauseDataType = column
-        self._column: str = self._resolve_column(column)
-        self._alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str] = alias_children_resolver
-        self._alias: tp.Optional[str] = self._alias_children_resolver(self)
-
-        self._query: str = self.__create_value_string(self._column)
-
-    def __repr__(self) -> str:
-        return f"{ClauseInfo.__name__}: {self.query}"
-
-    @property
-    def table(self) -> T:
-        return self._table
-
-    @property
-    def column(self) -> ClauseDataType:
-        return self._column
-
-    @property
-    def alias(self) -> str:
-        return self._alias
-
-    @property
-    def query(self) -> str:
-        return self._query
-
-    @property
-    def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
-        try:
-            return self._table.get_column(self.column).dtype
-        except ValueError:
-            return None
-
-    def _resolve_column(self, data: ClauseDataType) -> str:
-        if isinstance(data, property):
-            return self._table.__properties_mapped__[data]
-
-        elif isinstance(data, IAggregate):
-            return data.alias_name
-
-        elif isinstance(data, str):
-            # TODOL: refactor to base the condition in dict with '*' as key. '*' must to work as special character
-            return f"'{data}'" if data != DecompositionQueryBase.CHAR else data
-
-        elif isinstance(data, ICustomAlias):
-            return data.all_clauses[0].column
-
-        else:
-            raise NotImplementedError(f"type of value '{type(data)}' is not implemented.")
-
-    def __create_value_string(self, name: str) -> str:
-        if isinstance(self._row_column, property):
-            return self.concat_with_alias(f"{self._table.__table_name__}.{name}")
-
-        if isinstance(self._row_column, IAggregate):
-            return self.concat_with_alias(self._row_column.query)
-
-        return self.concat_with_alias(self.column)
-
-    def concat_with_alias(self, column_name: str) -> str:
-        if not self._alias:
-            return column_name
-        return f"{column_name} as `{self._alias}`"
 
 
 class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]):

@@ -3,6 +3,7 @@ from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo, De
 from ormlambda import Table
 
 from ormlambda.common.interfaces import ICustomAlias
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 
 class Alias[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ICustomAlias[T, *Ts]):
