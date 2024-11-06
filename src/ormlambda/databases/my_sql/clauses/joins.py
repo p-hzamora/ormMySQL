@@ -101,19 +101,28 @@ class JoinSelector[TLeft, TRight](IQuery):
     @property
     @override
     def query(self) -> str:
-        # {inner join} table_name on
-        #   table_name.first col = table_name.second_col
+        ltable = self._orig_table.__table_name__
+        left_col = f"{ltable}.{self._left_col}"
 
-        left_col = f"{self._orig_table.__table_name__}.{self._left_col}"
-        right_col = f"{self._table_right.__table_name__}.{self._right_col}"
+        rtable = self.use_alias_if_exists()
+        right_col = f"{rtable}.{self._right_col}"
+        # return f"{self._by.value} {rtable} {alias}ON {left_col} {self._compareop} {right_col}"
         list_ = [
             self._by.value,  # inner join
             self._table_right.__table_name__,  # table_name
+            f"AS `{self.alias}`" if self.alias is not None else None,
             "ON",
             left_col,  # first_col
             self._compareop,  # =
             right_col,  # second_col
         ]
+        return " ".join([x for x in list_ if x is not None])
+
+    def use_alias_if_exists(self) -> str:
+        if self._alias is not None:
+            return self.alias
+        return self._table_right.__table_name__
+
     @property
     def alias(self) -> str:
         return self._alias
