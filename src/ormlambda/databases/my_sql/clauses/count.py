@@ -3,12 +3,12 @@ import typing as tp
 if tp.TYPE_CHECKING:
     from ormlambda import Table
 from ormlambda.common.interfaces import IAggregate
-from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase, ClauseInfo
 from ormlambda import JoinType
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ..mysql_decomposition import MySQLDecompositionQuery
 
 
-class Count[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):
+class Count[T: tp.Type[Table]](MySQLDecompositionQuery[T], IAggregate[T]):
     NAME: str = "COUNT"
 
     def __init__(

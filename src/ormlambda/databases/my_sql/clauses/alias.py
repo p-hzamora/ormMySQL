@@ -1,12 +1,12 @@
 import typing as tp
-from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo, DecompositionQueryBase
 from ormlambda import Table
-
 from ormlambda.common.interfaces import ICustomAlias
+
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ..mysql_decomposition import MySQLDecompositionQuery
 
 
-class Alias[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ICustomAlias[T, *Ts]):
+class Alias[T: tp.Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], ICustomAlias[T, *Ts]):
     def __init__(
         self,
         table: T,

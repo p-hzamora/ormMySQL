@@ -1,16 +1,17 @@
 from __future__ import annotations
 from typing import override, Callable, TYPE_CHECKING, Any, Iterable
-
-from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+from ormlambda.common.interfaces.IStatements import OrderType
 
 
 if TYPE_CHECKING:
     from ormlambda import Table
 
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ..mysql_decomposition import MySQLDecompositionQuery
 
 
-class OrderQuery[T: Table](DecompositionQueryBase[T]):
+
+class OrderQuery[T: Table](MySQLDecompositionQuery[T]):
     ORDER = "ORDER BY"
 
     def __init__[*Ts](self, instance: T, lambda_query: Callable[[Any], tuple[*Ts]], order_type: Iterable[OrderType]) -> None:

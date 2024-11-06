@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import override, Type, Callable, TYPE_CHECKING, Optional
 
-from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 from ormlambda.common.enums.join_type import JoinType
 from ormlambda.common.interfaces.IAggregate import IAggregate
 import shapely as shp
@@ -11,8 +10,10 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from .joins import JoinSelector
 
+from ..mysql_decomposition import MySQLDecompositionQuery
 
-class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts]):
+
+class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
     CLAUSE: str = "SELECT"
 
     def __init__(

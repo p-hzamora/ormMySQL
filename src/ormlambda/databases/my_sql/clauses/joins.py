@@ -4,6 +4,7 @@ from typing import override, Callable, overload, Optional, TYPE_CHECKING, Type
 
 
 from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
+from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import Disassembler
 from ormlambda import JoinType
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
 
 
-class JoinSelector[TLeft, TRight](IQuery):
+class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     __slots__: tuple = (
         "_orig_table",
         "_table_right",
