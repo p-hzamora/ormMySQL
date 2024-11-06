@@ -20,7 +20,7 @@ from .clauses import DropTable
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
     from ormlambda import Table
-    from src.ormlambda.databases.my_sql.clauses.select import Select
+    from ormlambda.databases.my_sql.clauses.select import Select
 
 type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]
 
