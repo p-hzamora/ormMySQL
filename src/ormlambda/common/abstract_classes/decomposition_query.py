@@ -7,8 +7,8 @@ from ormlambda import Table
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
-from ormlambda.common.interfaces.IDecompositionQuery import IDecompositionQuery_one_arg
-from ormlambda import JoinType, ForeignKey
+from ormlambda import JoinType
+from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 from ..errors import UnmatchedLambdaParameterError
