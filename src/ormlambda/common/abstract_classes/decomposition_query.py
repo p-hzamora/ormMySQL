@@ -40,7 +40,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
     @tp.overload
     def __init__(self, tables: tuple[T,*Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: tuple[T,*Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ..., joins: tp.Optional[list[JoinSelector]] = ...) -> None: ...
+    def __init__(self, tables: tuple[T,*Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ..., joins: tp.Optional[list[IJoinSelector]] = ...) -> None: ...
 
     def __init__(
         self,
@@ -51,14 +51,14 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         alias_name: tp.Optional[str] = None,
         by: JoinType = JoinType.INNER_JOIN,
         replace_asterisk_char: bool = True,
-        joins: tp.Optional[list[JoinType]] = None,
+        joins: tp.Optional[list[IJoinSelector]] = None,
     ) -> None:
         self._tables: tuple[T, *Ts] = tables if isinstance(tables, tp.Iterable) else (tables,)
         self._lambda_query: tp.Callable[[T], tuple] = lambda_query
         self._alias: bool = alias
         self._alias_name: tp.Optional[str] = alias_name
         self._by: JoinType = by
-        self._joins: set[JoinSelector] = set(joins) if joins is not None else set()
+        self._joins: set[IJoinSelector] = set(joins) if joins is not None else set()
 
         self._clauses_group_by_tables: dict[tp.Type[Table], list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
@@ -296,15 +296,9 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         self._alias_name = value
 
-    def stringify_foreign_key(self, sep: str = "\n") -> str:
-        sorted_joins = JoinSelector.sort_join_selectors(self._joins)
-        return f"{sep}".join([join.query for join in sorted_joins])
 
-    def _add_fk_relationship[T1: tp.Type[Table], T2: tp.Type[Table]](self, t1: T1, t2: T2) -> None:
-        lambda_relationship = ForeignKey.MAPPED[t1.__table_name__].referenced_tables[t2.__table_name__].relationship
+    @abc.abstractmethod
+    def stringify_foreign_key(self, sep: str = "\n") -> str: ...
 
-        tables = list(self._tables)
-        if t2 not in tables:
-            tables.append(t2)
-        self._tables = tuple(tables)
-        return self._joins.add(JoinSelector[T1, T2](t1, t2, self._by, where=lambda_relationship))
+    @abc.abstractmethod
+    def _add_fk_relationship[T1: tp.Type[Table], T2: tp.Type[Table]](self, t1: T1, t2: T2) -> None: ...
