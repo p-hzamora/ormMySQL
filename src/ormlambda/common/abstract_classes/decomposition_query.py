@@ -276,10 +276,6 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         return self._joins
 
     @property
-    @abc.abstractmethod
-    def query(self) -> str: ...
-
-    @property
     def alias(self) -> str:
         return self._alias
 
@@ -296,6 +292,9 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         self._alias_name = value
 
+    @property
+    @abc.abstractmethod
+    def query(self) -> str: ...
 
     @abc.abstractmethod
     def stringify_foreign_key(self, sep: str = "\n") -> str: ...
