@@ -22,7 +22,7 @@ class TableInfo[T1: Type[Table], T2: Type[Table]]:
         self._referenced_tables: dict[str, ReferencedTable[T1, T2]] = {}
 
     def __repr__(self) -> str:
-        return f"<{TableInfo.__name__}> class '{self.table_object}' dependent tables -> [{', '.join(tuple(self.referenced_tables))}]"
+        return f"{TableInfo.__name__}: '{self.table_object.__table_name__}' dependent tables -> [{', '.join(tuple(self.referenced_tables))}]"
 
     @property
     def referenced_tables(self) -> dict[str, ReferencedTable[T1, T2]]:
