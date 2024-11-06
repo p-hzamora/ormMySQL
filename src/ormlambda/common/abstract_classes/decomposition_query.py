@@ -7,9 +7,9 @@ from ormlambda import Table
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
-from ormlambda import JoinType, ForeignKey
-from ormlambda.databases.my_sql.clauses.joins import JoinSelector
-from .clause_info import ClauseInfo
+from ormlambda import JoinType
+from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ..errors import UnmatchedLambdaParameterError
 
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
