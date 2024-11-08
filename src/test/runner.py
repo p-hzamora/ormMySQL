@@ -15,7 +15,7 @@ import test_queries_with_different_datatypes
 import test_where_statement
 import test_join_query
 import test_errors
-import test_new_context_select as test_new_context_select
+import test_new_context_select
 
 from test_queries import (
     test_join_selector,
