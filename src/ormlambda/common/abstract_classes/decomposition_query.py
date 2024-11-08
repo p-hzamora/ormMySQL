@@ -59,6 +59,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         self._alias_name: tp.Optional[str] = alias_name
         self._by: JoinType = by
         self._joins: set[IJoinSelector] = set(joins) if joins is not None else set()
+        self._alias_mapped:dict[str|property,str]= self.table.alias_mapped().copy()
 
         self._clauses_group_by_tables: dict[tp.Type[Table], list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
