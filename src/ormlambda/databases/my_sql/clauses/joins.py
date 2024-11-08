@@ -160,3 +160,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
                 continue
             res.extend(tables)
         return res
+
+    @property
+    def alias(self)->str:
+        return self._table_right.__table_name__ + "_" + self._left_col
