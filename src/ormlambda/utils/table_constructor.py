@@ -298,5 +298,7 @@ class Table(metaclass=TableMeta):
         return getattr(instance_table, f"_{_column}")
 
     @classmethod
-    def table_alias(cls)->str:
+    def table_alias(cls, column: Optional[str] = None) -> str:
+        if column:
+            return f"`{cls.__table_name__}_{column}`"
         return cls.__table_name__
