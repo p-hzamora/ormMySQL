@@ -302,3 +302,7 @@ class Table(metaclass=TableMeta):
         if column:
             return f"`{cls.__table_name__}_{column}`"
         return cls.__table_name__
+
+    @classmethod
+    def alias_mapped(cls) -> dict[str | property, str]:
+        return {col: cls.__table_name__ for col in cls.get_columns()}
