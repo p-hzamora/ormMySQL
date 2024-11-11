@@ -27,8 +27,8 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
 
     @override
     def __repr__(self) -> str:
-        table_col_left: str = f"{self._orig_table.table_alias()}.{self._left_col}"
-        table_col_right: str = f"{self._table_right.table_alias()}.{self._right_col}"
+        table_col_left: str = f"{self._left_table.table_alias()}.{self._left_col}"
+        table_col_right: str = f"{self._right_table.table_alias()}.{self._right_col}"
 
         return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
 
@@ -53,23 +53,23 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
 
     def __init__(
         self,
-        table_left: Table,
-        table_right: Table,
+        left_table: Table,
+        right_table: Table,
         by: JoinType,
-        col_left: Optional[str] = None,
-        col_right: Optional[str] = None,
+        left_col: Optional[str] = None,
+        right_col: Optional[str] = None,
         where: Optional[Callable[[TLeft, TRight], bool]] = None,
     ) -> None:
-        self._orig_table: Table = table_left
-        self._table_right: Table = table_right
+        self._left_table: Table = left_table
+        self._right_table: Table = right_table
         self._by: JoinType = by
 
-        if all(x is None for x in (col_left, col_right, where)):
+        if all(x is None for x in (left_col, right_col, where)):
             raise ValueError("You must specify at least 'where' clausule or ('_left_col',_right_col')")
 
         if where is None:
-            self._left_col: str = col_left
-            self._right_col: str = col_right
+            self._left_col: str = left_col
+            self._right_col: str = right_col
             self._compareop: str = "="
         else:
             _dis: Disassembler[TLeft, TRight] = Disassembler[TLeft, TRight](where)
@@ -78,7 +78,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
             self._compareop: str = _dis.compare_op
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
-        self._alias: Optional[str] = f"{self._table_right.table_alias()}_{self._left_col}"
+        self._alias: Optional[str] = f"{self._right_table.table_alias()}_{self._left_col}"
 
     def __eq__(self, __value: "JoinSelector") -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
@@ -86,8 +86,8 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     def __hash__(self) -> int:
         return hash(
             (
-                self._orig_table,
-                self._table_right,
+                self._left_table,
+                self._right_table,
                 self._by,
                 self._left_col,
                 self._right_col,
@@ -102,7 +102,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     @property
     @override
     def query(self) -> str:
-        ltable = self._orig_table.table_alias()
+        ltable = self._left_table.table_alias()
         left_col = f"{ltable}.{self._left_col}"
 
         rtable = self.use_alias_if_exists()
@@ -110,7 +110,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
         # return f"{self._by.value} {rtable} {alias}ON {left_col} {self._compareop} {right_col}"
         list_ = [
             self._by.value,  # inner join
-            self._table_right.table_alias(),  # table_name
+            self._right_table.table_alias(),  # table_name
             f"AS `{self.alias}`" if self.alias is not None else None,
             "ON",
             left_col,  # first_col
@@ -122,7 +122,7 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     def use_alias_if_exists(self) -> str:
         if self._alias is not None:
             return self.alias
-        return self._table_right.table_alias()
+        return self._right_table.table_alias()
 
     @property
     def alias(self) -> str:
@@ -131,6 +131,22 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     @alias.setter
     def alias(self, value: str) -> str:
         self._alias = value
+
+    @property
+    def left_table(self) -> str:
+        return self._left_table
+
+    @property
+    def right_table(self) -> str:
+        return self._right_table
+
+    @property
+    def left_col(self) -> str:
+        return self._left_col
+
+    @property
+    def right_col(self) -> str:
+        return self._right_col
 
     @classmethod
     def sort_join_selectors(cls, joins: set[JoinSelector]) -> tuple[JoinSelector]:
@@ -141,11 +157,11 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
         join_object_map: dict[str, list[JoinSelector]] = defaultdict(list)
 
         for obj in joins:
-            join_object_map[obj._orig_table].append(obj)
+            join_object_map[obj._left_table].append(obj)
 
         graph: dict[Type[Table], list[Type[Table]]] = defaultdict(list)
         for join in joins:
-            graph[join._orig_table].append(join._table_right)
+            graph[join._left_table].append(join._right_table)
 
         sorted_graph = DFSTraversal.sort(graph)[::-1]
 
@@ -162,5 +178,5 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
         return res
 
     @property
-    def alias(self)->str:
-        return self._table_right.__table_name__ + "_" + self._left_col
+    def alias(self) -> str:
+        return self._right_table.__table_name__ + "_" + self._left_col
