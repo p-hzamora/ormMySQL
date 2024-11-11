@@ -38,10 +38,12 @@ class MySQLDecompositionQuery[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, 
         return f"{sep}".join([join.query for join in sorted_joins])
 
     def _add_fk_relationship[T1: tp.Type[Table], T2: tp.Type[Table]](self, t1: T1, t2: T2) -> None:
-        lambda_relationship = ForeignKey.MAPPED[t1.__table_name__].referenced_tables[t2.__table_name__].relationship
+        for relation in ForeignKey.MAPPED[t1.__table_name__].referenced_tables[t2.__table_name__]:
+            new_join = JoinSelector[T1, T2](t1, t2, self._by, where=relation.relationship)
+            self._joins.add(new_join)
 
         tables = list(self._tables)
         if t2 not in tables:
             tables.append(t2)
         self._tables = tuple(tables)
-        return self._joins.add(JoinSelector[T1, T2](t1, t2, self._by, where=lambda_relationship))
+        return None
