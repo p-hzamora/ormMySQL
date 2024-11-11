@@ -1,35 +1,65 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, NamedTuple, Type, Optional, overload
+from dataclasses import dataclass
+from typing import Callable, TYPE_CHECKING, Type, Optional, overload
+
+from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
 from .lambda_disassembler import Disassembler
 
 if TYPE_CHECKING:
     from .table_constructor import Table
 
 
-class ReferencedTable[T1: Type[Table], T2: Type[Table]](NamedTuple):
-    obj: T2
+@dataclass
+class ReferencedTable[T1: Type[Table], T2: Type[Table]]:
+    orig_table: T1
+    referenced_table: T2
     relationship: Callable[[T1, T2], bool]
+
+    @property
+    def foreign_key_column(self):
+        resolved = TreeInstruction(self.relationship).to_list()
+        # FIXME [ ]: Avoid access to left col by position
+        col_left = resolved[0].nested_element.name
+        return col_left
 
 
 class TableInfo[T1: Type[Table], T2: Type[Table]]:
     @overload
     def __init__(self) -> None: ...
     @overload
+    def __init__(self, table_object: str) -> None: ...
+    @overload
     def __init__(self, table_object: T1) -> None: ...
 
     def __init__(self, table_object: Optional[T1] = None) -> None:
-        self._table_object: Optional[T1] = table_object
-        self._referenced_tables: dict[str, ReferencedTable[T1, T2]] = {}
+        self._table_name: str = ""
+        self._table_object: Optional[T1] = None
+        self._fill_table_variable(table_object)
+        self._referenced_tables: dict[str, dict[str, ReferencedTable[T1, T2]]] = {}
+
+    def _fill_table_variable(self, table: str | Type[Table]):
+        if isinstance(table, str):
+            self._table_name = table
+        else:
+            self._table_name = table.__table_name__
+            self._table_object = table
 
     def __repr__(self) -> str:
-        return f"{TableInfo.__name__}: '{self.table_object.__table_name__}' dependent tables -> [{', '.join(tuple(self.referenced_tables))}]"
+        return f"{TableInfo.__name__}: '{self._table_name}' dependent tables -> [{', '.join(tuple(self.referenced_tables))}]"
 
     @property
-    def referenced_tables(self) -> dict[str, ReferencedTable[T1, T2]]:
+    def referenced_tables(self) -> dict[str, list[ReferencedTable[T1, T2]]]:
         return self._referenced_tables
 
-    def update_referenced_tables(self, referenced_table: Type[Table], relationship: Callable[[T1, T2], bool]) -> None:
-        self._referenced_tables.update({referenced_table.__table_name__: ReferencedTable[T1, T2](referenced_table, relationship)})
+    def update_referenced_tables(self, orig_table: str, referenced_table: Type[Table], relationship: Callable[[T1, T2], bool]) -> None:
+        new_references = ReferencedTable[T1, T2](orig_table, referenced_table, relationship)
+
+        referenced_list = self._referenced_tables.get(referenced_table.__table_name__, [])
+
+        if new_references not in referenced_list:
+            referenced_list.append(new_references)
+            self._referenced_tables[referenced_table.__table_name__] = referenced_list
+        return None
 
     @property
     def table_object(self) -> Optional[Type[Table]]:
@@ -60,10 +90,10 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
     @classmethod
     def __add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
         if orig_table not in cls.MAPPED:
-            cls.MAPPED[orig_table] = TableInfo()
+            cls.MAPPED[orig_table] = TableInfo(orig_table)
 
         # if referenced_table not in cls.MAPPED[orig_table]:
-        cls.MAPPED[orig_table].update_referenced_tables(referenced_table, relationship)
+        cls.MAPPED[orig_table].update_referenced_tables(orig_table, referenced_table, relationship)
 
         return None
 

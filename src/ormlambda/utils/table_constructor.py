@@ -111,8 +111,7 @@ class TableMeta(type):
         if table_info := ForeignKey.MAPPED.get(cls.__table_name__, None):
             table_info.table_object = cls
         else:
-            ForeignKey.MAPPED[cls.__table_name__] = TableInfo()
-            ForeignKey.MAPPED[cls.__table_name__].table_object = cls
+            ForeignKey.MAPPED[cls.__table_name__] = TableInfo(cls)
 
         return None
 
