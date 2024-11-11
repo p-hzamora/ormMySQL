@@ -10,6 +10,7 @@ from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustom
 from ormlambda import JoinType
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.utils.foreign_key import ForeignKey
 from ..errors import UnmatchedLambdaParameterError
 
 type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
@@ -203,7 +204,8 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         _, *table_list = tuple_instruction.nested_element.parents
         counter: int = 0
         while prop not in temp_table.__properties_mapped__:
-            new_table: TTable = getattr(temp_table(), table_list[counter])
+            first_property: property = table_list[counter]
+            new_table: TTable = getattr(temp_table(), first_property)
 
             if not isinstance(new_table, type) or not issubclass(new_table, Table):
                 raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
@@ -219,6 +221,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 )
             temp_table = new_table
             counter += 1
+
 
         raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
 
