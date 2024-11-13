@@ -17,13 +17,16 @@ class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
     def __init__(self, table: T, column: property, alias_children_resolver: tp.Callable[..., str]): ...
     @tp.overload
     def __init__(self, table: T, column: str, alias_children_resolver: tp.Callable[..., str]): ...
+    @tp.overload
+    def __init__(self, table: T, column: str, alias_children_resolver: tp.Callable[..., str], with_alias: tp.Optional[str] = ...): ...
 
-    def __init__(self, table: T, column: ClauseDataType, alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str]):
+    def __init__(self, table: T, column: ClauseDataType, alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str], with_alias: tp.Optional[str] = None):
         self._table: T = table
         self._row_column: ClauseDataType = column
         self._column: str = self._resolve_column(column)
         self._alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str] = alias_children_resolver
         self._alias: tp.Optional[str] = self._alias_children_resolver(self)
+        self._with_alias: tp.Optional[str] = with_alias
 
         self._query: str = self.__create_value_string()
 
@@ -72,6 +75,9 @@ class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
 
     def __create_value_string(self) -> str:
         if isinstance(self._row_column, property):
+            # TODOM: cheched to refactor
+            if self._with_alias is not None:
+                return self.concat_with_alias(f"`{self._with_alias}`.{self.column}")
             return self.concat_with_alias(f"{self._table.table_alias(self._column)}.{self._column}")
 
         if isinstance(self._row_column, IAggregate):
