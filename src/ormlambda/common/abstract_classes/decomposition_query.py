@@ -181,7 +181,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
     def _IAggregate_type(self, data: IAggregate, ti: TupleInstruction):
         return ClauseInfo[T](self.table, data)
 
-    def _table_type(self, data: tp.Type[Table], ti: TupleInstruction):
+    def _table_type(self, data: tp.Type[Table], ti: TupleInstruction) -> ClauseInfo:
         if data not in self._tables:
             self.__add_necessary_fk(ti, data)
         # all columns
