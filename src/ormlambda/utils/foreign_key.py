@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable, TYPE_CHECKING, Type, Optional, overload
+from typing import Any, Callable, TYPE_CHECKING, Type, Optional, overload
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
 from .lambda_disassembler import Disassembler
@@ -75,6 +75,11 @@ class TableInfo[T1: Type[Table], T2: Type[Table]]:
 
 
 class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
+    __slots__ = (
+        "_orig_table",
+        "_referenced_table",
+        "_relationship",
+    )
     MAPPED: dict[str, TableInfo[Tbl1, Tbl2]] = {}
 
     def __new__(
@@ -85,7 +90,24 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
     ) -> Tbl2:
         cls.__add_foreign_key(orig_table, referenced_table, relationship)
 
-        return referenced_table
+        self = super().__new__(cls)
+        return self
+
+    def __init__(
+        self,
+        orig_table: str,
+        referenced_table: Type[Tbl2],
+        relationship: Callable[[Tbl1, Tbl2], bool],
+    ) -> None:
+        self._orig_table: str = orig_table
+        self._referenced_table: Type[Tbl2] = referenced_table
+        self._relationship: Callable[[Tbl1, Tbl2], bool] = relationship
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._referenced_table, name)
+
+    def decomposite_fk(self) -> Disassembler[Tbl1, Tbl2]:
+        return Disassembler(self._relationship)
 
     @classmethod
     def __add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
