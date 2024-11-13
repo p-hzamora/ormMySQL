@@ -176,6 +176,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 return self._search_correct_table_for_prop(table, ti, data)
             except ValueError:
                 continue
+        raise TypeError("Cannot return None")
 
     def _IAggregate_type(self, data: IAggregate, ti: TupleInstruction):
         return ClauseInfo[T](self.table, data)
