@@ -205,23 +205,24 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         counter: int = 0
         while prop not in temp_table.__properties_mapped__:
             first_property: property = table_list[counter]
-            new_table: TTable = getattr(temp_table(), first_property)
+            foreign_key: ForeignKey = getattr(temp_table(), first_property)
 
-            if not isinstance(new_table, type) or not issubclass(new_table, Table):
-                raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
-            self._add_fk_relationship(temp_table, new_table)
+            if not isinstance(foreign_key, ForeignKey):
+                raise ValueError(f"new_table var must be '{ForeignKey.__class__}' type and is '{type(foreign_key)}'")
 
+            new_table: TTable = foreign_key._referenced_table
             if prop in new_table.__properties_mapped__:
-                temp_table
-                return ClauseInfo[T](
-                    table=new_table,
-                    column=prop,
-                    alias_table=lambda x: new_table.__table_name__ + "_" + "{column}",
-                    alias_clause=lambda x: temp_table.__table_name__ + "_" + "{column}",
-                )
+                self._add_fk_relationship(temp_table, new_table)
+                for x in ForeignKey.MAPPED[table.__table_name__].referenced_tables[new_table.__table_name__]:
+                    if x.foreign_key_column == foreign_key.decomposite_fk().cond_1.name:
+                        return ClauseInfo[TTable](
+                            table=x.referenced_table,
+                            column=prop,
+                            alias_table=f"{x.foreign_key_column}_{new_table.__table_name__}",
+                            # alias_clause=f"{x.foreign_key_column}_{new_table.__table_name__}",
+                        )
             temp_table = new_table
             counter += 1
-
 
         raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
 
