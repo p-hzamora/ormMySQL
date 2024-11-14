@@ -301,3 +301,7 @@ class Table(metaclass=TableMeta):
         if column:
             return f"`{cls.__table_name__}_{column}`"
         return cls.__table_name__
+
+    @classmethod
+    def foreign_keys(cls) -> dict[str, ForeignKey]:
+        return {key: value for key, value in cls.__dict__.items() if isinstance(value, ForeignKey)}
