@@ -103,6 +103,9 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
         self._referenced_table: Type[Tbl2] = referenced_table
         self._relationship: Callable[[Tbl1, Tbl2], bool] = relationship
 
+    def __repr__(self) -> str:
+        return f"{ForeignKey.__name__}"
+
     def __getattr__(self, name: str) -> Any:
         return getattr(self._referenced_table, name)
 
@@ -124,10 +127,15 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
         clauses: list[str] = []
 
         fk: TableInfo[Tbl1, Tbl2] = ForeignKey[Tbl1, Tbl2].MAPPED[orig_table.__table_name__]
-        for referenced_table_obj in fk.referenced_tables.values():
-            dissambler: Disassembler = Disassembler(referenced_table_obj.relationship)
-            orig_col: str = dissambler.cond_1.name
-            referenced_col: str = dissambler.cond_2.name
-
-            clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table_obj.obj.__table_name__}({referenced_col})")
+        for referenced_tables in fk.referenced_tables.values():
+            for referenced_table in referenced_tables:
+                dissambler: Disassembler = Disassembler(referenced_table.relationship)
+                orig_col: str = dissambler.cond_1.name
+                referenced_col: str = dissambler.cond_2.name
+                clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.referenced_table.__table_name__}({referenced_col})")
         return clauses
+
+    @property
+    def alias(self) -> str:
+        left_col: str = self.decomposite_fk().cond_1.name
+        return f"{self._referenced_table.__table_name__}_{left_col}"
