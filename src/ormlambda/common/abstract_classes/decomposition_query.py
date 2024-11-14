@@ -208,12 +208,13 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
             foreign_key: ForeignKey = getattr(temp_table(), first_property)
 
             if not isinstance(foreign_key, ForeignKey):
-                raise ValueError(f"new_table var must be '{ForeignKey.__class__}' type and is '{type(foreign_key)}'")
+                raise ValueError(f"'new_table' var must be '{ForeignKey.__name__}' type and is '{type(foreign_key)}'")
 
-            new_table: TTable = foreign_key._referenced_table
+           
+            new_table: TTable =  foreign_key._referenced_table
             if prop in new_table.__properties_mapped__:
                 self._add_fk_relationship(temp_table, new_table)
-                for x in ForeignKey.MAPPED[table.__table_name__].referenced_tables[new_table.__table_name__]:
+                for x in ForeignKey.MAPPED[temp_table.__table_name__].referenced_tables[new_table.__table_name__]:
                     if x.foreign_key_column == foreign_key.decomposite_fk().cond_1.name:
                         return ClauseInfo[TTable](
                             table=x.referenced_table,
@@ -221,6 +222,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                             alias_table=f"{x.foreign_key_column}_{new_table.__table_name__}",
                             # alias_clause=f"{x.foreign_key_column}_{new_table.__table_name__}",
                         )
+
             temp_table = new_table
             counter += 1
 

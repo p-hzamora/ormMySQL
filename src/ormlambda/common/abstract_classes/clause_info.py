@@ -78,7 +78,7 @@ class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
             # TODOM: cheched to refactor
             if self._with_alias is not None:
                 return self.concat_with_alias(f"`{self._with_alias}`.{self.column}")
-            return self.concat_with_alias(f"{self._table.table_alias(self._column)}.{self._column}")
+            return self.concat_with_alias(f"`{self._table.table_alias()}`.{self._column}")
 
         if isinstance(self._row_column, IAggregate):
             return self.concat_with_alias(self._row_column.query)
