@@ -15,3 +15,4 @@ from .where_condition import WhereCondition as WhereCondition
 from .count import Count as Count
 from .group_by import GroupBy as GroupBy
 from .alias import Alias as Alias
+from .ST_AsText import ST_AsText as ST_AsText
