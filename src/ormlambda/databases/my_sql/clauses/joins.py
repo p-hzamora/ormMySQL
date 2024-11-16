@@ -8,6 +8,7 @@ from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import Disassembler
 from ormlambda import JoinType
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 # TODOL [x]: Try to import Table module without circular import Error
 if TYPE_CHECKING:
@@ -102,27 +103,20 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     @property
     @override
     def query(self) -> str:
-        ltable = self._left_table.table_alias()
-        left_col = f"{ltable}.{self._left_col}"
+        ltable = self._left_table
+        rtable = self._right_table
 
-        rtable = self.use_alias_if_exists()
-        right_col = f"{rtable}.{self._right_col}"
+        clause_table_name_join = ClauseInfo[TLeft](ltable, alias_table=self.alias)
         # return f"{self._by.value} {rtable} {alias}ON {left_col} {self._compareop} {right_col}"
         list_ = [
             self._by.value,  # inner join
-            self._right_table.table_alias(),  # table_name
-            f"AS `{self.alias}`" if self.alias is not None else None,
+            clause_table_name_join.query,
             "ON",
-            left_col,  # first_col
+            ClauseInfo[TLeft](ltable, column=self.left_col, alias_table=self.left_table.table_alias(), alias_clause=lambda x: "{table}_{column}").query,
             self._compareop,  # =
-            right_col,  # second_col
+            ClauseInfo[TLeft](rtable, column=self.right_col, alias_table=clause_table_name_join.alias_table, alias_clause=lambda x: "{table}_{column}").query,
         ]
         return " ".join([x for x in list_ if x is not None])
-
-    def use_alias_if_exists(self) -> str:
-        if self._alias is not None:
-            return self.alias
-        return self._right_table.table_alias()
 
     @property
     def alias(self) -> str:
@@ -133,11 +127,11 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
         self._alias = value
 
     @property
-    def left_table(self) -> str:
+    def left_table(self) -> TLeft:
         return self._left_table
 
     @property
-    def right_table(self) -> str:
+    def right_table(self) -> TRight:
         return self._right_table
 
     @property
