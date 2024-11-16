@@ -22,8 +22,10 @@ class IAggregate(IQuery):
 
 
 class ClauseInfo[T: tp.Type[Table]](IQuery):
-    _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)(?::([^{}]+))?}")
+    _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
+    @tp.overload
+    def __init__(self, table: T): ...
     @tp.overload
     def __init__[TProp](self, table: T, column: columnType[TProp]): ...
     @tp.overload
@@ -48,17 +50,24 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
         self._aggregation_method: tp.Optional[IAggregate] = aggregation_method
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
-            "column": lambda x: self._column_name_resolver(x),
+            "column": lambda x: self._column_resolver(x),
             "table": lambda x: self._table.__table_name__,
         }
+
+    def __repr__(self) -> str:
+        return f"{ClauseInfo.__name__}: table/alias ({self._table_resolver()})\tcolumn('{self._column_resolver(self._column)}')"
 
     @property
     def table(self) -> T:
         return self._table
 
     @property
-    def alias(self) -> tp.Optional[str]:
+    def alias_clause(self) -> tp.Optional[str]:
         return self._alias_clause
+
+    @property
+    def alias_table(self) -> tp.Optional[str]:
+        return self._alias_table
 
     @property
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
@@ -69,14 +78,17 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
 
     @property
     def query(self) -> tp.Optional[str]:
+        if self._column is None and self._aggregation_method is None:
+            return self._table_resolver()
+
         if self._aggregation_method:
             agg_query = self._aggregation_method.query
-            return self._concat_with_alias(agg_query)
+            return self.__concat_with_alias_clause(agg_query)
 
         if self._return_all_columns():
             return self._get_all_columns()
 
-        column = self._column_name_resolver(self._column)
+        column = self._column_resolver(self._column)
         return self._create_query(column)
 
     def _return_all_columns(self) -> bool:
@@ -93,23 +105,31 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
 
         return ", ".join(columns)
 
-    def _column_name_resolver[TProp](self, column: columnType[TProp]) -> str:
+    def _column_resolver[TProp](self, column: columnType[TProp]) -> str:
         if isinstance(column, property):
             return self._table.__properties_mapped__[column]
-        return self._column
+        return column
 
     def _create_query(self, column: str) -> str:
         table = self._table_resolver()
-        return self._concat_with_alias(f"{table}.{column}")
+        return self.__concat_with_alias_clause(f"{table}.{column}")
 
     def _table_resolver(self) -> str:
+        """
+        Show the name of the table if we don't specified alias_table. Otherwise, return the proper alias for that table
+        """
         tname: str = self._table.__table_name__
 
-        if callable(self._alias_table):
-            tname = f"`{self._alias_table(tname)}`"
-            return self._keyRegex.sub(self.__replace, tname)
+        if not self._alias_table:
+            return tname
 
-        return tname if not self._alias_table else f"`{self._alias_table}`"
+        alias = self._alias_table
+
+        if callable(self._alias_table):
+            tname = self._alias_table(self)
+            alias = self.replace_placeholder(tname)
+
+        return self.wrapped_with_quotes(alias)
 
     def __replace(self, match: re.Match[str]) -> str:
         key = match.group(1)
@@ -120,14 +140,28 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
         func = self._placeholderValues[key]
         return func(self._column)
 
-    def _concat_with_alias(self, column: str) -> str:
-        if callable(self._alias_clause):
-            alias = self._alias_clause(self._column_name_resolver(self._column))
+    def __concat_with_alias_clause(self, column: str) -> str:
+        return self.__concat_passing_alias_and_column(column, self._alias_clause)
 
-            # modified if the user used placeholders
-            alias = self._keyRegex.sub(self.__replace, alias)
-        else:
-            alias = self._alias_clause
+    def __concat_passing_alias_and_column(self, column: str, alias_clause: str):
+        if alias_clause is None:
+            return column
 
-        alias = f" AS `{alias}`" if self._alias_clause else ""
-        return f"{column}{alias}"
+        if callable(alias_clause):
+            clause_name = self._alias_clause(self)
+            return self.__concat_passing_alias_and_column(column, clause_name)
+
+        alias = self.replace_placeholder(alias_clause)
+
+        return f"{column} AS {self.wrapped_with_quotes(alias)}"
+
+    @staticmethod
+    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",") -> str:
+        return f"{chr} ".join([c.query for c in clauses])
+
+    @staticmethod
+    def wrapped_with_quotes(string: str) -> str:
+        return f"`{string}`"
+
+    def replace_placeholder(self, string: str) -> str:
+        return self._keyRegex.sub(self.__replace, string)
