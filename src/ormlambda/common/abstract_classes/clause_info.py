@@ -7,11 +7,13 @@ from ormlambda import Table
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
-ASTERISK: AsterikType = "*"
+ASTERISK: AsteriskType = "*"
 
 
-AsterikType = tp.NewType("AsterikType", str)
-type columnType[TProp] = TProp | str | property | AsterikType
+AsteriskType = tp.NewType("AsteriskType", str)
+
+type TableType = tp.Type[Table]
+type ColumnType[TProp] = TProp | str | property | AsteriskType
 type AliasType[T] = str | tp.Callable[[T], str]
 
 
@@ -21,32 +23,32 @@ class IAggregate(IQuery):
     def FUNCTION_NAME(cls) -> str: ...
 
 
-class ClauseInfo[T: tp.Type[Table]](IQuery):
+class ClauseInfo[T: TableType](IQuery):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
     @tp.overload
     def __init__(self, table: T): ...
     @tp.overload
-    def __init__[TProp](self, table: T, column: columnType[TProp]): ...
+    def __init__[TProp](self, table: T, column: ColumnType[TProp]): ...
     @tp.overload
-    def __init__[TProp](self, table: T, column: columnType[TProp], alias_table: AliasType[columnType[TProp]] = ..., alias_clause: AliasType[columnType[TProp]] = ...): ...
+    def __init__[TProp](self, table: T, column: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
     @tp.overload
     def __init__(self, table: T, *, aggregation_method: IAggregate = ...): ...
     @tp.overload
-    def __init__[TProp](self, table: T, *, aggregation_method: IAggregate = ..., alias_table: AliasType[columnType[TProp]] = ..., alias_clause: AliasType[columnType[TProp]] = ...): ...
+    def __init__[TProp](self, table: T, *, aggregation_method: IAggregate = ..., alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
 
     def __init__[TProp: property](
         self,
         table: T,
-        column: tp.Optional[columnType[TProp]] = None,
-        alias_table: tp.Optional[AliasType[columnType[TProp]]] = None,
-        alias_clause: tp.Optional[AliasType[columnType[TProp]]] = None,
+        column: tp.Optional[ColumnType[TProp]] = None,
+        alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = None,
+        alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
         aggregation_method: tp.Optional[IAggregate] = None,
     ):
         self._table: T = table
-        self._column: columnType[TProp] = column
-        self._alias_table: tp.Optional[AliasType[columnType[TProp]]] = alias_table
-        self._alias_clause: tp.Optional[AliasType[columnType[TProp]]] = alias_clause
+        self._column: ColumnType[TProp] = column
+        self._alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = alias_table
+        self._alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = alias_clause
         self._aggregation_method: tp.Optional[IAggregate] = aggregation_method
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
@@ -105,7 +107,7 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
 
         return ", ".join(columns)
 
-    def __column_resolver[TProp](self, column: columnType[TProp]) -> str:
+    def __column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
         if isinstance(column, property):
             return self._table.__properties_mapped__[column]
         return column
@@ -126,9 +128,9 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
         alias = self._alias_table
 
         if callable(self._alias_table):
-            tname = self._alias_table(self)
-            alias = self.__replace_placeholder(tname)
+            alias = self._alias_table(self)
 
+        alias = self.__replace_placeholder(alias)
         return self.__wrapped_with_quotes(alias)
 
     def __replace_placeholder(self, string: str) -> str:
@@ -137,10 +139,8 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
     def __replace(self, match: re.Match[str]) -> str:
         key = match.group(1)
 
-        if key not in self._placeholderValues:
+        if not (func := self._placeholderValues.get(key,None)):
             return match.group(0)  # No placeholder / value
-
-        func = self._placeholderValues[key]
         return func(self._column)
 
     def __concat_with_alias_clause(self, column: str) -> str:
@@ -165,4 +165,3 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
     @staticmethod
     def __wrapped_with_quotes(string: str) -> str:
         return f"`{string}`"
-
