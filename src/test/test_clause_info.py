@@ -1,7 +1,8 @@
+from datetime import datetime
 import sys
 from pathlib import Path
 import unittest
-
+from parameterized import parameterized
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
@@ -13,6 +14,22 @@ from models import A
 
 
 class TestClauseInfo(unittest.TestCase):
+    def test_passing_only_table(self):
+        ci = ClauseInfo[A](A)
+        self.assertEqual(ci.query, "a")
+
+    def test_passing_only_table_with_alias_table(self):
+        ci = ClauseInfo[A](A, alias_table=lambda x: "custom_table_name")
+        self.assertEqual(ci.query, "`custom_table_name`")
+
+    def test_passing_only_table_with_alias_table_placeholder_of_column(self):
+        ci = ClauseInfo[A](A, alias_table=lambda x: "{column}")
+        self.assertEqual(ci.query, "``")
+
+    def test_passing_only_table_with_alias_table_placeholder_of_table(self):
+        ci = ClauseInfo[A](A, alias_table=lambda x: "{table}")
+        self.assertEqual(ci.query, "`a`")
+
     def test_constructor(self):
         ci = ClauseInfo[A](A, A.pk_a)
         self.assertEqual(ci.query, "a.pk_a")
@@ -22,15 +39,35 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query, "a.custom_column")
 
     def test_passing_callable_alias_clause(self):
-        ci = ClauseInfo[A](A, A.name_a, alias_clause=lambda x: f"resolver_with_lambda_{x}")
+        ci = ClauseInfo[A](A, A.name_a, alias_clause=lambda x: "resolver_with_lambda_{column}")
+        self.assertEqual(ci.query, "a.name_a AS `resolver_with_lambda_name_a`")
+
+    def test_passing_string_with_placeholder_alias_clause(self):
+        ci = ClauseInfo[A](A, A.name_a, alias_clause="resolver_with_lambda_{column}")
         self.assertEqual(ci.query, "a.name_a AS `resolver_with_lambda_name_a`")
 
     def test_passing_callable_alias_clause_with_placeholder(self):
         ci = ClauseInfo[A](A, A.name_a, alias_clause=lambda x: "resolver_with_lambda_{table}")
         self.assertEqual(ci.query, "a.name_a AS `resolver_with_lambda_a`")
 
+    @parameterized.expand(
+        (
+            (A.pk_a, "pk_a", int),
+            (A.name_a, "name_a", str),
+            (A.data_a, "data_a", str),
+            (A.date_a, "date_a", datetime),
+            (A.value, "value", str),
+        )
+    )
+    def test_passing_callable_and_custom_method(self, column, string_col: str, result: object):
+        def message_placeholder(ci: ClauseInfo[A]):
+            return ci.dtype.__name__
+
+        ci = ClauseInfo[A](A, column, alias_clause=message_placeholder)
+        self.assertEqual(ci.query, f"a.{string_col} AS `{result.__name__}`")
+
     def test_passing_callable_alias_table(self):
-        ci = ClauseInfo[A](A, A.date_a, alias_table=lambda x: f"custom_alias_for_{x}_table")
+        ci = ClauseInfo[A](A, A.date_a, alias_table=lambda x: "custom_alias_for_{table}_table")
         self.assertEqual(ci.query, "`custom_alias_for_a_table`.date_a")
 
     def test_passing_callable_alias_table_with_placeholder(self):
