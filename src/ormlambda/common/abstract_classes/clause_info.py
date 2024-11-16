@@ -55,7 +55,7 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
         }
 
     def __repr__(self) -> str:
-        return f"{ClauseInfo.__name__}: table/alias ({self.__table_resolver()})\tcolumn/alias('{self.__column_resolver(self._column)}')"
+        return f"{ClauseInfo.__name__}: query -> {self.query}"
 
     @property
     def table(self) -> T:
