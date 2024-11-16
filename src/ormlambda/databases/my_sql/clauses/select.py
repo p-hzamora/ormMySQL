@@ -34,10 +34,6 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts]):
             joins=joins,
         )
 
-    # @classmethod
-    # def alias_children_resolver[Tclause: Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-    #     return f"{clause.table.__table_name__}_{name}"
-
     # TODOL: see who to deal when we will have to add more mysql methods
     @override
     @property
@@ -49,6 +45,7 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts]):
             else:
                 cols.append(x.query)
 
+            
             if isinstance(x._row_column, IAggregate) and x._row_column.has_foreign_keys:
                 self._joins.update(x._row_column.fk_relationship)
 
