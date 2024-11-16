@@ -168,7 +168,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 table=table_left,
                 column=data,
                 alias_table=table_left.__table_name__,
-                alias_clause=lambda x: f"{table_left.__table_name__}_{x}",
+                alias_clause="{table}_{column}",
             )
 
         for table in self.tables:
@@ -179,7 +179,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         raise TypeError("Cannot return None")
 
     def _IAggregate_type(self, data: IAggregate, ti: TupleInstruction):
-        return ClauseInfo[T](self.table, data)
+        return ClauseInfo[T](self.table, aggregation_method=data)
 
     def _table_type(self, data: tp.Type[Table], ti: TupleInstruction) -> ClauseInfo:
         if data not in self._tables:
@@ -210,8 +210,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
             if not isinstance(foreign_key, ForeignKey):
                 raise ValueError(f"'new_table' var must be '{ForeignKey.__name__}' type and is '{type(foreign_key)}'")
 
-           
-            new_table: TTable =  foreign_key._referenced_table
+            new_table: TTable = foreign_key._referenced_table
             if prop in new_table.__properties_mapped__:
                 self._add_fk_relationship(temp_table, new_table)
                 for x in ForeignKey.MAPPED[temp_table.__table_name__].referenced_tables[new_table.__table_name__]:
@@ -219,8 +218,8 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                         return ClauseInfo[TTable](
                             table=x.referenced_table,
                             column=prop,
-                            alias_table=f"{x.foreign_key_column}_{new_table.__table_name__}",
-                            # alias_clause=f"{x.foreign_key_column}_{new_table.__table_name__}",
+                            alias_table=f"{new_table.__table_name__}_{x.foreign_key_column}",
+                            alias_clause=f"{x.orig_table}_{x.foreign_key_column}" + "_{column}",
                         )
 
             temp_table = new_table
