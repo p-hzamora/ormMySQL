@@ -53,12 +53,12 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
         referenced_table: Type[Tbl2],
         relationship: Callable[[Tbl1, Tbl2], bool],
     ) -> Tbl2:
-        cls.add_foreign_key(orig_table, referenced_table, relationship)
+        cls.__add_foreign_key(orig_table, referenced_table, relationship)
 
         return referenced_table
 
     @classmethod
-    def add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
+    def __add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
         if orig_table not in cls.MAPPED:
             cls.MAPPED[orig_table] = TableInfo()
 
