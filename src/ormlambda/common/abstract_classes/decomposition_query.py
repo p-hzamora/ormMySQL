@@ -7,10 +7,9 @@ from ormlambda import Table
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
-from ormlambda.common.interfaces.IDecompositionQuery import IDecompositionQuery_one_arg
 from ormlambda import JoinType, ForeignKey
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
-
+from .clause_info import ClauseInfo
 from ..errors import UnmatchedLambdaParameterError
 
 type ClauseDataType = property | str | ICustomAlias
@@ -23,79 +22,6 @@ type ValueType = tp.Union[
     str,
     ICustomAlias,
 ]
-
-
-class ClauseInfo[T: tp.Type[Table]](IDecompositionQuery_one_arg[T]):
-    @tp.overload
-    def __init__(self, table: T, column: property, alias_children_resolver: tp.Callable[..., str]): ...
-    @tp.overload
-    def __init__(self, table: T, column: str, alias_children_resolver: tp.Callable[..., str]): ...
-
-    def __init__(self, table: T, column: ClauseDataType, alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str]):
-        self._table: T = table
-        self._row_column: ClauseDataType = column
-        self._column: str = self._resolve_column(column)
-        self._alias_children_resolver: tp.Callable[[DecompositionQueryBase[T], str], str] = alias_children_resolver
-        self._alias: tp.Optional[str] = self._alias_children_resolver(self)
-
-        self._query: str = self.__create_value_string(self._column)
-
-    def __repr__(self) -> str:
-        return f"{ClauseInfo.__name__}: {self.query}"
-
-    @property
-    def table(self) -> T:
-        return self._table
-
-    @property
-    def column(self) -> ClauseDataType:
-        return self._column
-
-    @property
-    def alias(self) -> str:
-        return self._alias
-
-    @property
-    def query(self) -> str:
-        return self._query
-
-    @property
-    def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
-        try:
-            return self._table.get_column(self.column).dtype
-        except ValueError:
-            return None
-
-    def _resolve_column(self, data: ClauseDataType) -> str:
-        if isinstance(data, property):
-            return self._table.__properties_mapped__[data]
-
-        elif isinstance(data, IAggregate):
-            return data.alias_name
-
-        elif isinstance(data, str):
-            # TODOL: refactor to base the condition in dict with '*' as key. '*' must to work as special character
-            return f"'{data}'" if data != DecompositionQueryBase.CHAR else data
-
-        elif isinstance(data, ICustomAlias):
-            return data.all_clauses[0].column
-
-        else:
-            raise NotImplementedError(f"type of value '{type(data)}' is not implemented.")
-
-    def __create_value_string(self, name: str) -> str:
-        if isinstance(self._row_column, property):
-            return self.concat_with_alias(f"{self._table.__table_name__}.{name}")
-
-        if isinstance(self._row_column, IAggregate):
-            return self.concat_with_alias(self._row_column.query)
-
-        return self.concat_with_alias(self.column)
-
-    def concat_with_alias(self, column_name: str) -> str:
-        if not self._alias:
-            return column_name
-        return f"{column_name} as `{self._alias}`"
 
 
 class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]):
@@ -150,7 +76,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 return clause
 
     def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-        DEFAULT_ALIAS: str = f"{clause_info._table.__table_name__}_{clause_info._column}"
+        DEFAULT_ALIAS: str = clause_info._table.__table_name__
 
         if isinstance(clause_info._row_column, IAggregate):
             return clause_info._row_column.alias_name
@@ -220,7 +146,6 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
             property: self._property_type,
             IAggregate: self._IAggregate_type,
             Table: self._table_type,
-            str: self._str_type,
             ICustomAlias: self._ICustomAlias_type,
         }
 
@@ -232,15 +157,20 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         return function(data, tuple_instruction)
 
     def _property_type(self, data: property, ti: TupleInstruction):
+        # COMMENT: if the property belongs to the main class, the columnn name in not prefixed. This only done if the property comes from any join.
+
         if ti.var == self.CHAR:
-            table_left = self.table
+            table_left: T = self.table
         else:
-            table_left = self.alias_cache[ti.var]
+            table_left: T = self.alias_cache[ti.var]
 
         if data in table_left.__properties_mapped__:
-            # if self.table != table_left:
-            #     self._add_fk_relationship(self.table, table_left)
-            return ClauseInfo[T](table_left, data, self.alias_children_resolver)
+            return ClauseInfo[T](
+                table=table_left,
+                column=data,
+                alias_table=table_left.__table_name__,
+                alias_clause=lambda x: f"{table_left.__table_name__}_{x}",
+            )
 
         for table in self.tables:
             try:
@@ -249,7 +179,7 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 continue
 
     def _IAggregate_type(self, data: IAggregate, ti: TupleInstruction):
-        return ClauseInfo[T](self.table, data, self.alias_children_resolver)
+        return ClauseInfo[T](self.table, data)
 
     def _table_type(self, data: tp.Type[Table], ti: TupleInstruction):
         if data not in self._tables:
@@ -261,21 +191,14 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 clauses.append(self.__identify_value_type(prop, ti))
         return clauses
 
-    def _str_type(self, data: str, ti: TupleInstruction):
-        # COMMENT: use self.table instead self._tables because if we hit this conditional, means that
-        # COMMENT: alias_cache to replace '*' by all columns
-        if self._replace_asterisk_char and (replace_value := self.alias_cache.get(data, None)) is not None:
-            return self.__identify_value_type(replace_value(self.table), ti)
-        return ClauseInfo[T](self.table, data, alias_children_resolver=self.alias_children_resolver)
-
     def _ICustomAlias_type(self, data: ICustomAlias, ti: TupleInstruction):
         # TODOM: Chech why I have to modify "clause_info._query" with 'data.query' to work as expected
-        clause_info = ClauseInfo(data.table, data, data.alias_children_resolver)
+        clause_info = ClauseInfo(data.table, data)
 
         clause_info._query = data.query
         return clause_info
 
-    def _search_correct_table_for_prop[TTable](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
+    def _search_correct_table_for_prop[TTable: tp.Type[Table]](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
         temp_table: tp.Type[Table] = table
 
         _, *table_list = tuple_instruction.nested_element.parents
@@ -287,11 +210,16 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
                 raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
             self._add_fk_relationship(temp_table, new_table)
 
+            if prop in new_table.__properties_mapped__:
+                temp_table
+                return ClauseInfo[T](
+                    table=new_table,
+                    column=prop,
+                    alias_table=lambda x: new_table.__table_name__ + "_" + "{column}",
+                    alias_clause=lambda x: temp_table.__table_name__ + "_" + "{column}",
+                )
             temp_table = new_table
             counter += 1
-
-            if prop in new_table.__properties_mapped__:
-                return ClauseInfo[TTable](new_table, prop, self.alias_children_resolver)
 
         raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
 
