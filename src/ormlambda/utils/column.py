@@ -67,7 +67,7 @@ class Column[T]:
         return caster.get(type_, lambda x: x)(cls.CHAR)
 
     def __repr__(self) -> str:
-        return f"<Column: {self.dtype}>"
+        return f"Column[{self.dtype}]({self.column_value})"
 
     def __to_string__(self, field: Field):
         column_class_string: str = f"{Column.__name__}[{field.type_name}]("
