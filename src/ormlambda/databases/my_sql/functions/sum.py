@@ -1,7 +1,7 @@
 from ormlambda.common.interfaces import IAggregate
 import typing as tp
 
-from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase, ClauseInfo
+from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 
 if tp.TYPE_CHECKING:
     from ormlambda import Table
@@ -27,11 +27,6 @@ class Sum[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):
             alias=alias,
             alias_name=alias_name,
         )
-
-    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-        if isinstance(clause_info._row_column, IAggregate):
-            return clause_info._row_column.alias
-        return None
 
     @property
     def query(self) -> str:

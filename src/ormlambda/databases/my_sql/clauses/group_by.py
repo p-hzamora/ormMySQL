@@ -3,7 +3,6 @@ from ormlambda.common.enums.join_type import JoinType
 from ormlambda.common.interfaces.IAggregate import IAggregate
 from ormlambda import Table
 
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ..mysql_decomposition import MySQLDecompositionQuery
 
 class GroupBy[T: tp.Type[Table], *Ts, TProp](MySQLDecompositionQuery[T], IAggregate[T]):
@@ -25,9 +24,6 @@ class GroupBy[T: tp.Type[Table], *Ts, TProp](MySQLDecompositionQuery[T], IAggreg
             alias_name=alias_name,
             by=by,
         )
-
-    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-        return None
 
     @property
     def query(self) -> str:

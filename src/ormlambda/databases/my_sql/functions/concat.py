@@ -29,11 +29,6 @@ class Concat[T: tp.Type[Table]](DecompositionQueryBase[T], IAggregate[T]):
             by=by,
         )
 
-    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-        if isinstance(clause_info._row_column, IAggregate):
-            return clause_info._row_column.alias
-        return None
-
     @property
     def query(self) -> str:
         col: str = ", ".join([x.query for x in self.all_clauses])

@@ -22,9 +22,6 @@ class Alias[T: tp.Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], ICustomAlia
             alias_name=alias_name,
         )
 
-    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-        return self.alias_name
-
     @property
     def query(self) -> str:
         assert len(self.all_clauses) == 1

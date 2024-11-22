@@ -6,9 +6,7 @@ from ormlambda.common.interfaces.IStatements import OrderType
 if TYPE_CHECKING:
     from ormlambda import Table
 
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ..mysql_decomposition import MySQLDecompositionQuery
-
 
 
 class OrderQuery[T: Table](MySQLDecompositionQuery[T]):
@@ -32,9 +30,6 @@ class OrderQuery[T: Table](MySQLDecompositionQuery[T]):
             except Exception:
                 pass
         raise Exception(f"order_type param only can be 'ASC' or 'DESC' string or '{OrderType.__name__}' enum")
-
-    def alias_children_resolver[Tclause](self, clause_info: ClauseInfo[Tclause]):
-        return None
 
     @override
     @property
