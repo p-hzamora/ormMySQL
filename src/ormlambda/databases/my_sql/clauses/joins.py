@@ -36,8 +36,8 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     @overload
     def __init__(
         self,
-        table_left: TLeft,
-        table_right: TRight,
+        left_table: TLeft,
+        right_table: TRight,
         col_left: str,
         col_right: str,
         by: JoinType,
@@ -46,8 +46,8 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
     @overload
     def __init__(
         self,
-        table_left: TLeft,
-        table_right: TRight,
+        left_table: TLeft,
+        right_table: TRight,
         by: JoinType,
         where: Callable[[TLeft, TRight], bool],
     ) -> None: ...
