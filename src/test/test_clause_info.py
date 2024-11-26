@@ -108,9 +108,21 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_aggregation_method(self):
         ci_a = ClauseInfo[A](A, A.data_a)
-        ci = ClauseInfo[A](A, aggregation_method=ST_AsText(ci_a), alias_clause="cast_point")
+        ci = ClauseInfo[A](A, ST_AsText(ci_a), alias_clause="cast_point")
 
         self.assertEqual(ci.query, "ST_AsText(a.data_a) AS `cast_point`")
+
+    def test_alias_table_property(self):
+        ci = ClauseInfo[A](A, A.name_a, alias_table="{table}~{column}")
+        self.assertEqual(ci.alias_table, "a~name_a")
+
+    def test_alias_clause_property(self):
+        ci = ClauseInfo[A](A, A.name_a, alias_clause="{table}~{column}")
+        self.assertEqual(ci.alias_clause, "a~name_a")
+
+    def test_alias_clause_property_as_none(self):
+        ci = ClauseInfo[A](A, A.name_a, alias_table="{table}~{column}")
+        self.assertEqual(ci.alias_clause, None)
 
 
 if __name__ == "__main__":
