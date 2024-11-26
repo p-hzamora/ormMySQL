@@ -2,6 +2,11 @@ from ormlambda.common.abstract_classes.clause_info import IAggregate, ClauseInfo
 
 
 class ST_AsText(IAggregate):
+    """
+    https://dev.mysql.com/doc/refman/8.4/en/fetching-spatial-data.html
+    
+    The ST_AsText() function converts a geometry from internal format to a WKT string.
+    """
     FUNCTION_NAME: str = "ST_AsText"
 
     def __init__[T, TProp](
