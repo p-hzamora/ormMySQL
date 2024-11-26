@@ -1,19 +1,22 @@
 from __future__ import annotations
-from collections import defaultdict
+from collections import deque
 import typing as tp
 import inspect
 import abc
-from ormlambda import Table
+from ormlambda import Table, Column
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
 from ormlambda import JoinType
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AliasType, TableType, ColumnType, ASTERISK
 from ormlambda.utils.foreign_key import ForeignKey
 from ..errors import UnmatchedLambdaParameterError
 
-type AliasType[T] = tp.Type[Table] | tp.Callable[[tp.Type[Table]], T]
+if tp.TYPE_CHECKING:
+    from ormlambda.utils.foreign_key import ReferencedTable
+
+type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
 type ValueType = tp.Union[
     property,
     IAggregate,
@@ -23,29 +26,23 @@ type ValueType = tp.Union[
 ]
 
 
-class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]):
-    CHAR: str = "*"
-
-    @staticmethod
-    def _asterik_resolver(table: tp.Type[Table]):
-        return table
-
+class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple]) -> None: ...
+    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple]) -> None: ...
     @tp.overload
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ..., joins: tp.Optional[list[IJoinSelector]] = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, alias: bool = ..., alias_name: tp.Optional[str] = ..., by: JoinType = ..., replace_asterisk_char: bool = ..., joins: tp.Optional[list[IJoinSelector]] = ...) -> None: ...
 
     def __init__(
         self,
-        tables: tuple[T, *Ts],
+        tables: TableTupleType,
         lambda_query: tp.Callable[[T], tuple[*Ts]],
         *,
         alias: bool = True,
@@ -54,18 +51,18 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         replace_asterisk_char: bool = True,
         joins: tp.Optional[list[IJoinSelector]] = None,
     ) -> None:
-        self._tables: tuple[T, *Ts] = tables if isinstance(tables, tp.Iterable) else (tables,)
+        self._tables: TableTupleType = tables if isinstance(tables, tp.Iterable) else (tables,)
+
         self._lambda_query: tp.Callable[[T], tuple] = lambda_query
         self._alias: bool = alias
         self._alias_name: tp.Optional[str] = alias_name
         self._by: JoinType = by
         self._joins: set[IJoinSelector] = set(joins) if joins is not None else set()
 
-        self._clauses_group_by_tables: dict[tp.Type[Table], list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
-        self.alias_cache: dict[str, AliasType] = {self.CHAR: self._asterik_resolver}
+        self._alias_cache: dict[str, AliasType] = {}
         self._replace_asterisk_char: bool = replace_asterisk_char
-        self.__assign_lambda_variables_to_table(lambda_query)
+        # self.__assign_lambda_variables_to_table(lambda_query)
 
         self.__clauses_list_generetor(lambda_query)
 
@@ -73,13 +70,6 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         for clause in self._all_clauses:
             if clause.alias == key:
                 return clause
-
-    def alias_children_resolver[Tclause: tp.Type[Table]](self, clause_info: ClauseInfo[Tclause]):
-        DEFAULT_ALIAS: str = clause_info._table.__table_name__
-
-        if isinstance(clause_info._row_column, IAggregate):
-            return clause_info._row_column.alias_name
-        return DEFAULT_ALIAS
 
     def __assign_lambda_variables_to_table(self, _lambda: tp.Callable[[T], None]) -> None:
         """
@@ -101,33 +91,23 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
 
         # COMMENT: We don't pass a lambda method because lambda reads the las value of 'i'
         for i, param in enumerate(lambda_vars):
-            self.alias_cache[param] = self._tables[i]
+            self._alias_cache[param] = self._tables[i]
         return None
 
     def __clauses_list_generetor(self, function: tp.Callable[[T], tp.Any]) -> None:
-        if not callable(function):
-            return None
-
-        resolved_function = function(*self._tables)
-
-        tree_list = TreeInstruction(function).to_list()
+        resolved_function = function
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
             resolved_function = (resolved_function,)
 
         for col_index, data in enumerate(resolved_function):
-            ti = tree_list[col_index] if tree_list else TupleInstruction(self.CHAR, NestedElement(self.CHAR))
+            values: ClauseInfo | list[ClauseInfo] = self.__identify_value_type(data)
 
-            values: ClauseInfo | list[ClauseInfo] = self.__identify_value_type(data, ti)
-
-            if isinstance(values, tp.Iterable):
-                [self.__add_clause(x) for x in values]
-            else:
-                self.__add_clause(values)
+            self.__add_clause(values)
 
         return None
 
-    def __identify_value_type[TProp](self, data: TProp, tuple_instruction: TupleInstruction) -> ClauseInfo[T]:
+    def __identify_value_type[TProp](self, data: TProp) -> ClauseInfo[T]:
         """
         A method that behaves based on the variable's type
         """
@@ -142,10 +122,10 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
             )
 
         value_type_mapped: dict[tp.Type[ValueType], tp.Callable[[TProp, TupleInstruction], ClauseInfo[T]]] = {
-            property: self._property_type,
+            ForeignKey: self._fk_type,
+            Column: self._column_type,
             IAggregate: self._IAggregate_type,
             Table: self._table_type,
-            ICustomAlias: self._ICustomAlias_type,
         }
 
         function = next((handler for cls, handler in value_type_mapped.items() if validation(data, cls)), None)
@@ -153,92 +133,95 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         if not function:
             raise NotImplementedError(f"type of value '{data}' is not implemented.")
 
-        return function(data, tuple_instruction)
+        return function(data)
 
-    def _property_type(self, data: property, ti: TupleInstruction):
+    def _fk_type[TTable: TableType](self, fk: ForeignKey[T, TTable]) -> list[ClauseInfo[TTable]]:
+        # self.__add_necessary_fk(fk)
+        return self._table_type(fk.resolved_function())
+
+    def _column_type[TProp](self, column: ColumnType, alias_table: AliasType[ColumnType[TProp]] = "{table}") -> ClauseInfo[T]:
         # COMMENT: if the property belongs to the main class, the columnn name in not prefixed. This only done if the property comes from any join.
 
-        if ti.var == self.CHAR:
-            table_left: T = self.table
-        else:
-            table_left: T = self.alias_cache[ti.var]
-
-        if data in table_left.__properties_mapped__:
-            return ClauseInfo[T](
-                table=table_left,
-                column=data,
-                alias_table=table_left.__table_name__,
-                alias_clause="{table}_{column}",
-            )
-
-        for table in self.tables:
-            try:
-                return self._search_correct_table_for_prop(table, ti, data)
-            except ValueError:
-                continue
-        raise TypeError("Cannot return None")
-
-    def _IAggregate_type(self, data: IAggregate, ti: TupleInstruction):
-        return ClauseInfo[T](self.table, aggregation_method=data)
-
-    def _table_type(self, data: tp.Type[Table], ti: TupleInstruction) -> ClauseInfo:
-        if data not in self._tables:
-            self.__add_necessary_fk(ti, data)
-        # all columns
-        clauses: list[ClauseInfo] = []
-        for prop in data.__properties_mapped__:
-            if isinstance(prop, property):
-                clauses.append(self.__identify_value_type(prop, ti))
-        return clauses
-
-    def _ICustomAlias_type(self, data: ICustomAlias, ti: TupleInstruction):
-        # TODOM: Chech why I have to modify "clause_info._query" with 'data.query' to work as expected
-        clause_info = ClauseInfo(data.table, data)
-
-        clause_info._query = data.query
+        clause_info = ClauseInfo[T](
+            table=column.table,
+            column=column,
+            alias_table=alias_table,
+            alias_clause="{table}_{column}",
+        )
+        self._alias_cache[clause_info.alias_clause] = clause_info
         return clause_info
 
-    def _search_correct_table_for_prop[TTable: tp.Type[Table]](self, table: tp.Type[Table], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
-        temp_table: tp.Type[Table] = table
+    def _IAggregate_type(self, aggregate_method: IAggregate, _: TupleInstruction) -> ClauseInfo[T]:
+        return ClauseInfo[T](self.table, aggregate_method)
+
+    def _table_type[TType: TableType](self, table: TType) -> list[ClauseInfo[TType]]:
+        """
+        if the data is Table, means that we want to retrieve all columns
+        """
+        return self._extract_all_clauses(table)
+
+    def _extract_all_clauses(self, table: TableType) -> list[ClauseInfo[TableType]]:
+        # all columns
+        return [self._column_type(prop) for prop in table.get_columns()]
+
+    def _search_correct_table_for_prop[TTable: TableType](self, table: TableType, tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
+        temp_table: TableType = table
 
         _, *table_list = tuple_instruction.nested_element.parents
-        counter: int = 0
+        queue_parent = deque(table_list, maxlen=len(table_list))
+
         while prop not in temp_table.__properties_mapped__:
-            first_property: property = table_list[counter]
+            first_property: property = queue_parent.popleft()
+
             foreign_key: ForeignKey = getattr(temp_table(), first_property)
+            foreign_key.orig_object = temp_table
 
             if not isinstance(foreign_key, ForeignKey):
                 raise ValueError(f"'new_table' var must be '{ForeignKey.__name__}' type and is '{type(foreign_key)}'")
 
             new_table: TTable = foreign_key._referenced_table
-            if prop in new_table.__properties_mapped__:
-                self._add_fk_relationship(temp_table, new_table)
-                for x in ForeignKey.MAPPED[temp_table.__table_name__].referenced_tables[new_table.__table_name__]:
-                    if x.foreign_key_column == foreign_key.decomposite_fk().cond_1.name:
-                        return ClauseInfo[TTable](
-                            table=x.referenced_table,
-                            column=prop,
-                            alias_table=f"{new_table.__table_name__}_{x.foreign_key_column}",
-                            alias_clause=f"{x.orig_table}_{x.foreign_key_column}" + "_{column}",
-                        )
+            self._alias_cache[first_property] = new_table
+
+            new_ti = TupleInstruction(first_property, NestedElement(table_list))
+
+            new_clause_info = self.return_property_type_from_foreign_key(foreign_key, new_ti, prop)
+            if new_clause_info:
+                return new_clause_info
 
             temp_table = new_table
-            counter += 1
 
         raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
 
-    def __add_clause[Tc: tp.Type[Table]](self, clause: ClauseInfo[Tc]) -> None:
-        self._all_clauses.append(clause)
-        self._clauses_group_by_tables[clause.table].append(clause)
+    def return_property_type_from_foreign_key(self, foreign_key: ForeignKey[TableType, TableType], tuple_instruction: TupleInstruction, prop: property) -> tp.Optional[ClauseInfo]:
+        """
+        Despite of return 'ClauseInfo' class from the given property, we added the necessary relationship by adding foreign_key into self._joins
+        """
+        new = foreign_key._referenced_table
+        old = foreign_key.orig_object
+
+        if prop in new.__properties_mapped__:
+            for ref_table in ForeignKey.MAPPED[old.__table_name__].referenced_tables[new.__table_name__]:
+                if ref_table.foreign_key_column == foreign_key.decomposite_fk().cond_1.name:
+                    ref_table.orig_table = old
+
+                    self._add_fk_relationship(referenced_table=ref_table)
+                    return self._column_type(prop, tuple_instruction)
         return None
 
-    def __add_necessary_fk(self, tuple_instruction: TupleInstruction, tables: tp.Type[Table]) -> None:
+    def __add_clause[TTable: TableType](self, clause: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:
+        if isinstance(clause, tp.Iterable):
+            [self.__add_clause(x) for x in clause]
+            return None
+
+        return self._all_clauses.append(clause)
+
+    def __add_necessary_fk(self, tables: TableType) -> None:
         old_table = self.table
 
-        table_inherit_list: list[Table] = tuple_instruction.nested_element.parents[1:]
+        table_inherit_list: list[Table] = []
         counter: int = 0
         while tables not in old_table.__dict__.values():
-            new_table: tp.Type[Table] = getattr(old_table(), table_inherit_list[counter])
+            new_table: TableType = getattr(old_table(), table_inherit_list[counter])
 
             if not issubclass(new_table, Table):
                 raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
@@ -270,33 +253,12 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
         return self._all_clauses
 
     @property
-    def clauses_group_by_tables(self) -> dict[tp.Type[Table], list[ClauseInfo[T]]]:
-        return self._clauses_group_by_tables
-
-    @property
     def has_foreign_keys(self) -> bool:
         return len(self._joins) > 0
 
     @property
-    def fk_relationship(self) -> set[tuple[tp.Type[Table], tp.Type[Table]]]:
+    def fk_relationship(self) -> set[tuple[TableType, TableType]]:
         return self._joins
-
-    @property
-    def alias(self) -> str:
-        return self._alias
-
-    @property
-    def alias_name(self) -> str:
-        return self._alias_name
-
-    @alias_name.setter
-    def alias_name(self, value: tp.Optional[str]) -> None:
-        if value is None and self._alias:
-            self._alias = False
-        else:
-            self._alias = True
-
-        self._alias_name = value
 
     @property
     @abc.abstractmethod
@@ -306,4 +268,4 @@ class DecompositionQueryBase[T: tp.Type[Table], *Ts](IDecompositionQuery[T, *Ts]
     def stringify_foreign_key(self, sep: str = "\n") -> str: ...
 
     @abc.abstractmethod
-    def _add_fk_relationship[T1: tp.Type[Table], T2: tp.Type[Table]](self, t1: T1, t2: T2) -> None: ...
+    def _add_fk_relationship[T1: TableType, T2: TableType](self, t1: T1, t2: T2, referenced_table: ReferencedTable[T1, T2]) -> None: ...
