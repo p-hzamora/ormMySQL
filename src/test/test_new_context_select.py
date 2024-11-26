@@ -14,7 +14,6 @@ from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import IRepositoryBase, Table, Column, BaseModel, JoinType, ForeignKey  # noqa: E402
 
 
-
 DDBBNAME = "__test_ddbb__"
 
 
@@ -30,7 +29,7 @@ class BSimple(Table):
     name: str
     fk_c: int
 
-    CSimple = ForeignKey[tp.Self, CSimple](__table_name__, CSimple, lambda self, c: self.fk_c == c.pk_c)
+    CSimple = ForeignKey[tp.Self, CSimple](CSimple, lambda self, c: self.fk_c == c.pk_c)
 
 
 class AWithMultipleReferencesToB(Table):
@@ -41,9 +40,9 @@ class AWithMultipleReferencesToB(Table):
     fk_b2: int
     fk_b3: int
 
-    B_fk_b1 = ForeignKey[tp.Self, BSimple](__table_name__, BSimple, lambda self, b: self.fk_b1 == b.pk_b)
-    B_fk_b2 = ForeignKey[tp.Self, BSimple](__table_name__, BSimple, lambda self, b: self.fk_b2 == b.pk_b)
-    B_fk_b3 = ForeignKey[tp.Self, BSimple](__table_name__, BSimple, lambda self, b: self.fk_b3 == b.pk_b)
+    B_fk_b1 = ForeignKey[tp.Self, BSimple](BSimple, lambda self, b: self.fk_b1 == b.pk_b)
+    B_fk_b2 = ForeignKey[tp.Self, BSimple](BSimple, lambda self, b: self.fk_b2 == b.pk_b)
+    B_fk_b3 = ForeignKey[tp.Self, BSimple](BSimple, lambda self, b: self.fk_b3 == b.pk_b)
 
 
 class AModel(BaseModel[AWithMultipleReferencesToB]):

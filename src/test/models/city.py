@@ -20,7 +20,7 @@ class City(Table):
     country_id: int
     last_update: datetime
 
-    Country = ForeignKey[Self, Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
+    Country = ForeignKey["City", Country](Country, lambda ci, co: ci.country_id == co.country_id)
 
 
 class CityModel(BaseModel[City]):

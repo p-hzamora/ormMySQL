@@ -50,8 +50,8 @@ class D(Table):
     fk_c: int
     fk_extra_c: int
 
-    C = ForeignKey["D", C](__table_name__, C, lambda self, c: self.fk_c == c.pk_c)
-    ExtraC = ForeignKey["D", ExtraC](__table_name__, ExtraC, lambda self, extra_c: self.fk_extra_c == extra_c.pk_extra_c)
+    C = ForeignKey["D", C](C, lambda self, c: self.fk_c == c.pk_c)
+    ExtraC = ForeignKey["D", ExtraC](ExtraC, lambda self, extra_c: self.fk_extra_c == extra_c.pk_extra_c)
 
 
 class ModelAB[T, *Ts](BaseModel[T, *Ts]):

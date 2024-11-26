@@ -156,7 +156,7 @@ class Address(Table):
     location: str
     last_update: datetime = Column(datetime, is_auto_generated=True)
 
-    City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
+    City = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
 
 
 class City(Table):
@@ -167,7 +167,7 @@ class City(Table):
     country_id: int
     last_update: datetime
 
-    Country = ForeignKey["City", Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
+    Country = ForeignKey["City", Country](Country, lambda ci, co: ci.country_id == co.country_id)
 ```
 
 Once created, you need to create a Model for each Table

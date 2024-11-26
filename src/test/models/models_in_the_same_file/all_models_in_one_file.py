@@ -30,7 +30,7 @@ class City(Table):
     country_id: int
     last_update: datetime
 
-    country = ForeignKey["City", Country](__table_name__, Country, lambda ci, co: ci.country_id == co.country_id)
+    country = ForeignKey["City", Country](Country, lambda ci, co: ci.country_id == co.country_id)
 
 
 class CityModel(BaseModel[City]):
@@ -51,7 +51,7 @@ class Address(Table):
     location: datetime
     last_update: datetime = Column(datetime, is_auto_generated=True)
 
-    city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
+    city = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
 
 
 class AddressModel(BaseModel[Address]):

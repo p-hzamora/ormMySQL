@@ -23,7 +23,7 @@ class Address(Table):
     location: Column[str]
     last_update: Column[datetime] = Column(datetime, is_auto_generated=True)
 
-    City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
+    City = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
 
 
 class AddressModel(BaseModel[Address]):

@@ -20,7 +20,7 @@ class Store(Table):
     address_id: int
     last_update: datetime
 
-    Address = ForeignKey[Self, Address](__table_name__, Address, lambda s, a: s.store_id == a.address_id)
+    Address = ForeignKey[Self, Address](Address, lambda s, a: s.store_id == a.address_id)
 
 
 class StoreModel(BaseModel[Store]):
