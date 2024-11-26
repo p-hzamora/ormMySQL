@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Type, Optional, Callable, TYPE_CHECKING, Any
 import shapely as sph
 
-from ormlambda.types import TableType
+from ormlambda.types import TableType, ComparerType
 
 if TYPE_CHECKING:
     from ormlambda import Table
@@ -106,23 +106,26 @@ class Column[TProp]:
             )
         )
 
-    def __eq__(self, other: TProp) -> str:
-        return Comparer(self, other, "=")
+    def __comparer_creator(self, other: Any, compare: ComparerType, *args) -> Comparer:
+        return Comparer(self, other, compare, *args)
 
-    def __ne__(self, other: TProp) -> str:
-        return Comparer(self, other, "!=")
+    def __eq__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, "=", *args)
 
-    def __lt__(self, other: TProp) -> str:
-        return Comparer(self, other, "<")
+    def __ne__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, "!=", *args)
 
-    def __le__(self, other: TProp) -> str:
-        return Comparer(self, other, "<=")
+    def __lt__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, "<", *args)
 
-    def __gt__(self, other: TProp) -> str:
-        return Comparer(self, other, ">")
+    def __le__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, "<=", *args)
 
-    def __ge__(self, other: TProp) -> str:
-        return Comparer(self, other, ">=")
+    def __gt__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, ">", *args)
 
-    def __contains__(self, other: TProp) -> str:
-        return Comparer(self, other, "in")
+    def __ge__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, ">=", *args)
+
+    def __contains__(self, other: TProp, *args) -> Comparer:
+        return self.__comparer_creator(other, "in", *args)
