@@ -1,4 +1,3 @@
-from typing import Self
 from ormlambda import (
     Column,
     Table,
