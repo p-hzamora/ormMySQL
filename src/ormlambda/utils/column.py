@@ -2,44 +2,73 @@ from __future__ import annotations
 from typing import Type, Optional, Callable, TYPE_CHECKING, Any
 import shapely as sph
 
+from ormlambda.types import TableType
+
 if TYPE_CHECKING:
-    from .table_constructor import Field
+    from ormlambda import Table
 
 
-class Column[T]:
+from .comparer import Comparer
+
+
+class Column[TProp]:
     CHAR: str = "%s"
+    PRIVATE_CHAR: str = "_"
 
     __slots__ = (
         "dtype",
         "column_name",
-        "column_value",
+        "table",
         "is_primary_key",
         "is_auto_generated",
         "is_auto_increment",
         "is_unique",
+        "__private_name",
     )
 
-    def __init__(
+    def __init__[T](
         self,
-        dtype: Type[T] = None,
-        column_name: str = None,
-        column_value: T = None,
-        *,
+        dtype: Type[TProp],
         is_primary_key: bool = False,
         is_auto_generated: bool = False,
         is_auto_increment: bool = False,
         is_unique: bool = False,
     ) -> None:
-        self.dtype = dtype
-        self.column_name = column_name
-        self.column_value: T = column_value
+        self.dtype: Type[TProp] = dtype
+        self.table: Optional[TableType[T]] = None
+        # self.column_value: Optional[TProp] = None
+        self.column_name: Optional[str] = None
+        self.__private_name: Optional[str] = None
+
         self.is_primary_key: bool = is_primary_key
         self.is_auto_generated: bool = is_auto_generated
         self.is_auto_increment: bool = is_auto_increment
         self.is_unique: bool = is_unique
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}[{self.dtype}]"
+
+    def __str__(self) -> str:
+        return self.table.__table_name__ + "." + self.column_name
+
+    def __set_name__[T: Table](self, owner: TableType[T], name):
+        self.table = owner
+        self.column_name = name
+        self.__private_name = self.PRIVATE_CHAR + name
+
+    def __get__(self, obj, objtype=None) -> Column[TProp] | TProp:
+        if not obj:
+            return self
+        return getattr(obj, self.__private_name)
+
+    def __set__(self, obj, value):
+        if value is not None:
+            assert type(value) == self.dtype
+        setattr(obj, self.__private_name, value)
+
+    # FIXME [ ]: this method is allocating the Column class with MySQL database
     @property
-    def column_value_to_query(self) -> T:
+    def column_value_to_query(self) -> TProp:
         """
         This property must ensure that any variable requiring casting by different database methods is properly wrapped.
         """
@@ -52,7 +81,7 @@ class Column[T]:
         return self.placeholder_resolutor(self.dtype)
 
     @property
-    def placeholder_resolutor(self) -> Callable[[Type, T], str]:
+    def placeholder_resolutor(self) -> Callable[[Type, TProp], str]:
         return self.__fetch_wrapped_method
 
     # FIXME [ ]: this method is allocating the Column class with MySQL database
@@ -66,32 +95,10 @@ class Column[T]:
         }
         return caster.get(type_, lambda x: x)(cls.CHAR)
 
-    def __repr__(self) -> str:
-        return f"Column[{self.dtype}]({self.column_value})"
-
-    def __to_string__(self, field: Field):
-        column_class_string: str = f"{Column.__name__}[{field.type_name}]("
-
-        dicc: dict[str, Callable[[Field], str]] = {
-            "dtype": lambda field: field.type_name,
-            "column_name": lambda field: f"'{field.name}'",
-            "column_value": lambda field: field.name,  # must be the same variable name as the instance variable name in Table's __init__ class
-        }
-        for self_var in self.__init__.__annotations__:
-            if not hasattr(self, self_var):
-                continue
-
-            self_value = dicc.get(self_var, lambda field: getattr(self, self_var))(field)
-            column_class_string += f" {self_var}={self_value}, "
-
-        column_class_string += ")"
-        return column_class_string
-
     def __hash__(self) -> int:
         return hash(
             (
                 self.column_name,
-                self.column_value,
                 self.is_primary_key,
                 self.is_auto_generated,
                 self.is_auto_increment,
@@ -99,7 +106,23 @@ class Column[T]:
             )
         )
 
-    def __eq__(self, value: "Column") -> bool:
-        if isinstance(value, Column):
-            return self.__hash__() == value.__hash__()
-        return False
+    def __eq__(self, other: TProp) -> str:
+        return Comparer(self, other, "=")
+
+    def __ne__(self, other: TProp) -> str:
+        return Comparer(self, other, "!=")
+
+    def __lt__(self, other: TProp) -> str:
+        return Comparer(self, other, "<")
+
+    def __le__(self, other: TProp) -> str:
+        return Comparer(self, other, "<=")
+
+    def __gt__(self, other: TProp) -> str:
+        return Comparer(self, other, ">")
+
+    def __ge__(self, other: TProp) -> str:
+        return Comparer(self, other, ">=")
+
+    def __contains__(self, other: TProp) -> str:
+        return Comparer(self, other, "in")
