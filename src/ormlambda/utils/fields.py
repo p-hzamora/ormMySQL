@@ -3,7 +3,7 @@ from .column import Column
 
 __all__ = ["get_fields"]
 
-MISSING = lambda: Column()  # COMMENT: Very Important to avoid reusing the same variable across different classes.  # noqa: E731
+MISSING = lambda x: Column(x)  # COMMENT: Very Important to avoid reusing the same variable across different classes.  # noqa: E731
 
 
 class Field[TProp: tp.AnnotatedAny]:
@@ -34,7 +34,7 @@ class Field[TProp: tp.AnnotatedAny]:
 
     @property
     def assginment(self) -> str:
-        return f"self._{self.name} = {self.default.__to_string__(self)}"
+        return f"self.{self.name} = {self.default.column_name}"
 
 
 def get_fields[T, TProp](cls: tp.Type[T]) -> tp.Iterable[Field]:
@@ -50,11 +50,12 @@ def get_fields[T, TProp](cls: tp.Type[T]) -> tp.Iterable[Field]:
             # type_ must by Column object
             field_type: TProp = type_
 
-        default: Column = getattr(cls, name, MISSING())
-
-        default.dtype = field_type  # COMMENT: Useful for setting the dtype variable after instantiation.
+        default: Column = getattr(cls, name, MISSING(field_type))
+        Column.__set_name__(default, cls, name)
+        
         fields.append(Field[TProp](name, field_type, default))
 
         # Update __annotations__ to create Columns
         cls.__annotations__[name] = default
+        setattr(cls, name, default)
     return fields
