@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Callable, TYPE_CHECKING, Type, Optional, overload
+from typing import Callable, TYPE_CHECKING, Type, Optional, overload
 
 from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
 from .lambda_disassembler import Disassembler
@@ -9,8 +9,11 @@ if TYPE_CHECKING:
     from .table_constructor import Table
 
 
+type TypeTable = Type[Table]
+
+
 @dataclass
-class ReferencedTable[T1: Type[Table], T2: Type[Table]]:
+class ReferencedTable[T1: TypeTable, T2: TypeTable]:
     orig_table: T1
     referenced_table: T2
     relationship: Callable[[T1, T2], bool]
@@ -23,7 +26,7 @@ class ReferencedTable[T1: Type[Table], T2: Type[Table]]:
         return col_left
 
 
-class TableInfo[T1: Type[Table], T2: Type[Table]]:
+class TableInfo[T1: TypeTable, T2: TypeTable]:
     @overload
     def __init__(self) -> None: ...
     @overload
@@ -37,7 +40,7 @@ class TableInfo[T1: Type[Table], T2: Type[Table]]:
         self._fill_table_variable(table_object)
         self._referenced_tables: dict[str, dict[str, ReferencedTable[T1, T2]]] = {}
 
-    def _fill_table_variable(self, table: str | Type[Table]):
+    def _fill_table_variable(self, table: str | TypeTable):
         if isinstance(table, str):
             self._table_name = table
         else:
@@ -51,7 +54,7 @@ class TableInfo[T1: Type[Table], T2: Type[Table]]:
     def referenced_tables(self) -> dict[str, list[ReferencedTable[T1, T2]]]:
         return self._referenced_tables
 
-    def update_referenced_tables(self, orig_table: str, referenced_table: Type[Table], relationship: Callable[[T1, T2], bool]) -> None:
+    def update_referenced_tables(self, orig_table: str, referenced_table: TypeTable, relationship: Callable[[T1, T2], bool]) -> None:
         new_references = ReferencedTable[T1, T2](orig_table, referenced_table, relationship)
 
         referenced_list = self._referenced_tables.get(referenced_table.__table_name__, [])
@@ -62,11 +65,11 @@ class TableInfo[T1: Type[Table], T2: Type[Table]]:
         return None
 
     @property
-    def table_object(self) -> Optional[Type[Table]]:
+    def table_object(self) -> Optional[TypeTable]:
         return self._table_object
 
     @table_object.setter
-    def table_object(self, value: Type[Table]) -> None:
+    def table_object(self, value: TypeTable) -> None:
         self._table_object = value
 
     @property
@@ -74,46 +77,34 @@ class TableInfo[T1: Type[Table], T2: Type[Table]]:
         return len(self._referenced_tables) > 0
 
 
-class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
-    __slots__ = (
-        "_orig_table",
-        "_referenced_table",
-        "_relationship",
-    )
-    MAPPED: dict[str, TableInfo[Tbl1, Tbl2]] = {}
+class ForeignKey[TLeft: TypeTable, TRight: TypeTable]:
+    MAPPED: dict[str, TableInfo[TLeft, TRight]] = {}
 
-    def __new__(
-        cls,
-        orig_table: str,
-        referenced_table: Type[Tbl2],
-        relationship: Callable[[Tbl1, Tbl2], bool],
-    ) -> Tbl2:
-        cls.__add_foreign_key(orig_table, referenced_table, relationship)
+    def __init__(self, tright: TRight, relationship: Callable[[TLeft, TRight], bool]) -> None:
+        self.tright: TRight = tright
+        self.relationship: Callable[[TLeft, TRight], bool] = relationship
 
-        self = super().__new__(cls)
-        return self
+    def __set_name__(self, owner: TLeft, name) -> None:
+        self.tleft = owner
+        self.clause_name = name
+        self.__add_foreign_key(self.tleft, self.tright, self.relationship)
 
-    def __init__(
-        self,
-        orig_table: str,
-        referenced_table: Type[Tbl2],
-        relationship: Callable[[Tbl1, Tbl2], bool],
-    ) -> None:
-        self._orig_table: str = orig_table
-        self._referenced_table: Type[Tbl2] = referenced_table
-        self._relationship: Callable[[Tbl1, Tbl2], bool] = relationship
+    def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey | TRight:
+        if not obj:
+            return self
+        return self.tright
+
+    def __set__(self, obj, value):
+        raise AttributeError(f"The {ForeignKey.__name__} '{self.clause_name}' in the '{self.tleft.__table_name__}' table cannot be overwritten.")
+
+    def __getattr__(self, name: str):
+        return getattr(self.tright, name)
 
     def __repr__(self) -> str:
         return f"{ForeignKey.__name__}"
 
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._referenced_table, name)
-
-    def decomposite_fk(self) -> Disassembler[Tbl1, Tbl2]:
-        return Disassembler(self._relationship)
-
     @classmethod
-    def __add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[Tbl1, Tbl2], bool]) -> None:
+    def __add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[TLeft, TRight], bool]) -> None:
         if orig_table not in cls.MAPPED:
             cls.MAPPED[orig_table] = TableInfo(orig_table)
 
@@ -126,7 +117,7 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
     def create_query(cls, orig_table: Table) -> list[str]:
         clauses: list[str] = []
 
-        fk: TableInfo[Tbl1, Tbl2] = ForeignKey[Tbl1, Tbl2].MAPPED[orig_table.__table_name__]
+        fk: TableInfo[TLeft, TRight] = ForeignKey[TLeft, TRight].MAPPED[orig_table.__table_name__]
         for referenced_tables in fk.referenced_tables.values():
             for referenced_table in referenced_tables:
                 dissambler: Disassembler = Disassembler(referenced_table.relationship)
@@ -135,7 +126,6 @@ class ForeignKey[Tbl1: Type[Table], Tbl2: Type[Table]]:
                 clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.referenced_table.__table_name__}({referenced_col})")
         return clauses
 
-    @property
-    def alias(self) -> str:
-        left_col: str = self.decomposite_fk().cond_1.name
-        return f"{self._referenced_table.__table_name__}_{left_col}"
+    def resolved_function(self):
+        """ """
+        return self.relationship(self.tleft, self.tright)
