@@ -1,6 +1,6 @@
 from __future__ import annotations
 from decimal import Decimal
-from typing import Any, Optional, Type, dataclass_transform, overload, TYPE_CHECKING
+from typing import Any, Optional, Type, dataclass_transform, overload
 import base64
 import datetime
 import json
@@ -11,18 +11,12 @@ import shapely as sph
 from .column import Column
 from .dtypes import get_query_clausule
 from .fields import get_fields
-from .foreign_key import ForeignKey, TableInfo
+from .foreign_key import ForeignKey
 from .module_tree.dfs_traversal import DFSTraversal
-
-if TYPE_CHECKING:
-    from .fields import Field
 
 
 @dataclass_transform()
 def __init_constructor__[T](cls: Type[T]) -> Type[T]:
-    # create '__properties_mapped__' dictionary for each Table to avoid shared information
-    # TODOL: I don't know if it's better to create a global dictionary like in commit '7de69443d7a8e7264b8d5d604c95da0e5d7e9cc0'
-    setattr(cls, "__properties_mapped__", {})
     fields = get_fields(cls)
 
     locals_: dict[str, Any] = {}
@@ -34,21 +28,20 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
             continue
 
         locals_[field.type_name] = field.type_
-        locals_[field.default_name] = field.default.column_value
+        locals_[field.default_name] = None
 
         init_args.append(field.init_arg)
         assignments.append(field.assginment)
-        __create_properties(cls, field)
 
     string_locals_ = ", ".join(locals_)
     string_init_args = ", ".join(init_args)
-    string_assignments = "\n\t\t".join(assignments)
+    string_assignments = "".join([f"\n\t\t{x}" for x in assignments])
 
     wrapper_fn = "\n".join(
         [
             f"def wrapper({string_locals_}):",
             f"\n\tdef __init__({string_init_args}):",
-            f"\n\t\t{string_assignments}",
+            string_assignments,
             "\treturn __init__",
         ]
     )
@@ -60,21 +53,6 @@ def __init_constructor__[T](cls: Type[T]) -> Type[T]:
 
     setattr(cls, "__init__", init_fn)
     return cls
-
-
-def __create_properties(cls: Type["Table"], field: Field) -> property:
-    _name: str = f"_{field.name}"
-
-    # we need to get Table attributes (Column class) and then called __getattribute__ or __setattr__ to make changes inside of Column
-    prop = property(
-        fget=lambda self: getattr(self, _name).__getattribute__("column_value"),
-        fset=lambda self, value: getattr(self, _name).__setattr__("column_value", value),
-    )
-
-    # set property in public name
-    setattr(cls, field.name, prop)
-    cls.__properties_mapped__[prop] = field.name
-    return None
 
 
 class TableMeta(type):
@@ -95,25 +73,11 @@ class TableMeta(type):
         if not isinstance(cls_object.__table_name__, str):
             raise Exception(f"class variable '__table_name__' of '{cls_object.__name__}' class must be 'str'")
 
-        TableMeta.__add_to_ForeignKey(cls_object)
         self = __init_constructor__(cls_object)
         return self
 
     def __repr__(cls: "Table") -> str:
         return f"{TableMeta.__name__}: {cls.__table_name__}"
-
-    @staticmethod
-    def __add_to_ForeignKey(cls: "Table") -> None:
-        """
-        When creating a Table class, we cannot pass the class itself as a parameter in a function that initializes a class variable.
-        To fix this, we first add the table name as key and then, we add the class itself in the TableInfo class.
-        """
-        if table_info := ForeignKey.MAPPED.get(cls.__table_name__, None):
-            table_info.table_object = cls
-        else:
-            ForeignKey.MAPPED[cls.__table_name__] = TableInfo(cls)
-
-        return None
 
 
 @dataclass_transform(eq_default=False)
@@ -129,7 +93,7 @@ class Table(metaclass=TableMeta):
     >>> class Address(Table):
     >>>     __table_name__ = "address"
 
-    >>>     address_id: int = Column[int](is_primary_key=True)
+    >>>     address_id: int = Column(int, is_primary_key=True)
     >>>     address: str
     >>>     address2: str
     >>>     district: str
@@ -137,13 +101,12 @@ class Table(metaclass=TableMeta):
     >>>     postal_code: datetime
     >>>     phone: str
     >>>     location: datetime
-    >>>     last_update: datetime = Column[datetime](is_auto_generated=True)
+    >>>     last_update: datetime = Column(datetime, is_auto_generated=True)
 
-    >>>     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
+    >>>     city = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
     """
 
     __table_name__: str = ...
-    __properties_mapped__: dict[property, str] = ...
 
     def __str__(self) -> str:
         params = self.to_dict()
@@ -199,7 +162,7 @@ class Table(metaclass=TableMeta):
 
     @classmethod
     def get_columns(cls) -> tuple[str, ...]:
-        return tuple(cls.__annotations__.keys())
+        return tuple([x for x in cls.__dict__.values() if isinstance(x, Column)])
 
     @classmethod
     def create_table_query(cls) -> str:
