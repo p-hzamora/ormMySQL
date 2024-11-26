@@ -13,7 +13,7 @@ from ormlambda import IRepositoryBase
 class TableType(Table):
     __table_name__ = "table_type"
 
-    pk: int = Column[int](is_primary_key=True, is_auto_increment=True)
+    pk: int = Column(int, is_primary_key=True, is_auto_increment=True)
     strings: str
     integers: int
     floats: int

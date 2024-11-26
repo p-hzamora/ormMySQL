@@ -11,7 +11,7 @@ from ormlambda import IRepositoryBase
 class Country(Table):
     __table_name__ = "country"
 
-    country_id: int = Column[int](is_primary_key=True)
+    country_id: int = Column(int, is_primary_key=True)
     country: str
     last_update: datetime
 

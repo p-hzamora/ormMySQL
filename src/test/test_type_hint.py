@@ -93,7 +93,7 @@ class TestTypeHint(unittest.TestCase):
     # def test_SELECT_ONE_method_with_SET_as_flavour_and_raises_TypeError(self):
     #     class TableWithBytearray(Table):
     #         __table_name__ = "bytearray_table"
-    #         pk: int = Column[int](is_primary_key=True)
+    #         pk: int = Column(int, is_primary_key=True)
     #         bytearray_data: bytearray
 
     #     class BytearrayModel(BaseModel[TableWithBytearray]):

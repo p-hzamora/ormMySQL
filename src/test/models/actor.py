@@ -16,7 +16,7 @@ from datetime import datetime
 class Actor(Table):
     __table_name__ = "actor"
 
-    actor_id: int = Column[int](is_primary_key=True)
+    actor_id: str = Column(str, is_primary_key=True)
     first_name: str
     last_name: str
     last_update: datetime

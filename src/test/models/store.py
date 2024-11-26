@@ -15,7 +15,7 @@ from .address import Address
 class Store(Table):
     __table_name__ = "store"
 
-    store_id: int = Column[int](is_primary_key=True)
+    store_id: int = Column(int, is_primary_key=True)
     manager_staff_id: int
     address_id: int
     last_update: datetime

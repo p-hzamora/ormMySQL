@@ -9,7 +9,7 @@ from ormlambda import IRepositoryBase
 
 class TestTable(Table):
     __table_name__ = "__test_table__"
-    Col1: int = Column[int](is_primary_key=True)
+    Col1: int = Column(int, is_primary_key=True)
     Col2: int
     Col3: int
     Col4: int

@@ -15,7 +15,7 @@ DATABASE_NAME = "__ddbb_test__"
 
 class TableCount(Table):
     __table_name__ = "table_count"
-    pos: int = Column[int](is_primary_key=True)
+    pos: int = Column(int, is_primary_key=True)
     a: int
     b: int
     c: int

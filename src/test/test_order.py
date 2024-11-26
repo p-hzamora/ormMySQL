@@ -18,7 +18,7 @@ DDBBNAME = "__test_ddbb__"
 
 class TestOrder(Table):
     __table_name__ = "order_table_test"
-    pk: int = Column[int](is_primary_key=True, is_auto_increment=True)
+    pk: int = Column(int, is_primary_key=True, is_auto_increment=True)
     a: int
     b: int
     c: int

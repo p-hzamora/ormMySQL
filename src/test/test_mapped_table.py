@@ -9,10 +9,10 @@ from ormlambda import Table, Column  # noqa: E402
 class Person(Table):
     __table_name__ = "person"
 
-    id: int = Column[int](is_primary_key=True)
-    title: int = Column[int]()
-    content: int = Column[int]()
-    dni_list: list = Column[list]()
+    id: int = Column(int, is_primary_key=True)
+    title: int = Column(int)
+    content: int = Column(int)
+    dni_list: list = Column(list)
 
 
 class TestSQLMapping(unittest.TestCase):

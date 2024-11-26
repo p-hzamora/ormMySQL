@@ -12,7 +12,7 @@ from ormlambda import (
 class Country(Table):
     __table_name__ = "country"
 
-    country_id: int = Column[int](is_primary_key=True)
+    country_id: int = Column(int, is_primary_key=True)
     country: str
     last_update: datetime
 
@@ -25,7 +25,7 @@ class CountryModel(BaseModel[Country]):
 class City(Table):
     __table_name__ = "city"
 
-    city_id: int = Column[int](is_primary_key=True)
+    city_id: int = Column(int, is_primary_key=True)
     city: str
     country_id: int
     last_update: datetime
@@ -41,7 +41,7 @@ class CityModel(BaseModel[City]):
 class Address(Table):
     __table_name__ = "address"
 
-    address_id: int = Column[int](is_primary_key=True)
+    address_id: int = Column(int, is_primary_key=True)
     address: str
     address2: str
     district: str
@@ -49,7 +49,7 @@ class Address(Table):
     postal_code: datetime
     phone: str
     location: datetime
-    last_update: datetime = Column[datetime](is_auto_generated=True)
+    last_update: datetime = Column(datetime, is_auto_generated=True)
 
     city = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 

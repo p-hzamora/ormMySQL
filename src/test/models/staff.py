@@ -16,7 +16,7 @@ from .store import Store
 class Staff(Table):
     __table_name__ = "staff"
 
-    staff_id: int = Column[int](is_primary_key=True, is_auto_increment=True)
+    staff_id: int = Column(int, is_primary_key=True, is_auto_increment=True)
     first_name: str
     last_name: str
     address_id: str

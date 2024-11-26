@@ -13,15 +13,15 @@ from .city import City
 class Address(Table):
     __table_name__ = "address"
 
-    address_id: int = Column[int](is_primary_key=True)
-    address: str
-    address2: str
-    district: str
-    city_id: int
-    postal_code: str
-    phone: str
-    location: str
-    last_update: datetime = Column[datetime](is_auto_generated=True)
+    address_id: Column[int] = Column(int, is_primary_key=True)
+    address: Column[str]
+    address2: Column[str]
+    district: Column[str]
+    city_id: Column[int]
+    postal_code: Column[str]
+    phone: Column[str]
+    location: Column[str]
+    last_update: Column[datetime] = Column(datetime, is_auto_generated=True)
 
     City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 

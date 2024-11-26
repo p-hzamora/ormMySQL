@@ -13,7 +13,7 @@ from ormlambda.utils.table_constructor import TableMeta  # noqa: E402
 class Person(Table):
     __table_name__ = "person"
 
-    pk_id: Optional[int] = Column[int](is_primary_key=True, is_auto_increment=True)
+    pk_id: Optional[int] = Column(int, is_primary_key=True, is_auto_increment=True)
     name: str
     age: int
     email: str

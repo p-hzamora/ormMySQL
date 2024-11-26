@@ -15,7 +15,7 @@ from .country import Country
 class City(Table):
     __table_name__ = "city"
 
-    city_id: int = Column[int](is_primary_key=True)
+    city_id: int = Column(int, is_primary_key=True)
     city: str
     country_id: int
     last_update: datetime

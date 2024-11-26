@@ -138,7 +138,7 @@ from ormlambda.common.interfaces import IStatements_two_generic, IRepositoryBase
 class Country(Table):
     __table_name__ = "country"
 
-    country_id: int = Column[int](is_primary_key=True)
+    country_id: int = Column(int, is_primary_key=True)
     country: str
     last_update: datetime
 
@@ -146,7 +146,7 @@ class Country(Table):
 class Address(Table):
     __table_name__ = "address"
 
-    address_id: int = Column[int](is_primary_key=True)
+    address_id: int = Column(int, is_primary_key=True)
     address: str
     address2: str
     district: str
@@ -154,7 +154,7 @@ class Address(Table):
     postal_code: str
     phone: str
     location: str
-    last_update: datetime = Column[datetime](is_auto_generated=True)
+    last_update: datetime = Column(datetime, is_auto_generated=True)
 
     City = ForeignKey["Address", City](__table_name__, City, lambda a, c: a.city_id == c.city_id)
 
@@ -162,7 +162,7 @@ class Address(Table):
 class City(Table):
     __table_name__ = "city"
 
-    city_id: int = Column[int](is_primary_key=True)
+    city_id: int = Column(int, is_primary_key=True)
     city: str
     country_id: int
     last_update: datetime
