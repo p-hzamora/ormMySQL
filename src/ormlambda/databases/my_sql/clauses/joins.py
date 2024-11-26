@@ -118,13 +118,6 @@ class JoinSelector[TLeft, TRight](IJoinSelector[TLeft, TRight]):
         ]
         return " ".join([x for x in list_ if x is not None])
 
-    @property
-    def alias(self) -> str:
-        return self._alias
-
-    @alias.setter
-    def alias(self, value: str) -> str:
-        self._alias = value
 
     @property
     def left_table(self) -> TLeft:

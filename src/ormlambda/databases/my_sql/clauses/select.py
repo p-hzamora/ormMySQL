@@ -5,7 +5,6 @@ from ormlambda.common.enums.join_type import JoinType
 import shapely as shp
 
 from ormlambda.databases.my_sql.clauses import ST_AsText
-from ormlambda.common.abstract_classes.clause_info import IAggregate
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 

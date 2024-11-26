@@ -4,25 +4,21 @@ import typing as tp
 
 
 if tp.TYPE_CHECKING:
-    from ormlambda import Table
+    from src.ormlambda.utils.foreign_key import ReferencedTable
 
     # TODOH: Changed to avoid mysql dependency
-    from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+    from ormlambda.common.abstract_classes.clause_info import ClauseInfo, TableType
 
 from .IQueryCommand import IQuery
 
 
-class IDecompositionQuery_one_arg[T: tp.Type[Table]](IQuery):
+class IDecompositionQuery_one_arg[T: TableType](IQuery):
     @property
     @abc.abstractmethod
     def table(self) -> T: ...
 
-    @property
-    @abc.abstractmethod
-    def alias(self) -> bool: ...
 
-
-class IDecompositionQuery[T: tp.Type[Table], *Ts](IDecompositionQuery_one_arg[T], IQuery):
+class IDecompositionQuery[T: TableType, *Ts](IDecompositionQuery_one_arg[T], IQuery):
     @property
     @abc.abstractmethod
     def tables(self) -> tuple[*Ts]: ...
@@ -37,15 +33,7 @@ class IDecompositionQuery[T: tp.Type[Table], *Ts](IDecompositionQuery_one_arg[T]
 
     @property
     @abc.abstractmethod
-    def clauses_group_by_tables(self) -> dict[tp.Type[Table], list[ClauseInfo[T]]]: ...
-
-    @property
-    @abc.abstractmethod
-    def fk_relationship(self) -> set[tuple[tp.Type[Table], tp.Type[Table]]]: ...
-
-    @property
-    @abc.abstractmethod
-    def alias_name(self) -> tp.Optional[str]: ...
+    def fk_relationship(self) -> set[tuple[TableType, TableType]]: ...
 
     @property
     @abc.abstractmethod
@@ -54,8 +42,10 @@ class IDecompositionQuery[T: tp.Type[Table], *Ts](IDecompositionQuery_one_arg[T]
     @abc.abstractmethod
     def stringify_foreign_key(self, sep: str = "\n"): ...
 
-    @abc.abstractmethod
-    def _add_fk_relationship[T1: tp.Type[Table], T2: tp.Type[Table]](self, t1: T1, t2: T2) -> None: ...
+    @tp.overload
+    def _add_fk_relationship[T1: TableType, T2: TableType](self, t1: T1, t2: T2) -> None: ...
+    @tp.overload
+    def _add_fk_relationship[T1: TableType, T2: TableType](self, referenced_table: ReferencedTable[T1, T2]) -> None: ...
 
     @abc.abstractmethod
-    def alias_children_resolver(self) -> tp.Callable[[tp.Type[Table], str], str]: ...
+    def _add_fk_relationship[T1: TableType, T2: TableType](self, t1: T1, t2: T2, referenced_table: ReferencedTable[T1, T2]) -> None: ...
