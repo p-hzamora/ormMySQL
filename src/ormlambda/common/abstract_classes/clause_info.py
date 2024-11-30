@@ -3,17 +3,18 @@ import typing as tp
 import abc
 import re
 
-from ormlambda import Table, Column
+from ormlambda import Table
+from ormlambda import Column
 from ormlambda.common.interfaces.IQueryCommand import IQuery
+from ormlambda.types import (
+    AsteriskType,
+    TableType,
+    ColumnType,
+    AliasType,
+)
 
 
 ASTERISK: AsteriskType = "*"
-
-
-type AsteriskType = str
-type TableType = tp.Type[Table]
-type ColumnType[TProp] = TProp | str | Column | AsteriskType
-type AliasType[T] = str | tp.Callable[[T], str]
 
 
 class IAggregate(IQuery):
@@ -22,7 +23,7 @@ class IAggregate(IQuery):
     def FUNCTION_NAME(cls) -> str: ...
 
 
-class ClauseInfo[T: TableType](IQuery):
+class ClauseInfo[T: tp.Type[Table]](IQuery):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
     @tp.overload
@@ -51,8 +52,10 @@ class ClauseInfo[T: TableType](IQuery):
             "table": lambda x: self._table.__table_name__,
         }
 
+        self._query: str = self.__create_query()
+
     def __repr__(self) -> str:
-        return f"{ClauseInfo.__name__}: query -> {self.query}"
+        return f"{type(self).__name__}: query -> {self.query}"
 
     @property
     def table(self) -> TableType:
@@ -74,12 +77,24 @@ class ClauseInfo[T: TableType](IQuery):
 
     @property
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
-        return self._column.dtype
+        if isinstance(self._column, Column):
+            return self._column.dtype
+
+        if isinstance(self._column, type):
+            return self._column
+        return type(self._column)
 
     @property
-    def query(self) -> tp.Optional[str]:
-        # When we pass "*" o the Table itself
-        if self._column is None:
+    def query(self) -> str:
+        return self._query
+
+    def __create_query(self) -> str:
+        # when passing some value that is not a column name
+        if not self.table:
+            return self.__column_resolver(self._column)
+
+        # When passing "*" o the Table itself without 'column'
+        if not self._column and self._table is not None:
             return self.__alias_table_resolver(self._alias_table)
 
         if isinstance(self._column, IAggregate):
@@ -90,18 +105,32 @@ class ClauseInfo[T: TableType](IQuery):
 
         if self.__return_all_columns():
             return self.__get_all_columns()
+        return self.__resolved_table_and_column(self._column)
 
-        column = self.__column_resolver(self._column)
-        return self.__create_query(column)
+    def __resolved_table_and_column(self, column: str) -> str:
+        table: tp.Optional[str] = self.__alias_table_resolver(self._alias_table)
+        column: str = self.__column_resolver(column)
+
+        table_column = f"{table}.{column}"
+        clause_alias = self.__alias_clause_resolver(self._alias_clause)
+        return self.__concat_alias_and_column(table_column, clause_alias)
 
     def __return_all_columns(self) -> bool:
-        cond1 = isinstance(self._column, str) and self._column == ASTERISK
-        cond2 = self._column is self._table
-        return any([cond1, cond2])
+        condition = self._column is self._table and issubclass(self._column, Table)
+        return any(
+            [
+                self.is_asterisk(self._column),
+                condition,
+            ]
+        )
+
+    @staticmethod
+    def is_asterisk(value: tp.Optional[str]) -> bool:
+        return isinstance(value, str) and value == ASTERISK
 
     def __get_all_columns(self) -> str:
         def ClauseCreator(column: str) -> ClauseInfo:
-            return ClauseInfo(
+            return type(self)(
                 self._table,
                 column,
                 self._alias_table,
@@ -109,23 +138,20 @@ class ClauseInfo[T: TableType](IQuery):
             )
 
         if self._alias_table:
-            return self.__create_query(ASTERISK)
+            return self.__resolved_table_and_column(ASTERISK)
 
         columns: list[ClauseInfo] = [ClauseCreator(column).query for column in self._table.get_columns()]
 
         return ", ".join(columns)
 
-    def __column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
-        if isinstance(column, Column):
-            return column.column_name
-        return column
+    # FIXME [ ]: Study how to deacoplate from mysql database
+    @classmethod
+    def __column_resolver[TProp](cls, column: ColumnType[TProp]) -> str:
+        from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
 
-    def __create_query(self, column: str) -> str:
-        table = self.__alias_table_resolver(self._alias_table)
-
-        column = f"{table}.{column}"
-        clause_alias = self.__alias_clause_resolver(self._alias_clause)
-        return self.__concat_alias_and_column(column, clause_alias)
+        if cls.is_asterisk(column):
+            return ASTERISK
+        return MySQLWriteCastBase().resolve(column)
 
     def __replace_placeholder(self, string: str) -> str:
         return self._keyRegex.sub(self.__replace, string)
@@ -137,7 +163,7 @@ class ClauseInfo[T: TableType](IQuery):
             return match.group(0)  # No placeholder / value
         return func(self._column)
 
-    def __concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str]):
+    def __concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str]) -> str:
         if alias_clause is None:
             return column
         return f"{column} AS {alias_clause}"
@@ -153,14 +179,14 @@ class ClauseInfo[T: TableType](IQuery):
         alias = self.__replace_placeholder(alias)
         return self.__wrapped_with_quotes(alias)
 
-    def __alias_table_resolver(self, alias_table: AliasType[ColumnType[T]]):
+    def __alias_table_resolver(self, alias_table: AliasType[ColumnType[T]]) -> tp.Optional[str]:
         """
         Show the name of the table if we don't specified alias_table. Otherwise, return the proper alias for that table
         """
 
         alias = self.__alias_resolver(alias_table)
         if not alias:
-            return self._table.__table_name__
+            return self._table.__table_name__ if self._table else None
         return alias
 
     def __alias_clause_resolver[T](self, alias_clause: AliasType[ColumnType[T]]) -> tp.Optional[str]:
