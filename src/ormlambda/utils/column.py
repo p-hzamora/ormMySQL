@@ -1,18 +1,14 @@
 from __future__ import annotations
-from typing import Type, Optional, Callable, TYPE_CHECKING, Any
-import shapely as sph
-
-from ormlambda.types import TableType, ComparerType
+from typing import Type, Optional, TYPE_CHECKING
+import abc
+from ormlambda.types import TableType, ComparerType, ColumnType
 
 if TYPE_CHECKING:
     from ormlambda import Table
-
-
-from .comparer import Comparer
+    from ormlambda.common.abstract_classes.comparer import Comparer
 
 
 class Column[TProp]:
-    CHAR: str = "%s"
     PRIVATE_CHAR: str = "_"
 
     __slots__ = (
@@ -36,7 +32,6 @@ class Column[TProp]:
     ) -> None:
         self.dtype: Type[TProp] = dtype
         self.table: Optional[TableType[T]] = None
-        # self.column_value: Optional[TProp] = None
         self.column_name: Optional[str] = None
         self.__private_name: Optional[str] = None
 
@@ -66,35 +61,6 @@ class Column[TProp]:
             assert type(value) == self.dtype
         setattr(obj, self.__private_name, value)
 
-    # FIXME [ ]: this method is allocating the Column class with MySQL database
-    @property
-    def column_value_to_query(self) -> TProp:
-        """
-        This property must ensure that any variable requiring casting by different database methods is properly wrapped.
-        """
-        if self.dtype is sph.Point:
-            return sph.to_wkt(self.column_value, -1)
-        return self.column_value
-
-    @property
-    def placeholder(self) -> str:
-        return self.placeholder_resolutor(self.dtype)
-
-    @property
-    def placeholder_resolutor(self) -> Callable[[Type, TProp], str]:
-        return self.__fetch_wrapped_method
-
-    # FIXME [ ]: this method is allocating the Column class with MySQL database
-    @classmethod
-    def __fetch_wrapped_method(cls, type_: Type) -> Optional[str]:
-        """
-        This method must ensure that any variable requiring casting by different database methods is properly wrapped.
-        """
-        caster: dict[Type[Any], Callable[[str], str]] = {
-            sph.Point: lambda x: f"ST_GeomFromText({x})",
-        }
-        return caster.get(type_, lambda x: x)(cls.CHAR)
-
     def __hash__(self) -> int:
         return hash(
             (
@@ -106,26 +72,29 @@ class Column[TProp]:
             )
         )
 
-    def __comparer_creator(self, other: Any, compare: ComparerType, *args) -> Comparer:
-        return Comparer(self, other, compare, *args)
+    @abc.abstractmethod
+    def __comparer_creator[OTherType](self, other: ColumnType[OTherType], compare: ComparerType, *args) -> Comparer:
+        from ormlambda.common.abstract_classes.comparer import Comparer
 
-    def __eq__(self, other: TProp, *args) -> Comparer:
+        return Comparer[TProp, OTherType](self, other, compare, *args)
+
+    def __eq__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, "=", *args)
 
-    def __ne__(self, other: TProp, *args) -> Comparer:
+    def __ne__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, "!=", *args)
 
-    def __lt__(self, other: TProp, *args) -> Comparer:
+    def __lt__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, "<", *args)
 
-    def __le__(self, other: TProp, *args) -> Comparer:
+    def __le__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, "<=", *args)
 
-    def __gt__(self, other: TProp, *args) -> Comparer:
+    def __gt__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, ">", *args)
 
-    def __ge__(self, other: TProp, *args) -> Comparer:
+    def __ge__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, ">=", *args)
 
-    def __contains__(self, other: TProp, *args) -> Comparer:
+    def __contains__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
         return self.__comparer_creator(other, "in", *args)
