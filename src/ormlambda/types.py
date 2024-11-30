@@ -4,10 +4,9 @@ if tp.TYPE_CHECKING:
     from ormlambda import Table, Column
 
 
-
 type AsteriskType = str
-type TableType[T:Table] = tp.Type[T]
+type TableType[T: Table] = tp.Type[T]
 type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType
-type AliasType[T] = str | tp.Callable[[T], str]
+type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
 
 type ComparerType = tp.Literal["=", "!=", "<", "<=", ">", ">=", "in"]
