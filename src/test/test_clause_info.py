@@ -1,6 +1,8 @@
 from datetime import datetime
 import sys
 from pathlib import Path
+from types import NoneType
+from typing import Any
 import unittest
 from parameterized import parameterized
 
@@ -8,7 +10,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 
 
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo as ClauseInfo
 
 from models import A
 
@@ -24,7 +26,7 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_only_table_with_alias_table_placeholder_of_column(self):
         ci = ClauseInfo[A](A, alias_table=lambda x: "{column}")
-        self.assertEqual(ci.query, "``")
+        self.assertEqual(ci.query, "`NULL`")
 
     def test_passing_only_table_with_alias_table_placeholder_of_table(self):
         ci = ClauseInfo[A](A, alias_table=lambda x: "{table}")
@@ -33,10 +35,6 @@ class TestClauseInfo(unittest.TestCase):
     def test_constructor(self):
         ci = ClauseInfo[A](A, A.pk_a)
         self.assertEqual(ci.query, "a.pk_a")
-
-    def test_passing_string(self):
-        ci = ClauseInfo[A](A, "custom_column")
-        self.assertEqual(ci.query, "a.custom_column")
 
     def test_passing_callable_alias_clause(self):
         ci = ClauseInfo[A](A, A.name_a, alias_clause=lambda x: "resolver_with_lambda_{column}")
@@ -123,6 +121,40 @@ class TestClauseInfo(unittest.TestCase):
     def test_alias_clause_property_as_none(self):
         ci = ClauseInfo[A](A, A.name_a, alias_table="{table}~{column}")
         self.assertEqual(ci.alias_clause, None)
+
+    @parameterized.expand(
+        [
+            (ClauseInfo[A](A, A), A),
+            (ClauseInfo(None, None), NoneType),
+            (ClauseInfo[A](A, A.data_a), str),
+            (ClauseInfo[A](A, A.pk_a), int),
+            (ClauseInfo[A](A, A.name_a), str),
+            (ClauseInfo[A](A, A.data_a), str),
+            (ClauseInfo[A](A, A.date_a), datetime),
+            (ClauseInfo[A](A, A.value), str),
+        ]
+    )
+    def test_dtype(self, clause_info: ClauseInfo, result: Any) -> None:
+        self.assertEqual(clause_info.dtype, result)
+
+    def test_random_value(self):
+        ci = ClauseInfo[A](None, "random_value")
+        self.assertEqual(ci.query, "'random_value'")
+
+    def test_pass_None(self):
+        ci = ClauseInfo(None, None)
+        self.assertEqual(ci.query, "NULL")
+
+    def test_pass_float(self):
+        ci = ClauseInfo(None, 3.1415)
+        self.assertEqual(ci.query, "3.1415")
+
+    def test_integer_in_column(self):
+        ci = ClauseInfo[A](None, 20)
+        self.assertEqual(ci.query, "20")
+
+    def test_all_None(self):
+        self.assertEqual(ClauseInfo[None](None, None).query, "NULL")
 
 
 if __name__ == "__main__":
