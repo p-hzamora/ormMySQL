@@ -7,7 +7,7 @@ if tp.TYPE_CHECKING:
 
 type AsteriskType = str
 type TableType[T:Table] = tp.Type[T]
-type ColumnType[TProp] = TProp | str | Column | AsteriskType
+type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType
 type AliasType[T] = str | tp.Callable[[T], str]
 
 type ComparerType = tp.Literal["=", "!=", "<", "<=", ">", ">=", "in"]
