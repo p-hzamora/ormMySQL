@@ -22,6 +22,10 @@ class IAggregate(IQuery):
     @abc.abstractmethod
     def FUNCTION_NAME(cls) -> str: ...
 
+    @property
+    @abc.abstractmethod
+    def alias_clause(self) -> tp.Optional[str]: ...
+
 
 class ClauseInfo[T: tp.Type[Table]](IQuery):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
@@ -99,7 +103,7 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
 
         if isinstance(self._column, IAggregate):
             agg_query = self._column.query
-            clause_alias = self.__alias_clause_resolver(self._alias_clause)
+            clause_alias = self.__alias_clause_resolver(self._column.alias_clause)
 
             return self.__concat_alias_and_column(agg_query, clause_alias)
 
