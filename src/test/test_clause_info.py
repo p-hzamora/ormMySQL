@@ -5,14 +5,17 @@ from types import NoneType
 from typing import Any
 import unittest
 from parameterized import parameterized
+from shapely import Point
+
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
+from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo as ClauseInfo
 
-from models import A
+from models import A, TableType
 
 
 class TestClauseInfo(unittest.TestCase):
@@ -20,17 +23,27 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfo[A](A)
         self.assertEqual(ci.query, "a")
 
+    @parameterized.expand(
+        (
+            (A, "name", "name"),
+            (None, "name", "'name'"),
+        )
+    )
+    def test_column_property(self, table, column, result):
+        ci = ClauseInfo[A](table, column, "alias_table", "alias_clause")
+        self.assertEqual(ci.column, result)
+
     def test_passing_only_table_with_alias_table(self):
         ci = ClauseInfo[A](A, alias_table=lambda x: "custom_table_name")
-        self.assertEqual(ci.query, "`custom_table_name`")
+        self.assertEqual(ci.query, "a AS `custom_table_name`")
 
     def test_passing_only_table_with_alias_table_placeholder_of_column(self):
         ci = ClauseInfo[A](A, alias_table=lambda x: "{column}")
-        self.assertEqual(ci.query, "`NULL`")
+        self.assertEqual(ci.query, "a AS `NULL`")
 
     def test_passing_only_table_with_alias_table_placeholder_of_table(self):
         ci = ClauseInfo[A](A, alias_table=lambda x: "{table}")
-        self.assertEqual(ci.query, "`a`")
+        self.assertEqual(ci.query, "a AS `a`")
 
     def test_constructor(self):
         ci = ClauseInfo[A](A, A.pk_a)
@@ -105,10 +118,17 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query, "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_passing_aggregation_method(self):
-        ci_a = ClauseInfo[A](A, A.data_a)
-        ci = ClauseInfo[A](A, ST_AsText(ci_a), alias_clause="cast_point")
-
+        ci = ClauseInfo[A](A, ST_AsText(A.data_a, alias_clause="cast_point"))
         self.assertEqual(ci.query, "ST_AsText(a.data_a) AS `cast_point`")
+
+    def test_passing_aggregation_method_with_alias_inside_of_the_method(self):
+        ci = ClauseInfo[A](A, ST_AsText(A.data_a, alias_table="new_table"))
+        self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a)")
+
+    def test_passing_aggregation_method_ST_Contains(self):
+        comparer = ST_Contains(TableType.points, Point(5, -5))
+        mssg: str = "ST_Contains(table_type.points, ST_GeomFromText('POINT (5 -5)'))"
+        self.assertEqual(comparer.query, mssg)
 
     def test_alias_table_property(self):
         ci = ClauseInfo[A](A, A.name_a, alias_table="{table}~{column}")
