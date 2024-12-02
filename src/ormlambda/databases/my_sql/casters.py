@@ -1,7 +1,7 @@
 from datetime import datetime
 from shapely import Point
 from types import NoneType
-from ormlambda.utils.resolver import WriteCastBase, ReadCastBase
+from ormlambda.common.abstract_classes.resolver import WriteCastBase, ReadCastBase
 from shapely.wkt import loads
 
 class MySQLReadCastBase(ReadCastBase):
