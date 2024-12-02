@@ -27,26 +27,26 @@ class IAggregate(IQuery):
     def alias_clause(self) -> tp.Optional[str]: ...
 
 
-class ClauseInfo[T: tp.Type[Table]](IQuery):
+class ClauseInfo[T: Table](IQuery):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
     @tp.overload
-    def __init__(self, table: T): ...
+    def __init__(self, table: TableType[T]): ...
     @tp.overload
-    def __init__[TProp](self, table: T, column: ColumnType[TProp]): ...
+    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp]): ...
     @tp.overload
-    def __init__[TProp](self, table: T, column: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
+    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
     @tp.overload
-    def __init__[TProp](self, table: T, alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
+    def __init__[TProp](self, table: TableType[T], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
 
     def __init__[TProp: Column](
         self,
-        table: T,
+        table: TableType[T],
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = None,
         alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
     ):
-        self._table: T = table
+        self._table: TableType[T] = table
         self._column: ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = alias_clause
@@ -62,16 +62,32 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
         return f"{type(self).__name__}: query -> {self.query}"
 
     @property
-    def table(self) -> TableType:
+    def table(self) -> TableType[T]:
         return self._table
+
+    @table.setter
+    def table(self, value: TableType[T]) -> None:
+        self._table = value
 
     @property
     def alias_clause(self) -> tp.Optional[str]:
         return self.__clean_alias(self.__alias_clause_resolver(self._alias_clause))
 
+    @alias_clause.setter
+    def alias_clause(self, value: str) -> str:
+        self._alias_clause = value
+
     @property
     def alias_table(self) -> tp.Optional[str]:
         return self.__clean_alias(self.__alias_table_resolver(self._alias_table))
+
+    @alias_table.setter
+    def alias_table(self, value: str) -> str:
+        self._alias_table = value
+
+    @property
+    def column(self) -> ColumnType:
+        return self.__column_resolver(self._column)
 
     @staticmethod
     def __clean_alias(alias: tp.Optional[str]) -> str:
@@ -95,11 +111,14 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
     def __create_query(self) -> str:
         # when passing some value that is not a column name
         if not self.table:
-            return self.__column_resolver(self._column)
+            return self.column
 
-        # When passing "*" o the Table itself without 'column'
-        if not self._column and self._table is not None:
-            return self.__alias_table_resolver(self._alias_table)
+        # When passing the Table itself without 'column'
+        if self._table and not self._column:
+            if not self._alias_table:
+                return self._table.__table_name__
+            alias_table = self.__alias_table_resolver(self._alias_table)
+            return self.__concat_alias_and_column(self._table.__table_name__, alias_table)
 
         if isinstance(self._column, IAggregate):
             agg_query = self._column.query
@@ -149,11 +168,17 @@ class ClauseInfo[T: tp.Type[Table]](IQuery):
         return ", ".join(columns)
 
     # FIXME [ ]: Study how to deacoplate from mysql database
-    @classmethod
-    def __column_resolver[TProp](cls, column: ColumnType[TProp]) -> str:
+    def __column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
         from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
 
-        if cls.is_asterisk(column):
+        if isinstance(column, Column):
+            return column.column_name
+
+        # if we want to pass the name of a column as a string, the 'table' var must not be None
+        if self.table and isinstance(self._column, str):
+            return self._column
+
+        if self.is_asterisk(column):
             return ASTERISK
         return MySQLWriteCastBase().resolve(column)
 
