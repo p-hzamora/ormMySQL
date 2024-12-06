@@ -11,6 +11,7 @@ from shapely import Point
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
+from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo, ClauseInfoContext
@@ -176,6 +177,18 @@ class TestClauseInfo(unittest.TestCase):
     def test_all_None(self):
         self.assertEqual(ClauseInfo[None](None, None).query, "NULL")
 
+    def test_raise_NotKeysInIAggregateError(self) -> None:
+        with self.assertRaises(NotKeysInIAggregateError) as err:
+            ST_AsText(A.data_a, alias_clause="{table}~{column}").query
+        mssg: str = "We cannot use placeholders in IAggregate class. You used ['table', 'column']"
+        self.assertEqual(mssg, err.exception.__str__())
+
+    def test_raise_NotKeysInIAggregateError_with_other_placeholder(self) -> None:
+        with self.assertRaises(NotKeysInIAggregateError) as err:
+            ST_AsText(A.data_a, alias_clause="{table}").query
+        mssg: str = "We cannot use placeholders in IAggregate class. You used ['table']"
+        self.assertEqual(mssg, err.exception.__str__())
+
 
 class TestContextClauseInfo(unittest.TestCase):
     def test_context(self):
@@ -210,6 +223,15 @@ class TestContextClauseInfo(unittest.TestCase):
         self.assertEqual(child.alias_clause, "c")
         self.assertEqual(child.alias_table, parent.alias_table)
         self.assertEqual(child_with_his_own_alias.alias_table, parent.alias_table)
+
+    def test_use_context_even_if_clause_is_not_specified(self) -> None:
+        context = ClauseInfoContext()
+        parent = ClauseInfo[C](C, alias_table="my-custom-alias", context=context)
+
+        child = ClauseInfo[C](C, context=context)
+
+        self.assertEqual(parent.alias_table, "my-custom-alias")
+        self.assertEqual(parent.alias_table, child.alias_table)
 
 
 if __name__ == "__main__":
