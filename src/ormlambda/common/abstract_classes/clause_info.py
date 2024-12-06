@@ -12,6 +12,7 @@ from ormlambda.types import (
     AliasType,
 )
 from ormlambda.common.interfaces import IAggregate
+from ormlambda.common.errors import NotKeysInIAggregateError
 
 
 from .clause_info_context import ClauseInfoContext
@@ -118,7 +119,11 @@ class ClauseInfo[T: Table](IQuery):
 
         if issubclass(self._table, IAggregate):
             agg_query = self._column
-            clause_alias = self.__alias_clause_resolver(self.alias_clause)
+
+            # avoid use placeholder when using IAggregate because no make sense.
+            if self._alias_clause and (found := self._keyRegex.findall(self._alias_clause)):
+                raise NotKeysInIAggregateError(found)
+            clause_alias = self.__alias_clause_resolver(self._alias_clause)
 
             return self.__concat_alias_and_column(agg_query, clause_alias)
 
