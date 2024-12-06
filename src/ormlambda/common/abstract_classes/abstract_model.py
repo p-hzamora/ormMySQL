@@ -6,9 +6,9 @@ import abc
 
 from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
 from ormlambda.common.interfaces.IAggregate import IAggregate
+from ormlambda.utils import Table
 
 if TYPE_CHECKING:
-    from ormlambda.utils import Table
     from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
     from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 

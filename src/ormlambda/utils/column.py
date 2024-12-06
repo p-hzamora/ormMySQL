@@ -22,7 +22,7 @@ class Column[TProp]:
         "__private_name",
     )
 
-    def __init__[T](
+    def __init__[T:Table](
         self,
         dtype: Type[TProp],
         is_primary_key: bool = False,

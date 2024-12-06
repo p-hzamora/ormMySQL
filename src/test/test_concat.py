@@ -13,9 +13,10 @@ from models import D
 class TestConcat(unittest.TestCase):
     def test_Concat(self) -> None:
         concat = func.Concat(
-            D,
-            lambda d: (d.data_d, "-", d.data_d),
-            alias=True,
+            "concat-for-table-{table}",
+            D.data_d,
+            "-",
+            D.data_d,
         )
 
         query = "CONCAT(d.data_d, '-', d.data_d) as `CONCAT`"

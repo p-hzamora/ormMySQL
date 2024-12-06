@@ -4,10 +4,12 @@ from enum import Enum
 from abc import abstractmethod, ABC
 import enum
 
+
 from .IRepositoryBase import IRepositoryBase
 from ormlambda.common.enums import JoinType
 
 if TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.comparer import Comparer
     from ormlambda import Table
     from .IAggregate import IAggregate
 
@@ -48,7 +50,7 @@ type TupleJoins6[T, T1, T2, T3, T4, T5, T6] = tuple[*TupleJoins5[T, T1, T2, T3, 
 # TODOH: This var is duplicated from 'src\ormlambda\databases\my_sql\clauses\create_database.py'
 TypeExists = Literal["fail", "replace", "append"]
 
-type WhereTypes[T, *Ts] = Union[Callable[[T, *Ts], bool], Iterable[Callable[[T, *Ts], bool]]]
+type WhereTypes = Comparer | Iterable[Comparer]
 
 
 class IStatements[T, *Ts](ABC):
@@ -151,7 +153,7 @@ class IStatements[T, *Ts](ABC):
 
     # region where
     @overload
-    def where(self, conditions: Iterable[Callable[[T, *Ts], bool]]) -> IStatements[T, *Ts]:
+    def where(self, conditions: Iterable[bool]) -> IStatements[T, *Ts]:
         """
         This method creates where clause by passing the Iterable in lambda function
         EXAMPLE
@@ -162,7 +164,7 @@ class IStatements[T, *Ts](ABC):
         ...
 
     @overload
-    def where(self, conditions: Callable[[T, *Ts], bool], **kwargs) -> IStatements[T, *Ts]:
+    def where(self, conditions: bool, **kwargs) -> IStatements[T, *Ts]:
         """
         PARAM
         -
@@ -179,7 +181,7 @@ class IStatements[T, *Ts](ABC):
         ...
 
     @abstractmethod
-    def where(self, conditions: WhereTypes[T, *Ts] = lambda: None, **kwargs) -> IStatements[T, *Ts]: ...
+    def where(self, conditions: WhereTypes = lambda: None, **kwargs) -> IStatements[T, *Ts]: ...
 
     # endregion
     # region order

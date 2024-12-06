@@ -1,20 +1,17 @@
 from __future__ import annotations
-from collections import deque
+from collections import defaultdict, deque
 import typing as tp
-import inspect
 import abc
 from ormlambda import Table, Column
 
-from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction, TupleInstruction, NestedElement
+from ormlambda.utils.lambda_disassembler.tree_instruction import TupleInstruction, NestedElement
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
 from ormlambda import JoinType
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AliasType, TableType, ColumnType, ASTERISK
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AliasType, TableType, ColumnType
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 from ormlambda.utils.foreign_key import ForeignKey
-from ..errors import UnmatchedLambdaParameterError
 
-if tp.TYPE_CHECKING:
-    from ormlambda.utils.foreign_key import ReferencedTable
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
 type ValueType = tp.Union[
@@ -53,46 +50,24 @@ class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
     ) -> None:
         self._tables: TableTupleType = tables if isinstance(tables, tp.Iterable) else (tables,)
 
-        self._lambda_query: tp.Callable[[T], tuple] = lambda_query
+        self._query_list: tp.Callable[[T], tuple] = lambda_query
         self._alias: bool = alias
         self._alias_name: tp.Optional[str] = alias_name
         self._by: JoinType = by
         self._joins: set[IJoinSelector] = set(joins) if joins is not None else set()
 
+        self._clauses_group_by_tables:dict[TableType, list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
         self._alias_cache: dict[str, AliasType] = {}
         self._replace_asterisk_char: bool = replace_asterisk_char
-        # self.__assign_lambda_variables_to_table(lambda_query)
+        self._context: ClauseInfoContext = ClauseInfoContext()
 
         self.__clauses_list_generetor(lambda_query)
 
     def __getitem__(self, key: str) -> ClauseInfo:
         for clause in self._all_clauses:
-            if clause.alias == key:
+            if clause.alias_clause == key:
                 return clause
-
-    def __assign_lambda_variables_to_table(self, _lambda: tp.Callable[[T], None]) -> None:
-        """
-        return a dictionary with the lambda's parameters as keys and Type[Table] as the values
-
-
-        >>> res = _assign_lambda_variables_to_table(lambda a,ci,co: ...)
-        >>> print(res)
-        >>> # {
-        >>> #   "a": Address,
-        >>> #   "ci": City,
-        >>> #   "co": Country,
-        >>> # }
-        """
-        lambda_vars = tuple(inspect.signature(_lambda).parameters)
-
-        if len(lambda_vars) != (expected := len(self._tables)):
-            raise UnmatchedLambdaParameterError(expected, found_param=lambda_vars)
-
-        # COMMENT: We don't pass a lambda method because lambda reads the las value of 'i'
-        for i, param in enumerate(lambda_vars):
-            self._alias_cache[param] = self._tables[i]
-        return None
 
     def __clauses_list_generetor(self, function: tp.Callable[[T], tp.Any]) -> None:
         resolved_function = function
@@ -100,9 +75,8 @@ class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
             resolved_function = (resolved_function,)
 
-        for col_index, data in enumerate(resolved_function):
+        for data in resolved_function:
             values: ClauseInfo | list[ClauseInfo] = self.__identify_value_type(data)
-
             self.__add_clause(values)
 
         return None
@@ -136,23 +110,20 @@ class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
         return function(data)
 
     def _fk_type[TTable: TableType](self, fk: ForeignKey[T, TTable]) -> list[ClauseInfo[TTable]]:
-        # self.__add_necessary_fk(fk)
-        return self._table_type(fk.resolved_function())
+        # FIXME [x]: How to deal with the foreign table
+        self._add_fk_relationship(fk)
+
+        return self._table_type(fk.tright)
 
     def _column_type[TProp](self, column: ColumnType, alias_table: AliasType[ColumnType[TProp]] = "{table}") -> ClauseInfo[T]:
         # COMMENT: if the property belongs to the main class, the columnn name in not prefixed. This only done if the property comes from any join.
 
-        clause_info = ClauseInfo[T](
-            table=column.table,
-            column=column,
-            alias_table=alias_table,
-            alias_clause="{table}_{column}",
-        )
+        clause_info = ClauseInfo[T](table=column.table, column=column, alias_table=alias_table, alias_clause="{table}_{column}", context=self._context)
         self._alias_cache[clause_info.alias_clause] = clause_info
         return clause_info
 
     def _IAggregate_type(self, aggregate_method: IAggregate, _: TupleInstruction) -> ClauseInfo[T]:
-        return ClauseInfo[T](self.table, aggregate_method)
+        return ClauseInfo[T](self.table, aggregate_method, context=self._context)
 
     def _table_type[TType: TableType](self, table: TType) -> list[ClauseInfo[TType]]:
         """
@@ -213,28 +184,9 @@ class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
             [self.__add_clause(x) for x in clause]
             return None
 
-        return self._all_clauses.append(clause)
-
-    def __add_necessary_fk(self, tables: TableType) -> None:
-        old_table = self.table
-
-        table_inherit_list: list[Table] = []
-        counter: int = 0
-        while tables not in old_table.__dict__.values():
-            new_table: TableType = getattr(old_table(), table_inherit_list[counter])
-
-            if not issubclass(new_table, Table):
-                raise ValueError(f"new_table var must be '{Table.__class__}' type and is '{type(new_table)}'")
-
-            self._add_fk_relationship(old_table, new_table)
-
-            if tables in new_table.__dict__.values():
-                return self._add_fk_relationship(new_table, tables)
-
-            old_table = new_table
-            counter += 1
-
-        return self._add_fk_relationship(old_table, tables)
+        self._all_clauses.append(clause)
+        self._clauses_group_by_tables[clause.table].append(clause)
+        return None
 
     @property
     def table(self) -> T:
@@ -246,11 +198,15 @@ class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
 
     @property
     def lambda_query[*Ts](self) -> tp.Callable[[T], tuple[*Ts]]:
-        return self._lambda_query
+        return self._query_list
 
     @property
     def all_clauses(self) -> list[ClauseInfo[T]]:
         return self._all_clauses
+
+    @property
+    def clauses_group_by_tables(self) -> dict[TableType, list[ClauseInfo[T]]]:
+        return self._clauses_group_by_tables
 
     @property
     def has_foreign_keys(self) -> bool:
@@ -268,4 +224,4 @@ class DecompositionQueryBase[T: TableType, *Ts](IDecompositionQuery[T, *Ts]):
     def stringify_foreign_key(self, sep: str = "\n") -> str: ...
 
     @abc.abstractmethod
-    def _add_fk_relationship[T1: TableType, T2: TableType](self, t1: T1, t2: T2, referenced_table: ReferencedTable[T1, T2]) -> None: ...
+    def _add_fk_relationship[RTable: Table](self, comparer: ForeignKey[T, RTable]) -> None: ...

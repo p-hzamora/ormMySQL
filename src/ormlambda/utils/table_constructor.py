@@ -180,12 +180,10 @@ class Table(metaclass=TableMeta):
         It's imperative to instantiate cls() to initialize the 'Table' object and create private variables that will be Column objects.
         Otherwise, we only can access to property method
         """
-        table_init_ = cls()
-        annotations: dict[str, Column] = table_init_.__annotations__
+        annotations: dict[str, Column] = cls.__annotations__
         all_columns: list = []
-        for col_name in annotations.keys():
-            col_object: Column = getattr(table_init_, f"_{col_name}")
-            all_columns.append(get_query_clausule(col_object))
+        for col_obj in annotations.values():
+            all_columns.append(get_query_clausule(col_obj))
         return all_columns
 
     @classmethod
