@@ -13,9 +13,9 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo as ClauseInfo
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo, ClauseInfoContext
 
-from models import A, TableType
+from models import A, C, TableType
 
 
 class TestClauseInfo(unittest.TestCase):
@@ -118,11 +118,11 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query, "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_passing_aggregation_method(self):
-        ci = ClauseInfo[A](A, ST_AsText(A.data_a, alias_clause="cast_point"))
+        ci = ST_AsText(A.data_a, alias_clause="cast_point")
         self.assertEqual(ci.query, "ST_AsText(a.data_a) AS `cast_point`")
 
     def test_passing_aggregation_method_with_alias_inside_of_the_method(self):
-        ci = ClauseInfo[A](A, ST_AsText(A.data_a, alias_table="new_table"))
+        ci = ST_AsText(A.data_a, alias_table="new_table")
         self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a)")
 
     def test_passing_aggregation_method_ST_Contains(self):
@@ -175,6 +175,41 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_all_None(self):
         self.assertEqual(ClauseInfo[None](None, None).query, "NULL")
+
+
+class TestContextClauseInfo(unittest.TestCase):
+    def test_context(self):
+        context = ClauseInfoContext()
+        ci_parent = ClauseInfo[C](
+            table=C,
+            column=C.data_c,
+            alias_table="alias-for-{table}",
+            alias_clause="{column}~alias",
+            context=context,
+        )
+        ci_parent.alias_table
+        ci_column = ClauseInfo[C](C, C.data_c, context=context)
+        ci_table = ClauseInfo[C](C, C, context=context)
+
+        ci_column_with_alias_clause = ClauseInfo[C](C, C.fk_b, alias_clause="{column}-random", context=context)
+        ci_column_with_alias_clause.alias_clause
+
+        self.assertEqual(ci_parent.alias_table, "alias-for-c")
+        self.assertEqual(ci_parent.alias_table, ci_table.alias_table)
+
+        self.assertEqual(ci_parent.alias_clause, "data_c~alias")
+        self.assertEqual(ci_parent.alias_clause, ci_column.alias_clause)
+        self.assertEqual(ci_parent.alias_clause, ci_column_with_alias_clause.alias_clause)
+
+    def test_table_context(self) -> None:
+        context = ClauseInfoContext()
+        parent = ClauseInfo[C](C, None, alias_table="my-custom-{table}-table", context=context)
+        child = ClauseInfo[C](C, C.data_c, alias_clause="{table}", context=context)
+        child_with_his_own_alias = ClauseInfo[C](C, alias_table="other-alias", context=context)
+
+        self.assertEqual(child.alias_clause, "c")
+        self.assertEqual(child.alias_table, parent.alias_table)
+        self.assertEqual(child_with_his_own_alias.alias_table, parent.alias_table)
 
 
 if __name__ == "__main__":
