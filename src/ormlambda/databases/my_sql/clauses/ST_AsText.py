@@ -23,7 +23,8 @@ class ST_AsText(IAggregate):
 
     @property
     def query(self) -> str:
-        return f"{self.FUNCTION_NAME}({self._point_column.query})"
+        string = f"{self.FUNCTION_NAME}({self._point_column.query})"
+        return ClauseInfo(IAggregate, string, alias_clause=self._alias_clause).query
 
     @property
     def alias_clause(self) -> tp.Optional[str]:
