@@ -1,6 +1,5 @@
 from __future__ import annotations
 import typing as tp
-import abc
 import re
 
 from ormlambda import Table
@@ -12,19 +11,12 @@ from ormlambda.types import (
     ColumnType,
     AliasType,
 )
+from ormlambda.common.interfaces import IAggregate
 
+
+from .clause_info_context import ClauseInfoContext
 
 ASTERISK: AsteriskType = "*"
-
-
-class IAggregate(IQuery):
-    @classmethod
-    @abc.abstractmethod
-    def FUNCTION_NAME(cls) -> str: ...
-
-    @property
-    @abc.abstractmethod
-    def alias_clause(self) -> tp.Optional[str]: ...
 
 
 class ClauseInfo[T: Table](IQuery):
@@ -38,6 +30,8 @@ class ClauseInfo[T: Table](IQuery):
     def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
     @tp.overload
     def __init__[TProp](self, table: TableType[T], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
+    @tp.overload
+    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], context: ClauseInfoContext): ...
 
     def __init__[TProp: Column](
         self,
@@ -45,11 +39,13 @@ class ClauseInfo[T: Table](IQuery):
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = None,
         alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
+        context: tp.Optional[ClauseInfoContext] = None,
     ):
         self._table: TableType[T] = table
         self._column: ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = alias_clause
+        self._context: tp.Optional[ClauseInfoContext] = context
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": lambda x: self.__column_resolver(x),
@@ -86,7 +82,7 @@ class ClauseInfo[T: Table](IQuery):
         self._alias_table = value
 
     @property
-    def column(self) -> ColumnType:
+    def column(self) -> str:
         return self.__column_resolver(self._column)
 
     @staticmethod
@@ -120,9 +116,9 @@ class ClauseInfo[T: Table](IQuery):
             alias_table = self.__alias_table_resolver(self._alias_table)
             return self.__concat_alias_and_column(self._table.__table_name__, alias_table)
 
-        if isinstance(self._column, IAggregate):
-            agg_query = self._column.query
-            clause_alias = self.__alias_clause_resolver(self._column.alias_clause)
+        if issubclass(self._table, IAggregate):
+            agg_query = self._column
+            clause_alias = self.__alias_clause_resolver(self.alias_clause)
 
             return self.__concat_alias_and_column(agg_query, clause_alias)
 
@@ -213,13 +209,34 @@ class ClauseInfo[T: Table](IQuery):
         Show the name of the table if we don't specified alias_table. Otherwise, return the proper alias for that table
         """
 
+        if self.has_alias_in_context(self.table):
+            return self._context.get_alias(self.table)
+
         alias = self.__alias_resolver(alias_table)
+
         if not alias:
-            return self._table.__table_name__ if self._table else None
+            alias = self._table.__table_name__ if self._table else None
+
+        if self._context:
+            self._context.add_table_to_context(self.table, alias)
         return alias
 
     def __alias_clause_resolver[T](self, alias_clause: AliasType[ColumnType[T]]) -> tp.Optional[str]:
-        return self.__alias_resolver(alias_clause)
+        if self.has_alias_in_context(self._column):
+            return self._context.get_alias(self._column)
+
+        alias = self.__alias_resolver(alias_clause)
+        if not alias:
+            return None
+
+        if self._context:
+            self._context.add_table_to_context(self._column, alias)
+        return alias
+
+    def has_alias_in_context(self, value: TableType[T] | Column) -> bool:
+        if not value:
+            return False
+        return self._context and self._context.has_alias(value)
 
     @staticmethod
     def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",") -> str:
