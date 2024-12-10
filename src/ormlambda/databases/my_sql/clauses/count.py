@@ -7,7 +7,7 @@ from ormlambda import JoinType
 from ..mysql_decomposition import MySQLDecompositionQuery
 
 
-class Count[T: tp.Type[Table]](MySQLDecompositionQuery[T], IAggregate[T]):
+class Count[T: tp.Type[Table]](MySQLDecompositionQuery[T], IAggregate):
     NAME: str = "COUNT"
 
     def __init__(

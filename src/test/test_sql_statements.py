@@ -7,8 +7,10 @@ from mysql.connector import MySQLConnection, errors
 import pandas as pd
 from datetime import datetime
 
+
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
+import ormlambda.databases.my_sql.functions as fn
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import IRepositoryBase, JoinType  # noqa: E402
@@ -493,8 +495,15 @@ class TestAggregateFunctions(unittest.TestCase):
         cls.ddbb.drop_database(DDBBNAME)
 
     def test_max_function(self) -> None:
-        select = self.model.select_one(
-            lambda x: (self.model.max(lambda x: x.Col1, alias_name="max_with_alias"),),
+        max_fn = self.model.max(TestTable.Col1, alias_name="max_with_alias")
+        min_fn = self.model.min(TestTable.Col1, alias_name="min_with_alias")
+        sum_fn = self.model.sum(TestTable.Col1, alias_name="sum_with_alias")
+        select = self.model.select(
+            (
+                max_fn,
+                min_fn,
+                sum_fn,
+            ),
             flavour=dict,
         )
 

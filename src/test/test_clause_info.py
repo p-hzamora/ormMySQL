@@ -11,6 +11,7 @@ from shapely import Point
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
+from ormlambda.common.interfaces import IAggregate
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
@@ -118,7 +119,7 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfo[A](A, "*", "ALIAS_TABLE", "ALIAS_FOR_ALL_CLAUSE")
         self.assertEqual(ci.query, "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
-    def test_passing_aggregation_method(self):
+    def test_AApassing_aggregation_method(self):
         ci = ST_AsText(A.data_a, alias_clause="cast_point")
         self.assertEqual(ci.query, "ST_AsText(a.data_a) AS `cast_point`")
 
@@ -193,26 +194,24 @@ class TestClauseInfo(unittest.TestCase):
 class TestContextClauseInfo(unittest.TestCase):
     def test_context(self):
         context = ClauseInfoContext()
-        ci_parent = ClauseInfo[C](
+        ci_parent_dataC = ClauseInfo[C](
             table=C,
             column=C.data_c,
             alias_table="alias-for-{table}",
             alias_clause="{column}~alias",
             context=context,
         )
-        ci_parent.alias_table
-        ci_column = ClauseInfo[C](C, C.data_c, context=context)
+        ci_column_dataC = ClauseInfo[C](C, C.data_c, context=context)
         ci_table = ClauseInfo[C](C, C, context=context)
 
-        ci_column_with_alias_clause = ClauseInfo[C](C, C.fk_b, alias_clause="{column}-random", context=context)
-        ci_column_with_alias_clause.alias_clause
+        ci_column_fkB_with_alias_clause = ClauseInfo[C](C, C.fk_b, alias_clause="{column}-random", context=context)
+        ci_column_fkB_with_alias_clause.alias_clause
 
-        self.assertEqual(ci_parent.alias_table, "alias-for-c")
-        self.assertEqual(ci_parent.alias_table, ci_table.alias_table)
+        self.assertEqual(ci_parent_dataC.alias_table, "alias-for-c")
+        self.assertEqual(ci_parent_dataC.alias_table, ci_table.alias_table)
 
-        self.assertEqual(ci_parent.alias_clause, "data_c~alias")
-        self.assertEqual(ci_parent.alias_clause, ci_column.alias_clause)
-        self.assertEqual(ci_parent.alias_clause, ci_column_with_alias_clause.alias_clause)
+        self.assertEqual(ci_parent_dataC.alias_clause, "data_c~alias")
+        self.assertEqual(ci_parent_dataC.alias_clause, ci_column_dataC.alias_clause)
 
     def test_table_context(self) -> None:
         context = ClauseInfoContext()
