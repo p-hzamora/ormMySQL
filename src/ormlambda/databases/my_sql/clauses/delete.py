@@ -1,4 +1,4 @@
-from typing import Any, override, Iterable, TYPE_CHECKING
+from typing import Any, Optional, override, Iterable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ormlambda import Column
@@ -21,18 +21,18 @@ class DeleteQuery[T: Table](DeleteQueryBase[T, IRepositoryBase[MySQLConnection]]
     def delete(self, instances: T | list[T]) -> None:
         col: str = ""
         if isinstance(instances, Table):
-            pk: Column = instances.get_pk()
-            if pk.column_value is None:
+            pk: Optional[Column] = instances.get_pk()
+            if pk is None:
                 raise Exception(f"You cannot use 'DELETE' query without set primary key in '{instances.__table_name__}'")
             col = pk.column_name
-            value = str(pk.column_value)
+            value = str(instances[pk])
 
         elif isinstance(instances, Iterable):
             value: list[Any] = []
             for ins in instances:
-                pk = ins.get_pk()
-                col = pk.column_name
-                value.append(pk.column_value)
+                pk = type(ins).get_pk()
+                value.append(ins[pk])
+            col = pk.column_name
 
         query: str = f"{self.CLAUSE} FROM {self._model.__table_name__} WHERE {col}"
         if isinstance(value, str):

@@ -5,6 +5,7 @@ from ormlambda import Table
 from ormlambda import Column
 from ormlambda.components.insert import InsertQueryBase
 from ormlambda import IRepositoryBase
+from ..casters import MySQLWriteCastBase
 
 
 class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]):
@@ -35,8 +36,9 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
             for col in cols:
                 if i == 0:
                     col_names.append(col.column_name)
-                    wildcards.append(col.placeholder)
-                col_values[-1].append(col.column_value_to_query)
+                    wildcards.append(MySQLWriteCastBase.PLACEHOLDER)
+                # COMMENT: avoid MySQLWriteCastBase.resolve when using PLACEHOLDERs
+                col_values[-1].append(instances[i][col])
 
         join_cols = ", ".join(col_names)
         unknown_rows = f'({", ".join(wildcards)})'  # The number of "%s" must match the dict 'dicc_0' length
@@ -46,7 +48,7 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         return None
 
     @staticmethod
-    def __is_valid(column: Column) -> bool:
+    def __is_valid[TProp](column: Column[TProp], value: TProp) -> bool:
         """
         We want to delete the column from table when it's specified with an 'AUTO_INCREMENT' or 'AUTO GENERATED ALWAYS AS (__) STORED' statement.
 
@@ -60,24 +62,28 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         - False -> Delete the column from dict query
         """
 
-        is_pk_none_and_auto_increment: bool = all([column.column_value is None, column.is_primary_key, column.is_auto_increment])
+        is_pk_none_and_auto_increment: bool = all([value is None, column.is_primary_key, column.is_auto_increment])
 
         if is_pk_none_and_auto_increment or column.is_auto_generated:
             return False
         return True
 
     def __fill_dict_list[TProp](self, list_dict: list[str, TProp], values: T | list[T]) -> list[Column]:
-        if issubclass(values.__class__, Table):
-            new_list = []
-            for col in values.__dict__.values():
-                if isinstance(col, Column) and self.__is_valid(col):
-                    new_list.append(col)
-
-            list_dict.append(new_list)
-
-        elif isinstance(values, Iterable):
+        if isinstance(values, Iterable):
             for x in values:
                 self.__fill_dict_list(list_dict, x)
+
+        elif issubclass(values.__class__, Table):
+            new_list = []
+            for prop in type(values).__dict__.values():
+                if not isinstance(prop, Column):
+                    continue
+
+                value = getattr(values, prop.column_name)
+                if self.__is_valid(prop, value):
+                    new_list.append(prop)
+            list_dict.append(new_list)
+
         else:
             raise Exception(f"Tipo de dato'{type(values)}' no esperado")
         return None

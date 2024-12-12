@@ -1,31 +1,30 @@
 import typing as tp
-from ormlambda.common.abstract_classes.clause_info import IAggregate, ClauseInfo
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
 from ormlambda.types import ColumnType, AliasType
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 
-class ST_AsText(IAggregate):
+class ST_AsText(AggregateFunctionBase):
     """
     https://dev.mysql.com/doc/refman/8.4/en/fetching-spatial-data.html
 
     The ST_AsText() function converts a geometry from internal format to a WKT string.
     """
 
-    FUNCTION_NAME: str = "ST_AsText"
+    @staticmethod
+    def FUNCTION_NAME() -> str:
+        return "ST_AsText"
 
     def __init__[T, TProp](
         self,
         point: ColumnType[TProp],
         alias_table: AliasType[ColumnType[TProp]] = None,
         alias_clause: AliasType[ColumnType[TProp]] = None,
+        context: tp.Optional[ClauseInfoContext] = None,
     ) -> None:
-        self._point_column: ClauseInfo[TProp] = ClauseInfo[T](point.table, point, alias_table)
-        self._alias_clause: AliasType[ColumnType[TProp]] = alias_clause
-
-    @property
-    def query(self) -> str:
-        string = f"{self.FUNCTION_NAME}({self._point_column.query})"
-        return ClauseInfo(IAggregate, string, alias_clause=self._alias_clause).query
-
-    @property
-    def alias_clause(self) -> tp.Optional[str]:
-        return self._alias_clause
+        point_column: ClauseInfo[TProp] = ClauseInfo[T](point.table, point, alias_table=alias_table, context=context)
+        super().__init__(
+            column=point_column,
+            alias_clause=alias_clause,
+            context=None,
+        )
