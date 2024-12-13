@@ -4,6 +4,7 @@ from types import NoneType
 from ormlambda.common.abstract_classes.resolver import WriteCastBase, ReadCastBase
 from shapely.wkt import loads
 
+
 class MySQLReadCastBase(ReadCastBase):
     def cast_str(self, value: str) -> str:
         return str(value)
@@ -45,7 +46,6 @@ class MySQLWriteCastBase(WriteCastBase):
 
     def cast_datetime(self, value: datetime):
         return self.cast_str(value.strftime("%Y-%m-%d %H:%M:%S"))
-    
+
+
 # class MySQLComparisonBase(ComparisonBase): ...
-
-
