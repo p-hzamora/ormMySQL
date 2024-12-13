@@ -1,4 +1,5 @@
 from __future__ import annotations
+import abc
 import typing as tp
 import re
 
@@ -251,3 +252,46 @@ class ClauseInfo[T: Table](IQuery):
     @staticmethod
     def _wrapped_with_quotes(string: str) -> str:
         return f"`{string}`"
+
+
+class AggregateFunctionBase(ClauseInfo[None], IAggregate):
+    def __init__[TProp: Column](
+        self,
+        column: tp.Optional[ColumnType[TProp]] = None,
+        alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
+        context: tp.Optional[ClauseInfoContext] = None,
+    ):
+        super().__init__(
+            table=column.table if isinstance(column, ClauseInfo) else None,  # if table is None, the column strings will not wrapped with ''. we need to treat as object not strings
+            alias_table=None,
+            column=self._join_column(column, context),
+            alias_clause=alias_clause,
+            context=context,
+        )
+
+    @staticmethod
+    @abc.abstractmethod
+    def FUNCTION_NAME() -> str: ...
+
+    @tp.override
+    def _create_query(self) -> str:
+        # avoid use placeholder when using IAggregate because no make sense.
+        if self._alias_clause and (found := self._keyRegex.findall(self._alias_clause)):
+            raise NotKeysInIAggregateError(found)
+
+        alias_clause = self._alias_clause_resolver(self._alias_clause)
+        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({self.column})", alias_clause)
+
+    @staticmethod
+    def _join_column[TProp](column: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> str:
+        if isinstance(column, ClauseInfo):
+            return column.query
+        if isinstance(column, str) or not isinstance(column, tp.Iterable):
+            column = (column,)
+
+        all_clauses: list[ClauseInfo] = []
+        for col in column:
+            table: tp.Optional[Table] = col.table if isinstance(col, Column) else None
+            all_clauses.append(ClauseInfo(table, col, context=context))
+
+        return ClauseInfo.join_clauses(all_clauses)
