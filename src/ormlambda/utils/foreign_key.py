@@ -1,131 +1,88 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Callable, TYPE_CHECKING, Type, Optional, overload
+from typing import Callable, TYPE_CHECKING, Optional, Any, overload
 
-from ormlambda.utils.lambda_disassembler.tree_instruction import TreeInstruction
-from .lambda_disassembler import Disassembler
+from ormlambda.common.interfaces.IQueryCommand import IQuery
+
 
 if TYPE_CHECKING:
-    from .table_constructor import Table
+    from ormlambda.common.abstract_classes.comparer import Comparer
+    from ormlambda import Table
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 
-type TypeTable = Type[Table]
-
-
-@dataclass
-class ReferencedTable[T1: TypeTable, T2: TypeTable]:
-    orig_table: T1
-    referenced_table: T2
-    relationship: Callable[[T1, T2], bool]
-
-    @property
-    def foreign_key_column(self):
-        resolved = TreeInstruction(self.relationship).to_list()
-        # FIXME [ ]: Avoid access to left col by position
-        col_left = resolved[0].nested_element.name
-        return col_left
-
-
-class TableInfo[T1: TypeTable, T2: TypeTable]:
+class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     @overload
-    def __init__(self) -> None: ...
+    def __init__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
-    def __init__(self, table_object: str) -> None: ...
-    @overload
-    def __init__(self, table_object: T1) -> None: ...
+    def __init__[LProp, RProp](self, tright: TRight, relationship: Callable[[TLeft, TRight], Comparer[LProp, RProp]]) -> None: ...
 
-    def __init__(self, table_object: Optional[T1] = None) -> None:
-        self._table_name: str = ""
-        self._table_object: Optional[T1] = None
-        self._fill_table_variable(table_object)
-        self._referenced_tables: dict[str, dict[str, ReferencedTable[T1, T2]]] = {}
-
-    def _fill_table_variable(self, table: str | TypeTable):
-        if isinstance(table, str):
-            self._table_name = table
+    def __init__[LProp, RProp](
+        self,
+        tright: Optional[TRight] = None,
+        relationship: Optional[Callable[[TLeft, TRight], Comparer[LProp, RProp]]] = None,
+        *,
+        comparer: Optional[Comparer] = None,
+        clause_name: Optional[str] = None,
+    ) -> None:
+        if comparer is not None and clause_name is not None:
+            self.__init__with_comparer(comparer, clause_name)
         else:
-            self._table_name = table.__table_name__
-            self._table_object = table
+            self.__init_with_callable(tright, relationship)
 
-    def __repr__(self) -> str:
-        return f"{TableInfo.__name__}: '{self._table_name}' dependent tables -> [{', '.join(tuple(self.referenced_tables))}]"
+    def __init__with_comparer[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
+        self._comparer: Comparer[LProp, RProp] = comparer
 
-    @property
-    def referenced_tables(self) -> dict[str, list[ReferencedTable[T1, T2]]]:
-        return self._referenced_tables
+        self._relationship = None
+        self._tleft:TLeft = comparer.left_condition.table
+        self._tright: TRight = comparer.right_condition.table
+        self._clause_name: str = clause_name
 
-    def update_referenced_tables(self, orig_table: str, referenced_table: TypeTable, relationship: Callable[[T1, T2], bool]) -> None:
-        new_references = ReferencedTable[T1, T2](orig_table, referenced_table, relationship)
-
-        referenced_list = self._referenced_tables.get(referenced_table.__table_name__, [])
-
-        if new_references not in referenced_list:
-            referenced_list.append(new_references)
-            self._referenced_tables[referenced_table.__table_name__] = referenced_list
-        return None
-
-    @property
-    def table_object(self) -> Optional[TypeTable]:
-        return self._table_object
-
-    @table_object.setter
-    def table_object(self, value: TypeTable) -> None:
-        self._table_object = value
-
-    @property
-    def has_relationship(self) -> bool:
-        return len(self._referenced_tables) > 0
-
-
-class ForeignKey[TLeft: TypeTable, TRight: TypeTable]:
-    MAPPED: dict[str, TableInfo[TLeft, TRight]] = {}
-
-    def __init__(self, tright: TRight, relationship: Callable[[TLeft, TRight], bool]) -> None:
-        self.tright: TRight = tright
-        self.relationship: Callable[[TLeft, TRight], bool] = relationship
+    def __init_with_callable[LProp, RProp](self, tright: Optional[TRight], relationship: Optional[Callable[[TLeft, TRight], Comparer[LProp, RProp]]]) -> None:
+        self._tright: TRight = tright
+        self._relationship: Callable[[TLeft, TRight], Comparer[LProp, RProp]] = relationship
+        self._comparer: Optional[Comparer] = None
+        self._tleft: TLeft = None
+        self._clause_name: str = None
 
     def __set_name__(self, owner: TLeft, name) -> None:
-        self.tleft = owner
-        self.clause_name = name
-        self.__add_foreign_key(self.tleft, self.tright, self.relationship)
+        self._tleft: TLeft = owner
+        self._clause_name: str = name
 
     def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey | TRight:
         if not obj:
             return self
-        return self.tright
+        return self._tright
 
     def __set__(self, obj, value):
-        raise AttributeError(f"The {ForeignKey.__name__} '{self.clause_name}' in the '{self.tleft.__table_name__}' table cannot be overwritten.")
+        raise AttributeError(f"The {ForeignKey.__name__} '{self._clause_name}' in the '{self._tleft.__table_name__}' table cannot be overwritten.")
 
     def __getattr__(self, name: str):
-        return getattr(self.tright, name)
+        return getattr(self._tright, name)
 
     def __repr__(self) -> str:
         return f"{ForeignKey.__name__}"
 
-    @classmethod
-    def __add_foreign_key(cls, orig_table: str, referenced_table: Table, relationship: Callable[[TLeft, TRight], bool]) -> None:
-        if orig_table not in cls.MAPPED:
-            cls.MAPPED[orig_table] = TableInfo(orig_table)
-
-        # if referenced_table not in cls.MAPPED[orig_table]:
-        cls.MAPPED[orig_table].update_referenced_tables(orig_table, referenced_table, relationship)
-
-        return None
+    @property
+    def query(self) -> str:
+        compare = self.resolved_function()
+        return f"FOREIGN KEY ({self._tleft.__table_name__}) REFERENCES {compare.right_condition.alias_table}({compare.right_condition._column})"
 
     @classmethod
     def create_query(cls, orig_table: Table) -> list[str]:
         clauses: list[str] = []
 
-        fk: TableInfo[TLeft, TRight] = ForeignKey[TLeft, TRight].MAPPED[orig_table.__table_name__]
-        for referenced_tables in fk.referenced_tables.values():
-            for referenced_table in referenced_tables:
-                dissambler: Disassembler = Disassembler(referenced_table.relationship)
-                orig_col: str = dissambler.cond_1.name
-                referenced_col: str = dissambler.cond_2.name
-                clauses.append(f"FOREIGN KEY ({orig_col}) REFERENCES {referenced_table.referenced_table.__table_name__}({referenced_col})")
+        for attr in vars(orig_table):
+            if isinstance(attr, ForeignKey):
+                clauses.append(attr.query)
         return clauses
 
-    def resolved_function(self):
+    def resolved_function[LProp: Any, RProp: Any](self, context: Optional[ClauseInfoContext] = None) -> Comparer[LProp, RProp]:
         """ """
-        return self.relationship(self.tleft, self.tright)
+        if self._comparer is not None:
+            return self._comparer
+
+        left = self._tleft
+        right = self._tright
+        comparer = self._relationship(left, right)
+        comparer.set_context(context)
+        return comparer
