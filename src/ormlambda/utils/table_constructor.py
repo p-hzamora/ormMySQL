@@ -127,6 +127,12 @@ class Table(metaclass=TableMeta):
         equal_loop = ["=".join((x, __cast_long_variables(y))) for x, y in dicc.items()]
         return f'{self.__class__.__name__}({", ".join(equal_loop)})'
 
+    def __getitem__[TProp](self, value: str | Column[TProp]) -> Optional[TProp]:
+        name = value if isinstance(value, str) else value.column_name
+        if hasattr(self, name):
+            return getattr(self, name)
+        return None
+
     def to_dict(self) -> dict[str, str | int]:
         dicc: dict[str, Any] = {}
         for x in self.__annotations__:
@@ -152,12 +158,11 @@ class Table(metaclass=TableMeta):
             return transform_map[dtype](_value)
         return _value
 
-    def get_pk(self) -> Optional[Column]:
-        for col_name in self.__annotations__.keys():
-            private_col = f"_{col_name}"
-            col_obj = getattr(self, private_col)
-            if isinstance(col_obj, Column) and col_obj.is_primary_key:
-                return col_obj
+    @classmethod
+    def get_pk(cls) -> Optional[Column]:
+        for obj in cls.__dict__.values():
+            if isinstance(obj, Column) and obj.is_primary_key:
+                return obj
         return None
 
     @classmethod
@@ -180,12 +185,10 @@ class Table(metaclass=TableMeta):
         It's imperative to instantiate cls() to initialize the 'Table' object and create private variables that will be Column objects.
         Otherwise, we only can access to property method
         """
-        table_init_ = cls()
-        annotations: dict[str, Column] = table_init_.__annotations__
+        annotations: dict[str, Column] = cls.__annotations__
         all_columns: list = []
-        for col_name in annotations.keys():
-            col_object: Column = getattr(table_init_, f"_{col_name}")
-            all_columns.append(get_query_clausule(col_object))
+        for col_obj in annotations.values():
+            all_columns.append(get_query_clausule(col_obj))
         return all_columns
 
     @classmethod
