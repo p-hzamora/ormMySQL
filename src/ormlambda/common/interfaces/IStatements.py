@@ -4,12 +4,18 @@ from enum import Enum
 from abc import abstractmethod, ABC
 import enum
 
+
+
 from .IRepositoryBase import IRepositoryBase
 from ormlambda.common.enums import JoinType
 
 if TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.comparer import Comparer
     from ormlambda import Table
     from .IAggregate import IAggregate
+    from ormlambda.types import TupleJoinType
+    from ormlambda.databases.my_sql.join_context import JoinContext
+    
 
 
 class OrderType(enum.Enum):
@@ -48,10 +54,16 @@ type TupleJoins6[T, T1, T2, T3, T4, T5, T6] = tuple[*TupleJoins5[T, T1, T2, T3, 
 # TODOH: This var is duplicated from 'src\ormlambda\databases\my_sql\clauses\create_database.py'
 TypeExists = Literal["fail", "replace", "append"]
 
-type WhereTypes[T, *Ts] = Union[Callable[[T, *Ts], bool], Iterable[Callable[[T, *Ts], bool]]]
+
+type WhereTypes[LTable, LProp, RTable, RProp] = Union[
+    bool,
+    Comparer[LTable, LProp, RTable, RProp],
+    tuple[Comparer[LTable, LProp, RTable, RProp], ...],
+    Callable[[LTable], WhereTypes[LTable, LProp, RTable, RProp]],
+]
 
 
-class IStatements[T, *Ts](ABC):
+class IStatements[T: Table, *Ts](ABC):
     @abstractmethod
     def create_table(self, if_exists: TypeExists) -> None: ...
 
@@ -150,36 +162,12 @@ class IStatements[T, *Ts](ABC):
     # endregion
 
     # region where
-    @overload
-    def where(self, conditions: Iterable[Callable[[T, *Ts], bool]]) -> IStatements[T, *Ts]:
-        """
-        This method creates where clause by passing the Iterable in lambda function
-        EXAMPLE
-        -
-        mb = BaseModel()
-        mb.where(lambda a: (a.city, ConditionType.REGEXP, r"^B"))
-        """
-        ...
 
     @overload
-    def where(self, conditions: Callable[[T, *Ts], bool], **kwargs) -> IStatements[T, *Ts]:
-        """
-        PARAM
-        -
-
-        -kwargs: Use this when you need to replace variables inside a lambda method. When working with lambda methods, all variables will be replaced by their own variable names. To avoid this, we need to pass key-value parameters  to specify which variables we want to replace with their values.
-
-        EXAMPLE
-        -
-        mb = BaseModel()
-
-        external_data = "
-        mb.where(lambda a: a.city_id > external_data)
-        """
-        ...
+    def where[LProp, RTable, RProp](self, conditions: Callable[[T], WhereTypes[T, LProp, RTable, RProp]]) -> IStatements[T, *Ts]: ...
 
     @abstractmethod
-    def where(self, conditions: WhereTypes[T, *Ts] = lambda: None, **kwargs) -> IStatements[T, *Ts]: ...
+    def where[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T, *Ts]: ...
 
     # endregion
     # region order
@@ -193,7 +181,7 @@ class IStatements[T, *Ts](ABC):
     # endregion
     # region concat
     @overload
-    def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]]) -> IAggregate[T]: ...
+    def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]]) -> IAggregate: ...
 
     # endregion
     # region max
@@ -226,30 +214,33 @@ class IStatements[T, *Ts](ABC):
     # endregion
     # region join
 
-    @overload
-    def join[T1](self, table: T1, relation: WhereCondition[T, T1], join_type: Optional[JoinType]) -> IStatements[T, T1]: ...
-    @overload
-    def join[T1](self, table: JoinCondition[T, T1]) -> IStatements[T, T1]: ...
-    @overload
-    def join[T1](self, table: TupleJoins1[T, T1]) -> IStatements[T, T1]: ...
-    @overload
-    def join[T1, T2](self, table: TupleJoins2[T, T1, T2]) -> IStatements[T, T1, T2]: ...
-    @overload
-    def join[T1, T2, T3](self, table: TupleJoins3[T, T1, T2, T3]) -> IStatements[T, T1, T2, T3]: ...
-    @overload
-    def join[T1, T2, T3, T4](self, table: TupleJoins4[T, T1, T2, T3, T4]) -> IStatements[T, T1, T2, T3, T4]: ...
-    @overload
-    def join[T1, T2, T3, T4, T5](self, table: TupleJoins5[T, T1, T2, T3, T4, T5]) -> IStatements[T, T1, T2, T3, T4, T5]: ...
-    @overload
-    def join[T1, T2, T3, T4, T5, T6](self, table: TupleJoins6[T, T1, T2, T3, T4, T5, T6]) -> IStatements[T, T1, T2, T3, T4, T5, T6]: ...
+    # @overload
+    # def join[T1](self, table: T1, relation: WhereCondition[T, T1], join_type: Optional[JoinType]) -> IStatements[T, T1]: ...
+    # @overload
+    # def join[T1](self, table: JoinCondition[T, T1]) -> IStatements[T, T1]: ...
+    # @overload
+    # def join[T1](self, table: TupleJoins1[T, T1]) -> IStatements[T, T1]: ...
+    # @overload
+    # def join[T1, T2](self, table: TupleJoins2[T, T1, T2]) -> IStatements[T, T1, T2]: ...
+    # @overload
+    # def join[T1, T2, T3](self, table: TupleJoins3[T, T1, T2, T3]) -> IStatements[T, T1, T2, T3]: ...
+    # @overload
+    # def join[T1, T2, T3, T4](self, table: TupleJoins4[T, T1, T2, T3, T4]) -> IStatements[T, T1, T2, T3, T4]: ...
+    # @overload
+    # def join[T1, T2, T3, T4, T5](self, table: TupleJoins5[T, T1, T2, T3, T4, T5]) -> IStatements[T, T1, T2, T3, T4, T5]: ...
+    # @overload
+    # def join[T1, T2, T3, T4, T5, T6](self, table: TupleJoins6[T, T1, T2, T3, T4, T5, T6]) -> IStatements[T, T1, T2, T3, T4, T5, T6]: ...
 
-    @abstractmethod
-    def join[*FKTables](
-        self,
-        table: Optional[T] = ...,
-        relation: Optional[WhereCondition[T, FKTables]] = ...,
-        join_type: Optional[JoinType] = ...,
-    ) -> IStatements[T, *FKTables]: ...
+    # @abstractmethod
+    # def join[*FKTables](
+    #     self,
+    #     table: Optional[T] = ...,
+    #     relation: Optional[WhereCondition[T, FKTables]] = ...,
+    #     join_type: Optional[JoinType] = ...,
+    # ) -> IStatements[T, *FKTables]: ...
+
+    def join[FKTable](self, joins: TupleJoinType[FKTable]| tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]: ...
+
 
     # endregion
     # region select
