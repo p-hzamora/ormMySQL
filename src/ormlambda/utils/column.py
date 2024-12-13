@@ -22,7 +22,7 @@ class Column[TProp]:
         "__private_name",
     )
 
-    def __init__[T](
+    def __init__[T: Table](
         self,
         dtype: Type[TProp],
         is_primary_key: bool = False,
@@ -47,7 +47,7 @@ class Column[TProp]:
         return self.table.__table_name__ + "." + self.column_name
 
     def __set_name__[T: Table](self, owner: TableType[T], name):
-        self.table = owner
+        self.table: TableType[T] = owner
         self.column_name = name
         self.__private_name = self.PRIVATE_CHAR + name
 
@@ -58,7 +58,7 @@ class Column[TProp]:
 
     def __set__(self, obj, value):
         if value is not None:
-            assert type(value) == self.dtype
+            assert type(value) == self.dtype, f"The attribute 'value={value}' and the '{self.column_name}' Column, must be the same type. You pass {type(value).__name__} to {self.dtype}"
         setattr(obj, self.__private_name, value)
 
     def __hash__(self) -> int:
@@ -73,28 +73,28 @@ class Column[TProp]:
         )
 
     @abc.abstractmethod
-    def __comparer_creator[OTherType](self, other: ColumnType[OTherType], compare: ComparerType, *args) -> Comparer:
+    def __comparer_creator[LTable: Table, OTherTable: Table, OTherType](self, other: ColumnType[OTherType], compare: ComparerType, *args) -> Comparer:
         from ormlambda.common.abstract_classes.comparer import Comparer
 
-        return Comparer[TProp, OTherType](self, other, compare, *args)
+        return Comparer[LTable, TProp, OTherTable, OTherType](self, other, compare, *args)
 
-    def __eq__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __eq__[LTable, OTherTable, OTherProp](self, other: ColumnType[OTherProp], *args) -> Comparer[LTable, TProp, OTherTable, OTherProp]:
         return self.__comparer_creator(other, "=", *args)
 
-    def __ne__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __ne__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, "!=", *args)
 
-    def __lt__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __lt__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, "<", *args)
 
-    def __le__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __le__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, "<=", *args)
 
-    def __gt__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __gt__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, ">", *args)
 
-    def __ge__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __ge__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, ">=", *args)
 
-    def __contains__[TOtherProp](self, other: ColumnType[TOtherProp], *args) -> Comparer[TProp, TOtherProp]:
+    def __contains__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, "in", *args)
