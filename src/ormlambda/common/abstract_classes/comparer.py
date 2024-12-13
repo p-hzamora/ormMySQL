@@ -6,29 +6,55 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.types import ComparerType, ColumnType
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
-type ConditionType[L, *R] = Comparer[L, *R] | ColumnType
+if tp.TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+    from ormlambda import Table
+
+type ConditionType[TProp] = Comparer | ColumnType[TProp]
 type UnionType = tp.Literal["AND", "OR", ""]
 type ComparerTypes = ComparerType | UnionType
 
 
-class Comparer[LProp, *RProp](IQuery):
-    def __init__(self, left_condition: ConditionType[LProp], right_condition: ConditionType[RProp], compare: ComparerTypes) -> None:
-        self._left_condition: Comparer | ClauseInfo = self._create_clause_info(left_condition)
-        self._right_condition: Comparer | ClauseInfo = self._create_clause_info(right_condition)
+class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
+    def __init__(
+        self,
+        left_condition: ConditionType[LProp],
+        right_condition: ConditionType[RProp],
+        compare: ComparerTypes,
+        context: tp.Optional[ClauseInfoContext] = None,
+    ) -> None:
+        self._context: tp.Optional[ClauseInfoContext] = context
         self._compare: ComparerTypes = compare
+        self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = self._create_clause_info(left_condition)
+        self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = self._create_clause_info(right_condition)
+
+    def set_context(self, context: ClauseInfoContext) -> None:
+        self._context = context
 
     def __repr__(self) -> str:
         return f"{Comparer.__name__}: {self.query}"
 
-    def _create_clause_info(self, cond: ConditionType[LProp]) -> Comparer | ClauseInfo:
+    def _create_clause_info[TTable](self, cond: ConditionType[LProp]) -> Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[TTable]:
         from ormlambda import Column
 
         if isinstance(cond, Comparer):
             return cond
         if isinstance(cond, Column):
-            return ClauseInfo(cond.table, cond)
+            return ClauseInfo[type(cond.table)](cond.table, cond, context=self._context)
         # it a value that's not depend of any Table
-        return ClauseInfo(None, cond)
+        return ClauseInfo[None](None, cond, context=self._context)
+
+    @property
+    def left_condition(self) -> Comparer | ClauseInfo[LTable]:
+        return self._left_condition
+
+    @property
+    def right_condition(self) -> Comparer | ClauseInfo[RTable]:
+        return self._right_condition
+
+    @property
+    def compare(self) -> ComparerTypes:
+        return self._compare
 
     @property
     def query(self) -> str:
