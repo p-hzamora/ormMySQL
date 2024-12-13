@@ -7,6 +7,7 @@ import abc
 from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
 from ormlambda.common.interfaces.IAggregate import IAggregate
 from ormlambda.utils import Table
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
@@ -28,6 +29,7 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
         self._models: tuple[T, *Ts] = self._model if isinstance(model, Iterable) else (model,)
         self._repository: IRepositoryBase[TRepo] = repository
         self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
+        self._context:ClauseInfoContext = ClauseInfoContext()
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
