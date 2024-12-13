@@ -5,7 +5,8 @@ from ormlambda import Table
 
 from ..mysql_decomposition import MySQLDecompositionQuery
 
-class GroupBy[T: tp.Type[Table], *Ts, TProp](MySQLDecompositionQuery[T], IAggregate[T]):
+
+class GroupBy[T: tp.Type[Table], *Ts, TProp](MySQLDecompositionQuery[T], IAggregate):
     CLAUSE: str = "GROUP BY"
 
     def __init__(
