@@ -183,8 +183,8 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(q.table, D)
         self.assertEqual(q._tables, (D, C, B, A))
 
-        self.assertTrue(callable(q._lambda_query))
-        self.assertEqual(q._lambda_query, _lambda)
+        self.assertTrue(callable(q._query_list))
+        self.assertEqual(q._query_list, _lambda)
 
         self.assertDictEqual(
             q.alias_cache,
