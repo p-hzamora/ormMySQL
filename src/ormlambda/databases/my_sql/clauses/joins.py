@@ -34,18 +34,18 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
 
         return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
 
-    def __init__(
+    def __init__[LProp,RProp](
         self,
-        where: Comparer,
+        where: Comparer[TLeft,LProp,TRight,RProp],
         by: JoinType,
         alias: Optional[str] = None,
     ) -> None:
-        self._comparer = where
-        self._orig_table = where._left_condition.table
-        self._right_table = where._right_condition.table
-        self._by = by
-        self._left_col = where._left_condition._column.column_name
-        self._right_col = where._right_condition._column.column_name
+        self._comparer:Comparer[TLeft,LProp,TRight,RProp] = where
+        self._orig_table:TLeft = where._left_condition.table
+        self._right_table:TRight = where._right_condition.table
+        self._by:JoinType = by
+        self._left_col:str = where._left_condition._column.column_name
+        self._right_col:str = where._right_condition._column.column_name
         self._compareop = where._compare
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
