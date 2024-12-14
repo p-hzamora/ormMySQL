@@ -11,7 +11,7 @@ if tp.TYPE_CHECKING:
 class Min(AggregateFunctionBase):
     @staticmethod
     def FUNCTION_NAME() -> str:
-        return "Min"
+        return "MIN"
 
     def __init__[T:Table,TProp](
         self,
