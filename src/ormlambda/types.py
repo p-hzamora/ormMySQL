@@ -10,7 +10,11 @@ type TableType[T: Table] = tp.Type[T]
 type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType
 type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
 
+# region Comparer Types
 type ComparerType = tp.Literal["=", "!=", "<", "<=", ">", ">=", "in"]
-
+type ConditionType[TProp] = Comparer | ColumnType[TProp]
+type UnionType = tp.Literal["AND", "OR", ""]
+type ComparerTypes = ComparerType | UnionType
+# endregion
 
 type TupleJoinType[T] = tuple[str, T, Comparer[T]]
