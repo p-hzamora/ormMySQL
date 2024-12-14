@@ -1,8 +1,9 @@
+from __future__ import annotations
 from datetime import datetime
 import sys
 from pathlib import Path
 from types import NoneType
-from typing import Any
+from typing import Any, Callable, TYPE_CHECKING
 import unittest
 from parameterized import parameterized
 from shapely import Point
@@ -10,12 +11,14 @@ from shapely import Point
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-
+if TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo, ClauseInfoContext
 
+from ormlambda.databases.my_sql import functions as func
 from models import A, C, TableType
 
 
@@ -118,13 +121,28 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfo[A](A, "*", "ALIAS_TABLE", "ALIAS_FOR_ALL_CLAUSE")
         self.assertEqual(ci.query, "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
-    def test_AApassing_aggregation_method(self):
+    def test_passing_aggregation_method(self):
         ci = ST_AsText(A.data_a, alias_clause="cast_point")
         self.assertEqual(ci.query, "ST_AsText(a.data_a) AS `cast_point`")
 
     def test_passing_aggregation_method_with_alias_inside_of_the_method(self):
         ci = ST_AsText(A.data_a, alias_table="new_table")
         self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a)")
+
+    @parameterized.expand(
+        (
+            (func.Max, "max"),
+            (func.Min, "min"),
+            (func.Sum, "sum"),
+        )
+    )
+    def test_max_function(self, fn: Callable[..., AggregateFunctionBase], result: str):
+        ci = fn(A.data_a, alias_table="new_table")
+        self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
+
+    def test_max_function_with_clause_alias(self):
+        ci = func.Max(A.data_a, alias_clause="alias-clause")
+        self.assertEqual(ci.query, "MAX(a.data_a) AS `alias-clause`")
 
     def test_passing_aggregation_method_ST_Contains(self):
         comparer = ST_Contains(TableType.points, Point(5, -5))
@@ -205,12 +223,12 @@ class TestContextClauseInfo(unittest.TestCase):
 
         ci_column_fkB_with_alias_clause = ClauseInfo[C](C, C.fk_b, alias_clause="{column}-random", context=context)
 
+        self.assertEqual(ci_column_fkB_with_alias_clause.alias_clause, "fk_b-random")
         self.assertEqual(ci_parent_dataC.alias_table, "alias-for-c")
         self.assertEqual(ci_parent_dataC.alias_table, ci_table.alias_table)
 
         self.assertEqual(ci_parent_dataC.alias_clause, "data_c~alias")
         self.assertEqual(ci_parent_dataC.alias_clause, ci_column_dataC.alias_clause)
-
 
     def test_table_context(self) -> None:
         context = ClauseInfoContext()
