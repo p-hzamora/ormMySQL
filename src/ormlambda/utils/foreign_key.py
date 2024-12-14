@@ -30,25 +30,24 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
             self.__init_with_callable(tright, relationship)
 
     def __init__with_comparer[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
-        self._comparer: Comparer[LProp, RProp] = comparer
-
         self._relationship = None
-        self._tleft:TLeft = comparer.left_condition.table
+        self._tleft: TLeft = comparer.left_condition.table
         self._tright: TRight = comparer.right_condition.table
         self._clause_name: str = clause_name
+        self._comparer: Comparer[LProp, RProp] = comparer
 
     def __init_with_callable[LProp, RProp](self, tright: Optional[TRight], relationship: Optional[Callable[[TLeft, TRight], Comparer[LProp, RProp]]]) -> None:
-        self._tright: TRight = tright
         self._relationship: Callable[[TLeft, TRight], Comparer[LProp, RProp]] = relationship
-        self._comparer: Optional[Comparer] = None
         self._tleft: TLeft = None
+        self._tright: TRight = tright
         self._clause_name: str = None
+        self._comparer: Optional[Comparer] = None
 
     def __set_name__(self, owner: TLeft, name) -> None:
         self._tleft: TLeft = owner
         self._clause_name: str = name
 
-    def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey | TRight:
+    def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey[TLeft,TRight] | TRight:
         if not obj:
             return self
         return self._tright
@@ -61,6 +60,18 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
 
     def __repr__(self) -> str:
         return f"{ForeignKey.__name__}"
+
+    @property
+    def tleft(self) -> TLeft:
+        return self._tleft
+
+    @property
+    def tright(self) -> TRight:
+        return self._tright
+
+    @property
+    def clause_name(self) -> str:
+        return self._clause_name
 
     @property
     def query(self) -> str:
