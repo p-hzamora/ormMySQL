@@ -172,15 +172,15 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def max[TProp](self, column: Callable[[T], TProp], alias_name: str = "max") -> TProp:
-        return func.Max[T](column=column, alias_name=alias_name, context=self._context)
+        return func.Max(column=column, alias_clause=alias_name, context=self._context)
 
     @override
     def min[TProp](self, column: Callable[[T], TProp], alias_name: str = "min") -> TProp:
-        return func.Min[T](column=column, alias_name=alias_name, context=self._context)
+        return func.Min(column=column, alias_clause=alias_name, context=self._context)
 
     @override
     def sum[TProp](self, column: Callable[[T], TProp], alias_name: str = "sum") -> TProp:
-        return func.Sum[T](column=column, alias_name=alias_name, context=self._context)
+        return func.Sum(column=column, alias_clause=alias_name, context=self._context)
 
     # @override
     # def min[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "min") -> TProp:
