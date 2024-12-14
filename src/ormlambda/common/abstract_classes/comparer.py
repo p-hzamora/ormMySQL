@@ -3,16 +3,12 @@ import typing as tp
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
-from ormlambda.types import ComparerType, ColumnType
+from ormlambda.types import ConditionType, ComparerTypes
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 if tp.TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
     from ormlambda import Table
-
-type ConditionType[TProp] = Comparer | ColumnType[TProp]
-type UnionType = tp.Literal["AND", "OR", ""]
-type ComparerTypes = ComparerType | UnionType
 
 
 class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
