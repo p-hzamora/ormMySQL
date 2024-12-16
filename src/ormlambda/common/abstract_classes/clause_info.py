@@ -268,9 +268,9 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         context: tp.Optional[ClauseInfoContext] = None,
     ):
         super().__init__(
-            table=column.table if isinstance(column, ClauseInfo) else None,  # if table is None, the column strings will not wrapped with ''. we need to treat as object not strings
+            table=Table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
             alias_table=None,
-            column=self._join_column(column, context),
+            column=column,
             alias_clause=alias_clause,
             context=context,
         )
@@ -286,7 +286,8 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
             raise NotKeysInIAggregateError(found)
 
         alias_clause = self._alias_clause_resolver(self._alias_clause)
-        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({self.column})", alias_clause)
+        columns = self._column_resolver(self._column)
+        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", alias_clause)
 
     @staticmethod
     def _join_column[TProp](column: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> str:
