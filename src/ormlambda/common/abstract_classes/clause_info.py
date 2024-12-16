@@ -70,8 +70,11 @@ class ClauseInfo[T: Table](IQuery):
     @property
     def alias_clause(self) -> tp.Optional[str]:
         alias = self._alias_clause if not (a := self.get_clause_alias()) else a
-        return self._clean_alias(self._alias_clause_resolver(alias))
 
+        self._context.add_clause_to_context(self, alias) if self._context else None
+        return self._alias_resolver(alias)
+
+    # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
     @alias_clause.setter
     def alias_clause(self, value: str) -> str:
         self._alias_clause = value
@@ -79,8 +82,11 @@ class ClauseInfo[T: Table](IQuery):
     @property
     def alias_table(self) -> tp.Optional[str]:
         alias = self._alias_table if not (a := self.get_table_alias()) else a
-        return self._clean_alias(self._alias_table_resolver(alias))
 
+        self._context.add_table_to_context(self.table, alias) if self._context else None
+        return self._alias_resolver(alias)
+
+    # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
     @alias_table.setter
     def alias_table(self, value: str) -> str:
         self._alias_table = value
@@ -92,12 +98,6 @@ class ClauseInfo[T: Table](IQuery):
     @property
     def context(self) -> tp.Optional[ClauseInfoContext]:
         return self._context
-
-    @staticmethod
-    def _clean_alias(alias: tp.Optional[str]) -> str:
-        if alias is None:
-            return None
-        return re.sub("`", "", alias)
 
     @property
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
@@ -119,15 +119,14 @@ class ClauseInfo[T: Table](IQuery):
 
         if not self.table and self._alias_clause:
             # it means that we are passing an object with alias. We should delete '' around the object
-            clean_column = self._column.strip("'")
-            alias_clause = self._alias_table_resolver(self._alias_clause)
-            return self._concat_alias_and_column(clean_column, alias_clause)
+            alias_clause = self.alias_clause
+            return self._concat_alias_and_column(self._column, alias_clause)
 
         # When passing the Table itself without 'column'
         if self._table and not self._column:
             if not self._alias_table:
                 return self._table.__table_name__
-            alias_table = self._alias_table_resolver(self._alias_table)
+            alias_table = self.alias_table
             return self._concat_alias_and_column(self._table.__table_name__, alias_table)
 
         if self._return_all_columns():
@@ -135,12 +134,15 @@ class ClauseInfo[T: Table](IQuery):
         return self._join_table_and_column(self._column)
 
     def _join_table_and_column(self, column: str) -> str:
-        table: tp.Optional[str] = self._alias_table_resolver(self._alias_table)
+        if self.alias_table:
+            table = self._wrapped_with_quotes(self.alias_table)
+        else:
+            table = self.table.__table_name__
+
         column: str = self._column_resolver(column)
 
         table_column = f"{table}.{column}"
-        clause_alias = self._alias_clause_resolver(self._alias_clause)
-        return self._concat_alias_and_column(table_column, clause_alias)
+        return self._concat_alias_and_column(table_column, self.alias_clause)
 
     def _return_all_columns(self) -> bool:
         condition = self._column is self._table and issubclass(self._column, Table)
@@ -205,41 +207,16 @@ class ClauseInfo[T: Table](IQuery):
     def _concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str]) -> str:
         if alias_clause is None:
             return column
-        return f"{column} AS {alias_clause}"
+        return f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
 
-    def _alias_resolver(self, alias: AliasType[ClauseInfo[T]]):
+    def _alias_resolver(self, alias: AliasType[ClauseInfo[T]]) -> tp.Optional[str]:
         if alias is None:
             return None
 
         if callable(alias):
-            clause_name = alias(self)
-            return self._alias_clause_resolver(clause_name)
+            return self._alias_resolver(alias(self))
 
-        alias = self._replace_placeholder(alias)
-        return self._wrapped_with_quotes(alias)
-
-    def _alias_table_resolver(self, alias_table: AliasType[ColumnType[T]]) -> tp.Optional[str]:
-        """
-        Show the name of the table if we don't specified alias_table. Otherwise, return the proper alias for that table
-        """
-
-        alias = self._alias_resolver(alias_table)
-
-        if not alias:
-            alias = self._table.__table_name__ if self._table else None
-
-        if self._context is not None:
-            self._context.add_table_to_context(self.table, alias)
-        return alias
-
-    def _alias_clause_resolver[T](self, alias_clause: AliasType[ColumnType[T]]) -> tp.Optional[str]:
-        alias = self._alias_resolver(alias_clause)
-        if not alias:
-            return None
-
-        if self._context is not None:
-            self._context.add_clause_to_context(self, alias)
-        return alias
+        return self._replace_placeholder(alias)
 
     def get_clause_alias(self) -> tp.Optional[str]:
         if not self._context:
@@ -285,9 +262,8 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         if self._alias_clause and (found := self._keyRegex.findall(self._alias_clause)):
             raise NotKeysInIAggregateError(found)
 
-        alias_clause = self._alias_clause_resolver(self._alias_clause)
         columns = self._column_resolver(self._column)
-        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", alias_clause)
+        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", self.alias_clause)
 
     @staticmethod
     def _join_column[TProp](column: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> str:
