@@ -29,24 +29,24 @@ class ClauseInfo[T: Table](IQuery):
     @tp.overload
     def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp]): ...
     @tp.overload
-    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
+    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
     @tp.overload
-    def __init__[TProp](self, table: TableType[T], alias_table: AliasType[ColumnType[TProp]] = ..., alias_clause: AliasType[ColumnType[TProp]] = ...): ...
+    def __init__(self, table: TableType[T], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
     @tp.overload
     def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], context: ClauseInfoContext): ...
 
-    def __init__[TProp: Column](
+    def __init__[TProp](
         self,
         table: TableType[T],
         column: tp.Optional[ColumnType[TProp]] = None,
-        alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = None,
-        alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
+        alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
+        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         context: tp.Optional[ClauseInfoContext] = None,
     ):
         self._table: TableType[T] = table
         self._column: ColumnType[TProp] = column
-        self._alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = alias_table
-        self._alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = alias_clause
+        self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
+        self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
         self._context: tp.Optional[ClauseInfoContext] = context
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
@@ -201,7 +201,7 @@ class ClauseInfo[T: Table](IQuery):
             return column
         return f"{column} AS {alias_clause}"
 
-    def _alias_resolver(self, alias: AliasType[ColumnType[T]]):
+    def _alias_resolver(self, alias: AliasType[ClauseInfo[T]]):
         if alias is None:
             return None
 
@@ -258,7 +258,7 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
     def __init__[TProp: Column](
         self,
         column: tp.Optional[ColumnType[TProp]] = None,
-        alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
+        alias_clause: tp.Optional[AliasType[ClauseInfo[None]]] = None,
         context: tp.Optional[ClauseInfoContext] = None,
     ):
         super().__init__(
