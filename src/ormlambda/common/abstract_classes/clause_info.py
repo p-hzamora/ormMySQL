@@ -14,6 +14,7 @@ from ormlambda.types import (
 )
 from ormlambda.common.interfaces import IAggregate
 from ormlambda.common.errors import NotKeysInIAggregateError
+from ormlambda.utils.foreign_key import ForeignKey
 
 
 from .clause_info_context import ClauseInfoContext
@@ -51,7 +52,7 @@ class ClauseInfo[T: Table](IQuery):
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": lambda x: self._column_resolver(x),
-            "table": lambda x: self._table.__table_name__,
+            "table": lambda x: self.table.__table_name__,
         }
 
         self._query: str = self._create_query()
@@ -61,6 +62,8 @@ class ClauseInfo[T: Table](IQuery):
 
     @property
     def table(self) -> TableType[T]:
+        if isinstance(self._table, ForeignKey):
+            return self._table.tright
         return self._table
 
     @table.setter
@@ -71,7 +74,7 @@ class ClauseInfo[T: Table](IQuery):
     def alias_clause(self) -> tp.Optional[str]:
         alias = self._alias_clause if not (a := self.get_clause_alias()) else a
 
-        self._context.add_clause_to_context(self, alias) if self._context else None
+        self._context.add_clause_to_context(self, alias) if self._context and alias else None
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -83,7 +86,7 @@ class ClauseInfo[T: Table](IQuery):
     def alias_table(self) -> tp.Optional[str]:
         alias = self._alias_table if not (a := self.get_table_alias()) else a
 
-        self._context.add_table_to_context(self.table, alias) if self._context else None
+        self._context.add_table_to_context(self.table, alias) if self._context and alias else None
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -123,11 +126,11 @@ class ClauseInfo[T: Table](IQuery):
             return self._concat_alias_and_column(self._column, alias_clause)
 
         # When passing the Table itself without 'column'
-        if self._table and not self._column:
+        if self.table and not self._column:
             if not self._alias_table:
-                return self._table.__table_name__
+                return self.table.__table_name__
             alias_table = self.alias_table
-            return self._concat_alias_and_column(self._table.__table_name__, alias_table)
+            return self._concat_alias_and_column(self.table.__table_name__, alias_table)
 
         if self._return_all_columns():
             return self._get_all_columns()
@@ -145,13 +148,11 @@ class ClauseInfo[T: Table](IQuery):
         return self._concat_alias_and_column(table_column, self.alias_clause)
 
     def _return_all_columns(self) -> bool:
-        condition = self._column is self._table and issubclass(self._column, Table)
-        return any(
-            [
-                self.is_asterisk(self._column),
-                condition,
-            ]
-        )
+        if isinstance(self._column, ForeignKey):
+            return True
+
+        C1 = self._column is self.table and issubclass(self._column, Table)
+        return any([self.is_asterisk(self._column), C1])
 
     @staticmethod
     def is_asterisk(value: tp.Optional[str]) -> bool:
@@ -160,7 +161,7 @@ class ClauseInfo[T: Table](IQuery):
     def _get_all_columns(self) -> str:
         def ClauseCreator(column: str) -> ClauseInfo:
             return type(self)(
-                self._table,
+                self.table,
                 column,
                 self._alias_table,
                 self._alias_clause,
@@ -169,7 +170,7 @@ class ClauseInfo[T: Table](IQuery):
         if self._alias_table:
             return self._join_table_and_column(ASTERISK)
 
-        columns: list[ClauseInfo] = [ClauseCreator(column).query for column in self._table.get_columns()]
+        columns: list[ClauseInfo] = [ClauseCreator(column).query for column in self.table.get_columns()]
 
         return ", ".join(columns)
 
@@ -247,7 +248,7 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         super().__init__(
             table=Table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
             alias_table=None,
-            column=column,
+            column=self._join_column(column, context),
             alias_clause=alias_clause,
             context=context,
         )
@@ -266,15 +267,19 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", self.alias_clause)
 
     @staticmethod
-    def _join_column[TProp](column: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> str:
-        if isinstance(column, ClauseInfo):
-            return column.query
-        if isinstance(column, str) or not isinstance(column, tp.Iterable):
-            column = (column,)
+    def _join_column[TProp](columns: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> list[ClauseInfo]:
+        type ClusterType = ColumnType | str | ForeignKey
+        dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
+            Column: lambda column: ClauseInfo(column.table, column, context=context),
+            ClauseInfo: lambda column: column,
+            ForeignKey: lambda column: ClauseInfo(column.tright, column.tright, context=context),
+            "default": lambda column: ClauseInfo(table=None, column=column, context=context),
+        }
 
         all_clauses: list[ClauseInfo] = []
-        for col in column:
-            table: tp.Optional[Table] = col.table if isinstance(col, Column) else None
-            all_clauses.append(ClauseInfo(table, col, context=context))
+        if isinstance(columns, str) or not isinstance(columns, tp.Iterable):
+            columns = (columns,)
+        for value in columns:
+            all_clauses.append(dicc_type.get(type(value), dicc_type["default"])(value))
 
-        return ClauseInfo.join_clauses(all_clauses)
+        return all_clauses
