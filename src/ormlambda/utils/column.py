@@ -41,12 +41,12 @@ class Column[TProp]:
         self.is_unique: bool = is_unique
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}[{self.dtype}]"
+        return f"{type(self).__name__}[{self.dtype.__name__}](name='{self.column_name}')"
 
     def __str__(self) -> str:
         return self.table.__table_name__ + "." + self.column_name
 
-    def __set_name__[T: Table](self, owner: TableType[T], name):
+    def __set_name__[T: Table](self, owner: TableType[T], name: str) -> None:
         self.table: TableType[T] = owner
         self.column_name = name
         self.__private_name = self.PRIVATE_CHAR + name
