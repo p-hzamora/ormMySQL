@@ -22,7 +22,7 @@ class ST_AsText(AggregateFunctionBase):
         alias_clause: AliasType[ColumnType[TProp]] = None,
         context: tp.Optional[ClauseInfoContext] = None,
     ) -> None:
-        point_column: ClauseInfo[T] = ClauseInfo[T](point.table, point, alias_table=alias_table, context=context,)
+        point_column: ClauseInfo[T] = ClauseInfo[T](point.table, point, alias_table=alias_table, context=context)
         super().__init__(
             column=point_column,
             alias_clause=alias_clause,
