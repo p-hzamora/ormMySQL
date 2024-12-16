@@ -39,7 +39,7 @@ class MySQLDecompositionQuery[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, 
 
     def _add_fk_relationship[RTable: tp.Type[Table]](self, foreign_key: ForeignKey[T, RTable]) -> None:
         comparer = foreign_key.resolved_function(self._context)
-        join_selector = JoinSelector[T, RTable](comparer, self._by,alias=comparer.left_condition.alias_table)
+        join_selector = JoinSelector[T, RTable](comparer, self._by,alias=comparer.right_condition.alias_table)
         join_selector.query
         self._joins.add(join_selector)
         t2 = comparer._right_condition.table
