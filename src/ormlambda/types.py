@@ -7,7 +7,7 @@ if tp.TYPE_CHECKING:
 
 type AsteriskType = str
 type TableType[T: Table] = tp.Type[T]
-type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType
+type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType | tuple[Column]
 type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
 
 # region Comparer Types
