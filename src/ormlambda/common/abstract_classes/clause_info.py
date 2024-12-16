@@ -132,9 +132,9 @@ class ClauseInfo[T: Table](IQuery):
 
         if self._return_all_columns():
             return self._get_all_columns()
-        return self._resolved_table_and_column(self._column)
+        return self._join_table_and_column(self._column)
 
-    def _resolved_table_and_column(self, column: str) -> str:
+    def _join_table_and_column(self, column: str) -> str:
         table: tp.Optional[str] = self._alias_table_resolver(self._alias_table)
         column: str = self._column_resolver(column)
 
@@ -165,7 +165,7 @@ class ClauseInfo[T: Table](IQuery):
             )
 
         if self._alias_table:
-            return self._resolved_table_and_column(ASTERISK)
+            return self._join_table_and_column(ASTERISK)
 
         columns: list[ClauseInfo] = [ClauseCreator(column).query for column in self._table.get_columns()]
 
