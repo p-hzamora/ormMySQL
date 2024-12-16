@@ -14,10 +14,10 @@ from .country import Country
 class City(Table):
     __table_name__ = "city"
 
-    city_id: int = Column(int, is_primary_key=True)
-    city: str
-    country_id: int
-    last_update: datetime
+    city_id: Column[int] = Column(int, is_primary_key=True)
+    city: Column[str]
+    country_id: Column[int]
+    last_update: Column[datetime]
 
     Country = ForeignKey["City", Country](Country, lambda ci, co: ci.country_id == co.country_id)
 
