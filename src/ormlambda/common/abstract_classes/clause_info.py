@@ -175,6 +175,12 @@ class ClauseInfo[T: Table](IQuery):
     def _column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
         from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
 
+        if isinstance(column, ClauseInfo):
+            return column.query
+
+        if isinstance(column, tp.Iterable) and isinstance(column[0], ClauseInfo):
+            return self.join_clauses(column)
+
         if isinstance(column, Column):
             return column.column_name
 
