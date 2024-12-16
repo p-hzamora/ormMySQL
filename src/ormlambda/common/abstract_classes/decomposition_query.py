@@ -57,8 +57,11 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
             if clause.alias_clause == key:
                 return clause
 
-    def __clauses_list_generetor(self, function: tp.Callable[[T], tp.Any]) -> None:
-        resolved_function = function
+    def __clauses_list_generetor(self, function: tuple | tp.Callable[[T], tp.Any]) -> None:
+        if callable(function):
+            resolved_function = function(self.table)
+        else:
+            resolved_function = function
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
             resolved_function = (resolved_function,)
