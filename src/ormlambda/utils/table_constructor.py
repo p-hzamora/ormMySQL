@@ -167,7 +167,7 @@ class Table(metaclass=TableMeta):
 
     @classmethod
     def get_columns(cls) -> tuple[str, ...]:
-        return tuple([x for x in cls.__dict__.values() if isinstance(x, Column)])
+        return tuple([x for x in cls.__annotations__.values() if isinstance(x, Column)])
 
     @classmethod
     def create_table_query(cls) -> str:
@@ -229,38 +229,6 @@ class Table(metaclass=TableMeta):
                 )
             )
         return False
-
-    @classmethod
-    def get_property_name(cls, _property: property) -> str:
-        name: str = cls.__properties_mapped__.get(_property, None)
-        if not name:
-            raise KeyError(f"Class '{cls.__name__}' has not propery '{_property}' mapped.")
-        return name
-
-    @overload
-    @classmethod
-    def get_column(cls, column: str) -> Column: ...
-    @overload
-    @classmethod
-    def get_column(cls, column: property) -> Column: ...
-    @overload
-    @classmethod
-    def get_column[TProp](cls, column: property, value: TProp) -> Column[TProp]: ...
-    @overload
-    @classmethod
-    def get_column[TProp](cls, column: str, value: TProp) -> Column[TProp]: ...
-    @classmethod
-    def get_column[TProp](cls, column: str | property, value: Optional[TProp] = None) -> Column[TProp]:
-        if isinstance(column, property):
-            _column = cls.get_property_name(column)
-        elif isinstance(column, str) and column in cls.get_columns():
-            _column = column
-        else:
-            raise ValueError(f"'Column' param with value'{column}' is not expected.")
-
-        instance_table: Table = cls(**{_column: value})
-
-        return getattr(instance_table, f"_{_column}")
 
     @classmethod
     def table_alias(cls, column: Optional[str] = None) -> str:
