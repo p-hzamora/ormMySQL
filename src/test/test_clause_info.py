@@ -89,6 +89,10 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfo[A](A, A.date_a, alias_table="{table}")
         self.assertEqual(ci.query, "`a`.date_a")
 
+    def test_call_A_withou_alias(self):
+        ci = ClauseInfo[A](A, A.date_a)
+        self.assertEqual(ci.query, "a.date_a")
+
     def test_passing_callable_alias_table_with_placeholder(self):
         ci = ClauseInfo[A](A, A.date_a, alias_table=lambda x: "custom_alias_for_{column}_column")
         self.assertEqual(ci.query, "`custom_alias_for_date_a_column`.date_a")
