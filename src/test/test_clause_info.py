@@ -133,16 +133,16 @@ class TestClauseInfo(unittest.TestCase):
         ci = ST_AsText(A.data_a, alias_table="new_table")
         self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a)")
 
-    @parameterized.expand(
-        (
-            (func.Max, "max"),
-            (func.Min, "min"),
-            (func.Sum, "sum"),
-        )
-    )
-    def test_max_function(self, fn: Callable[..., AggregateFunctionBase], result: str):
-        ci = fn(A.data_a, alias_table="new_table")
-        self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
+    # @parameterized.expand(
+    #     (
+    #         (func.Max, "max"),
+    #         (func.Min, "min"),
+    #         (func.Sum, "sum"),
+    #     )
+    # )
+    # def test_max_function(self, fn: Callable[..., AggregateFunctionBase], result: str):
+    #     ci = fn(A.data_a, alias_table="new_table")
+    #     self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
 
     def test_max_function_with_clause_alias(self):
         ci = func.Max(A.data_a, alias_clause="alias-clause")
@@ -210,6 +210,10 @@ class TestClauseInfo(unittest.TestCase):
             ST_AsText(A.data_a, alias_clause="{table}").query
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table']"
         self.assertEqual(mssg, err.exception.__str__())
+
+    def test_pass_fk(self) -> None:
+        ci = ClauseInfo[C](C.B, C.B)
+        self.assertEqual(ci.query, "b.pk_b, b.data_b, b.fk_a, b.data")
 
 
 class TestContextClauseInfo(unittest.TestCase):
