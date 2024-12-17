@@ -279,7 +279,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertEqual(e.exception.args[0], mssg)
 
     # FIXME [x]: Review this method in the future
-    def test_AAAjoin(self):
+    def test_join(self):
         modelA = ModelAB(A, self.ddbb)
         modelB = ModelAB(B, self.ddbb)
 
@@ -507,7 +507,7 @@ class TestAggregateFunctions(unittest.TestCase):
     def tearDownClass(cls):
         cls.ddbb.drop_database(DDBBNAME)
 
-    def test_AAmax_function(self) -> None:
+    def test_max_function(self) -> None:
         max_fn = self.model.max(TestTable.Col1, alias_name="max_with_alias")
         min_fn = self.model.min(TestTable.Col1, alias_name="min_with_alias")
         sum_fn = self.model.sum(TestTable.Col1, alias_name="sum_with_alias")
@@ -523,7 +523,7 @@ class TestAggregateFunctions(unittest.TestCase):
         dicc = {
             "max_with_alias": 10,
             "min_with_alias": 1,
-            "sum_with_alias": 55,
+            "sum_with_alias": Decimal('55'), #FIXME [ ]: I don't know why return 'Decimal' instead 'int'
         }
         self.assertDictEqual(select[0], dicc)
 
