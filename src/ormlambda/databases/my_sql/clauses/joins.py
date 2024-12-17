@@ -12,6 +12,7 @@ from ormlambda.common.abstract_classes.comparer import Comparer
 
 # TODOL [x]: Try to import Table module without circular import Error
 if TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
     from ormlambda import Table
 
 
@@ -34,19 +35,15 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
 
         return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
 
-    def __init__[LProp,RProp](
-        self,
-        where: Comparer[TLeft,LProp,TRight,RProp],
-        by: JoinType,
-        alias: Optional[str] = None,
-    ) -> None:
-        self._comparer:Comparer[TLeft,LProp,TRight,RProp] = where
-        self._orig_table:TLeft = where._left_condition.table
-        self._right_table:TRight = where._right_condition.table
-        self._by:JoinType = by
-        self._left_col:str = where._left_condition._column.column_name
-        self._right_col:str = where._right_condition._column.column_name
+    def __init__[LProp, RProp](self, where: Comparer[TLeft, LProp, TRight, RProp], by: JoinType, alias: Optional[str] = "{table}", context: Optional[ClauseInfoContext] = None) -> None:
+        self._comparer: Comparer[TLeft, LProp, TRight, RProp] = where
+        self._orig_table: TLeft = where._left_condition.table
+        self._right_table: TRight = where._right_condition.table
+        self._by: JoinType = by
+        self._left_col: str = where._left_condition._column.column_name
+        self._right_col: str = where._right_condition._column.column_name
         self._compareop = where._compare
+        self._context: Optional[ClauseInfoContext] = context
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
         self._alias: Optional[str] = alias
@@ -76,15 +73,13 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         ltable = self.left_table
         rtable = self.right_table
 
-        clause_table_name_join = ClauseInfo[TLeft](rtable, alias_table=self.alias)
-        # return f"{self._by.value} {rtable} {alias}ON {left_col} {self._compareop} {right_col}"
         list_ = [
             self._by.value,  # inner join
-            clause_table_name_join.query,
+            ClauseInfo[TRight](rtable, alias_table=self.alias, context=self._context).query,
             "ON",
-            ClauseInfo[TLeft](ltable, column=self.left_col, alias_table="{table}").query,
+            ClauseInfo[TLeft](ltable, column=self.left_col, alias_table="{table}", context=self._context).query,
             self._compareop,  # =
-            ClauseInfo[TLeft](rtable, column=self.right_col, alias_table="{table}").query,
+            ClauseInfo[TRight](rtable, column=self.right_col, alias_table="{table}", context=self._context).query,
         ]
         return " ".join([x for x in list_ if x is not None])
 
