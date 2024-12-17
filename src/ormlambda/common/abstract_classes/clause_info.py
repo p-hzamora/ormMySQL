@@ -74,7 +74,7 @@ class ClauseInfo[T: Table](IQuery):
     def alias_clause(self) -> tp.Optional[str]:
         alias = self._alias_clause if not (a := self.get_clause_alias()) else a
 
-        self._context.add_clause_to_context(self, alias) if self._context and alias else None
+        self._context.add_clause_to_context(self) if self._context and alias else None
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -86,7 +86,7 @@ class ClauseInfo[T: Table](IQuery):
     def alias_table(self) -> tp.Optional[str]:
         alias = self._alias_table if not (a := self.get_table_alias()) else a
 
-        self._context.add_table_to_context(self.table, alias) if self._context and alias else None
+        self._context.add_clause_to_context(self) if self._context and alias else None
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -161,10 +161,11 @@ class ClauseInfo[T: Table](IQuery):
     def _get_all_columns(self) -> str:
         def ClauseCreator(column: str) -> ClauseInfo:
             return type(self)(
-                self.table,
-                column,
-                self._alias_table,
-                self._alias_clause,
+                table=self.table,
+                column=column,
+                alias_table=self._alias_table,
+                alias_clause=self._alias_clause,
+                context=self._context,
             )
 
         if self._alias_table:

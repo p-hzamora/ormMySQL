@@ -26,7 +26,7 @@ class JoinContext[TParent: Table, *T, TRepo]:
     def __enter__(self) -> IStatements_two_generic[TParent, *T, TRepo]:
         for alias, comparer, by in self._joins:
             foreign_key = ForeignKey(comparer=comparer, clause_name=alias)
-            self._context.add_clause_to_context(self.get_fk_table(comparer), alias)
+            self._context.add_clause_to_context(self.get_fk_table(comparer))
             setattr(self, alias, foreign_key)
         return self
 
