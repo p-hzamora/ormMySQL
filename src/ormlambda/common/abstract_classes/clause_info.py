@@ -55,6 +55,10 @@ class ClauseInfo[T: Table](IQuery):
             "table": lambda x: self.table.__table_name__,
         }
 
+        if self._context and any([alias_table,alias_clause]):
+            self._context.add_clause_to_context(self)
+
+
     def __repr__(self) -> str:
         return f"{type(self).__name__}: query -> {self.query}"
 
@@ -71,8 +75,6 @@ class ClauseInfo[T: Table](IQuery):
     @property
     def alias_clause(self) -> tp.Optional[str]:
         alias = self._alias_clause if not (a := self.get_clause_alias()) else a
-
-        self._context.add_clause_to_context(self) if self._context and alias else None
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -83,8 +85,6 @@ class ClauseInfo[T: Table](IQuery):
     @property
     def alias_table(self) -> tp.Optional[str]:
         alias = self._alias_table if not (a := self.get_table_alias()) else a
-
-        self._context.add_clause_to_context(self) if self._context and alias else None
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -95,6 +95,10 @@ class ClauseInfo[T: Table](IQuery):
     @property
     def column(self) -> str:
         return self._column_resolver(self._column)
+
+    @property
+    def unresolved_column(self) -> ColumnType:
+        return self._column
 
     @property
     def context(self) -> tp.Optional[ClauseInfoContext]:
@@ -266,7 +270,7 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", self.alias_clause)
 
     @staticmethod
-    def _join_column[TProp](columns: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> list[ClauseInfo]:
+    def _convert_into_clauseInfo[TProp](columns: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> list[ClauseInfo]:
         type ClusterType = ColumnType | str | ForeignKey
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
             Column: lambda column: ClauseInfo(column.table, column, context=context),
