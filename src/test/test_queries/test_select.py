@@ -273,8 +273,8 @@ class TestSelect(unittest.TestCase):
         self.query = Select[D](D, lambda d: (d.ExtraC))
         self.assertEqual(self.query.query, "SELECT extra_c.pk_extra_c AS `extra_c_pk_extra_c`, extra_c.data_extra_c AS `extra_c_data_extra_c` FROM d INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
 
-    def test_AAselect_with_concat(self):
-        context = ClauseInfoContext({D: "DDD", C: "CCC", B: "BBB", A: "AAA"})
+    def test_select_with_concat(self):
+        context = ClauseInfoContext()
         selected = Select[D](
             D,
             lambda d: (
