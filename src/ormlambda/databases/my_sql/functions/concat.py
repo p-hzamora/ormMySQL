@@ -1,38 +1,24 @@
-from ormlambda.common.interfaces.IAggregate import IAggregate
-from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 
 import typing as tp
-from ormlambda.types import ColumnType
-from ormlambda import Column
-
-if tp.TYPE_CHECKING:
-    from ormlambda import Table
+from ormlambda.types import ColumnType, AliasType
 
 
-class Concat[T: tp.Type[Table]](IAggregate):
-    FUNCTION_NAME: str = "CONCAT"
+class Concat[*Ts](AggregateFunctionBase):
+    @staticmethod
+    def FUNCTION_NAME() -> str:
+        return "CONCAT"
 
-    def __init__[*Ts](
+    def __init__[TProp](
         self,
-        alias_name: str = "CONCAT",
-        *values: ColumnType[Ts],
+        values: ColumnType[Ts] | tuple[ColumnType[Ts], ...],
+        alias_clause: AliasType[ColumnType[TProp]] = "concat",
+        context: tp.Optional[ClauseInfoContext] = None,
     ) -> None:
-        self._alias_name: str = alias_name
-        self._all_clauses: list[ClauseInfo] = []
-
-        for value in values:
-            if isinstance(value, Column):
-                clause_info = ClauseInfo(value.table, value)
-            else:
-                clause_info = ClauseInfo(None, value)
-            self._all_clauses.append(clause_info)
-
-    @property
-    def alias_clause(self) -> tp.Optional[str]:
-        return self._alias_name
-
-    @property
-    def query(self) -> str:
-        string = f"{self.FUNCTION_NAME}({ClauseInfo.join_clauses(self._all_clauses)})"
-        return ClauseInfo(IAggregate, string, alias_clause=self._alias_name).query
+        super().__init__(
+            column=values,
+            alias_clause=alias_clause,
+            context=context,
+        )
