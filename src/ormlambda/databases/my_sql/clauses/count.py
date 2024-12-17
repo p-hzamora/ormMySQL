@@ -1,34 +1,35 @@
+from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase, ClauseInfo
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+
+
 import typing as tp
-
-if tp.TYPE_CHECKING:
-    from ormlambda import Table
-from ormlambda.common.interfaces import IAggregate
-from ormlambda import JoinType
-from ..mysql_decomposition import MySQLDecompositionQuery
+from ormlambda.types import ColumnType, AliasType
+from ormlambda import Column
 
 
-class Count[T: tp.Type[Table]](MySQLDecompositionQuery[T], IAggregate):
-    NAME: str = "COUNT"
+class Count[*Ts](AggregateFunctionBase):
+    @staticmethod
+    def FUNCTION_NAME() -> str:
+        return "COUNT"
 
-    def __init__(
+    def __init__[TProp](
         self,
-        table: T,
-        lambda_query: str | tp.Callable[[T], tuple],
-        *,
-        alias: bool = True,
-        alias_name: str = "count",
-        by: JoinType = JoinType.INNER_JOIN,
+        values: ColumnType[Ts] | tuple[ColumnType[Ts], ...],
+        alias_clause: AliasType[ColumnType[TProp]] = "count",
+        context: tp.Optional[ClauseInfoContext] = None,
     ) -> None:
-        super().__init__(
-            table,
-            lambda_query=lambda_query,
-            alias=alias,
-            alias_name=alias_name,
-            by=by,
-            replace_asterisk_char=False,
-        )
+        all_clauses: list[ClauseInfo] = []
 
-    @property
-    def query(self) -> str:
-        col = ", ".join([x.query for x in self.all_clauses])
-        return f"{self.NAME}({col})"
+        if not isinstance(values, tp.Iterable):
+            values = (values,)
+        for value in values:
+            if isinstance(value, Column):
+                all_clauses.append(ClauseInfo(value.table, value, context=context))
+            else:
+                all_clauses.append(ClauseInfo(table=None, column=value, context=context))
+
+        super().__init__(
+            column=all_clauses,
+            alias_clause=alias_clause,
+            context=context,
+        )
