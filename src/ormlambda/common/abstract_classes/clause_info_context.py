@@ -28,17 +28,23 @@ class ClauseInfoContext(IClauseInfo):
     @overload
     def __init__(self) -> None: ...
     @overload
+    def __init__[T: Table, TProp](self, clause_context: dict[ClauseAliasKey[T, TProp], str]) -> None: ...
+    @overload
+    def __init__[T: Table, TProp](self, table_context: dict[TableAliasKey[T], str]) -> None: ...
+    @overload
     def __init__[T: Table, TProp](self, clause_context: dict[AliasKey[T, TProp], str]) -> None: ...
     @overload
     def __init__[T: Table, TProp](self, alias_context: dict[str, AliasKey[T, TProp]]) -> None: ...
 
     def __init__[T: Table, TProp](
         self,
-        clause_context: Optional[dict[AliasKey[T, TProp], str]] = None,
+        clause_context: Optional[dict[ClauseAliasKey[T, TProp], str]] = None,
+        table_context: Optional[dict[TableAliasKey[T], str]] = None,
         alias_context: Optional[dict[str, AliasKey[T, TProp]]] = None,
     ) -> None:
         self._alias_context: dict[str, AliasKey[T, TProp]] = alias_context if alias_context else {}
         self._clause_context: dict[AliasKey[T, TProp], str] = clause_context if clause_context else {}
+        self._table_context: dict[AliasKey[T, TProp], str] = table_context if table_context else {}
 
     @property
     def is_empty(self) -> bool:
@@ -49,13 +55,13 @@ class ClauseInfoContext(IClauseInfo):
             return None
 
         if t := clause.table:
-            self.__add_alias(t, clause._alias_table)
+            self.__add_table_alias(t, clause._alias_table)
         if c := clause.column:
-            self.__add_alias((t, c, type(clause)), clause._alias_clause)
+            self.__add_clause_alias((t, c, type(clause)), clause._alias_clause)
 
         return None
 
-    def __add_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
+    def __add_clause_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
         if not key:
             return None
 
@@ -67,9 +73,21 @@ class ClauseInfoContext(IClauseInfo):
 
         return None
 
+    def __add_table_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
+        if not key:
+            return None
+
+        if alias not in self._alias_context:
+            self._alias_context[alias] = key
+
+        if key not in self._table_context:
+            self._table_context[key] = alias
+
+        return None
+
     def get_clause_alias[T: Table, TProp](self, clause: ClauseInfo[T]) -> Optional[str]:
         table_col: ClauseAliasKey[T, TProp] = (clause.table, clause.column, type(clause))
         return self._clause_context.get(table_col, None)
 
     def get_table_alias[T: Table](self, table: T) -> Optional[str]:
-        return self._clause_context.get(table, None)
+        return self._table_context.get(table, None)
