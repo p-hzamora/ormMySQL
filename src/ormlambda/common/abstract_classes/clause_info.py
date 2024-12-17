@@ -55,8 +55,6 @@ class ClauseInfo[T: Table](IQuery):
             "table": lambda x: self.table.__table_name__,
         }
 
-        self._query: str = self._create_query()
-
     def __repr__(self) -> str:
         return f"{type(self).__name__}: query -> {self.query}"
 
@@ -113,7 +111,7 @@ class ClauseInfo[T: Table](IQuery):
 
     @property
     def query(self) -> str:
-        return self._query
+        return self._create_query()
 
     def _create_query(self) -> str:
         # when passing some value that is not a column name
