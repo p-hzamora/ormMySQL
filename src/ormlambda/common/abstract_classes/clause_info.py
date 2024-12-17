@@ -247,7 +247,7 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         super().__init__(
             table=Table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
             alias_table=None,
-            column=self._join_column(column, context),
+            column=column,
             alias_clause=alias_clause,
             context=context,
         )
