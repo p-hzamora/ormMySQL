@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 
-class ForeignKey[TLeft, TRight](IQuery):
+class ForeignKey[TLeft:Table, TRight:Table](IQuery):
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
