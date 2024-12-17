@@ -280,6 +280,9 @@ class TestSQLStatements(unittest.TestCase):
 
     # FIXME [x]: Review this method in the future
     def test_join(self):
+        '''
+        New way to use join with 'with' clause
+        '''
         modelA = ModelAB(A, self.ddbb)
         modelB = ModelAB(B, self.ddbb)
 
