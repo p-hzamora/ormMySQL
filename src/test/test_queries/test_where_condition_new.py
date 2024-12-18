@@ -6,6 +6,7 @@ from parameterized import parameterized
 
 from shapely import Point
 
+
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
@@ -62,6 +63,15 @@ class TestCondition(unittest.TestCase):
         compare = Address.City.Country.country == "morning"
         mssg: str = "country.country = 'morning'"
         self.assertEqual(compare.query, mssg)
+
+    def test_join_some_Comparer_object(self) -> None:
+        VAR = "Madrid"
+        compare1 = Address.address == "Tetuan"
+        compare2 = Address.City.city == VAR
+        compare3 = Address.City.Country.country == "Spain"
+
+        comparer = type(compare1).join_comparers([compare1, compare2, compare3], True)
+        self.assertEqual(comparer, "address.address = 'Tetuan' AND city.city = 'Madrid' AND country.country = 'Spain'")
 
 
 if __name__ == "__main__":
