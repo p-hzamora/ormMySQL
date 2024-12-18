@@ -152,7 +152,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     def where(self, conditions: WhereTypes[T]) -> IStatements_two_generic[T, MySQLConnection]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
 
-        if callable(conditions):
+        if GlobalChecker.is_lambda_function(conditions):
             conditions = conditions(self._model)
         if isinstance(conditions, Iterable):
             for x in conditions:
@@ -228,7 +228,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def select[TValue, TFlavour, *Ts](self, selector: Optional[tuple[TValue, *Ts]] = None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN, **kwargs):
-        select_clause = selector(self._model) if callable(selector) and not isinstance(selector, type) else selector
+        select_clause = selector(self._model) if GlobalChecker.is_lambda_function(selector) else selector
 
         if selector is None:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
