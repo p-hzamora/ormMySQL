@@ -523,7 +523,7 @@ class TestAggregateFunctions(unittest.TestCase):
         dicc = {
             "max_with_alias": 10,
             "min_with_alias": 1,
-            "sum_with_alias": Decimal('55'), #FIXME [ ]: I don't know why return 'Decimal' instead 'int'
+            "sum_with_alias": Decimal("55"),  # FIXME [ ]: I don't know why return 'Decimal' instead 'int'
         }
         self.assertDictEqual(select[0], dicc)
 
