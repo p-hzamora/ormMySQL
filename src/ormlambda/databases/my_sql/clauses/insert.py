@@ -25,6 +25,8 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
 
     @override
     def insert(self, instances: T | list[T]) -> None:
+        if not isinstance(instances, Iterable):
+            instances = (instances,)
         valid_cols: list[list[Column]] = []
         self.__fill_dict_list(valid_cols, instances)
 
@@ -68,7 +70,7 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
             return False
         return True
 
-    def __fill_dict_list[TProp](self, list_dict: list[str, TProp], values: T | list[T]) -> list[Column]:
+    def __fill_dict_list[TProp](self, list_dict: list[str, TProp], values: list[T]) -> list[Column]:
         if isinstance(values, Iterable):
             for x in values:
                 self.__fill_dict_list(list_dict, x)
