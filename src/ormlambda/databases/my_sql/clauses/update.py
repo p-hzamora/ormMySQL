@@ -4,7 +4,21 @@ from mysql.connector import MySQLConnection
 from ormlambda.components.update import UpdateQueryBase
 from ormlambda import Table, Column
 from ormlambda import IRepositoryBase
+from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
 from .where_condition import WhereCondition
+from ormlambda.types import ColumnType
+
+
+class UpdateKeyError(KeyError):
+    def __init__(self, table: Type[Table], key: str | ColumnType, *args):
+        super().__init__(*args)
+        self._table: Type[Table] = table
+        self._key: str | ColumnType = key
+
+    def __str__(self):
+        if isinstance(self._key, Column):
+            return f"The column '{self._key.column_name}' does not belong to the table '{self._table.__table_name__}'; it belongs to the table '{self._key.table.__table_name__}'. Please check the columns in the query."
+        return f"The column '{self._key}' does not belong to the table '{self._table.__table_name__}'. Please check the columns in the query."
 
 
 class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnection]]):
@@ -19,28 +33,38 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnec
     @override
     def execute(self) -> None:
         if self._where:
-            self._query += " " + WhereCondition.join_condition(*self._where)
+            for x in self._where:
+                # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
+                query_with_table = x.query
+                self._query += " " + query_with_table.replace(x.left_condition.table.__table_name__ + ".", "")
         return self._repository.execute_with_values(self._query, self._values)
 
     @override
-    def update(self, dicc: Any | dict[str | property, Any]) -> None:
+    def update[TProp](self, dicc: dict[str | ColumnType[TProp], Any]) -> None:
         if not isinstance(dicc, dict):
             raise TypeError
 
         name_cols: list[Column] = []
 
         for col, value in dicc.items():
-            col: Column = self._model.get_column(col, value)
+            if isinstance(col, str):
+                if not hasattr(self._model, col):
+                    raise UpdateKeyError(self._model, col)
+                col = getattr(self._model, col)
+            if not isinstance(col, Column):
+                raise ValueError
 
             if self.__is_valid__(col):
                 name_cols.append(col)
-                self._values.append(col.column_value_to_query)
+                self._values.append(value)
 
-        set_query: str = ",".join(["=".join([col.column_name, col.placeholder]) for col in name_cols])
+        set_query: str = ",".join(["=".join([col.column_name, MySQLWriteCastBase.PLACEHOLDER]) for col in name_cols])
 
         self._query = f"{self.CLAUSE} {self._model.__table_name__} SET {set_query}"
         self._values = tuple(self._values)
         return None
 
     def __is_valid__(self, col: Column) -> bool:
+        if self._model is not col.table:
+            raise UpdateKeyError(self._model, col)
         return not col.is_auto_generated
