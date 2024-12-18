@@ -9,10 +9,10 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import JoinType
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ormlambda.common.abstract_classes.comparer import Comparer
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 # TODOL [x]: Try to import Table module without circular import Error
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
     from ormlambda import Table
 
 
@@ -73,13 +73,14 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         ltable = self.left_table
         rtable = self.right_table
 
+        context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context) if self._context else None
         list_ = [
             self._by.value,  # inner join
             ClauseInfo[TRight](rtable, alias_table=self.alias, context=self._context).query,
             "ON",
-            ClauseInfo[TLeft](ltable, column=self.left_col, alias_table="{table}", context=self._context).query,
+            ClauseInfo[TLeft](ltable, column=self.left_col, context=context).query,
             self._compareop,  # =
-            ClauseInfo[TRight](rtable, column=self.right_col, alias_table="{table}", context=self._context).query,
+            ClauseInfo[TRight](rtable, column=self.right_col, context=context).query,
         ]
         return " ".join([x for x in list_ if x is not None])
 
