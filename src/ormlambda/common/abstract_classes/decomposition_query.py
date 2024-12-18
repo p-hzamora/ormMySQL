@@ -58,7 +58,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
                 return clause
 
     def __clauses_list_generetor(self, function: tuple | tp.Callable[[T], tp.Any]) -> None:
-        if callable(function):
+        if callable(function) and not isinstance(function,type):
             resolved_function = function(self.table)
         else:
             resolved_function = function
