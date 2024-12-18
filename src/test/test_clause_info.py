@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 from types import NoneType
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING, Type
 import unittest
 from parameterized import parameterized
 from shapely import Point
@@ -133,16 +133,16 @@ class TestClauseInfo(unittest.TestCase):
         ci = ST_AsText(A.data_a, alias_table="new_table")
         self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a)")
 
-    # @parameterized.expand(
-    #     (
-    #         (func.Max, "max"),
-    #         (func.Min, "min"),
-    #         (func.Sum, "sum"),
-    #     )
-    # )
-    # def test_max_function(self, fn: Callable[..., AggregateFunctionBase], result: str):
-    #     ci = fn(A.data_a, alias_table="new_table")
-    #     self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
+    @parameterized.expand(
+        (
+            (func.Max, "max"),
+            (func.Min, "min"),
+            (func.Sum, "sum"),
+        )
+    )
+    def test_max_function(self, fn: Type[AggregateFunctionBase], result: str):
+        ci = fn(A.data_a, context=ClauseInfoContext(table_context={A:'new_table'}))
+        self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
 
     def test_max_function_with_clause_alias(self):
         ci = func.Max(A.data_a, alias_clause="alias-clause")
