@@ -7,11 +7,10 @@ from mysql.connector import MySQLConnection
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic
+from ormlambda.common.interfaces import IRepositoryBase
 from ormlambda.databases.my_sql import MySQLRepository
 from config import config_dict  # noqa: E402
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import IRepositoryBase, Table, Column, BaseModel, JoinType, ForeignKey  # noqa: E402
+from ormlambda import Table, Column, BaseModel, ForeignKey  # noqa: E402
 
 
 DDBBNAME = "__test_ddbb__"
@@ -19,26 +18,26 @@ DDBBNAME = "__test_ddbb__"
 
 class CSimple(Table):
     __table_name__ = "C"
-    pk_c: int = Column(is_primary_key=True, is_auto_increment=True)
-    name: str
+    pk_c: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    name: Column[str]
 
 
 class BSimple(Table):
     __table_name__ = "B"
-    pk_b: int = Column(is_primary_key=True, is_auto_increment=True)
-    name: str
-    fk_c: int
+    pk_b: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    name: Column[str]
+    fk_c: Column[int]
 
     CSimple = ForeignKey[tp.Self, CSimple](CSimple, lambda self, c: self.fk_c == c.pk_c)
 
 
 class AWithMultipleReferencesToB(Table):
     __table_name__ = "A"
-    pk_a: int = Column(is_primary_key=True, is_auto_increment=True)
-    data_a: str
-    fk_b1: int
-    fk_b2: int
-    fk_b3: int
+    pk_a: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    data_a: Column[str]
+    fk_b1: Column[int]
+    fk_b2: Column[int]
+    fk_b3: Column[int]
 
     B_fk_b1 = ForeignKey[tp.Self, BSimple](BSimple, lambda self, b: self.fk_b1 == b.pk_b)
     B_fk_b2 = ForeignKey[tp.Self, BSimple](BSimple, lambda self, b: self.fk_b2 == b.pk_b)
@@ -75,6 +74,11 @@ class TestJoinQueries(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.ddbb.drop_database(DDBBNAME)
+
+    def test_new_select(self):
+        self.model.select(AWithMultipleReferencesToB)
+        real_query: str = "SELECT `A`.pk_a AS `A_pk_ a`, `A`.data_a AS `A_data_a`, `A`.fk_b1 AS `A_fk_b1`, `A`.fk_b2 AS `A_fk_b2`, `A`.fk_b3 AS `A_fk_b3` FROM A AS `A`"
+        self.assertEqual(self.model.query, real_query)
 
     def test_new_select_context(self):
         select_a = self.model.select(
