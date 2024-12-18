@@ -1,26 +1,37 @@
 from __future__ import annotations
-from typing import override, Callable, TYPE_CHECKING, Any, Iterable
+import typing as tp
+
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.types import ColumnType
+from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
+
 from ormlambda.common.interfaces.IStatements import OrderType
 
 
-if TYPE_CHECKING:
-    from ormlambda import Table
+class Order(AggregateFunctionBase):
+    @staticmethod
+    def FUNCTION_NAME() -> str:
+        return "ORDER BY"
 
-from ..mysql_decomposition import MySQLDecompositionQuery
+    def __init__[TProp](
+        self,
+        column: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
+        order_type: tp.Iterable[OrderType],
+        context: tp.Optional[ClauseInfoContext] = None,
+    ):
+        super().__init__(
+            column=column,
+            alias_clause=None,
+            context=context,
+        )
 
-
-class OrderQuery[T: Table](MySQLDecompositionQuery[T]):
-    ORDER = "ORDER BY"
-
-    def __init__[*Ts](self, instance: T, lambda_query: Callable[[Any], tuple[*Ts]], order_type: Iterable[OrderType]) -> None:
-        super().__init__(instance, lambda_query)
-
-        if isinstance(order_type, str) or not isinstance(order_type, Iterable):
+        if isinstance(order_type, str) or not isinstance(order_type, tp.Iterable):
             order_type = (order_type,)
 
         self._order_type: list[OrderType] = [self.__cast_to_OrderType(x) for x in order_type]
 
-    def __cast_to_OrderType(self, _value: Any) -> Iterable[OrderType]:
+    def __cast_to_OrderType(self, _value: tp.Any) -> tp.Iterable[OrderType]:
         if isinstance(_value, OrderType):
             return _value
 
@@ -31,12 +42,20 @@ class OrderQuery[T: Table](MySQLDecompositionQuery[T]):
                 pass
         raise Exception(f"order_type param only can be 'ASC' or 'DESC' string or '{OrderType.__name__}' enum")
 
-    @override
+    @tp.override
     @property
     def query(self) -> str:
-        assert len(self.all_clauses) == len(self._order_type)
+        string_columns: list[str] = []
+        columns = self.unresolved_column
+        
+        # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
+        if not isinstance(columns, tp.Iterable):
+            columns = (columns,)
+        assert len(columns) == len(self._order_type)
 
-        query: list[str] = []
-        for index, x in enumerate(self.all_clauses):
-            query.append(f"{x.query} {self._order_type[index].value}")
-        return f"{self.ORDER} {", ".join(query)}"
+        context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None
+        for index, clause in enumerate(self._convert_into_clauseInfo(columns, context)):
+            clause.alias_clause = None
+            string_columns.append(f"{clause.query} {self._order_type[index].value}")
+
+        return f"{self.FUNCTION_NAME()} {', '.join(string_columns)}"
