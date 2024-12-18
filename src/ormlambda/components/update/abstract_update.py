@@ -2,8 +2,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Any, Optional, TYPE_CHECKING
 
-from ormlambda.components.where import AbstractWhere
 from ormlambda.common.abstract_classes import NonQueryBase
+from ormlambda.databases.my_sql.clauses.where_condition import WhereCondition
 
 if TYPE_CHECKING:
     from ormlambda import IRepositoryBase
@@ -13,9 +13,9 @@ from .IUpdate import IUpdate
 
 
 class UpdateQueryBase[T: Table, TRepo: IRepositoryBase](NonQueryBase[T, TRepo], IUpdate):
-    def __init__(self, model: T, repository: TRepo, where: AbstractWhere = list[AbstractWhere]) -> None:
+    def __init__(self, model: T, repository: TRepo, where: list[WhereCondition] = list[WhereCondition]) -> None:
         super().__init__(model, repository)
-        self._where: Optional[AbstractWhere] = where
+        self._where: Optional[list[WhereCondition]] = where
 
     @abstractmethod
     def update(self, dicc: dict[str | property, Any]) -> None:
