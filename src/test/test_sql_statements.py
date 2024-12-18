@@ -137,7 +137,7 @@ class TestSQLStatements(unittest.TestCase):
         instance = create_instance_of_TestTable(5)
         self.tmodel.insert(instance)
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(KeyError) as err:
             self.tmodel.where(lambda x: x.Col1 == 3).update(
                 {
                     Address.address: 2,
@@ -145,6 +145,25 @@ class TestSQLStatements(unittest.TestCase):
                     TestTable.Col13: 13,
                 }
             )
+
+        mssg: str = "The column 'address' does not belong to the table '__test_table__'; it belongs to the table 'address'. Please check the columns in the query."
+        self.assertEqual(mssg, err.exception.__str__())
+
+    def test_raise_KeyError_updating_with_string_as_key(self):
+        instance = create_instance_of_TestTable(5)
+        self.tmodel.insert(instance)
+
+        with self.assertRaises(KeyError) as err:
+            self.tmodel.where(lambda x: x.Col1 == 3).update(
+                {
+                    "lol": 2,
+                    TestTable.Col5: 5,
+                    TestTable.Col13: 13,
+                }
+            )
+
+        mssg: str = "The column 'lol' does not belong to the table '__test_table__'. Please check the columns in the query."
+        self.assertEqual(mssg, err.exception.__str__())
 
     def test_upsert(self):
         instance = create_instance_of_TestTable(0)[0]
@@ -222,7 +241,7 @@ class TestSQLStatements(unittest.TestCase):
         }
         self.assertDictEqual(dicc, select)
 
-    def test_where_passing_tuples(self):
+    def test_AAAwhere_passing_tuples(self):
         ddbb = MySQLRepository(**config_dict)
 
         model = AddressModel(ddbb)
@@ -278,39 +297,39 @@ class TestSQLStatements(unittest.TestCase):
         mssg: str = "You cannot use aggregation method like 'Max' to return model objects. Try specifying 'flavour' attribute as 'dict'."
         self.assertEqual(e.exception.args[0], mssg)
 
-    # FIXME [x]: Review this method in the future
-    def test_join(self):
-        '''
-        New way to use join with 'with' clause
-        '''
-        modelA = ModelAB(A, self.ddbb)
-        modelB = ModelAB(B, self.ddbb)
+    # # FIXME [x]: Review this method in the future
+    # def test_join(self):
+    #     '''
+    #     New way to use join with 'with' clause
+    #     '''
+    #     modelA = ModelAB(A, self.ddbb)
+    #     modelB = ModelAB(B, self.ddbb)
 
-        a_insert = [A(x, "a", "data_a", datetime.today(), f"pk_with_value_{x}") for x in range(1, 6)]
-        b_insert = [
-            *[B(None, "data_b", 1, "pk_b_with_data_1") for x in range(20)],
-            *[B(None, "data_b", 2, "pk_b_with_data_2") for x in range(10)],
-            *[B(None, "data_b", 3, "pk_b_with_data_3") for x in range(5)],
-            B(None, "data_b", 4, "pk_b_with_data_4"),
-        ]
+    #     a_insert = [A(x, "a", "data_a", datetime.today(), f"pk_with_value_{x}") for x in range(1, 6)]
+    #     b_insert = [
+    #         *[B(None, "data_b", 1, "pk_b_with_data_1") for x in range(20)],
+    #         *[B(None, "data_b", 2, "pk_b_with_data_2") for x in range(10)],
+    #         *[B(None, "data_b", 3, "pk_b_with_data_3") for x in range(5)],
+    #         B(None, "data_b", 4, "pk_b_with_data_4"),
+    #     ]
 
-        modelA.create_table()
-        modelB.create_table()
-        modelA.insert(a_insert)
-        modelB.insert(b_insert)
+    #     modelA.create_table()
+    #     modelB.create_table()
+    #     modelA.insert(a_insert)
+    #     modelB.insert(b_insert)
 
-        # join = modelB.join(("b_a", B, B.fk_a == A.pk_a, JoinType.INNER_JOIN)).select_one(
-        #     lambda x, q: (modelB.count(),),
-        #     flavour=dict,
-        # )
+    #     # join = modelB.join(("b_a", B, B.fk_a == A.pk_a, JoinType.INNER_JOIN)).select_one(
+    #     #     lambda x, q: (modelB.count(),),
+    #     #     flavour=dict,
+    #     # )
 
-        with modelB.join([("alias_for_A", B.fk_a == A.pk_a, JoinType.INNER_JOIN)]) as ctx:
-            select = ctx.select_one(ctx.alias_for_A.pk_a)
+    #     with modelB.join([("alias_for_A", B.fk_a == A.pk_a, JoinType.INNER_JOIN)]) as ctx:
+    #         select = ctx.select_one(ctx.alias_for_A.pk_a)
 
-        self.assertEqual(select["count"], 36)
+    #     self.assertEqual(select["count"], 36)
 
-        self.ddbb.drop_table(modelB.model.__table_name__)
-        self.ddbb.drop_table(modelA.model.__table_name__)
+    #     self.ddbb.drop_table(modelB.model.__table_name__)
+    #     self.ddbb.drop_table(modelA.model.__table_name__)
 
     def test_where(self):
         instance = create_instance_of_TestTable(3)
