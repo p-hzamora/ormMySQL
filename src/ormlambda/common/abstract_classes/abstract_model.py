@@ -5,9 +5,9 @@ import abc
 
 
 from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
-from ormlambda.common.interfaces.IAggregate import IAggregate
 from ormlambda.utils import Table
 from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
 
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
@@ -108,10 +108,12 @@ class ClusterQuery[T]:
         return table_initialize
 
     def __get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
+        """
+        Get the class name of those classes that inherit from 'AggregateFunctionBase' class in order to create a better error message.
+        """
         res: set[str] = set()
 
         for clause in clauses:
-            row = clause._row_column
-            if isinstance(row, IAggregate):
-                res.add(row.__class__.__name__)
+            if isinstance(clause, AggregateFunctionBase):
+                res.add(clause.__class__.__name__)
         return ", ".join(res)
