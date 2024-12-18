@@ -63,3 +63,18 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
     def __or__(self, other: Comparer) -> Comparer:
         # Customize the behavior of '|'
         return Comparer(self, other, "OR")
+
+    @classmethod
+    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True) -> str:
+        if len(comparers) == 1:
+            return comparers[0].query
+
+        join_method = cls.__or__ if not restrictive else cls.__and__
+
+        ini_comparer: Comparer = None
+        for i in range(len(comparers) - 1):
+            if ini_comparer is None:
+                ini_comparer = comparers[i]
+            new_comparer = join_method(ini_comparer, comparers[i + 1])
+            ini_comparer = new_comparer
+        return new_comparer.query
