@@ -6,13 +6,14 @@ import functools
 
 if TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.components.where.abstract_where import AbstractWhere
     from ormlambda.common.interfaces.IStatements import OrderTypes
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
     from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
 
+from ormlambda.utils.foreign_key import ForeignKey
+from ormlambda.common.abstract_classes.comparer import Comparer
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
 from .clauses import InsertQuery
