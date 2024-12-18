@@ -243,7 +243,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         select = Select[T, *Ts](self._models, lambda_query=select_clause, by=by, joins=joins, context=self._context)
         self._query_list["select"].append(select)
 
-        self._query: str = self._build()
+        self._query: str = self._build(by)
 
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
@@ -284,7 +284,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     @clear_list
-    def _build(self) -> str:
+    def _build(self, by: JoinType = JoinType.INNER_JOIN) -> str:
         query_list: list[str] = []
         for x in self.__order__:
             if len(self._query_list) == 0:
@@ -299,7 +299,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
             elif isinstance((select := sub_query[0]), Select):
                 query_: str = ""
-                where_joins = self.__create_necessary_inner_join()
+                where_joins = self.__create_necessary_inner_join(by)
                 if where_joins:
                     select._joins.update(where_joins)
                 query_ = select.query
@@ -310,16 +310,12 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             query_list.append(query_)
         return "\n".join(query_list)
 
-    def __build_where_clause(self, where_condition: list[AbstractWhere]) -> str:
-        query: str = where_condition[0].query
+    def __build_where_clause(self, where_condition: list[Comparer]) -> str:
+        if not where_condition:
+            return ""
+        return Comparer.join_comparers(where_condition, True)
 
-        for where in where_condition[1:]:
-            q = where.query.replace(where.WHERE, "AND")
-            and_, clause = q.split(" ", maxsplit=1)
-            query += f" {and_} ({clause})"
-        return query
-
-    def __create_necessary_inner_join(self) -> Optional[set[JoinSelector]]:
+    def __create_necessary_inner_join(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
         if "where" not in self._query_list:
             return None
@@ -327,17 +323,18 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         for where in self._query_list["where"]:
             where: WhereCondition
 
-            self.model
             # Always it's gonna be a set of two
-            # # # FIXME [ ]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-            # table = set([where.left_condition.table, where.right_condition.table]).difference(set(self.models)).pop()
+            # # FIXME [ ]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
+            all_tables_in_where = set([where.left_condition.table, where.right_condition.table]) - set([None])
+            table_set = all_tables_in_where.difference(set(self.models))
 
-            # if table:
-            #     # FIXME [x]: Refactor to avoid copy and paste the same code of the '_add_fk_relationship' method
-            #     joins = []
-            #     for fk in table.__dict__:
-            #         if isinstance(fk, ForeignKey):
-            #             # FIXME [ ]: pass context
-            #             joins.append(JoinSelector(fk.resolved_function()))
-            #     return set(joins)
+            if table_set:
+                table = table_set.pop()
+                # FIXME [x]: Refactor to avoid copy and paste the same code of the '_add_fk_relationship' method
+                joins = []
+                for fk in table.__dict__.values():
+                    if isinstance(fk, ForeignKey):
+                        # FIXME [ ]: pass context
+                        joins.append(JoinSelector(fk.resolved_function(), by))
+                return set(joins)
         return None
