@@ -308,10 +308,10 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             query_list.append(query_)
         return "\n".join(query_list)
 
-    def __build_where_clause(self, where_condition: list[Comparer]) -> str:
+    def __build_where_clause(self, where_condition: Where) -> str:
         if not where_condition:
             return ""
-        return Comparer.join_comparers(where_condition, True)
+        return where_condition.query
 
     def __create_necessary_inner_join(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
