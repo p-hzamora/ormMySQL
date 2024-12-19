@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Any, Optional, TYPE_CHECKING
 
 from ormlambda.common.abstract_classes import NonQueryBase
-from src.ormlambda.databases.my_sql.clauses.where import Where
+from ormlambda.databases.my_sql.clauses.where import Where
 
 if TYPE_CHECKING:
     from ormlambda import IRepositoryBase
