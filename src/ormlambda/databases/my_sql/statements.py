@@ -150,17 +150,14 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         return Count[T](self._model, selection, alias=alias, alias_name=alias_name)
 
     @override
-    def where(self, conditions: WhereTypes[T]) -> IStatements_two_generic[T, MySQLConnection]:
+    def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
 
         if GlobalChecker.is_lambda_function(conditions):
             conditions = conditions(self._model)
-        if isinstance(conditions, Iterable):
-            for x in conditions:
-                self._query_list["where"].append(Where(x))
-            return self
-
-        self._query_list["where"].append(Where(conditions))
+        if not isinstance(conditions, Iterable):
+            conditions = (conditions,)
+        self._query_list["where"].append(Where(*conditions))
         return self
 
     @override
