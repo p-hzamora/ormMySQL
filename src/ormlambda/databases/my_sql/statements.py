@@ -169,7 +169,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]], alias: bool = True, alias_name: str = "CONCAT") -> IAggregate:
-        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name)
+        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name,context=self._context)
 
     @override
     def max[TProp](self, column: Callable[[T], TProp], alias_name: str = "max") -> TProp:
