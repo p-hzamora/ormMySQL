@@ -7,7 +7,7 @@ if tp.TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 
-class WhereCondition(IAggregate):
+class Where(IAggregate):
     FUNCTION_NAME: str = "WHERE"
     """
     The purpose of this class is to create 'WHERE' condition queries properly.

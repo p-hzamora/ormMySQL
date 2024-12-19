@@ -11,7 +11,7 @@ from .offset import OffsetQuery as OffsetQuery
 from .order import Order as Order
 from .update import UpdateQuery as UpdateQuery
 from .upsert import UpsertQuery as UpsertQuery
-from .where_condition import WhereCondition as WhereCondition
+from .where import Where as Where
 from .count import Count as Count
 from .group_by import GroupBy as GroupBy
 from .alias import Alias as Alias

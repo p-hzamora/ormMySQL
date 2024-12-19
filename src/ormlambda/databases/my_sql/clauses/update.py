@@ -5,7 +5,7 @@ from ormlambda.components.update import UpdateQueryBase
 from ormlambda import Table, Column
 from ormlambda import IRepositoryBase
 from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
-from .where_condition import WhereCondition
+from .where import Where
 from ormlambda.types import ColumnType
 
 
@@ -22,7 +22,7 @@ class UpdateKeyError(KeyError):
 
 
 class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnection]]):
-    def __init__(self, model: T, repository: Any, where: list[WhereCondition]) -> None:
+    def __init__(self, model: T, repository: Any, where: list[Where]) -> None:
         super().__init__(model, repository, where)
 
     @override

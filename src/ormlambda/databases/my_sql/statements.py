@@ -25,7 +25,7 @@ from .clauses.select import Select
 
 from .clauses import UpsertQuery
 from .clauses import UpdateQuery
-from .clauses import WhereCondition
+from .clauses import Where
 from .clauses import Count
 from .clauses import GroupBy
 from .clauses import Alias
@@ -157,10 +157,10 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             conditions = conditions(self._model)
         if isinstance(conditions, Iterable):
             for x in conditions:
-                self._query_list["where"].append(WhereCondition(x))
+                self._query_list["where"].append(Where(x))
             return self
 
-        self._query_list["where"].append(WhereCondition(conditions))
+        self._query_list["where"].append(Where(conditions))
         return self
 
     @override
@@ -295,7 +295,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             if sub_query is None:
                 continue
 
-            if isinstance(sub_query[0], WhereCondition):
+            if isinstance(sub_query[0], Where):
                 query_ = self.__build_where_clause(sub_query)
 
             elif isinstance((select := sub_query[0]), Select):
@@ -322,7 +322,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             return None
 
         for where in self._query_list["where"]:
-            where: WhereCondition
+            where: Where
 
             # Always it's gonna be a set of two
             # # FIXME [ ]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
