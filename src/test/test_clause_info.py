@@ -168,7 +168,7 @@ class TestClauseInfo(unittest.TestCase):
     @parameterized.expand(
         [
             (ClauseInfo[A](A, A), A),
-            (ClauseInfo(None, None), NoneType),
+            (ClauseInfo[None](None, None), NoneType),
             (ClauseInfo[A](A, A.data_a), str),
             (ClauseInfo[A](A, A.pk_a), int),
             (ClauseInfo[A](A, A.name_a), str),
@@ -205,7 +205,7 @@ class TestClauseInfo(unittest.TestCase):
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table', 'column']"
         self.assertEqual(mssg, err.exception.__str__())
 
-    def test_raise_NotKeysInIAggregateError_with_other_placeholder(self) -> None:
+    def test_raise_NotKeysInIAggregateError_with_one_placeholder(self) -> None:
         with self.assertRaises(NotKeysInIAggregateError) as err:
             ST_AsText(A.data_a, alias_clause="{table}").query
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table']"
