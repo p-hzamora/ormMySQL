@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as tp
 from ormlambda.common.abstract_classes.comparer import Comparer
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
+from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
 
 
 class Where(AggregateFunctionBase):
@@ -15,15 +15,6 @@ class Where(AggregateFunctionBase):
     @staticmethod
     def FUNCTION_NAME() -> str:
         return "WHERE"
-
-    # FIXME [ ]: that's an error. We need to keep in mind that left_condition could be Compare
-    @property
-    def left_condition(self) -> ClauseInfo:
-        return self._comparer.left_condition
-
-    @property
-    def right_condition(self) -> ClauseInfo:
-        return self._comparer.right_condition
 
     @property
     def query(self) -> str:
