@@ -112,8 +112,8 @@ class Table(metaclass=TableMeta):
         params = self.to_dict()
         return json.dumps(params, ensure_ascii=False, indent=2)
 
-    def __getattr__[T](self, __name: str) -> Column[T]:
-        return self.__dict__.get(__name, None)
+    def __getattr__[T](self, _name: str) -> Column[T]:
+        return self.__dict__.get(_name, None)
 
     def __repr__(self: "Table") -> str:
         def __cast_long_variables(value: Any):
