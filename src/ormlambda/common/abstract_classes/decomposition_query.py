@@ -126,50 +126,6 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         # all columns
         return [self._column_type(prop) for prop in table.get_columns()]
 
-    def _search_correct_table_for_prop[TTable: Table](self, table: TableType[TTable], tuple_instruction: TupleInstruction, prop: property) -> ClauseInfo[TTable]:
-        temp_table: TableType[TTable] = table
-
-        _, *table_list = tuple_instruction.nested_element.parents
-        queue_parent = deque(table_list, maxlen=len(table_list))
-
-        while prop not in temp_table.__properties_mapped__:
-            first_property: property = queue_parent.popleft()
-
-            foreign_key: ForeignKey = getattr(temp_table(), first_property)
-            foreign_key.orig_object = temp_table
-
-            if not isinstance(foreign_key, ForeignKey):
-                raise ValueError(f"'new_table' var must be '{ForeignKey.__name__}' type and is '{type(foreign_key)}'")
-
-            new_table: TTable = foreign_key._referenced_table
-            self._alias_cache[first_property] = new_table
-
-            new_ti = TupleInstruction(first_property, NestedElement(table_list))
-
-            new_clause_info = self.return_property_type_from_foreign_key(foreign_key, new_ti, prop)
-            if new_clause_info:
-                return new_clause_info
-
-            temp_table = new_table
-
-        raise ValueError(f"property '{prop}' does not exist in any inherit tables.")
-
-    def return_property_type_from_foreign_key(self, foreign_key: ForeignKey[TableType, TableType], tuple_instruction: TupleInstruction, prop: property) -> tp.Optional[ClauseInfo]:
-        """
-        Despite of return 'ClauseInfo' class from the given property, we added the necessary relationship by adding foreign_key into self._joins
-        """
-        new = foreign_key._referenced_table
-        old = foreign_key.orig_object
-
-        if prop in new.__properties_mapped__:
-            for ref_table in ForeignKey.MAPPED[old.__table_name__].referenced_tables[new.__table_name__]:
-                if ref_table.foreign_key_column == foreign_key.decomposite_fk().cond_1.name:
-                    ref_table.orig_table = old
-
-                    self._add_fk_relationship(referenced_table=ref_table)
-                    return self._column_type(prop, tuple_instruction)
-        return None
-
     def __add_clause[TTable: TableType](self, clause: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:
         if isinstance(clause, tp.Iterable):
             [self.__add_clause(x) for x in clause]
