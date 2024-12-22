@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
 
 
-class ForeignKey[TLeft:Table, TRight:Table](IQuery):
+class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
@@ -83,6 +83,12 @@ class ForeignKey[TLeft:Table, TRight:Table](IQuery):
         compare = self.resolved_function()
         rcon = alias if (alias := compare.right_condition.alias_table) else compare.right_condition.table.__table_name__
         return f"FOREIGN KEY ({self._tleft.__table_name__}) REFERENCES {rcon}({compare.right_condition._column.column_name})"
+
+    @property
+    def alias(self) -> str:
+        lcol = self._comparer.left_condition._column.column_name
+        rcol = self._comparer.right_condition._column.column_name
+        return f"{self.tleft}_{lcol}_{rcol}"
 
     @classmethod
     def create_query(cls, orig_table: Table) -> list[str]:
