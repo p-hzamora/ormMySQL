@@ -3,6 +3,7 @@ import typing as tp
 if tp.TYPE_CHECKING:
     from ormlambda import Table, Column
     from ormlambda.common.abstract_classes.comparer import Comparer
+    from ormlambda import ConditionType as ConditionEnum
 
 
 type AsteriskType = str
@@ -14,7 +15,7 @@ type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
 type ComparerType = tp.Literal["=", "!=", "<", "<=", ">", ">=", "in"]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
 type UnionType = tp.Literal["AND", "OR", ""]
-type ComparerTypes = ComparerType | UnionType
+type ComparerTypes = ComparerType | UnionType | ConditionEnum
 # endregion
 
 type TupleJoinType[T] = tuple[str, T, Comparer[T]]
