@@ -2,10 +2,11 @@ from __future__ import annotations
 from typing import Type, Optional, TYPE_CHECKING
 import abc
 from ormlambda.types import TableType, ComparerType, ColumnType
+from ormlambda import ConditionType
 
 if TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.common.abstract_classes.comparer import Comparer
+    from ormlambda.common.abstract_classes.comparer import Comparer, Regex, Like
 
 
 class Column[TProp]:
@@ -79,22 +80,22 @@ class Column[TProp]:
         return Comparer[LTable, TProp, OTherTable, OTherType](self, other, compare, *args)
 
     def __eq__[LTable, OTherTable, OTherProp](self, other: ColumnType[OTherProp], *args) -> Comparer[LTable, TProp, OTherTable, OTherProp]:
-        return self.__comparer_creator(other, "=", *args)
+        return self.__comparer_creator(other, ConditionType.EQUAL.value, *args)
 
     def __ne__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, "!=", *args)
+        return self.__comparer_creator(other, ConditionType.NOT_EQUAL.value, *args)
 
     def __lt__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, "<", *args)
+        return self.__comparer_creator(other, ConditionType.LESS_THAN.value, *args)
 
     def __le__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, "<=", *args)
+        return self.__comparer_creator(other, ConditionType.LESS_THAN_OR_EQUAL.value, *args)
 
     def __gt__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ">", *args)
+        return self.__comparer_creator(other, ConditionType.GREATER_THAN.value, *args)
 
     def __ge__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ">=", *args)
+        return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value, *args)
 
     def __contains__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, "in", *args)
