@@ -9,8 +9,9 @@ class Where(AggregateFunctionBase):
     The purpose of this class is to create 'WHERE' condition queries properly.
     """
 
-    def __init__(self, *comparer: Comparer) -> None:
+    def __init__(self, *comparer: tp.Iterable[Comparer], restrictive: bool = True) -> None:
         self._comparer: tuple[Comparer] = comparer
+        self._restrictive: bool = restrictive
 
     @staticmethod
     def FUNCTION_NAME() -> str:
@@ -19,7 +20,7 @@ class Where(AggregateFunctionBase):
     @property
     def query(self) -> str:
         if isinstance(self._comparer, tp.Iterable):
-            comparer = Comparer.join_comparers(self._comparer)
+            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive)
         else:
             comparer = self._comparer
         return f"{self.FUNCTION_NAME()} {comparer}"
@@ -27,3 +28,6 @@ class Where(AggregateFunctionBase):
     @property
     def alias_clause(self) -> None:
         return None
+
+    def join_condition(self, *wheres: Where, restrictive: bool) -> str:
+        return Where(*[x._comparer for x in wheres], restrictive=restrictive).query
