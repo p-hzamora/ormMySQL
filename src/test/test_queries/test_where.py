@@ -44,6 +44,17 @@ class TestWhere(unittest.TestCase):
         )
         self.assertEqual(w.query, "WHERE address.address = 'sol' AND city.city = 'Madrid' AND country.country = 'Spain'")
 
+    def test_where_with_regex(self):
+        address = "sol"
+        city = "Madrid"
+        country = "Spain"
+        w = Where(
+            Address.address == address,
+            Address.City.city == city,
+            Address.City.Country.country == country,
+        )
+        self.assertEqual(w.query, "WHERE address.address = 'sol' AND city.city = 'Madrid' AND country.country = 'Spain'")
+
 
 if __name__ == "__main__":
     unittest.main()
