@@ -5,6 +5,7 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 from ormlambda.types import ConditionType, ComparerTypes
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda import ConditionType as ConditionEnum
 
 if tp.TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
@@ -78,3 +79,23 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
             new_comparer = join_method(ini_comparer, comparers[i + 1])
             ini_comparer = new_comparer
         return new_comparer.query
+
+
+class Regex[LProp, RProp](Comparer[None, LProp, None, RProp]):
+    def __init__(
+        self,
+        left_condition: ConditionType[LProp],
+        right_condition: ConditionType[RProp],
+        context: tp.Optional[ClauseInfoContext] = None,
+    ):
+        super().__init__(left_condition, right_condition, ConditionEnum.REGEXP.value, context)
+
+
+class Like[LProp, RProp](Comparer[None, LProp, None, RProp]):
+    def __init__(
+        self,
+        left_condition: ConditionType[LProp],
+        right_condition: ConditionType[RProp],
+        context: tp.Optional[ClauseInfoContext] = None,
+    ):
+        super().__init__(left_condition, right_condition, ConditionEnum.LIKE.value, context)
