@@ -97,5 +97,16 @@ class Column[TProp]:
     def __ge__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value, *args)
 
-    def __contains__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, "in", *args)
+    def contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
+        return self.__comparer_creator(other, ConditionType.IN.value, *args)
+
+    def not_contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
+        return self.__comparer_creator(other, ConditionType.NOT_IN.value, *args)
+
+    def regex[LProp, RProp](self, pattern: str) -> Regex[LProp, RProp]:
+        from ormlambda.common.abstract_classes.comparer import Regex
+        return Regex(self, pattern)
+
+    def like[LProp, RProp](self, pattern: str) -> Like[LProp, RProp]:
+        from ormlambda.common.abstract_classes.comparer import Like
+        return Like(self, pattern)
