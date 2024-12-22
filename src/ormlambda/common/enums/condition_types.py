@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class ConditionType(Enum):
-    EQUAL = "=="
+    EQUAL = "="
     LESS_THAN = "<"
     GREATER_THAN = ">"
     LESS_THAN_OR_EQUAL = "<="
@@ -12,5 +12,6 @@ class ConditionType(Enum):
     BETWEEN = "BETWEEN"
     LIKE = "LIKE"
     IN = "IN"
+    NOT_IN = "NOT IN"
     IS = "IS"
     IS_NOT = "IS NOT"
