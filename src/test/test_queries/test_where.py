@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
+from ormlambda.common.abstract_classes.comparer import Regex, Like  # noqa: E402
 from models import Address  # noqa: E402
 from ormlambda.databases.my_sql.clauses.where import Where  # noqa: E402
 
@@ -45,15 +46,32 @@ class TestWhere(unittest.TestCase):
         self.assertEqual(w.query, "WHERE address.address = 'sol' AND city.city = 'Madrid' AND country.country = 'Spain'")
 
     def test_where_with_regex(self):
-        address = "sol"
-        city = "Madrid"
-        country = "Spain"
-        w = Where(
-            Address.address == address,
-            Address.City.city == city,
-            Address.City.Country.country == country,
-        )
-        self.assertEqual(w.query, "WHERE address.address = 'sol' AND city.city = 'Madrid' AND country.country = 'Spain'")
+        pattern: str = r"^[A+]"
+        w = Where(Regex(Address.address, pattern))
+        self.assertEqual(w.query, f"WHERE address.address REGEXP '{pattern}'")
+
+    def test_where_with_regex_from_column(self):
+        pattern: str = r"^[A+]"
+        w = Where(Address.address.regex(pattern))
+        self.assertEqual(w.query, f"WHERE address.address REGEXP '{pattern}'")
+
+    def test_where_with_like(self):
+        pattern: str = r"*123*"
+        w = Where(Like(Address.address, pattern))
+        self.assertEqual(w.query, f"WHERE address.address LIKE '{pattern}'")
+
+    def test_where_with_like_from_column(self):
+        pattern: str = r"*123*"
+        w = Where(Address.address.like(pattern))
+        self.assertEqual(w.query, f"WHERE address.address LIKE '{pattern}'")
+
+    def test_where_contains(self):
+        w = Where(Address.address_id.contains((1, 2, 3, 4, 5, 6, 7, 8, 9)))
+        self.assertEqual(w.query, "WHERE address.address_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9)")
+
+    def test_where_not_contains(self):
+        w = Where(Address.address_id.not_contains((1, 2, 3, 4, 5, 6, 7, 8, 9)))
+        self.assertEqual(w.query, "WHERE address.address_id NOT IN (1, 2, 3, 4, 5, 6, 7, 8, 9)")
 
 
 if __name__ == "__main__":
