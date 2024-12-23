@@ -10,7 +10,7 @@ from ormlambda.common.abstract_classes.comparer import Regex, Like  # noqa: E402
 from models import Address  # noqa: E402
 from ormlambda.databases.my_sql.clauses.where import Where  # noqa: E402
 
-ADDRESS_1 = Address(200, "Calle Cristo de la victoria", None, None, 1, "28026", "617128992", "Usera", None)
+ADDRESS_1 = Address(200, "Calle Cristo de la victoria","Usera", None, 1, "28026", "617128992",None, None)
 
 
 class TestWhere(unittest.TestCase):
