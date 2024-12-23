@@ -59,7 +59,8 @@ class Column[TProp]:
 
     def __set__(self, obj, value):
         if value is not None:
-            assert type(value) == self.dtype, f"The '{self.column_name}' Column from '{self.table.__table_name__}' table expected '{self.dtype.__name__}' type. You passed '{type(value).__name__}' type"
+            if not isinstance(value,self.dtype):
+                raise ValueError(f"The '{self.column_name}' Column from '{self.table.__table_name__}' table expected '{str(self.dtype)}' type. You passed '{type(value).__name__}' type")
         setattr(obj, self.__private_name, value)
 
     def __hash__(self) -> int:
