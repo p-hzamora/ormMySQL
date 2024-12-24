@@ -37,7 +37,7 @@ class ClauseInfoConverter[T, TProp](abc.ABC):
 
 class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None]):
     @classmethod
-    def convert(cls, data: ForeignKey[LT, RT], _, context: ClauseContextType = None) -> list[ClauseInfo[RT]]:
+    def convert(cls, data: ForeignKey[LT, RT], alias_table=None, context: ClauseContextType = None) -> list[ClauseInfo[RT]]:
         return ConvertFromTable[RT].convert(data.tright, data.alias, context)
 
 
