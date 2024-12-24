@@ -314,22 +314,13 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     def __create_necessary_inner_join(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
-        if "where" not in self._query_list:
+        if not ForeignKey.stored_calls:
             return None
 
-        for where in self._query_list["where"]:
-            where: Where
-            table_set = None
-
-            # Always it's gonna be a set of two
-            # # FIXME [ ]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-            if table_set:
-                table = table_set.pop()
-                # FIXME [x]: Refactor to avoid copy and paste the same code of the '_add_fk_relationship' method
-                joins = []
-                for fk in table.__dict__.values():
-                    if isinstance(fk, ForeignKey):
-                        # FIXME [ ]: pass context
-                        joins.append(JoinSelector(fk.resolved_function(), by))
-                return set(joins)
-        return None
+        # Always it's gonna be a set of two
+        # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
+        joins = set()
+        for _ in range(len(ForeignKey.stored_calls)):
+            fk = ForeignKey.stored_calls.pop()
+            joins.add(JoinSelector(fk.resolved_function(), by, context=self._context, alias=fk.alias))
+        return joins
