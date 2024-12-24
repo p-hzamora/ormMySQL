@@ -86,9 +86,10 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
 
     @property
     def alias(self) -> str:
+        self._comparer = self.resolved_function()
         lcol = self._comparer.left_condition._column.column_name
         rcol = self._comparer.right_condition._column.column_name
-        return f"{self.tleft}_{lcol}_{rcol}"
+        return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
 
     @classmethod
     def create_query(cls, orig_table: Table) -> list[str]:
