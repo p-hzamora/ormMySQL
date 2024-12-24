@@ -26,22 +26,29 @@ class JoinContext[TParent: Table, *T, TRepo]:
     def __enter__(self) -> IStatements_two_generic[TParent, *T, TRepo]:
         for alias, comparer, by in self._joins:
             foreign_key = ForeignKey(comparer=comparer, clause_name=alias)
-            self._context.add_clause_to_context(self.get_fk_table(comparer))
-            setattr(self, alias, foreign_key)
+            self._context.add_clause_to_context(self.get_origin_table_in_fk(comparer))
+            setattr(self._parent, alias, foreign_key)
         return self
 
-    def __exit__(self, type: type, value: Any, traceback: str):
-        if value:
-            raise value
+    def __exit__(self, type: type, error: Any, traceback: str):
+        if error:
+            raise error
 
         for alias, _, _ in self._joins:
             delattr(self._parent, alias)
         return None
 
     def __getattr__(self, name: str) -> TParent:
-        return getattr(self._statements, name)
+        return getattr(self._parent, name)
 
-    def get_fk_table(self, comparer: Comparer) -> ClauseInfo:
+    def get_origin_table_in_fk(self, comparer: Comparer) -> ClauseInfo:
+        """
+        In this method the 'comparer' attributes always should be a one by one comparison.
+        Not a combining of Comparers like when using () & () | () ... operator
+
+        >>> A.fk_b == B.pk_b # Correct
+        >>> (A.fk_b == B.pk_b) & (B.fk_c == C.pk_c) # Incorrect
+        """
         clause_dicc: dict[Table, ClauseInfo] = {
             comparer.left_condition.table: comparer.left_condition,
             comparer.right_condition.table: comparer.right_condition,
