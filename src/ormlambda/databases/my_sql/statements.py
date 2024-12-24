@@ -168,7 +168,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]], alias: bool = True, alias_name: str = "CONCAT") -> IAggregate:
-        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name,context=self._context)
+        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name, context=self._context)
 
     @override
     def max[TProp](self, column: Callable[[T], TProp], alias_name: str = "max") -> TProp:
@@ -233,7 +233,13 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             return () if not result else result[0]
 
         joins = self._query_list.pop("join", None)
-        select = Select[T, *Ts](self._models, lambda_query=select_clause, by=by, joins=joins, context=self._context)
+        select = Select[T, *Ts](
+            self._models,
+            lambda_query=select_clause,
+            by=by,
+            joins=joins,
+            context=self._context,
+        )
         self._query_list["select"].append(select)
 
         self._query: str = self._build(by)
@@ -306,7 +312,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     def __build_where_clause(self, where_condition: list[Where]) -> str:
         if not where_condition:
             return ""
-        return Where.join_condition(where_condition,restrictive=True)
+        return Where.join_condition(where_condition, restrictive=True)
 
     def __create_necessary_inner_join(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
