@@ -232,7 +232,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
                 return result
             return () if not result else result[0]
 
-        joins = self._query_list.pop("join", None)
+        joins = self.extract_joins_from_ForeignKey(by)
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
@@ -314,10 +314,10 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             return ""
         return Where.join_condition(where_condition, restrictive=True)
 
-    def __create_necessary_inner_join(self, by: JoinType) -> Optional[set[JoinSelector]]:
+    def extract_joins_from_ForeignKey(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
         if not ForeignKey.stored_calls:
-            return None
+            return set()
 
         # Always it's gonna be a set of two
         # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
