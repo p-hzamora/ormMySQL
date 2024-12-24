@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class ForeignKey[TLeft: Table, TRight: Table](IQuery):
+    stored_calls: set[ForeignKey] = set()
+
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
@@ -52,6 +54,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
 
     def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey[TLeft, TRight] | TRight:
         if not obj:
+            ForeignKey.stored_calls.add(self)
             return self
         return self._tright
 
