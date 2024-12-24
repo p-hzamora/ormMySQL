@@ -220,7 +220,14 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     #     return self
 
     @override
-    def select[TValue, TFlavour, *Ts](self, selector: Optional[tuple[TValue, *Ts]] = None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN, **kwargs):
+    def select[TValue, TFlavour, *Ts](
+        self,
+        selector: Optional[tuple[TValue, *Ts]] = None,
+        *,
+        flavour: Optional[Type[TFlavour]] = None,
+        by: JoinType = JoinType.INNER_JOIN,
+        **kwargs,
+    ):
         select_clause = selector(self._model) if GlobalChecker.is_lambda_function(selector) else selector
 
         if selector is None:
@@ -233,6 +240,9 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             return () if not result else result[0]
 
         joins = self.extract_joins_from_ForeignKey(by)
+        for join in joins:
+            self._context._add_table_alias(join.right_table, join.alias)
+
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
@@ -242,7 +252,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         )
         self._query_list["select"].append(select)
 
-        self._query: str = self._build(by)
+        self._query: str = self._build()
 
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
