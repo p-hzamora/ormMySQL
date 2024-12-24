@@ -33,10 +33,11 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnec
     @override
     def execute(self) -> None:
         if self._where:
-            for x in self._where:
-                # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
-                query_with_table = x.query
-                self._query += " " + query_with_table.replace(x.left_condition.table.__table_name__ + ".", "")
+            for where in self._where:
+                query_with_table = where.query
+                for x in where._comparer:
+                    # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
+                    self._query += " " + query_with_table.replace(x.left_condition.table.__table_name__ + ".", "")
         return self._repository.execute_with_values(self._query, self._values)
 
     @override
