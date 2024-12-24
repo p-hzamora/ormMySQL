@@ -55,13 +55,13 @@ class ClauseInfoContext(IClauseInfo):
             return None
 
         if t := clause.table:
-            self.__add_table_alias(t, clause._alias_table)
+            self._add_table_alias(t, clause._alias_table)
         if c := clause.column:
-            self.__add_clause_alias((t, c, type(clause)), clause._alias_clause)
+            self._add_clause_alias((t, c, type(clause)), clause._alias_clause)
 
         return None
 
-    def __add_clause_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
+    def _add_clause_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
         if not key:
             return None
 
@@ -73,7 +73,7 @@ class ClauseInfoContext(IClauseInfo):
 
         return None
 
-    def __add_table_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
+    def _add_table_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
         if not key:
             return None
 
