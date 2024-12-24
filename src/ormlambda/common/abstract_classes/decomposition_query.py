@@ -26,18 +26,18 @@ type ValueType = tp.Union[
 
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
-    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple]) -> None: ...
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple]) -> None: ...
     @tp.overload
-    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, by: JoinType = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], *, by: JoinType = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], *, by: JoinType = ..., replace_asterisk_char: bool = ...) -> None: ...
     @tp.overload
-    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple], *, by: JoinType = ..., replace_asterisk_char: bool = ..., joins: tp.Optional[list[IJoinSelector]] = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], *, by: JoinType = ..., replace_asterisk_char: bool = ..., joins: tp.Optional[list[IJoinSelector]] = ...) -> None: ...
 
-    def __init__(self, tables: TableTupleType, lambda_query: tp.Callable[[T], tuple[*Ts]], *, alias_name: tp.Optional[str] = None, by: JoinType = JoinType.INNER_JOIN, replace_asterisk_char: bool = True, joins: tp.Optional[list[IJoinSelector]] = None, context: tp.Optional[ClauseInfoContext] = None) -> None:
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple[*Ts]], *, alias_name: tp.Optional[str] = None, by: JoinType = JoinType.INNER_JOIN, replace_asterisk_char: bool = True, joins: tp.Optional[list[IJoinSelector]] = None, context: tp.Optional[ClauseInfoContext] = None) -> None:
         self._tables: TableTupleType = tables if isinstance(tables, tp.Iterable) else (tables,)
 
-        self._query_list: tp.Callable[[T], tuple] = lambda_query
+        self._query_list: tp.Callable[[T], tuple] = columns
         self._by: JoinType = by
         self._joins: set[IJoinSelector] = set(joins) if joins is not None else set()
         self._clauses_group_by_tables: dict[TableType, list[ClauseInfo[T]]] = defaultdict(list)
@@ -46,7 +46,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self._replace_asterisk_char: bool = replace_asterisk_char
         self._context: ClauseInfoContext = context if context else ClauseInfoContext()
 
-        self.__clauses_list_generetor(lambda_query)
+        self.__clauses_list_generetor(columns)
 
     def __getitem__(self, key: str) -> ClauseInfo:
         for clause in self._all_clauses:
@@ -54,7 +54,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
                 return clause
 
     def __clauses_list_generetor(self, function: tuple | tp.Callable[[T], tp.Any]) -> None:
-        if callable(function) and not isinstance(function,type):
+        if callable(function) and not isinstance(function, type):
             resolved_function = function(self.table)
         else:
             resolved_function = function
@@ -140,7 +140,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         return self._tables
 
     @property
-    def lambda_query[*Ts](self) -> tp.Callable[[T], tuple[*Ts]]:
+    def columns[*Ts](self) -> tp.Callable[[T], tuple[*Ts]]:
         return self._query_list
 
     @property

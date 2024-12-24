@@ -62,6 +62,7 @@ class TestJoinStatement(unittest.TestCase):
         modelB.insert(b_insert)
 
         modelB.select((A, B))
+        pass
 
 
 if __name__ == "__main__":

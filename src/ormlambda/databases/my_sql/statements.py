@@ -235,7 +235,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         joins = self._query_list.pop("join", None)
         select = Select[T, *Ts](
             self._models,
-            lambda_query=select_clause,
+            columns=select_clause,
             by=by,
             joins=joins,
             context=self._context,

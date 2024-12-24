@@ -18,7 +18,7 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
     def __init__(
         self,
         tables: tuple[T, *Ts],
-        lambda_query: Callable[[T], tuple] = lambda x: x,
+        columns: Callable[[T], tuple] = lambda x: x,
         *,
         joins: Optional[list[JoinSelector]] = None,
         by: JoinType = JoinType.INNER_JOIN,
@@ -28,7 +28,7 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
         context = context if context else ClauseInfoContext()
         super().__init__(
             tables,
-            lambda_query,
+            columns,
             by=by,
             joins=joins,
             context=context,

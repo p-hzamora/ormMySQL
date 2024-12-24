@@ -17,7 +17,7 @@ class Alias[T: tp.Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], ICustomAlia
     ) -> None:
         super().__init__(
             table,
-            lambda_query=query,
+            columns=query,
             alias=alias,
             alias_name=alias_name,
         )

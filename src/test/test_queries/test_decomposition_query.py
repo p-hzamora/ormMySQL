@@ -17,7 +17,7 @@ class TestCondition(unittest.TestCase):
         # this response must not be the real one,
         q = Select[Address](
             Address,
-            lambda_query=(
+            columns=(
                 Address.City.city_id,
                 Address.address,
                 Address.City.city_id,

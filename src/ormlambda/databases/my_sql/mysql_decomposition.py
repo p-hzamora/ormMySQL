@@ -13,10 +13,10 @@ if tp.TYPE_CHECKING:
 
 
 class MySQLDecompositionQuery[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, *Ts]):
-    def __init__(self, tables: tuple[T, *Ts], lambda_query: tp.Callable[[T], tuple[*Ts]], *, by: JoinType = JoinType.INNER_JOIN, replace_asterisk_char: bool = True, joins: tp.Optional[list[IJoinSelector]] = None, context: tp.Optional[ClauseInfoContext] = None) -> None:
+    def __init__(self, tables: tuple[T, *Ts], columns: tp.Callable[[T], tuple[*Ts]], *, by: JoinType = JoinType.INNER_JOIN, replace_asterisk_char: bool = True, joins: tp.Optional[list[IJoinSelector]] = None, context: tp.Optional[ClauseInfoContext] = None) -> None:
         super().__init__(
             tables=tables,
-            lambda_query=lambda_query,
+            columns=columns,
             by=by,
             replace_asterisk_char=replace_asterisk_char,
             joins=joins,

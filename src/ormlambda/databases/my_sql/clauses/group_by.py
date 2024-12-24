@@ -20,7 +20,7 @@ class GroupBy[T: tp.Type[Table], *Ts, TProp](MySQLDecompositionQuery[T], IAggreg
     ) -> None:
         super().__init__(
             table,
-            lambda_query=column,
+            columns=column,
             alias=alias,
             alias_name=alias_name,
             by=by,

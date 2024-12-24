@@ -34,20 +34,20 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(q.query, mssg)
 
     def test_all_col_with_select_list_attr(self):
-        q = Select[City](City, lambda_query=lambda x: "*")
+        q = Select[City](City, columns=lambda x: "*")
         mssg: str = "SELECT `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update` FROM city"
         self.assertEqual(q.query, mssg)
 
     def test_one_col(self):
-        q = Select[City](City, lambda_query=lambda c: c.city)
+        q = Select[City](City, columns=lambda c: c.city)
         self.assertEqual(q.query, "SELECT `city`.city AS `city_city` FROM city")
 
     def test_two_col(self):
-        q = Select[City](City, lambda_query=lambda c: (c.city, c.city_id))
+        q = Select[City](City, columns=lambda c: (c.city, c.city_id))
         self.assertEqual(q.query, "SELECT `city`.city AS `city_city`, `city`.city_id AS `city_city_id` FROM city")
 
     def test_three_col(self):
-        q = Select[City](City, lambda_query=lambda c: (c.city, c.last_update, c.country_id))
+        q = Select[City](City, columns=lambda c: (c.city, c.last_update, c.country_id))
         self.assertEqual(q.query, "SELECT `city`.city AS `city_city`, `city`.last_update AS `city_last_update`, `city`.country_id AS `city_country_id` FROM city")
 
     def test_cols_from_foreign_keys(self):
@@ -92,7 +92,7 @@ class TestSelect(unittest.TestCase):
         # this response must not be the real one,
         q = Select[Address, City, Country](
             (Address, City, Country),
-            lambda_query=lambda a, ci, co: (
+            columns=lambda a, ci, co: (
                 a,
                 ci,
                 co,
@@ -108,7 +108,7 @@ class TestSelect(unittest.TestCase):
     #     # this response must not be the real one,
     #     q = Select[Address, City](
     #         (Address, City),
-    #         lambda_query=lambda a, ci: (
+    #         columns=lambda a, ci: (
     #             a,
     #             a.City,
     #             ci.Country,
@@ -123,7 +123,7 @@ class TestSelect(unittest.TestCase):
         with self.assertRaises(UnmatchedLambdaParameterError) as err:
             Select[D, C, B, A](
                 (D, C, B, A),
-                lambda_query=lambda d: (
+                columns=lambda d: (
                     d.C.B,
                     d.data_d,
                     d.C.data_c,
@@ -138,7 +138,7 @@ class TestSelect(unittest.TestCase):
     def test_d_c_b_a_models(self):
         q = Select[D, C, B, A](
             D,
-            lambda_query=lambda d: (
+            columns=lambda d: (
                 d.C.B,
                 d.data_d,
                 d.C.data_c,
@@ -170,7 +170,7 @@ class TestSelect(unittest.TestCase):
     def test_a_b_c_d_e(self):
         q = Select[D](
             D,
-            lambda_query=lambda d: (
+            columns=lambda d: (
                 d.C.B.A,
                 d.C.B,
                 d.C,
@@ -184,7 +184,7 @@ class TestSelect(unittest.TestCase):
     def test_get_involved_table_method_consistency(self):
         q = Select[D](
             D,
-            lambda_query=lambda d: (
+            columns=lambda d: (
                 d.C.B.A,
                 d.C.B,
                 d.C,
@@ -199,7 +199,7 @@ class TestSelect(unittest.TestCase):
         def _lambda(d, c, b, a):
             return d, c, b, a
 
-        q = Select[D, C, B, A]((D, C, B, A), lambda_query=_lambda)
+        q = Select[D, C, B, A]((D, C, B, A), columns=_lambda)
 
         self.assertEqual(q.table, D)
         self.assertEqual(q._tables, (D, C, B, A))
