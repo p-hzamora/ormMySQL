@@ -39,21 +39,12 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
     @override
     @property
     def query(self) -> str:
-        # # FIXME [ ]: refactor ClauseInfo class
-        # if isinstance(x, IAggregate) and x._row_column.has_foreign_keys:
-        #     self._joins.update(x._row_column.fk_relationship)
-
         from_clause = "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query
-        all_cols: str = ClauseInfo.join_clauses(self._all_clauses, ",")
-
         select_clauses = [
             self.CLAUSE,
-            all_cols,
+            ClauseInfo.join_clauses(self._all_clauses, ","),
             from_clause,
+            self.stringify_foreign_key(self._joins, " "),
         ]
-        select_clause = " ".join(select_clauses)
 
-        if self.has_foreign_keys:
-            select_clause += " " + self.stringify_foreign_key(" ")
-
-        return select_clause
+        return " ".join(select_clauses)
