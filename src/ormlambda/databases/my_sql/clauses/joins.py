@@ -100,6 +100,10 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
     def right_col(self) -> str:
         return self._right_col
 
+    @property
+    def alias(self) -> str:
+        return self._alias
+
     @classmethod
     def sort_join_selectors(cls, joins: set[JoinSelector]) -> tuple[JoinSelector]:
         # FIXME [x]: How to sort when needed because it's not necessary at this point. It is for testing purpouse
@@ -128,7 +132,3 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
                 continue
             res.extend(tables)
         return res
-
-    @property
-    def alias(self) -> str:
-        return self._alias
