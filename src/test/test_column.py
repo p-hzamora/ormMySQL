@@ -25,6 +25,12 @@ class TestComparer(unittest.TestCase):
         cond = A.pk == 100
         self.assertIsInstance(cond, Comparer)  # noqa: F821
 
+    def test_raise_ValueError(self):
+        with self.assertRaises(ValueError) as err:
+            Comparer.join_comparers(A.pk == 20)
+        
+        mssg: str = "Excepted 'Comparer' iterable not Comparer"
+        self.assertEqual(err.exception.args[0],mssg)
 
 if __name__ == "__main__":
     unittest.main()
