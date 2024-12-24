@@ -67,6 +67,8 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
 
     @classmethod
     def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True) -> str:
+        if not isinstance(comparers,tp.Iterable):
+            raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
             return comparers[0].query
 
