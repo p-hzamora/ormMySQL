@@ -94,7 +94,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertDictEqual(VERIFICATION.to_dict(), select_query.to_dict())
 
     # TODOM [x]: Add a test for update method once it has been created
-    def test_update_with_properties_as_keys(self):
+    def test_update_with_column_as_keys(self):
         instance = create_instance_of_TestTable(5)
         self.tmodel.insert(instance)
 
@@ -245,7 +245,7 @@ class TestSQLStatements(unittest.TestCase):
         }
         self.assertDictEqual(dicc, select)
 
-    def test_AAAwhere_passing_tuples(self):
+    def test_where_passing_tuples(self):
         ddbb = MySQLRepository(**config_dict)
 
         model = AddressModel(ddbb)
@@ -271,16 +271,6 @@ class TestSQLStatements(unittest.TestCase):
             )
         )
 
-        select = (
-            model.order(lambda x: x.address_id, order_type="ASC")
-            .where(
-                (
-                    Address.address_id >= 40,
-                    Address.address == 0,
-                ),
-            )
-            .select()
-        )
         tuple_: tuple[dict[str, int]] = (
             {"address_address_id": 59, "city_city_id": 49, "country_country_id": 80},
             {"address_address_id": 65, "city_city_id": 56, "country_country_id": 91},
