@@ -22,7 +22,7 @@ class IDecompositionQuery[T: TableType, *Ts](IDecompositionQuery_one_arg[T], IQu
     @property
     @abc.abstractmethod
     def tables(self) -> tuple[*Ts]: ...
-    
+
     @property
     @abc.abstractmethod
     def all_clauses(self) -> list[ClauseInfo]: ...
