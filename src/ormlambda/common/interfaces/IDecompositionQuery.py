@@ -4,8 +4,7 @@ import typing as tp
 
 
 if tp.TYPE_CHECKING:
-    from ormlambda.utils.foreign_key import ForeignKey
-    from ormlambda.utils.table_constructor import Table
+    from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 
     # TODOH: Changed to avoid mysql dependency
     from ormlambda.common.abstract_classes.clause_info import ClauseInfo, TableType
@@ -28,16 +27,5 @@ class IDecompositionQuery[T: TableType, *Ts](IDecompositionQuery_one_arg[T], IQu
     @abc.abstractmethod
     def all_clauses(self) -> list[ClauseInfo]: ...
 
-    @property
     @abc.abstractmethod
-    def fk_relationship(self) -> set[tuple[TableType, TableType]]: ...
-
-    @property
-    @abc.abstractmethod
-    def has_foreign_keys(self) -> bool: ...
-
-    @abc.abstractmethod
-    def stringify_foreign_key(self, sep: str = "\n"): ...
-
-    @abc.abstractmethod
-    def _add_fk_relationship[RTable: tp.Type[Table]](self, foreign_key: ForeignKey[T, RTable]) -> None: ...
+    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n"): ...

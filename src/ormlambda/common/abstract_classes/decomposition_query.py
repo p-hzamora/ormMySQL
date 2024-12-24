@@ -152,14 +152,6 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         return self._clauses_group_by_tables
 
     @property
-    def has_foreign_keys(self) -> bool:
-        return len(self._joins) > 0
-
-    @property
-    def fk_relationship(self) -> set[tuple[TableType, TableType]]:
-        return self._joins
-
-    @property
     @abc.abstractmethod
     def query(self) -> str: ...
 
