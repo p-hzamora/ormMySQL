@@ -291,7 +291,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     @clear_list
-    def _build(self, by: JoinType = JoinType.INNER_JOIN) -> str:
+    def _build(self) -> str:
         query_list: list[str] = []
         for x in self.__order__:
             if len(self._query_list) == 0:
@@ -303,13 +303,6 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
             if isinstance(sub_query[0], Where):
                 query_ = self.__build_where_clause(sub_query)
-
-            elif isinstance((select := sub_query[0]), Select):
-                query_: str = ""
-                where_joins = self.__create_necessary_inner_join(by)
-                if where_joins:
-                    select._joins.update(where_joins)
-                query_ = select.query
 
             else:
                 query_ = "\n".join([x.query for x in sub_query])
