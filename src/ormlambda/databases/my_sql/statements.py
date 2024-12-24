@@ -192,11 +192,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def join[*FKTable](self, joins: tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]:
-        for join in joins:
-            alias = join[0]
-            comparer = join[1]
-            # fk_table = get_fk_table(comparer)
-            by = join[2]
+        for alias, comparer, by in joins:
             self._query_list["join"].append(JoinSelector(comparer, by, alias))
         return JoinContext[T, *FKTable, MySQLConnection](self, joins, self._context)
 
