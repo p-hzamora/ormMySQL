@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces.IStatements import WhereTypes
 
 from ormlambda.utils.foreign_key import ForeignKey
-from ormlambda.common.abstract_classes.comparer import Comparer
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
 from .clauses import InsertQuery
@@ -308,10 +307,10 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             query_list.append(query_)
         return "\n".join(query_list)
 
-    def __build_where_clause(self, where_condition: Where) -> str:
+    def __build_where_clause(self, where_condition: list[Where]) -> str:
         if not where_condition:
             return ""
-        return where_condition.query
+        return Where.join_condition(where_condition,restrictive=True)
 
     def __create_necessary_inner_join(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
@@ -320,12 +319,10 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
         for where in self._query_list["where"]:
             where: Where
+            table_set = None
 
             # Always it's gonna be a set of two
             # # FIXME [ ]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-            all_tables_in_where = set([where.left_condition.table, where.right_condition.table]) - set([None])
-            table_set = all_tables_in_where.difference(set(self.models))
-
             if table_set:
                 table = table_set.pop()
                 # FIXME [x]: Refactor to avoid copy and paste the same code of the '_add_fk_relationship' method
