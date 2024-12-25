@@ -9,7 +9,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 from ormlambda.databases.my_sql.clauses.select import Select  # noqa: E402
 from models import Address  # noqa: E402
 
-ADDRESS_1 = Address(200, "Calle Cristo de la victoria", None, None, 1, "28026", "617128992", "Usera", None)
+ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)
 
 
 class TestCondition(unittest.TestCase):

@@ -14,11 +14,11 @@ class Person(Table):
     __table_name__ = "person"
 
     pk_id: Optional[int] = Column(int, is_primary_key=True, is_auto_increment=True)
-    name: str
-    age: int
-    email: str
-    phone: str
-    address: int
+    name: Column[str] = Column(str)
+    age: Column[int] = Column(int)
+    email: Column[str] = Column(str)
+    phone: Column[str] = Column(str)
+    address: Column[str] = Column(str)
 
 
 P1 = Person(None, "Pablo", 25, "pablo@icloud.com", "6XXXXXXXXX", "C/ Madrid N_1, 3B")

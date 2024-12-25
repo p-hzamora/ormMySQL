@@ -18,12 +18,15 @@ import test_errors
 import test_new_context_select
 
 from test_queries import (
+    test_comparer,
+    test_count,
+    test_decomposition_query,
+    test_join_context,
     test_join_selector,
     test_relationship_fk,
     test_select,
     test_table,
-    test_where_condition,
-    test_count,
+    test_where
 )
 
 loader = unittest.TestLoader()
@@ -44,12 +47,15 @@ suite.addTests(
         *loader.loadTestsFromModule(test_table_class),
         *loader.loadTestsFromModule(test_tree_instruction),
         *loader.loadTestsFromModule(test_type_hint),
+        *loader.loadTestsFromModule(test_comparer),
+        *loader.loadTestsFromModule(test_count),
+        *loader.loadTestsFromModule(test_decomposition_query),
+        *loader.loadTestsFromModule(test_join_context),
         *loader.loadTestsFromModule(test_join_selector),
         *loader.loadTestsFromModule(test_relationship_fk),
         *loader.loadTestsFromModule(test_select),
         *loader.loadTestsFromModule(test_table),
-        *loader.loadTestsFromModule(test_where_condition),
-        *loader.loadTestsFromModule(test_count),
+        *loader.loadTestsFromModule(test_where),
         *loader.loadTestsFromModule(test_order),
         *loader.loadTestsFromModule(test_queries_with_different_datatypes),
         *loader.loadTestsFromModule(test_where_statement),
