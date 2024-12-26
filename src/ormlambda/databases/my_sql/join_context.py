@@ -36,8 +36,11 @@ class JoinContext[TParent: Table, *T, TRepo]:
         if error:
             raise error
 
-        for alias, _, _ in self._joins:
-            delattr(self._parent, alias)
+        for attribute, _, _ in self._joins:
+            fk:ForeignKey = getattr(self._parent,attribute)
+            delattr(self._parent, attribute)
+            del self._context._table_context[fk.tright]
+            del self._context._alias_context[fk.alias]
         return None
 
     def __getattr__(self, name: str) -> TParent:
