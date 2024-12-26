@@ -73,10 +73,10 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         ltable = self.left_table
         rtable = self.right_table
 
-        context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context) if self._context else None
+        context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context) if self._context else ClauseInfoContext()
         list_ = [
             self._by.value,  # inner join
-            ClauseInfo[TRight](rtable, alias_table=self.alias, context=self._context).query,
+            ClauseInfo[TRight](rtable, alias_table=self.alias, context=context).query,
             "ON",
             ClauseInfo[TLeft](ltable, column=self.left_col, context=context).query,
             self._compareop,  # =
