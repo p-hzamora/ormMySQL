@@ -20,7 +20,6 @@ from ormlambda.utils.foreign_key import ForeignKey
 from .clause_info_context import ClauseInfoContext
 
 
-
 class ClauseInfo[T: Table](IQuery):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
@@ -47,16 +46,15 @@ class ClauseInfo[T: Table](IQuery):
         self._column: ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
-        self._context: tp.Optional[ClauseInfoContext] = context
+        self._context: tp.Optional[ClauseInfoContext] = context if context else ClauseInfoContext()
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": lambda x: self._column_resolver(x),
             "table": lambda x: self.table.__table_name__,
         }
 
-        if self._context and any([alias_table,alias_clause]):
+        if self._context and any([alias_table, alias_clause]):
             self._context.add_clause_to_context(self)
-
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}: query -> {self.query}"
@@ -210,7 +208,9 @@ class ClauseInfo[T: Table](IQuery):
     def _concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str]) -> str:
         if alias_clause is None:
             return column
-        return f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
+        alias = f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
+        self._context.add_clause_to_context(self)
+        return alias
 
     def _alias_resolver(self, alias: AliasType[ClauseInfo[T]]) -> tp.Optional[str]:
         if alias is None:
