@@ -37,11 +37,11 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
 
     def __init__[LProp, RProp](self, where: Comparer[TLeft, LProp, TRight, RProp], by: JoinType, alias: Optional[str] = "{table}", context: Optional[ClauseInfoContext] = None) -> None:
         self._comparer: Comparer[TLeft, LProp, TRight, RProp] = where
-        self._orig_table: TLeft = where._left_condition.table
-        self._right_table: TRight = where._right_condition.table
+        self._orig_table: TLeft = where.left_condition.table
+        self._right_table: TRight = where.right_condition.table
         self._by: JoinType = by
-        self._left_col: str = where._left_condition._column.column_name
-        self._right_col: str = where._right_condition._column.column_name
+        self._left_col: str = where.left_condition._column.column_name
+        self._right_col: str = where.right_condition._column.column_name
         self._compareop = where._compare
         self._context: Optional[ClauseInfoContext] = context
 

@@ -11,6 +11,8 @@ if tp.TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
     from ormlambda import Table
 
+type CallableContextType = tp.Callable[[], tp.Optional[ClauseInfoContext]]
+
 
 class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
     def __init__(
@@ -18,14 +20,14 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         left_condition: ConditionType[LProp],
         right_condition: ConditionType[RProp],
         compare: ComparerTypes,
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: CallableContextType = lambda: None,
     ) -> None:
-        self._context: tp.Optional[ClauseInfoContext] = context
+        self._context: CallableContextType = context
         self._compare: ComparerTypes = compare
-        self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = self._create_clause_info(left_condition)
-        self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = self._create_clause_info(right_condition)
+        self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = left_condition
+        self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = right_condition
 
-    def set_context(self, context: ClauseInfoContext) -> None:
+    def set_context(self, context: CallableContextType) -> None:
         self._context = context
 
     def __repr__(self) -> str:
@@ -37,17 +39,17 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         if isinstance(cond, Comparer):
             return cond
         if isinstance(cond, Column):
-            return ClauseInfo[type(cond.table)](cond.table, cond, context=self._context)
+            return ClauseInfo[type(cond.table)](cond.table, cond, context=self._context())
         # it a value that's not depend of any Table
-        return ClauseInfo[None](None, cond, context=self._context)
+        return ClauseInfo[None](None, cond, context=self._context())
 
     @property
     def left_condition(self) -> Comparer | ClauseInfo[LTable]:
-        return self._left_condition
+        return self._create_clause_info(self._left_condition)
 
     @property
     def right_condition(self) -> Comparer | ClauseInfo[RTable]:
-        return self._right_condition
+        return self._create_clause_info(self._right_condition)
 
     @property
     def compare(self) -> ComparerTypes:
@@ -55,22 +57,24 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
 
     @property
     def query(self) -> str:
-        return f"{self._left_condition.query} {self._compare} {self._right_condition.query}"
+        return f"{self.left_condition.query} {self._compare} {self.right_condition.query}"
 
-    def __and__(self, other: Comparer) -> Comparer:
+    def __and__(self, other: Comparer, context: CallableContextType = lambda: None) -> Comparer:
         # Customize the behavior of '&'
-        return Comparer(self, other, "AND")
+        return Comparer(self, other, "AND", context=context)
 
-    def __or__(self, other: Comparer) -> Comparer:
+    def __or__(self, other: Comparer, context: CallableContextType = lambda: None) -> Comparer:
         # Customize the behavior of '|'
-        return Comparer(self, other, "OR")
+        return Comparer(self, other, "OR", context=context)
 
     @classmethod
-    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True) -> str:
-        if not isinstance(comparers,tp.Iterable):
+    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: CallableContextType = lambda: None) -> str:
+        if not isinstance(comparers, tp.Iterable):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
-            return comparers[0].query
+            comparer = comparers[0]
+            comparer.set_context(context)
+            return comparer.query
 
         join_method = cls.__or__ if not restrictive else cls.__and__
 
@@ -78,7 +82,7 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         for i in range(len(comparers) - 1):
             if ini_comparer is None:
                 ini_comparer = comparers[i]
-            new_comparer = join_method(ini_comparer, comparers[i + 1])
+            new_comparer = join_method(ini_comparer, comparers[i + 1], context=context)
             ini_comparer = new_comparer
         return new_comparer.query
 
