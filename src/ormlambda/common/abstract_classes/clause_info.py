@@ -7,7 +7,7 @@ from ormlambda import Table
 from ormlambda import Column
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.types import (
-    AsteriskType,
+    ASTERISK,
     TableType,
     ColumnType,
     AliasType,
@@ -19,7 +19,6 @@ from ormlambda.utils.foreign_key import ForeignKey
 
 from .clause_info_context import ClauseInfoContext
 
-ASTERISK: AsteriskType = "*"
 
 
 class ClauseInfo[T: Table](IQuery):

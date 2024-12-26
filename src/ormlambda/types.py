@@ -19,3 +19,5 @@ type ComparerTypes = ComparerType | UnionType | ConditionEnum
 # endregion
 
 type TupleJoinType[T] = tuple[str, T, Comparer[T]]
+
+ASTERISK: AsteriskType = "*"

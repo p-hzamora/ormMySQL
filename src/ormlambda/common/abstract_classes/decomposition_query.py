@@ -12,7 +12,7 @@ from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoCont
 from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.utils.global_checker import GlobalChecker
 
-from ormlambda.types import AliasType, TableType, ColumnType
+from ormlambda.types import AliasType, TableType, ColumnType, ASTERISK
 
 if tp.TYPE_CHECKING:
     from ormlambda.databases.my_sql.clauses.joins import JoinSelector
