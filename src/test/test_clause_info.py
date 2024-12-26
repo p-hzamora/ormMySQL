@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 from types import NoneType
-from typing import Any, Callable, TYPE_CHECKING, Type
+from typing import Any, TYPE_CHECKING, Type
 import unittest
 from parameterized import parameterized
 from shapely import Point

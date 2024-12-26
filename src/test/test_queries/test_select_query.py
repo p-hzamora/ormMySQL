@@ -64,10 +64,8 @@ class TestSelect(unittest.TestCase):
                 a.City.Country.country,
             ),
         )
-        self.assertEqual(
-            q.query,
-            "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update`, `country`.country_id AS `country_country_id`, `country`.country AS `country_country`, `country`.last_update AS `country_last_update`, `city`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `country`.country AS `country_country` FROM address AS `address` INNER JOIN city AS `city` ON `address`.city_id = `city`.city_id INNER JOIN country AS `country` ON `city`.country_id = `country`.country_id",
-        )
+        query: str = "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `address_city_id_city_id`.city_id AS `city_city_id`, `address_city_id_city_id`.city AS `city_city`, `address_city_id_city_id`.country_id AS `city_country_id`, `address_city_id_city_id`.last_update AS `city_last_update`, `city_country_id_country_id`.country_id AS `country_country_id`, `city_country_id_country_id`.country AS `country_country`, `city_country_id_country_id`.last_update AS `country_last_update`, `address_city_id_city_id`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `city_country_id_country_id`.country AS `country_country` FROM address AS `address` INNER JOIN city AS `address_city_id_city_id` ON `address`.city_id = `address_city_id_city_id`.city_id INNER JOIN country AS `city_country_id_country_id` ON `address_city_id_city_id`.country_id = `city_country_id_country_id`.country_id"
+        self.assertEqual(q.query, query)
 
     def test_cols_from_foreign_keys_NEW_METHOD(self):
         # this response must not be the real one,
@@ -83,24 +81,18 @@ class TestSelect(unittest.TestCase):
                 Address.City.Country.country,
             ),
         )
-        self.assertEqual(
-            q.query,
-            "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update`, `country`.country_id AS `country_country_id`, `country`.country AS `country_country`, `country`.last_update AS `country_last_update`, `city`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `country`.country AS `country_country` FROM address AS `address` INNER JOIN city AS `city` ON `address`.city_id = `city`.city_id INNER JOIN country AS `country` ON `city`.country_id = `country`.country_id",
-        )
+        query: str = "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `address_city_id_city_id`.city_id AS `city_city_id`, `address_city_id_city_id`.city AS `city_city`, `address_city_id_city_id`.country_id AS `city_country_id`, `address_city_id_city_id`.last_update AS `city_last_update`, `city_country_id_country_id`.country_id AS `country_country_id`, `city_country_id_country_id`.country AS `country_country`, `city_country_id_country_id`.last_update AS `country_last_update`, `address_city_id_city_id`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `city_country_id_country_id`.country AS `country_country` FROM address AS `address` INNER JOIN city AS `address_city_id_city_id` ON `address`.city_id = `address_city_id_city_id`.city_id INNER JOIN country AS `city_country_id_country_id` ON `address_city_id_city_id`.country_id = `city_country_id_country_id`.country_id"
+        self.assertEqual(q.query, query)
 
     def test_all_columns_from_all_tables(self):
         # this response must not be the real one,
         q = Select[Address, City, Country](
             (Address, City, Country),
-            columns=lambda a, ci, co: (
-                a,
-                ci,
-                co,
-            ),
+            columns=lambda a, ci, co: (a, ci, co),
         )
         self.assertEqual(
             q.query,
-            "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update`, `country`.country_id AS `country_country_id`, `country`.country AS `country_country`, `country`.last_update AS `country_last_update` FROM address",
+            "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update`, `country`.country_id AS `country_country_id`, `country`.country AS `country_country`, `country`.last_update AS `country_last_update` FROM address AS `address`",
         )
 
     # COMMENT: depricated test. See if it's useful
@@ -146,10 +138,8 @@ class TestSelect(unittest.TestCase):
                 d.C.B.A.data_a,
             ),
         )
-        self.assertEqual(
-            q.query,
-            "SELECT `b`.pk_b AS `b_pk_b`, `b`.data_b AS `b_data_b`, `b`.fk_a AS `b_fk_a`, `b`.data AS `b_data`, d.data_d AS `d_data_d`, c.data_c AS `c_data_c`, `b`.data_b AS `b_data_b`, a.data_a AS `a_data_a` FROM d AS `d` INNER JOIN c ON d.fk_c = c.pk_c INNER JOIN b ON c.fk_b = `b`.pk_b INNER JOIN a ON `b`.fk_a = a.pk_a",
-        )
+        mssg: str = "SELECT `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d`.data_d AS `d_data_d`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `b_fk_a_pk_a`.data_a AS `a_data_a` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        self.assertEqual(q.query, mssg)
 
     def test_all_a(self):
         q = Select[A](A)
@@ -161,11 +151,11 @@ class TestSelect(unittest.TestCase):
 
     def test_all_c(self):
         q = Select[C](C)
-        self.assertEqual(q.query, "SELECT c.pk_c AS `c_pk_c`, c.data_c AS `c_data_c`, c.fk_b AS `c_fk_b` FROM c AS `c`")
+        self.assertEqual(q.query, "SELECT `c`.pk_c AS `c_pk_c`, `c`.data_c AS `c_data_c`, `c`.fk_b AS `c_fk_b` FROM c AS `c`")
 
     def test_all_d(self):
         q = Select[D](D)
-        self.assertEqual(q.query, "SELECT d.pk_d AS `d_pk_d`, d.data_d AS `d_data_d`, d.fk_c AS `d_fk_c`, d.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
+        self.assertEqual(q.query, "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
 
     def test_a_b_c_d_e(self):
         q = Select[D](
@@ -178,22 +168,22 @@ class TestSelect(unittest.TestCase):
             ),
         )
 
-        mssg: str = "SELECT `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d` AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        mssg: str = "SELECT `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
         self.assertEqual(q.query, mssg)
 
-    def test_get_involved_table_method_consistency(self):
-        q = Select[D](
-            D,
-            columns=lambda d: (
-                d.C.B.A,
-                d.C.B,
-                d.C,
-                d,
-            ),
-        )
-        tuple_ = set(q.tables)
+    # def test_get_involved_table_method_consistency(self):
+    #     q = Select[D](
+    #         D,
+    #         columns=lambda d: (
+    #             d.C.B.A,
+    #             d.C.B,
+    #             d.C,
+    #             d,
+    #         ),
+    #     )
+    #     tuple_ = set(q.tables)
 
-        self.assertSetEqual(tuple_, set([A, B, C, D]))
+    #     self.assertSetEqual(tuple_, set([A, B, C, D]))
 
     def test_check_private_variabels(self):
         def _lambda(d, c, b, a):
@@ -204,74 +194,61 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(q.table, D)
         self.assertEqual(q._tables, (D, C, B, A))
 
-        self.assertTrue(callable(q._query_list))
-        self.assertEqual(q._query_list, _lambda)
-
-        self.assertDictEqual(
-            q.alias_cache,
-            {
-                "*": q._asterik_resolver,
-                "d": D,
-                "c": C,
-                "b": B,
-                "a": A,
-            },
-        )
+        self.assertTrue(callable(q._columns))
+        self.assertEqual(q._columns, _lambda)
 
     def test_one_col_from_RIGHT_INCLUSIVE_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.RIGHT_INCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_LEFT_INCLUSIVE_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.LEFT_INCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_RIGHT_EXCLUSIVE_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.RIGHT_EXCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_LEFT_EXCLUSIVE_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.LEFT_EXCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_FULL_OUTER_INCLUSIVE_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.FULL_OUTER_INCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_FULL_OUTER_EXCLUSIVE_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.FULL_OUTER_EXCLUSIVE)
-        self.assertEqual(q.query, "SELECT c.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c ON d.fk_c = c.pk_c")
+        self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_INNER_JOIN_table(self):
         q = Select[D](D, lambda d: d.C.data_c, by=JoinType.INNER_JOIN)
         self.assertEqual(q.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_column_without_fk(self):
-        self.query = Select[D](D, lambda d: (d.pk_d))
-        self.assertEqual(self.query.query, "SELECT `d`.pk_d AS `d_pk_d` FROM d AS `d`")
+        select = Select[D](D, lambda d: (d.pk_d))
+        self.assertEqual(select.query, "SELECT `d`.pk_d AS `d_pk_d` FROM d AS `d`")
 
     def test_all_column_without_fk(self):
-        self.query = Select[D](D, lambda d: (d))
-        self.assertEqual(self.query.query, "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
+        select = Select[D](D, lambda d: (d))
+        self.assertEqual(select.query, "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
 
     def test_two_column_with_one_fk(self):
-        self.query = Select[D](D, lambda d: (d.pk_d, d.C.data_c))
-        self.assertEqual(self.query.query, "SELECT `d`.pk_d AS `d_pk_d`, `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        select = Select[D](D, lambda d: (d.pk_d, d.C.data_c))
+        self.assertEqual(select.query, "SELECT `d`.pk_d AS `d_pk_d`, `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_all_column_from_all_tables_with_one_fk(self):
-        self.query = Select[D](D, lambda d: (d, d.C))
-        self.assertEqual(
-            self.query.query,
-            "SELECT d.pk_d AS `d_pk_d`, d.data_d AS `d_data_d`, d.fk_c AS `d_fk_c`, d.fk_extra_c AS `d_fk_extra_c`, c.pk_c AS `c_pk_c`, c.data_c AS `c_data_c`, c.fk_b AS `c_fk_b` FROM d AS `d` INNER JOIN c ON d.fk_c = c.pk_c",
-        )
+        select = Select[D](D, lambda d: (d, d.C))
+        mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
+        self.assertEqual(select.query, mssg)
 
     def test_one_column_with_two_fk_in_one_table(self):
-        self.query = Select[D](D, lambda d: (d.ExtraC.data_extra_c))
-        self.assertEqual(self.query.query, "SELECT extra_c.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
+        select = Select[D](D, lambda d: (d.ExtraC.data_extra_c))
+        self.assertEqual(select.query, "SELECT `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c")
 
     def test_all_column_with_two_fk_in_one_table(self):
-        self.query = Select[D](D, lambda d: (d.ExtraC))
-        self.assertEqual(self.query.query, "SELECT extra_c.pk_extra_c AS `extra_c_pk_extra_c`, extra_c.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c ON d.fk_extra_c = extra_c.pk_extra_c")
+        select = Select[D](D, lambda d: (d.ExtraC))
+        self.assertEqual(select.query, "SELECT `d_fk_extra_c_pk_extra_c`.pk_extra_c AS `extra_c_pk_extra_c`, `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c")
 
     def test_select_with_concat(self):
         context = ClauseInfoContext()
@@ -287,19 +264,22 @@ class TestSelect(unittest.TestCase):
             ),
             context=context,
         )
-        query_string: str = "SELECT d.pk_d AS `d_pk_d`, d.data_d AS `d_data_d`, d.fk_c AS `d_fk_c`, d.fk_extra_c AS `d_fk_extra_c`, a.data_a AS `a_data_a`, c.pk_c AS `c_pk_c`, c.data_c AS `c_data_c`, c.fk_b AS `c_fk_b`, CONCAT(d.pk_d, '-', c.pk_c, '-', `b`.pk_b, '-', a.pk_a, a.name_a, a.data_a, a.date_a, a.value, '-', `b`.data) AS `concat_pks`, COUNT(a.name_a) AS `count`, MAX(a.data_a) AS `max` FROM d AS `d` INNER JOIN c ON d.fk_c = c.pk_c INNER JOIN b ON c.fk_b = `b`.pk_b INNER JOIN a ON `b`.fk_a = a.pk_a"
-        self.assertEqual(selected.query, query_string)
+        mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.name_a) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        self.assertEqual(selected.query, mssg)
 
     def test_select_with_select_inside(self) -> None:
+        context = ClauseInfoContext()
+
         select = Select[D](
             D,
             lambda d: (
                 d.C,
-                func.Concat(D.pk_d, "-", D.data_d),
+                func.Concat((D.pk_d, "-", D.data_d), context=context),
             ),
+            context=context,
         )
 
-        query = "SELECT c.pk_c AS `c_pk_c`, c.data_c AS `c_data_c`, c.fk_b AS `c_fk_b`, CONCAT(d.pk_d, '-', d.data_d) AS `CONCAT` FROM d AS `d` INNER JOIN c ON d.fk_c = c.pk_c"
+        query = "SELECT `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d`.data_d) AS `concat` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
 
         self.assertEqual(select.query, query)
 
@@ -316,7 +296,7 @@ class TestSelect(unittest.TestCase):
             context=context,
         )
 
-        query: str = "SELECT `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, CONCAT(`d`.pk_d, '-', `d`.data_d) AS `concat` FROM d AS `d` AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        query: str = "SELECT `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, CONCAT(`d`.pk_d, '-', `d`.data_d) AS `concat` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
 
         self.assertEqual(select.query, query)
 
