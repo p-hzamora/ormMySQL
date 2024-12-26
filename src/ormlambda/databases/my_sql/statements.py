@@ -317,5 +317,5 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         joins = set()
         for _ in range(len(ForeignKey.stored_calls)):
             fk = ForeignKey.stored_calls.pop()
-            joins.add(JoinSelector(fk.resolved_function(), by, context=self._context, alias=fk.alias))
+            joins.add(JoinSelector(fk.resolved_function(lambda: self._context), by, context=self._context, alias=fk.alias))
         return joins
