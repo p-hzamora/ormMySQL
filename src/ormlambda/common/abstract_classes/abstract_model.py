@@ -19,7 +19,7 @@ ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", 
 
 class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts, TRepo]):
     __slots__ = ("_model", "_repository", "_query_list")
-    __order__: tuple[str, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
+    __order__: tuple[ORDER_QUERIES, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
 
     def __init__(self, model: tuple[T, *Ts], repository: IRepositoryBase[TRepo]) -> None:
         self.__valid_repository(repository)
