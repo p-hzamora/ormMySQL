@@ -11,6 +11,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import IRepositoryBase  # noqa: E402
+from ormlambda.common.enums.join_type import JoinType
 
 from models import (
     TestTable,
@@ -61,8 +62,13 @@ class TestJoinStatement(unittest.TestCase):
         modelA.insert(a_insert)
         modelB.insert(b_insert)
 
-        modelB.select((A, B))
-        pass
+        with modelB.join(
+            [
+                ("A", B.fk_a == A.pk_a, JoinType.LEFT_EXCLUSIVE),
+            ]
+        ) as ctx:
+            select = modelB.where(ctx.A.pk_a >= 3).select_one(modelB.count("*"), flavour=dict)
+        self.assertEqual(select["count"], 6)
 
 
 if __name__ == "__main__":
