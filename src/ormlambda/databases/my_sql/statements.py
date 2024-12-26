@@ -143,10 +143,9 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     def count(
         self,
         selection: Callable[[T], tuple] = lambda x: "*",
-        alias=True,
-        alias_name="count",
+        alias_clause="count",
     ) -> IQuery:
-        return Count[T](self._model, selection, alias=alias, alias_name=alias_name)
+        return Count[T](values=selection, alias_clause=alias_clause, context=self._context)
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
@@ -156,7 +155,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             conditions = conditions(self._model)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
-        self._query_list["where"].append(Where(*conditions))
+        self._query_list["where"].append(Where(*conditions, context=self._context))
         return self
 
     @override
@@ -241,11 +240,13 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         for join in joins:
             self._context._add_table_alias(join.right_table, join.alias)
 
+        wheres = self._query_list.pop("where", None)
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
             by=by,
             joins=joins,
+            wheres=wheres,
             context=self._context,
         )
         self._query_list["select"].append(select)
@@ -297,23 +298,14 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             if len(self._query_list) == 0:
                 break
 
-            sub_query: Optional[list[IQuery]] = self._query_list.pop(x, None)
+            sub_query = self._query_list.pop(x, None)
             if sub_query is None:
                 continue
 
-            if isinstance(sub_query[0], Where):
-                query_ = self.__build_where_clause(sub_query)
-
-            else:
-                query_ = "\n".join([x.query for x in sub_query])
+            query_ = "\n".join([x.query for x in sub_query])
 
             query_list.append(query_)
         return "\n".join(query_list)
-
-    def __build_where_clause(self, where_condition: list[Where]) -> str:
-        if not where_condition:
-            return ""
-        return Where.join_condition(where_condition, restrictive=True)
 
     def extract_joins_from_ForeignKey(self, by: JoinType) -> Optional[set[JoinSelector]]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
