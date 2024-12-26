@@ -44,8 +44,8 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
         # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
         # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
         FROM = "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query
-        WHERE = Where.join_condition(self._wheres, True, self._context) if self._wheres else None
         JOINS = self.stringify_foreign_key(self._joins, " ")
+        WHERE = Where.join_condition(self._wheres, True, self._context) if self._wheres else None
         COLUMNS = ClauseInfo.join_clauses(self._all_clauses, ",")
         SELECT = self.CLAUSE
         select_clauses = [
