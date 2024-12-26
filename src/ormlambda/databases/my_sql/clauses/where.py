@@ -22,7 +22,8 @@ class Where(AggregateFunctionBase):
     @property
     def query(self) -> str:
         if isinstance(self._comparer, tp.Iterable):
-            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=lambda: self._context)
+            context = ClauseInfoContext(table_context=self._context._table_context)
+            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=lambda: context)
         else:
             comparer = self._comparer
         return f"{self.FUNCTION_NAME()} {comparer}"
