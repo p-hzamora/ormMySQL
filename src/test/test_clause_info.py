@@ -141,7 +141,7 @@ class TestClauseInfo(unittest.TestCase):
         )
     )
     def test_max_function(self, fn: Type[AggregateFunctionBase], result: str):
-        ci = fn(A.data_a, context=ClauseInfoContext(table_context={A:'new_table'}))
+        ci = fn(A.data_a, context=ClauseInfoContext(table_context={A: "new_table"}))
         self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
 
     def test_max_function_with_clause_alias(self):
