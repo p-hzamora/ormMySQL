@@ -12,11 +12,9 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
 
-from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
 from .clauses import InsertQuery
-from .clauses import JoinSelector
 from .clauses import LimitQuery
 from .clauses import OffsetQuery
 from .clauses import Order
@@ -236,16 +234,11 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
                 return result
             return () if not result else result[0]
 
-        joins = self.extract_joins_from_ForeignKey(by)
-        for join in joins:
-            self._context._add_table_alias(join.right_table, join.alias)
-
         wheres = self._query_list.pop("where", None)
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
             by=by,
-            joins=joins,
             wheres=wheres,
             context=self._context,
         )
@@ -307,15 +300,4 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             query_list.append(query_)
         return "\n".join(query_list)
 
-    def extract_joins_from_ForeignKey(self, by: JoinType) -> Optional[set[JoinSelector]]:
-        # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
-        if not ForeignKey.stored_calls:
-            return set()
 
-        # Always it's gonna be a set of two
-        # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-        joins = set()
-        for _ in range(len(ForeignKey.stored_calls)):
-            fk = ForeignKey.stored_calls.pop()
-            joins.add(JoinSelector(fk.resolved_function(lambda: self._context), by, context=self._context, alias=fk.alias))
-        return joins

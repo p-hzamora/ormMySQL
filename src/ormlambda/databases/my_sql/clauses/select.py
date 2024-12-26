@@ -8,7 +8,6 @@ from ormlambda.databases.my_sql.clauses.where import Where
 
 if TYPE_CHECKING:
     from ormlambda import Table
-    from .joins import JoinSelector
 
 from ..mysql_decomposition import MySQLDecompositionQuery
 
@@ -21,7 +20,6 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
         tables: tuple[T, *Ts],
         columns: Callable[[T], tuple] = lambda x: x,
         *,
-        joins: Optional[list[JoinSelector]] = None,
         wheres: Optional[list[Where]] = None,
         by: JoinType = JoinType.INNER_JOIN,
         context: Optional[ClauseInfoContext] = None,
@@ -32,7 +30,6 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
             tables,
             columns,
             by=by,
-            joins=joins,
             context=context,
         )
         self._alias_table = alias_table
@@ -42,12 +39,14 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
     @override
     @property
     def query(self) -> str:
+        self.pop_tables_and_create_joins_from_ForeignKey()
+
         select_clauses = [
             self.CLAUSE,
             ClauseInfo.join_clauses(self._all_clauses, ","),
             "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query,
             self.stringify_foreign_key(self._joins, " "),
-            Where.join_condition(self._wheres, True,self._context) if self._wheres else "",
+            Where.join_condition(self._wheres, True, self._context) if self._wheres else None,
         ]
 
-        return " ".join(select_clauses)
+        return " ".join([x for x in select_clauses if x])
