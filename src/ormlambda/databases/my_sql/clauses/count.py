@@ -5,6 +5,7 @@ from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoCont
 import typing as tp
 from ormlambda.types import ColumnType, AliasType
 from ormlambda import Column
+from ormlambda.utils.foreign_key import ForeignKey
 
 
 class Count[*Ts](AggregateFunctionBase):
@@ -25,6 +26,8 @@ class Count[*Ts](AggregateFunctionBase):
         for value in values:
             if isinstance(value, Column):
                 all_clauses.append(ClauseInfo(value.table, value, context=context))
+            elif isinstance(value, ForeignKey):
+                all_clauses.append(ClauseInfo(table=None, column="*"))
             else:
                 all_clauses.append(ClauseInfo(table=None, column=value, context=context))
 
