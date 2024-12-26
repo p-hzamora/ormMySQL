@@ -26,6 +26,8 @@ class MySQLDecompositionQuery[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, 
             context=context,
         )
 
-    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> str:
+    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> tp.Optional[str]:
+        if not joins:
+            return None
         sorted_joins = JoinSelector.sort_join_selectors(joins)
         return f"{sep}".join([join.query for join in sorted_joins])
