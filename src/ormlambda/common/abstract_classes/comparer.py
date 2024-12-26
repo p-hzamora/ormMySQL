@@ -39,9 +39,9 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         if isinstance(cond, Comparer):
             return cond
         if isinstance(cond, Column):
-            return ClauseInfo[type(cond.table)](cond.table, cond, context=self._context())
+            return ClauseInfo[type(cond.table)](cond.table, cond,alias_clause=None, context=self._context())
         # it a value that's not depend of any Table
-        return ClauseInfo[None](None, cond, context=self._context())
+        return ClauseInfo[None](None, cond,alias_clause=None, context=self._context())
 
     @property
     def left_condition(self) -> Comparer | ClauseInfo[LTable]:
