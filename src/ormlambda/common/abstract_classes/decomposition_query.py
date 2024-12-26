@@ -13,6 +13,7 @@ from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.utils.global_checker import GlobalChecker
 
 from ormlambda.types import AliasType, TableType, ColumnType, ASTERISK
+from ormlambda.common.errors import UnmatchedLambdaParameterError
 
 if tp.TYPE_CHECKING:
     from ormlambda.databases.my_sql.clauses.joins import JoinSelector
@@ -89,7 +90,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple[*Ts]], *, by: JoinType = JoinType.INNER_JOIN, joins: tp.Optional[set[IJoinSelector]] = None, context: ClauseContextType = None) -> None:
         self._tables: TableTupleType = tables if isinstance(tables, tp.Iterable) else (tables,)
 
-        self._query_list: tp.Callable[[T], tuple] = columns
+        self._columns: tp.Callable[[T], tuple] = columns
         self._by: JoinType = by
         self._joins: set[IJoinSelector] = set()
         self._clauses_group_by_tables: dict[TableType, list[ClauseInfo[T]]] = defaultdict(list)
@@ -97,19 +98,28 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self._alias_cache: dict[str, AliasType] = {}
         self._context: ClauseInfoContext = context if context else ClauseInfoContext()
 
-        self.__clauses_list_generetor(columns)
+        self.__clauses_list_generetor()
 
     def __getitem__(self, key: str) -> ClauseInfo:
         for clause in self._all_clauses:
             if clause.alias_clause == key:
                 return clause
 
-    def __clauses_list_generetor(self, function: tuple | tp.Callable[[T], tp.Any]) -> None:
-        resolved_function = function if not GlobalChecker.is_lambda_function(function) else function(self.table)
+    def __clauses_list_generetor(self) -> None:
+        if not GlobalChecker.is_lambda_function(self._columns):
+            resolved_function = self._columns
+        else:
+            try:
+                resolved_function = self._columns(*self.tables)
+            except TypeError:
+                raise UnmatchedLambdaParameterError(len(self.tables), self._columns)
 
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
-            resolved_function = (resolved_function,)
+            if isinstance(resolved_function,str) and resolved_function == ASTERISK:
+                resolved_function = (self.table,)
+            else:
+                resolved_function = (resolved_function,)
 
         for data in resolved_function:
             values: list[ClauseInfo] = self.__convert_into_ClauseInfo(data)
@@ -163,7 +173,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
     @property
     def columns[*Ts](self) -> tp.Callable[[T], tuple[*Ts]]:
-        return self._query_list
+        return self._columns
 
     @property
     def all_clauses(self) -> list[ClauseInfo[T]]:
