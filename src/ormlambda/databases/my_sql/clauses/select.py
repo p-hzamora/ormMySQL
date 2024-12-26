@@ -41,12 +41,19 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
     def query(self) -> str:
         self.pop_tables_and_create_joins_from_ForeignKey()
 
+        # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
+        # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
+        FROM = "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query
+        WHERE = Where.join_condition(self._wheres, True, self._context) if self._wheres else None
+        JOINS = self.stringify_foreign_key(self._joins, " ")
+        COLUMNS = ClauseInfo.join_clauses(self._all_clauses, ",")
+        SELECT = self.CLAUSE
         select_clauses = [
-            self.CLAUSE,
-            ClauseInfo.join_clauses(self._all_clauses, ","),
-            "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query,
-            self.stringify_foreign_key(self._joins, " "),
-            Where.join_condition(self._wheres, True, self._context) if self._wheres else None,
+            SELECT,
+            COLUMNS,
+            FROM,
+            JOINS,
+            WHERE,
         ]
 
         return " ".join([x for x in select_clauses if x])
