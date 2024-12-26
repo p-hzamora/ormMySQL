@@ -10,13 +10,25 @@ from shapely import Point
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from models import Address, City, TableType  # noqa: E402
+from ormlambda.common.abstract_classes.comparer import Comparer  # noqa: E402
+from models import Address, City, TableType, A  # noqa: E402
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains  # noqa: E402
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)
 
 
-class TestCondition(unittest.TestCase):
+class TestComparer(unittest.TestCase):
+    def test_comparer(self) -> None:
+        cond = A.pk_a == 100
+        self.assertIsInstance(cond, Comparer)  # noqa: F821
+
+    def test_raise_ValueError(self):
+        with self.assertRaises(ValueError) as err:
+            Comparer.join_comparers(A.pk_a == 20)
+
+        mssg: str = "Excepted 'Comparer' iterable not Comparer"
+        self.assertEqual(err.exception.args[0], mssg)
+
     def test_simple_condition(self):
         comparer = City.last_update >= datetime(2024, 1, 16)
         mssg: str = "city.last_update >= '2024-01-16 00:00:00'"
@@ -37,7 +49,7 @@ class TestCondition(unittest.TestCase):
     #     mssg: str = "address.city_id in (1, 2, 3, 4, 5, 6, 7)"
     #     self.assertEqual(comparer.query, mssg)
 
-    def test_AAretrieve_string_from_class_property_using_variable(self):
+    def test_retrieve_string_from_class_property_using_variable(self):
         VAR = 10
         compare = Address.city_id == VAR
         self.assertEqual(compare.query, "address.city_id = 10")
@@ -46,12 +58,12 @@ class TestCondition(unittest.TestCase):
         [
             ("address_id", 200),
             ("address", "Calle Cristo de la victoria"),
-            ("address2", None),
+            ("address2", "Usera"),
             ("district", None),
             ("city_id", 1),
             ("postal_code", "28026"),
             ("phone", "617128992"),
-            ("location", "Usera"),
+            ("location", None),
             ("last_update", None),
         ]
     )

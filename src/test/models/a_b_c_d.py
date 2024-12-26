@@ -12,11 +12,11 @@ from ormlambda import Table, Column, ForeignKey  # noqa: E402
 
 class A(Table):
     __table_name__ = "a"
-    pk_a: int = Column(int, is_primary_key=True)
-    name_a: str
-    data_a: str
-    date_a: datetime
-    value: str
+    pk_a: Column[int] = Column(int, is_primary_key=True)
+    name_a: Column[str] = Column(str)
+    data_a: Column[str] = Column(str)
+    date_a: Column[datetime] = Column(datetime)
+    value: Column[str] = Column(str)
 
 
 class B(Table):

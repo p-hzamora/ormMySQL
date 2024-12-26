@@ -28,8 +28,8 @@ class TestSelect(unittest.TestCase):
                 d,
                 d.C.B.A.data_a,
                 d.C,
-                # Count(D.C.B.A.name_a, context=context),
-                # func.Max(D.C.B.A.data_a, context=context),
+                Count(D.C.B.A.name_a, context=context),
+                func.Max(D.C.B.A.data_a, context=context),
             ),
             context=context,
         )

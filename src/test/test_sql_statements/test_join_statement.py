@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 import unittest
 import sys
 from pathlib import Path
@@ -10,30 +11,37 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import IRepositoryBase, Table, Column, BaseModel, JoinType  # noqa: E402
+from models import (  # noqa: E402
+    TestTable,
+    ModelAB,
+    A,
+    B,
+)
 
 
 DDBBNAME = "__test_ddbb__"
+TABLETEST = TestTable.__table_name__
 
 
 class JoinA(Table):
     __table_name__ = "a"
     pk_a: int = Column(int, is_primary_key=True, is_auto_increment=True)
-    data_a: str
+    data_a: Column[str] = Column(str)
 
 
 class JoinB(Table):
     __table_name__ = "b"
     pk_b: int = Column(int, is_primary_key=True, is_auto_increment=True)
-    data_b: str
-    fk_a: int
-    fk_c: int
+    data_b: Column[str] = Column(str)
+    fk_a: Column[int] = Column(int)
+    fk_c: Column[int] = Column(int)
 
 
 class JoinC(Table):
     __table_name__ = "c"
     pk_c: int = Column(int, is_primary_key=True, is_auto_increment=True)
-    data_c: str
-    fk_b: int
+    data_c: Column[str] = Column(str)
+    fk_b: Column[int] = Column(int)
 
 
 class JoinAModel(BaseModel[JoinA]):
@@ -51,7 +59,7 @@ class JoinCModel(BaseModel[JoinC]):
         return super().__new__(cls, JoinC, repository)
 
 
-class TestJoinQueries(unittest.TestCase):
+class TestJoinStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
@@ -247,15 +255,38 @@ class TestJoinQueries(unittest.TestCase):
     #     self.assertTupleEqual(tuple(keys), ("data_b_de b", "fk_a de b"))
     #     self.assertEqual(mssg, self.model_b.query)
 
-    def test_proof(self):
-        with self.model_b.join(
+    def test_join(self):
+        """
+        New way to use join with 'with' clause
+        """
+        ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        ddbb.create_database(DDBBNAME, "replace")
+        ddbb.database = DDBBNAME
+
+        modelA = ModelAB(A, ddbb)
+        modelB = ModelAB(B, ddbb)
+
+        a_insert = [A(x, "a", "data_a", datetime.today(), f"pk_with_value_{x}") for x in range(1, 6)]
+        b_insert = [
+            *[B(None, "data_b", 1, "pk_b_with_data_1") for x in range(20)],
+            *[B(None, "data_b", 2, "pk_b_with_data_2") for x in range(10)],
+            *[B(None, "data_b", 3, "pk_b_with_data_3") for x in range(5)],
+            B(None, "data_b", 4, "pk_b_with_data_4"),
+        ]
+
+        modelA.create_table()
+        modelB.create_table()
+        modelA.insert(a_insert)
+        modelB.insert(b_insert)
+
+        with modelB.join(
             [
-                ["A1", JoinB.fk_a == JoinA.pk_a, JoinType.LEFT_EXCLUSIVE],
+                ("A", B.fk_a == A.pk_a, JoinType.LEFT_EXCLUSIVE),
             ]
         ) as ctx:
-            self.model_b.select((ctx.A1.pk_a))
-
-        pass
+            select = modelB.where(ctx.A.pk_a >= 3).select_one(modelB.count("*"), flavour=dict)
+        self.assertEqual(select["count"], 6)
+        ddbb.drop_database(DDBBNAME)
 
 
 if __name__ == "__main__":
