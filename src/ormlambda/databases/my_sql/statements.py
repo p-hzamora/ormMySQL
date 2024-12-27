@@ -299,5 +299,3 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
             query_list.append(query_)
         return "\n".join(query_list)
-
-

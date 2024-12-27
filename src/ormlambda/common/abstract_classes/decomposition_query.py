@@ -116,7 +116,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
-            if isinstance(resolved_function,str) and resolved_function == ASTERISK:
+            if isinstance(resolved_function, str) and resolved_function == ASTERISK:
                 resolved_function = (self.table,)
             else:
                 resolved_function = (resolved_function,)

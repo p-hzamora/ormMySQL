@@ -5,7 +5,6 @@ from abc import abstractmethod, ABC
 import enum
 
 
-
 from .IRepositoryBase import IRepositoryBase
 from ormlambda.common.enums import JoinType
 
@@ -15,7 +14,6 @@ if TYPE_CHECKING:
     from .IAggregate import IAggregate
     from ormlambda.types import TupleJoinType
     from ormlambda.databases.my_sql.join_context import JoinContext
-    
 
 
 class OrderType(enum.Enum):
@@ -239,8 +237,7 @@ class IStatements[T: Table, *Ts](ABC):
     #     join_type: Optional[JoinType] = ...,
     # ) -> IStatements[T, *FKTables]: ...
 
-    def join[FKTable](self, joins: TupleJoinType[FKTable]| tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]: ...
-
+    def join[FKTable](self, joins: TupleJoinType[FKTable] | tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]: ...
 
     # endregion
     # region select

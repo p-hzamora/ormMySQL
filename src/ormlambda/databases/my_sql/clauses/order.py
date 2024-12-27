@@ -47,7 +47,7 @@ class Order(AggregateFunctionBase):
     def query(self) -> str:
         string_columns: list[str] = []
         columns = self.unresolved_column
-        
+
         # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
         if not isinstance(columns, tp.Iterable):
             columns = (columns,)

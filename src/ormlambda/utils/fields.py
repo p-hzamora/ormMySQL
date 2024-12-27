@@ -52,7 +52,7 @@ def get_fields[T, TProp](cls: tp.Type[T]) -> tp.Iterable[Field]:
 
         default: Column = getattr(cls, name, MISSING(field_type))
         Column.__set_name__(default, cls, name)
-        
+
         fields.append(Field[TProp](name, field_type, default))
 
         # Update __annotations__ to create Columns

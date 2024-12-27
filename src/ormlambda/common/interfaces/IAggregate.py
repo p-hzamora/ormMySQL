@@ -8,4 +8,3 @@ class IAggregate(IQuery):
     @classmethod
     @abc.abstractmethod
     def FUNCTION_NAME(cls) -> str: ...
-

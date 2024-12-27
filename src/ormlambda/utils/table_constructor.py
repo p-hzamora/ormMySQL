@@ -193,8 +193,9 @@ class Table(metaclass=TableMeta):
 
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:
-        ''' Work in progress'''
+        """Work in progress"""
         return
+
         # TODOL: Dive into new way to return dependent tables
         def get_involved_tables(graph: dict[Table, list[Table]], table_name: str) -> None:
             """

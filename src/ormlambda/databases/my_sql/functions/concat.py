@@ -35,5 +35,4 @@ class Concat[*Ts](AggregateFunctionBase):
             new_clause = clause
             new_clause.alias_clause = None
             columns.append(new_clause)
-        return self._concat_alias_and_column( f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})",self._alias_clause)
-
+        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})", self._alias_clause)

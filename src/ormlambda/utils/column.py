@@ -59,7 +59,7 @@ class Column[TProp]:
 
     def __set__(self, obj, value):
         if value is not None:
-            if not isinstance(value,self.dtype):
+            if not isinstance(value, self.dtype):
                 raise ValueError(f"The '{self.column_name}' Column from '{self.table.__table_name__}' table expected '{str(self.dtype)}' type. You passed '{type(value).__name__}' type")
         setattr(obj, self.__private_name, value)
 
@@ -106,8 +106,10 @@ class Column[TProp]:
 
     def regex[LProp, RProp](self, pattern: str) -> Regex[LProp, RProp]:
         from ormlambda.common.abstract_classes.comparer import Regex
+
         return Regex(self, pattern)
 
     def like[LProp, RProp](self, pattern: str) -> Like[LProp, RProp]:
         from ormlambda.common.abstract_classes.comparer import Like
+
         return Like(self, pattern)

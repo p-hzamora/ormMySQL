@@ -44,10 +44,10 @@ class TestJoinSelector(unittest.TestCase):
     #         by=JoinType.RIGHT_EXCLUSIVE,
     #     )
 
-        # query_parser = join.query
-        # query = "RIGHT JOIN country ON `city`.country_id = `country`.country_id"
+    # query_parser = join.query
+    # query = "RIGHT JOIN country ON `city`.country_id = `country`.country_id"
 
-        # self.assertEqual(query, query_parser)
+    # self.assertEqual(query, query_parser)
 
     def test_left_join(self):
         join = JoinSelector[City, Country](

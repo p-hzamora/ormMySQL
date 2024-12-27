@@ -40,7 +40,7 @@ class TestSQLMapping(unittest.TestCase):
         with self.assertRaises(ValueError) as error:
             Person(id="should be pass 'int'")
         mssg: str = "The 'id' Column from 'person' table expected '<class 'int'>' type. You passed 'str' type"
-        self.assertEqual(error.exception.__str__(),mssg)
+        self.assertEqual(error.exception.__str__(), mssg)
 
 
 if "__main__" == __name__:
