@@ -9,7 +9,7 @@ from ormlambda.databases.my_sql.clauses.where import Where
 if TYPE_CHECKING:
     from ormlambda import Table
 
-from ..mysql_decomposition import MySQLDecompositionQuery
+from ormlambda.databases.my_sql.mysql_decomposition import MySQLDecompositionQuery
 
 
 class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
