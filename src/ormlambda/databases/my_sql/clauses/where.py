@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as tp
 from ormlambda.common.abstract_classes.comparer import Comparer
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext,ClauseContextType
 
 
 class Where(AggregateFunctionBase):
@@ -10,10 +10,10 @@ class Where(AggregateFunctionBase):
     The purpose of this class is to create 'WHERE' condition queries properly.
     """
 
-    def __init__(self, *comparer: Comparer, restrictive: bool = True, context: tp.Optional[ClauseInfoContext] = None) -> None:
+    def __init__(self, *comparer: Comparer, restrictive: bool = True, context: ClauseContextType = None) -> None:
         self._comparer: tuple[Comparer] = comparer
         self._restrictive: bool = restrictive
-        self._context: tp.Optional[ClauseInfoContext] = context
+        self._context: ClauseContextType = context
 
     @staticmethod
     def FUNCTION_NAME() -> str:

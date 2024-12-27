@@ -17,7 +17,7 @@ from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.utils.foreign_key import ForeignKey
 
 
-from .clause_info_context import ClauseInfoContext
+from .clause_info_context import ClauseInfoContext, ClauseContextType
 
 
 class ClauseInfo[T: Table](IQuery):
@@ -32,7 +32,7 @@ class ClauseInfo[T: Table](IQuery):
     @tp.overload
     def __init__(self, table: TableType[T], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
     @tp.overload
-    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], context: ClauseInfoContext): ...
+    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], context: ClauseContextType): ...
 
     def __init__[TProp](
         self,
@@ -40,13 +40,13 @@ class ClauseInfo[T: Table](IQuery):
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ):
         self._table: TableType[T] = table
         self._column: ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
-        self._context: tp.Optional[ClauseInfoContext] = context if context else ClauseInfoContext()
+        self._context: ClauseContextType = context if context else ClauseInfoContext()
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": lambda x: self._column_resolver(x),
@@ -98,7 +98,7 @@ class ClauseInfo[T: Table](IQuery):
         return self._column
 
     @property
-    def context(self) -> tp.Optional[ClauseInfoContext]:
+    def context(self) -> ClauseContextType:
         return self._context
 
     @property
@@ -245,7 +245,7 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         self,
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[None]]] = None,
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ):
         super().__init__(
             table=Table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
@@ -269,7 +269,7 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", self.alias_clause)
 
     @staticmethod
-    def _convert_into_clauseInfo[TProp](columns: ClauseInfo | ColumnType[TProp], context: ClauseInfoContext) -> list[ClauseInfo]:
+    def _convert_into_clauseInfo[TProp](columns: ClauseInfo | ColumnType[TProp], context: ClauseContextType) -> list[ClauseInfo]:
         type ClusterType = ColumnType | str | ForeignKey
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
             Column: lambda column: ClauseInfo(column.table, column, context=context),

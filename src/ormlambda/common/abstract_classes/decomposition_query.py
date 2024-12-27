@@ -8,7 +8,7 @@ from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustom
 from ormlambda import JoinType
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
 from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.utils.global_checker import GlobalChecker
 
@@ -26,8 +26,6 @@ type ValueType = tp.Union[
     str,
     ICustomAlias,
 ]
-
-type ClauseContextType = tp.Optional[ClauseInfoContext]
 
 
 class ClauseInfoConverter[T, TProp](abc.ABC):
@@ -96,7 +94,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self._clauses_group_by_tables: dict[TableType, list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
         self._alias_cache: dict[str, AliasType] = {}
-        self._context: ClauseInfoContext = context if context else ClauseInfoContext()
+        self._context: ClauseContextType = context if context else ClauseInfoContext()
 
         self.__clauses_list_generetor()
 

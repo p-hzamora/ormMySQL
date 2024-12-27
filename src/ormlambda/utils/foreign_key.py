@@ -7,7 +7,7 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.comparer import Comparer
     from ormlambda import Table
-    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
 
 
 class ForeignKey[TLeft: Table, TRight: Table](IQuery):
@@ -103,7 +103,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
                 clauses.append(attr.query)
         return clauses
 
-    def resolved_function[LProp: Any, RProp: Any](self, context: Optional[ClauseInfoContext] = None) -> Comparer[LProp, RProp]:
+    def resolved_function[LProp: Any, RProp: Any](self, context: ClauseContextType = None) -> Comparer[LProp, RProp]:
         """ """
         if self._comparer is not None:
             return self._comparer

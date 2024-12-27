@@ -2,7 +2,8 @@ from __future__ import annotations
 from typing import override, Type, Callable, TYPE_CHECKING, Optional
 
 from ormlambda.common.enums.join_type import JoinType
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
 from ormlambda.types import AliasType
 from ormlambda.databases.my_sql.clauses.where import Where
 
@@ -22,7 +23,7 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts]):
         *,
         wheres: Optional[list[Where]] = None,
         by: JoinType = JoinType.INNER_JOIN,
-        context: Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
         alias_table: AliasType[ClauseInfo] = "{table}",
     ) -> None:
         context = context if context else ClauseInfoContext()

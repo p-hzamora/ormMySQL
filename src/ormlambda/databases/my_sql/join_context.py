@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Iterable, TYPE_CHECKING, Optional
+from typing import Any, Iterable, TYPE_CHECKING
 
 from ormlambda import ForeignKey
 from ormlambda.common.abstract_classes.comparer import Comparer
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.common.interfaces import IStatements_two_generic
-    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
     from ormlambda.common.enums.join_type import JoinType
 
 
@@ -17,11 +17,11 @@ type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[str, Comp
 
 
 class JoinContext[TParent: Table, *T, TRepo]:
-    def __init__(self, statements: IStatements_two_generic[TParent, *T, TRepo], joins: tuple[*T], context: Optional[ClauseInfoContext]) -> None:
+    def __init__(self, statements: IStatements_two_generic[TParent, *T, TRepo], joins: tuple[*T], context: ClauseContextType) -> None:
         self._statements = statements
         self._parent: TParent = statements.model
         self._joins: Iterable[tuple[str, Comparer, JoinType]] = joins
-        self._context: Optional[ClauseInfoContext] = context
+        self._context: ClauseContextType = context
 
     def __enter__(self) -> IStatements_two_generic[TParent, *T, TRepo]:
         for alias, comparer, by in self._joins:

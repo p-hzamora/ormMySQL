@@ -1,7 +1,6 @@
-import typing as tp
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
 from ormlambda.types import ColumnType, AliasType
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
 
 
 class ST_AsText(AggregateFunctionBase):
@@ -20,7 +19,7 @@ class ST_AsText(AggregateFunctionBase):
         point: ColumnType[TProp],
         alias_table: AliasType[ColumnType[TProp]] = None,
         alias_clause: AliasType[ColumnType[TProp]] = None,
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ) -> None:
         point_column: ClauseInfo[T] = ClauseInfo[T](point.table, point, alias_table=alias_table, context=context)
         super().__init__(

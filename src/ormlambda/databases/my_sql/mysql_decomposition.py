@@ -7,7 +7,7 @@ from .clauses import JoinSelector
 
 if tp.TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
 
 
 class MySQLDecompositionQuery[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, *Ts]):
@@ -17,7 +17,7 @@ class MySQLDecompositionQuery[T: tp.Type[Table], *Ts](DecompositionQueryBase[T, 
         columns: tp.Callable[[T], tuple[*Ts]],
         *,
         by: JoinType = JoinType.INNER_JOIN,
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ) -> None:
         super().__init__(
             tables=tables,

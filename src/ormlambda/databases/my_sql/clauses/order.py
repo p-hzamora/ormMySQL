@@ -1,8 +1,7 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
 from ormlambda.types import ColumnType
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
 
@@ -18,7 +17,7 @@ class Order(AggregateFunctionBase):
         self,
         column: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
         order_type: tp.Iterable[OrderType],
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ):
         super().__init__(
             column=column,

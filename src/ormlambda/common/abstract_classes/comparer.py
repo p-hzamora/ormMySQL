@@ -8,10 +8,10 @@ from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ormlambda import ConditionType as ConditionEnum
 
 if tp.TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
     from ormlambda import Table
 
-type CallableContextType = tp.Callable[[], tp.Optional[ClauseInfoContext]]
+type CallableContextType = tp.Callable[[], ClauseContextType]
 
 
 class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
@@ -92,7 +92,7 @@ class Regex[LProp, RProp](Comparer[None, LProp, None, RProp]):
         self,
         left_condition: ConditionType[LProp],
         right_condition: ConditionType[RProp],
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ):
         super().__init__(left_condition, right_condition, ConditionEnum.REGEXP.value, context)
 
@@ -102,6 +102,6 @@ class Like[LProp, RProp](Comparer[None, LProp, None, RProp]):
         self,
         left_condition: ConditionType[LProp],
         right_condition: ConditionType[RProp],
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ):
         super().__init__(left_condition, right_condition, ConditionEnum.LIKE.value, context)

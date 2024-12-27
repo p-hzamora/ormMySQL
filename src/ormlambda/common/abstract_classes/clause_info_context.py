@@ -23,6 +23,8 @@ type TableAliasKey[T: Table] = T
 
 type AliasKey[T: Table, TProp] = ClauseAliasKey[T, TProp] | TableAliasKey[T]
 
+type ClauseContextType = Optional[ClauseInfoContext]
+
 
 class ClauseInfoContext(IClauseInfo):
     @overload

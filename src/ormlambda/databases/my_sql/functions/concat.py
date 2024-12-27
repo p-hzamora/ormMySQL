@@ -1,5 +1,5 @@
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext,ClauseContextType
 
 
 import typing as tp
@@ -16,7 +16,7 @@ class Concat[*Ts](AggregateFunctionBase):
         self,
         values: ColumnType[Ts] | tuple[ColumnType[Ts], ...],
         alias_clause: AliasType[ColumnType[TProp]] = "concat",
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ) -> None:
         super().__init__(
             column=values,

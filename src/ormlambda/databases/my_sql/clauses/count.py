@@ -1,5 +1,5 @@
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase, ClauseInfo
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
 
 
 import typing as tp
@@ -17,7 +17,7 @@ class Count[*Ts](AggregateFunctionBase):
         self,
         values: ColumnType[Ts] | tuple[ColumnType[Ts], ...],
         alias_clause: AliasType[ColumnType[TProp]] = "count",
-        context: tp.Optional[ClauseInfoContext] = None,
+        context: ClauseContextType = None,
     ) -> None:
         all_clauses: list[ClauseInfo] = []
 
