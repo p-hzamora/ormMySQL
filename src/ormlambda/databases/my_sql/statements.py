@@ -143,6 +143,8 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         selection: Callable[[T], tuple] = lambda x: "*",
         alias_clause="count",
     ) -> IQuery:
+        if GlobalChecker.is_lambda_function(selection):
+            selection = selection(*self.models)
         return Count[T](values=selection, alias_clause=alias_clause, context=self._context)
 
     @override
