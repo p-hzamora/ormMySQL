@@ -54,7 +54,7 @@ class ClauseInfoContext(IClauseInfo):
         return None
 
     def _add_clause_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
-        if not key:
+        if not all([key, alias]):
             return None
 
         self._clause_context[key] = alias
@@ -62,7 +62,7 @@ class ClauseInfoContext(IClauseInfo):
         return None
 
     def _add_table_alias[T: Table, TProp](self, key: AliasKey[T, TProp], alias: str) -> None:
-        if not key:
+        if not all([key, alias]):
             return None
 
         self._table_context[key] = alias
