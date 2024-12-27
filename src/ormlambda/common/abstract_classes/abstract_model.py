@@ -56,9 +56,6 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
 
         return response_sql
 
-    @abc.abstractmethod
-    def _build(sef): ...
-
     @property
     def query(self) -> str:
         return self._query

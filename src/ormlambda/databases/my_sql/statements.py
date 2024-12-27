@@ -284,20 +284,3 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     @override
     def alias(self, column: Callable[[T, *Ts], Any], alias: str) -> IStatements_two_generic[T, *Ts, MySQLConnection]:
         return Alias[T, *Ts](self.models, column, alias_name=alias)
-
-    @override
-    @clear_list
-    def _build(self) -> str:
-        query_list: list[str] = []
-        for x in self.__order__:
-            if len(self._query_list) == 0:
-                break
-
-            sub_query = self._query_list.pop(x, None)
-            if sub_query is None:
-                continue
-
-            query_ = "\n".join([x.query for x in sub_query])
-
-            query_list.append(query_)
-        return "\n".join(query_list)
