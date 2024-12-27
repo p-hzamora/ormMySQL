@@ -7,7 +7,6 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import IRepositoryBase  # noqa: E402
-from ormlambda.common.enums import ConditionType  # noqa: E402
 from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from models.staff import StaffModel, Staff  # noqa: E402
 from models.address import AddressModel, Address  # noqa: E402
