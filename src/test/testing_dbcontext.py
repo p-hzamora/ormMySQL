@@ -10,7 +10,7 @@ from ormlambda import IRepositoryBase  # noqa: E402
 from ormlambda.common.enums import ConditionType  # noqa: E402
 from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from models.staff import StaffModel, Staff  # noqa: E402
-from models.address import AddressModel  # noqa: E402
+from models.address import AddressModel, Address  # noqa: E402
 from models.actor import ActorModel, Actor  # noqa: E402
 from models.store import StoreModel  # noqa: E402
 
@@ -31,7 +31,7 @@ s_model = StaffModel(database)
 
 result = (
     AddressModel(database)
-    .where(lambda x: x.City.Country.country_id == 87)
+    .where(Address.City.Country.country_id == 87)
     .select(
         lambda address: (
             address.city_id,
@@ -42,13 +42,14 @@ result = (
         flavour=tuple,
     )
 )
-res = a_model.where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[aA]")).select(
+res = a_model.where(Address.City.Country.country.regex(r"^[aA]")).select(
     lambda a: (
         a,
         a.City,
         a.City.Country,
     ),
     by=JoinType.INNER_JOIN,
+    flavour=tuple,
 )
 
 
@@ -59,20 +60,20 @@ s_model.repository.create_database(asdf, "replace")
 s_model.repository.drop_database(asdf)
 
 
-staff = s_model.where(lambda x: x.staff_id == 1).select_one()
+staff = s_model.where(Staff.staff_id == 1).select_one()
 staff.staff_id = 100
 s_model.upsert(staff)
 id = s_model.order(lambda x: x.staff_id, order_type="DESC").select_one().staff_id
-new_staff = s_model.where(lambda x: x.staff_id == id, id=id).select_one()
+new_staff = s_model.where(Staff.staff_id == id).select_one()
 new_staff.first_name = "PEPON"
 s_model.upsert(new_staff)
 
-staffs = s_model.where(lambda x: x.staff_id > 2).delete()
+staffs = s_model.where(Staff.staff_id > 2).delete()
 
 
 res_tuple_3 = (
     a_model.order(lambda a: a.address_id, order_type="DESC")
-    .where(lambda x: x.City.Country.country_id == 87)
+    .where(Address.City.Country.country_id == 87)
     .select(
         lambda a: (
             a,
@@ -84,7 +85,7 @@ res_tuple_3 = (
 
 result = (
     a_model.order(lambda a: a.address_id, order_type="DESC")
-    .where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[A]"))
+    .where(Address.City.Country.country_id.regex(r"^[A]"))
     .limit(100)
     .select(
         lambda a: (
@@ -98,9 +99,9 @@ result = (
 )
 
 
-res_one_table_five_results = a_model.where(lambda a: a.address_id <= 5).limit(100).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a,))
-res_one_table_one_result = a_model.where(lambda a: a.address_id == 5).order(lambda a: a.address_id, order_type="DESC").select_one()
-res_one_table_one_result = a_model.where(lambda a: a.address2 == 100).order(lambda a: a.address_id, order_type="DESC").select_one(lambda x: x)
+res_one_table_five_results = a_model.where(Address.address_id <= 5).limit(100).order(lambda a: a.address_id, order_type="DESC").select(lambda a: (a,))
+res_one_table_one_result = a_model.where(Address.address_id == 5).order(lambda a: a.address_id, order_type="DESC").select_one()
+res_one_table_one_result = a_model.where(Address.address2 == 100).order(lambda a: a.address_id, order_type="DESC").select_one(lambda x: x)
 
 
 query = """
