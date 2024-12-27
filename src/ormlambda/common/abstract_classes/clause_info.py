@@ -209,7 +209,6 @@ class ClauseInfo[T: Table](IQuery):
         if alias_clause is None:
             return column
         alias = f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
-        self._context.add_clause_to_context(self)
         return alias
 
     def _alias_resolver(self, alias: AliasType[ClauseInfo[T]]) -> tp.Optional[str]:
