@@ -13,7 +13,7 @@ class Where(AggregateFunctionBase):
     def __init__(self, *comparer: Comparer, restrictive: bool = True, context: ClauseContextType = None) -> None:
         self._comparer: tuple[Comparer] = comparer
         self._restrictive: bool = restrictive
-        self._context: ClauseContextType = context
+        self._context: ClauseContextType = context if context else ClauseInfoContext()
 
     @staticmethod
     def FUNCTION_NAME() -> str:
