@@ -12,7 +12,7 @@ from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoCont
 from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.utils.global_checker import GlobalChecker
 
-from ormlambda.types import AliasType, TableType, ColumnType, ASTERISK
+from ormlambda.types import AliasType, TableType, ColumnType
 from ormlambda.common.errors import UnmatchedLambdaParameterError
 
 if tp.TYPE_CHECKING:
@@ -116,13 +116,10 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
-            if isinstance(resolved_function, str) and resolved_function == ASTERISK:
-                resolved_function = (self.table,)
-            else:
-                resolved_function = (resolved_function,)
+            resolved_function = (self.table,) if ClauseInfo.is_asterisk(resolved_function) else (resolved_function,)
 
         for data in resolved_function:
-            values: list[ClauseInfo] = self.__convert_into_ClauseInfo(data)
+            values = self.__convert_into_ClauseInfo(data)
             self.__add_clause(values)
 
         return None
