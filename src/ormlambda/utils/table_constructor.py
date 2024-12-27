@@ -1,6 +1,6 @@
 from __future__ import annotations
 from decimal import Decimal
-from typing import Any, Optional, Type, dataclass_transform, overload
+from typing import Any, Optional, Type, dataclass_transform
 import base64
 import datetime
 import json
