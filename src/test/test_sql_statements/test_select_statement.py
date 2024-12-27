@@ -64,8 +64,8 @@ class TestJoinQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
-        cls.ddbb.database = DDBBNAME
         cls.ddbb.create_database(DDBBNAME, "replace")
+        cls.ddbb.database = DDBBNAME
 
         cls.model = AModel(cls.ddbb)
         CSimpleModel(cls.ddbb).create_table()
@@ -78,11 +78,11 @@ class TestJoinQueries(unittest.TestCase):
 
     def test_new_select(self):
         self.model.select(AWithMultipleReferencesToB)
-        real_query: str = "SELECT `A`.pk_a AS `A_pk_ a`, `A`.data_a AS `A_data_a`, `A`.fk_b1 AS `A_fk_b1`, `A`.fk_b2 AS `A_fk_b2`, `A`.fk_b3 AS `A_fk_b3` FROM A AS `A`"
+        real_query: str = "SELECT `A`.pk_a AS `A_pk_a`, `A`.data_a AS `A_data_a`, `A`.fk_b1 AS `A_fk_b1`, `A`.fk_b2 AS `A_fk_b2`, `A`.fk_b3 AS `A_fk_b3` FROM A AS `A`"
         self.assertEqual(self.model.query, real_query)
 
     def test_new_select_context(self):
-        select_a = self.model.select(
+        self.model.select(
             lambda a: (
                 a.data_a,
                 a.B_fk_b1.name,
@@ -92,9 +92,7 @@ class TestJoinQueries(unittest.TestCase):
                 a.B_fk_b2.CSimple.name,
             ),
         )
-        real_query: str = "SELECT A.data_a, b1.name as `b1.name`, b2.name as `b2.name`, b3.name as `b3.name` FROM A INNER JOIN B AS `b1` ON A.fk_b1 = b1.pk_b INNER JOIN B AS `b2` ON A.fk_b2 = b2.pk_b INNER JOIN B AS `b3` ON A.fk_b3 = b3.pk_b"
-        self.model.query
-        select_a
+        real_query: str = "SELECT `A`.data_a AS `A_data_a`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `B_fk_c_pk_c`.name AS `C_name`, `B_fk_c_pk_c`.name AS `C_name` FROM A AS `A` INNER JOIN B AS `A_fk_b1_pk_b` ON `A`.fk_b1 = `A_fk_b1_pk_b`.pk_b INNER JOIN B AS `A_fk_b2_pk_b` ON `A`.fk_b2 = `A_fk_b2_pk_b`.pk_b INNER JOIN B AS `A_fk_b3_pk_b` ON `A`.fk_b3 = `A_fk_b3_pk_b`.pk_b INNER JOIN C AS `B_fk_c_pk_c` ON `A_fk_b3_pk_b`.fk_c = `B_fk_c_pk_c`.pk_c"
         self.assertEqual(self.model.query, real_query)
 
 
