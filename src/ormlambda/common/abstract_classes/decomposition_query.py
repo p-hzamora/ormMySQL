@@ -81,20 +81,15 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
     def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple]) -> None: ...
     @tp.overload
-    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], *, by: JoinType = ...) -> None: ...
-    @tp.overload
-    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], *, by: JoinType = ..., joins: tp.Optional[set[IJoinSelector]] = ...) -> None: ...
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], joins: tp.Optional[set[IJoinSelector]] = ...) -> None: ...
 
-    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple[*Ts]], *, by: JoinType = JoinType.INNER_JOIN, joins: tp.Optional[set[IJoinSelector]] = None, context: ClauseContextType = None) -> None:
+    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple[*Ts]], *, context: ClauseContextType = ClauseInfoContext()) -> None:
         self._tables: TableTupleType = tables if isinstance(tables, tp.Iterable) else (tables,)
 
         self._columns: tp.Callable[[T], tuple] = columns
-        self._by: JoinType = by
-        self._joins: set[IJoinSelector] = set()
         self._clauses_group_by_tables: dict[TableType, list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
-        self._alias_cache: dict[str, AliasType] = {}
-        self._context: ClauseContextType = context if context else ClauseInfoContext()
+        self._context: ClauseContextType = context
 
         self.__clauses_list_generetor()
 
@@ -184,20 +179,3 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
     @abc.abstractmethod
     def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> str: ...
-
-    def pop_tables_and_create_joins_from_ForeignKey(self) -> None:
-        from ormlambda.databases.my_sql.clauses.joins import JoinSelector
-
-        # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
-        if not ForeignKey.stored_calls:
-            return None
-
-        # Always it's gonna be a set of two
-        # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-        for _ in range(len(ForeignKey.stored_calls)):
-            fk = ForeignKey.stored_calls.pop()
-            join = JoinSelector(fk.resolved_function(lambda: self._context), self._by, context=self._context, alias=fk.alias)
-            self._joins.add(join)
-            self._context._add_table_alias(join.right_table, join.alias)
-
-        return None
