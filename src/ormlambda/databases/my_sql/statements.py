@@ -152,7 +152,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
 
         if GlobalChecker.is_lambda_function(conditions):
-            conditions = conditions(self._model)
+            conditions = conditions(*self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
         self._query_list["where"].append(Where(*conditions, context=self._context))
@@ -160,7 +160,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def order[TValue](self, columns: Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, MySQLConnection]:
-        query = columns(self._model) if GlobalChecker.is_lambda_function(columns) else columns
+        query = columns(*self._models) if GlobalChecker.is_lambda_function(columns) else columns
         order = Order(query, order_type)
         self._query_list["order"].append(order)
         return self
@@ -181,40 +181,9 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     def sum[TProp](self, column: Callable[[T], TProp], alias_name: str = "sum") -> TProp:
         return func.Sum(column=column, alias_clause=alias_name, context=self._context)
 
-    # @override
-    # def min[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "min") -> TProp:
-    #     return func.Min[T](self._model, column=column, alias=alias, alias_name=alias_name)
-
-    # @override
-    # def sum[TProp](self, column: Callable[[T], TProp], alias: bool = True, alias_name: str = "sum") -> TProp:
-    #     return func.Sum[T](self._model, column=column, alias=alias, alias_name=alias_name)
-
     @override
-    def join[*FKTable](self, joins: tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]:
-        return JoinContext[T, *FKTable, MySQLConnection](self, joins, self._context)
-
-    # @override
-    # def join[*FKTables](
-    #     self,
-    #     table: Optional[T] = None,
-    #     relation: Optional[WhereCondition[T, *FKTables]] = None,
-    #     join_type: Optional[JoinType] = None,
-    # ) -> IStatements_two_generic[T, *FKTables, MySQLConnection]:
-    #     if isinstance(table, type) and issubclass(table, Table):
-    #         joins = ((table, relation, join_type),)
-    #     else:
-    #         if any(len(x) != 3 for x in table):
-    #             raise ValueError("Each tuple inside of 'join' method must contain the referenced table, relation between columns and join type")
-    #         joins = table
-
-    #     new_tables: list[Type[Table]] = [self._model]
-
-    #     for table, where, by in joins:
-    #         new_tables.append(table)
-    #         join_query = JoinSelector[T, type(table)](self._model, table, by=by, where=where)
-    #         self._query_list["join"].append(join_query)
-    #     self._models = new_tables
-    #     return self
+    def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable,LProp,RTable,RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable,LProp,RTable,RProp]]]:
+        return JoinContext[LTable, *RTable, MySQLConnection](self, joins, self._context)
 
     @override
     def select[TValue, TFlavour, *Ts](
@@ -225,7 +194,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         by: JoinType = JoinType.INNER_JOIN,
         **kwargs,
     ):
-        select_clause = selector(self._model) if GlobalChecker.is_lambda_function(selector) else selector
+        select_clause = selector(*self._models) if GlobalChecker.is_lambda_function(selector) else selector
 
         if selector is None:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
@@ -236,17 +205,19 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
                 return result
             return () if not result else result[0]
 
-        wheres = self._query_list.pop("where", None)
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
             by=by,
-            wheres=wheres,
+            wheres=self._query_list.pop("where", None),
+            order=self._query_list.pop("order", None),
+            group_by=self._query_list.pop("group_by", None),
+            limit=self._query_list.pop("limit", None),
+            offset=self._query_list.pop("offset", None),
             context=self._context,
         )
-        self._query_list["select"].append(select)
-
-        self._query: str = self._build()
+        
+        self._query: str = select.query
 
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
