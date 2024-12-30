@@ -34,9 +34,9 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], IQuery):
         super().__init__(
             tables,
             columns,
-            by=by,
             context=context,
         )
+        self._by = by
         self._alias_table = alias_table
         self._kwargs = kwargs
 
@@ -44,7 +44,7 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], IQuery):
     @override
     @property
     def query(self) -> str:
-        joins = self.pop_tables_and_create_joins_from_ForeignKey()
+        joins = self.pop_tables_and_create_joins_from_ForeignKey(self._by)
 
         # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
         # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
@@ -71,4 +71,3 @@ class Select[T: Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], IQuery):
         ]
 
         return " ".join([x for x in select_clauses if x])
-
