@@ -315,9 +315,6 @@ class IStatements[T: Table, *Ts](ABC):
     # endregion
 
     @abstractmethod
-    def _build(self) -> str: ...
-
-    @abstractmethod
     def alias(self, column: Callable[[T, *Ts], Any], alias: str) -> IStatements[T, *Ts]: ...
 
 
