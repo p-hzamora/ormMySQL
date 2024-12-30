@@ -1,16 +1,22 @@
 from __future__ import annotations
+from collections import defaultdict
 from typing import Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
 from mysql.connector import MySQLConnection, errors, errorcode
 import functools
 
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+
 
 if TYPE_CHECKING:
+    from ormlambda.common.abstract_classes.abstract_model import ORDER_QUERIES
     from ormlambda import Table
     from ormlambda.common.interfaces.IStatements import OrderTypes
     from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
     from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
+    from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+
 
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
@@ -45,6 +51,16 @@ def clear_list(f: Callable[..., Any]):
             self._query_list.clear()
 
     return wrapper
+
+class QueryBuilder():
+    __order__: tuple[ORDER_QUERIES, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
+
+    def __init__(self):
+        self._context = ClauseInfoContext()
+        self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
+
+
+    def add_statement[T](self,clause:ClauseInfo[T]): ...
 
 
 class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnection]):
