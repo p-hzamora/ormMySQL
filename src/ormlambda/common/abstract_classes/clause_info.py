@@ -235,8 +235,14 @@ class ClauseInfo[T: Table](IQuery):
         return self._context.get_table_alias(self.table)
 
     @staticmethod
-    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",") -> str:
-        return f"{chr} ".join([c.query for c in clauses])
+    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",", context: tp.Optional[ClauseInfoContext] = None) -> str:
+        queries: list[str] = []
+        for c in clauses:
+            if context:
+                c.context = context
+            queries.append(c.query)
+
+        return f"{chr} ".join(queries)
 
     @staticmethod
     def _wrapped_with_quotes(string: str) -> str:
