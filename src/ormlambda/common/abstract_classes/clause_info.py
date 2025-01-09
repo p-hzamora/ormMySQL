@@ -255,9 +255,10 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[None]]] = None,
         context: ClauseContextType = None,
+        table: Table = None,
     ):
         super().__init__(
-            table=Table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
+            table=Table if not table else table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
             alias_table=None,
             column=column,
             alias_clause=alias_clause,
@@ -283,7 +284,8 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
             Column: lambda column: ClauseInfo(column.table, column, context=context),
             ClauseInfo: lambda column: column,
-            ForeignKey: lambda column: ClauseInfo(column.tright, column.tright, context=context),
+            ForeignKey: lambda tbl: ClauseInfo(tbl.tright, tbl.tright, context=context),
+            Table: lambda tbl: ClauseInfo(tbl.table, None, context=context),
             "default": lambda column: ClauseInfo(table=None, column=column, context=context),
         }
 
