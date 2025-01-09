@@ -101,6 +101,10 @@ class ClauseInfo[T: Table](IQuery):
     def context(self) -> ClauseContextType:
         return self._context
 
+    @context.setter
+    def context(self, value: ClauseInfoContext) -> None:
+        self._context = value
+
     @property
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
         if isinstance(self._column, Column):
