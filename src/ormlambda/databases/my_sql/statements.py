@@ -52,15 +52,104 @@ def clear_list(f: Callable[..., Any]):
 
     return wrapper
 
-class QueryBuilder():
-    __order__: tuple[ORDER_QUERIES, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
+
+class QueryBuilder(IQuery):
+    __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "Order", "GroupBy", "Limit", "Offset")
 
     def __init__(self):
         self._context = ClauseInfoContext()
-        self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
+        self._query_list: dict[str, IQuery] = {}
+        self._by = JoinType.INNER_JOIN
 
+        self._joins: Optional[IQuery] = None
+        self._select: Optional[IQuery] = None
+        self._where: Optional[IQuery] = None
+        self._order: Optional[IQuery] = None
+        self._group_by: Optional[IQuery] = None
+        self._limit: Optional[IQuery] = None
+        self._offset: Optional[IQuery] = None
 
-    def add_statement[T](self,clause:ClauseInfo[T]): ...
+    def add_statement[T](self, clause: Type[ClauseInfo[T]]):
+        clause.context = self._context
+        self._query_list[type(clause).__name__] = clause
+
+    @property
+    def JOINS(self) -> IQuery:
+        if not self._joins:
+            self._joins = self.pop_tables_and_create_joins_from_ForeignKey(self._by)
+        return self._joins
+
+    @property
+    def SELECT(self) -> IQuery:
+        return self._query_list.get("Select", None)
+
+    @property
+    def WHERE(self) -> IQuery:
+        where = self._query_list.get("Where", None)
+        if not isinstance(where, Iterable):
+            if not where:
+                return ()
+            return (where,)
+        return where
+
+    @property
+    def ORDER(self) -> IQuery:
+        return self._query_list.get("Order", None)
+
+    @property
+    def GROUP_BY(self) -> IQuery:
+        return self._query_list.get("GroupBy", None)
+
+    @property
+    def LIMIT(self) -> IQuery:
+        return self._query_list.get("Limit", None)
+
+    @property
+    def OFFSET(self) -> IQuery:
+        return self._query_list.get("Offset", None)
+
+    @property
+    def query(self) -> str:
+        # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
+        # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
+
+        query_list: tuple[str, ...] = (
+            self.SELECT.query,
+            self.stringify_foreign_key(self.JOINS, " "),
+            Where.join_condition(self.WHERE, True, self._context) if self.WHERE else None,
+            self.ORDER.query if self.ORDER else None,
+            self.GROUP_BY.query if self.GROUP_BY else None,
+            self.LIMIT.query if self.LIMIT else None,
+            self.OFFSET.query if self.OFFSET else None,
+        )
+        return " ".join([x for x in query_list if x])
+
+    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> Optional[str]:
+        if not joins:
+            return None
+        sorted_joins = JoinSelector.sort_join_selectors(joins)
+        return f"{sep}".join([join.query for join in sorted_joins])
+
+    def pop_tables_and_create_joins_from_ForeignKey(self, by: JoinType = JoinType.INNER_JOIN) -> set[JoinSelector]:
+        # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
+        if not ForeignKey.stored_calls:
+            return None
+
+        joins = set()
+        # Always it's gonna be a set of two
+        # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
+        for _ in range(len(ForeignKey.stored_calls)):
+            fk = ForeignKey.stored_calls.pop()
+            join = JoinSelector(fk.resolved_function(lambda: self._context), by, context=self._context, alias=fk.alias)
+            joins.add(join)
+            self._context._add_table_alias(join.right_table, join.alias)
+
+        return joins
+
+    def clear(self) -> None:
+        self.__init__()
+
+        return None
 
 
 class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnection]):
