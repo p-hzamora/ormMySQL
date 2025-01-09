@@ -78,38 +78,50 @@ class ClusterQuery[T]:
         self._select: DecompositionQueryBase[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
 
-    def clean_response(self) -> tuple[dict[Type[Table], tuple[Table]]]:
+    def clean_response(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
         tbl_dicc: dict[Type[Table], list[Table]] = self.__loop_foo()
 
+        response = {}
+        tuple_response = []
         # it not depend of flavour attr
-        for key, val in tbl_dicc.items():
-            tbl_dicc[key] = tuple(val)
+        for table, attribute_list in tbl_dicc.items():
+            new_instance = []
+            for attrs in attribute_list:
+                new_instance.append(table(**attrs))
+            response[table] = tuple(new_instance)
+            tuple_response.append(tuple(new_instance))
+        return tuple(tuple_response)
 
-        return tuple(tbl_dicc.values())
+    def __loop_foo(self) -> dict[Type[Table], list[dict[str, Any]]]:
+        # We'll create a default list of dicts *once* we know how many rows are in _response_sql
+        row_count = len(self._response_sql)
 
-    def __loop_foo(self) -> dict[Type[Table], list[Table]]:
-        #  We must ensure to get the valid attributes for each instance
-        table_initialize = defaultdict(list)
+        def make_list_of_dicts() -> list[dict[str, Any]]:
+            return [{} for _ in range(row_count)]
 
-        for table, clauses in self._select._clauses_group_by_tables.items():
-            for dicc_cols in self._response_sql:
-                valid_attr: dict[str, Any] = {}
-                for clause in clauses:
-                    if clause.column is None or not hasattr(table, clause.column):
-                        agg_methods = self.__get_all_aggregate_method(clauses)
-                        raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'.")
-                    valid_attr[clause.column] = dicc_cols[clause.alias_clause]
+        table_attr_dict = defaultdict(make_list_of_dicts)
 
-                # COMMENT: At this point we are going to instantiate Table class with specific attributes getting directly from database
-                table_initialize[table].append(table(**valid_attr))
-        return table_initialize
+        for i, dicc_cols in enumerate(self._response_sql):
+            for clause in self._select.all_clauses:
+                table = clause.table
+                col = clause.column
+
+                if col is None or not hasattr(table, col):
+                    agg_methods = self.__get_all_aggregate_method(clause)
+                    raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'.")
+
+                table_attr_dict[table][i][col] = dicc_cols[clause.alias_clause]
+
+        # Convert back to a normal dict if you like (defaultdict is a dict subclass).
+        return dict(table_attr_dict)
 
     def __get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
         """
         Get the class name of those classes that inherit from 'AggregateFunctionBase' class in order to create a better error message.
         """
         res: set[str] = set()
-
+        if not isinstance(clauses, Iterable):
+            return clauses.__class__.__name__
         for clause in clauses:
             if isinstance(clause, AggregateFunctionBase):
                 res.add(clause.__class__.__name__)
