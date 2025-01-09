@@ -3,13 +3,12 @@ import abc
 import typing as tp
 
 
-if tp.TYPE_CHECKING:
-    from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 
+if tp.TYPE_CHECKING:
     # TODOH: Changed to avoid mysql dependency
     from ormlambda.common.abstract_classes.clause_info import ClauseInfo, TableType
-
-from .IQueryCommand import IQuery
+    from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+    
 
 
 class IDecompositionQuery_one_arg[T: TableType]():
@@ -35,5 +34,3 @@ class IDecompositionQuery[T: TableType, *Ts](IDecompositionQuery_one_arg[T]):
     @abc.abstractmethod
     def all_clauses(self) -> list[ClauseInfo]: ...
 
-    @abc.abstractmethod
-    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n"): ...
