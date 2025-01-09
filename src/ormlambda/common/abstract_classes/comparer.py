@@ -11,8 +11,6 @@ if tp.TYPE_CHECKING:
     from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
     from ormlambda import Table
 
-type CallableContextType = tp.Callable[[], ClauseContextType]
-
 
 class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
     def __init__(
@@ -20,14 +18,14 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         left_condition: ConditionType[LProp],
         right_condition: ConditionType[RProp],
         compare: ComparerTypes,
-        context: CallableContextType = lambda: None,
+        context: ClauseContextType = None,
     ) -> None:
-        self._context: CallableContextType = context
+        self._context: ClauseContextType = context
         self._compare: ComparerTypes = compare
         self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = left_condition
         self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = right_condition
 
-    def set_context(self, context: CallableContextType) -> None:
+    def set_context(self, context: ClauseContextType) -> None:
         self._context = context
 
     def __repr__(self) -> str:
@@ -39,9 +37,9 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         if isinstance(cond, Comparer):
             return cond
         if isinstance(cond, Column):
-            return ClauseInfo[type(cond.table)](cond.table, cond, alias_clause=None, context=self._context())
+            return ClauseInfo[type(cond.table)](cond.table, cond, alias_clause=None, context=self._context)
         # it a value that's not depend of any Table
-        return ClauseInfo[None](None, cond, alias_clause=None, context=self._context())
+        return ClauseInfo[None](None, cond, alias_clause=None, context=self._context)
 
     @property
     def left_condition(self) -> Comparer | ClauseInfo[LTable]:
@@ -59,16 +57,16 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
     def query(self) -> str:
         return f"{self.left_condition.query} {self._compare} {self.right_condition.query}"
 
-    def __and__(self, other: Comparer, context: CallableContextType = lambda: None) -> Comparer:
+    def __and__(self, other: Comparer, context: ClauseContextType = None) -> Comparer:
         # Customize the behavior of '&'
         return Comparer(self, other, "AND", context=context)
 
-    def __or__(self, other: Comparer, context: CallableContextType = lambda: None) -> Comparer:
+    def __or__(self, other: Comparer, context: ClauseContextType = None) -> Comparer:
         # Customize the behavior of '|'
         return Comparer(self, other, "OR", context=context)
 
     @classmethod
-    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: CallableContextType = lambda: None) -> str:
+    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None) -> str:
         if not isinstance(comparers, tp.Iterable):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
