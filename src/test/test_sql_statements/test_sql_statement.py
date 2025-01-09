@@ -183,6 +183,7 @@ class TestSQLStatements(unittest.TestCase):
 
         limit = self.tmodel.limit(1).select()
         select_one = self.tmodel.select_one()
+        self.assertEqual(len(limit), 1)
         self.assertEqual(limit[0], select_one)
 
     def test_only_last_added_limit_is_available(self):
