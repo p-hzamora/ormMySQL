@@ -82,7 +82,10 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         for i in range(len(comparers) - 1):
             if ini_comparer is None:
                 ini_comparer = comparers[i]
-            new_comparer = join_method(ini_comparer, comparers[i + 1], context=context)
+                ini_comparer.set_context(context)
+            right_comparer = comparers[i + 1]
+            right_comparer.set_context(context)
+            new_comparer = join_method(ini_comparer, right_comparer, context=context)
             ini_comparer = new_comparer
         return new_comparer.query
 
