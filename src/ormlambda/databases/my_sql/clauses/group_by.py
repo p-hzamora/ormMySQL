@@ -2,11 +2,11 @@ import typing as tp
 from ormlambda.common.enums.join_type import JoinType
 from ormlambda.common.interfaces.IAggregate import IAggregate
 from ormlambda import Table
+from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 
-from ..mysql_decomposition import MySQLDecompositionQuery
 
 
-class GroupBy[T: tp.Type[Table], *Ts, TProp](MySQLDecompositionQuery[T], IAggregate):
+class GroupBy[T: tp.Type[Table], *Ts, TProp](DecompositionQueryBase[T], IAggregate):
     CLAUSE: str = "GROUP BY"
 
     def __init__(
