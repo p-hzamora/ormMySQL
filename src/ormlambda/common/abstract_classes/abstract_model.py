@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import Any, Type, override, Iterable, Literal, TYPE_CHECKING, Optional
 from collections import defaultdict
-import abc
 
 
-from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
+from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic
 from ormlambda.utils import Table
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
+
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
+
 
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
@@ -18,9 +18,6 @@ ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", 
 
 
 class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts, TRepo]):
-    __slots__ = ("_model", "_repository", "_query_list")
-    __order__: tuple[ORDER_QUERIES, ...] = ("select", "join", "where", "order", "with", "group by", "limit", "offset")
-
     def __init__(self, model: tuple[T, *Ts], repository: IRepositoryBase[TRepo]) -> None:
         self.__valid_repository(repository)
 
@@ -28,8 +25,6 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
         self._model: T = model[0] if isinstance(model, Iterable) else model
         self._models: tuple[T, *Ts] = self._model if isinstance(model, Iterable) else (model,)
         self._repository: IRepositoryBase[TRepo] = repository
-        self._query_list: dict[ORDER_QUERIES, list[IQuery]] = defaultdict(list)
-        self._context: ClauseContextType = ClauseInfoContext()
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
@@ -51,7 +46,7 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
     def _return_model(self, select, query: str):
         response_sql = self._repository.read_sql(query, flavour=dict, model=self._model, select=select)  # store all columns of the SQL query
 
-        if isinstance(response_sql, Iterable):
+        if response_sql and isinstance(response_sql, Iterable):
             return ClusterQuery[T](select, response_sql).clean_response()
 
         return response_sql
