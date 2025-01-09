@@ -3,7 +3,7 @@ from typing import override
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
-class OffsetQuery(IQuery):
+class Offset(IQuery):
     OFFSET = "OFFSET"
 
     def __init__(self, number: int) -> None:

@@ -3,7 +3,7 @@ from typing import override
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
-class LimitQuery(IQuery):
+class Limit(IQuery):
     LIMIT = "LIMIT"
 
     def __init__(self, number: int) -> None:
