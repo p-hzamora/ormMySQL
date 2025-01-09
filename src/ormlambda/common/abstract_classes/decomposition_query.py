@@ -97,7 +97,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
         self._columns: tp.Callable[[T], tuple] = columns
         self._all_clauses: list[ClauseInfo] = []
-        self._context: ClauseContextType = context
+        self._context: ClauseContextType = context if context else ClauseInfoContext()
         self._alias_table: str = alias_table
         self.__clauses_list_generetor()
 
@@ -108,7 +108,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
     def __clauses_list_generetor(self) -> None:
         # Clean self._all_clauses if we update the context
-        self._all_clauses.clear()
+        self._all_clauses.clear() if self._all_clauses else None
 
         resolved_function = GlobalChecker.resolved_callback_object(self._columns, self.tables)
 
