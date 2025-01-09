@@ -75,3 +75,13 @@ class ClauseInfoContext(IClauseInfo):
 
     def get_table_alias[T: Table](self, table: T) -> Optional[str]:
         return self._table_context.get(table, None)
+
+    def update(self, context: ClauseInfoContext) -> None:
+        if not context:
+            return None
+        if not isinstance(context, ClauseInfoContext):
+            raise ValueError(f"A '{ClauseInfoContext.__name__}' type was expected")
+
+        self._table_context.update(context._table_context)
+        self._clause_context.update(context._clause_context)
+        return None
