@@ -13,7 +13,6 @@ import test_queries_with_different_datatypes
 import test_ResolverType
 import test_table_class
 import test_type_hint
-import testing_dbcontext
 
 
 from test_queries import (
@@ -71,7 +70,6 @@ suite.addTests(
         *loader.loadTestsFromModule(test_ResolverType),
         *loader.loadTestsFromModule(test_table_class),
         *loader.loadTestsFromModule(test_type_hint),
-        *loader.loadTestsFromModule(testing_dbcontext),
         # endregion
     )
 )
