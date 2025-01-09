@@ -1,22 +1,15 @@
 from __future__ import annotations
-from collections import defaultdict
 import typing as tp
 import abc
 from ormlambda import Table, Column
 
 from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
-from ormlambda import JoinType
-from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
 from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
 from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.utils.global_checker import GlobalChecker
 
 from ormlambda.types import AliasType, TableType, ColumnType
-from ormlambda.common.errors import UnmatchedLambdaParameterError
-
-if tp.TYPE_CHECKING:
-    from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
@@ -32,6 +25,20 @@ class ClauseInfoConverter[T, TProp](abc.ABC):
     @classmethod
     @abc.abstractmethod
     def convert(cls, data: T, alias_table: AliasType[ColumnType[TProp]] = "{table}", context: ClauseContextType = None) -> list[ClauseInfo[T]]: ...
+
+
+class ConvertFromAnyType(ClauseInfoConverter[None, None]):
+    @classmethod
+    def convert(cls, data: tp.Any, alias_table: AliasType = "{table}", context: ClauseContextType = None) -> list[ClauseInfo[None]]:
+        return [
+            ClauseInfo[None](
+                table=None,
+                column=data,
+                alias_table=alias_table,
+                alias_clause=None,
+                context=context,
+            )
+        ]
 
 
 class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None]):
@@ -79,18 +86,19 @@ class ConvertFromTable[T: Table](ClauseInfoConverter[T, None]):
 
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
-    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple]) -> None: ...
+    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType]) -> None: ...
     @tp.overload
-    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple], joins: tp.Optional[set[IJoinSelector]] = ...) -> None: ...
+    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], context: ClauseContextType = ...) -> None: ...
+    @tp.overload
+    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str, context: ClauseContextType = ...) -> None: ...
 
-    def __init__(self, tables: TableTupleType, columns: tp.Callable[[T], tuple[*Ts]], *, context: ClauseContextType = ClauseInfoContext()) -> None:
-        self._tables: TableTupleType = tables if isinstance(tables, tp.Iterable) else (tables,)
+    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str = "{table}", *, context: ClauseContextType = ClauseInfoContext()) -> None:
+        self._tables: tuple[TableType[T]] = tables if isinstance(tables, tp.Iterable) else (tables,)
 
         self._columns: tp.Callable[[T], tuple] = columns
-        self._clauses_group_by_tables: dict[TableType, list[ClauseInfo[T]]] = defaultdict(list)
         self._all_clauses: list[ClauseInfo] = []
         self._context: ClauseContextType = context
-
+        self._alias_table: str = alias_table
         self.__clauses_list_generetor()
 
     def __getitem__(self, key: str) -> ClauseInfo:
@@ -99,13 +107,10 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
                 return clause
 
     def __clauses_list_generetor(self) -> None:
-        if not GlobalChecker.is_lambda_function(self._columns):
-            resolved_function = self._columns
-        else:
-            try:
-                resolved_function = self._columns(*self.tables)
-            except TypeError:
-                raise UnmatchedLambdaParameterError(len(self.tables), self._columns)
+        # Clean self._all_clauses if we update the context
+        self._all_clauses.clear()
+
+        resolved_function = GlobalChecker.resolved_callback_object(self._columns, self.tables)
 
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
@@ -137,12 +142,9 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
             IAggregate: ConvertFromIAggregate,
             Table: ConvertFromTable[T],
         }
-        classConverter = next((handler for cls, handler in value_type_mapped.items() if validation(data, cls)), None)
+        classConverter = next((handler for cls, handler in value_type_mapped.items() if validation(data, cls)), ConvertFromAnyType)
 
-        if not classConverter:
-            raise NotImplementedError(f"type of value '{data}' is not implemented.")
-
-        return classConverter.convert(data, context=self._context)
+        return classConverter.convert(data, alias_table=self._alias_table, context=self._context)
 
     def __add_clause[TTable: TableType](self, clauses: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:
         if not isinstance(clauses, tp.Iterable):
@@ -150,7 +152,6 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
         for clause in clauses:
             self._all_clauses.append(clause)
-            self._clauses_group_by_tables[clause.table].append(clause)
         return None
 
     @property
@@ -170,12 +171,11 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         return self._all_clauses
 
     @property
-    def clauses_group_by_tables(self) -> dict[TableType, list[ClauseInfo[T]]]:
-        return self._clauses_group_by_tables
+    def context(self) -> tp.Optional[ClauseInfoContext]:
+        return self._context
 
-    @property
-    @abc.abstractmethod
-    def query(self) -> str: ...
-
-    @abc.abstractmethod
-    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> str: ...
+    @context.setter
+    def context(self, value: ClauseInfoContext) -> None:
+        self._context = value
+        self.__clauses_list_generetor()
+        return None
