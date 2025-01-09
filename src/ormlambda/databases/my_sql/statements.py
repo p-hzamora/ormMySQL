@@ -1,17 +1,18 @@
 from __future__ import annotations
-from collections import defaultdict
 from typing import Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
 from mysql.connector import MySQLConnection, errors, errorcode
 import functools
 
 from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.databases.my_sql.clauses.joins import JoinSelector
+from ormlambda.utils.foreign_key import ForeignKey
 
+from ormlambda.common.interfaces import IQuery
 
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.abstract_model import ORDER_QUERIES
     from ormlambda import Table
     from ormlambda.common.interfaces.IStatements import OrderTypes
-    from ormlambda.common.interfaces import IQuery, IRepositoryBase, IStatements_two_generic
+    from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
     from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
@@ -21,8 +22,8 @@ if TYPE_CHECKING:
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
 from .clauses import InsertQuery
-from .clauses import LimitQuery
-from .clauses import OffsetQuery
+from .clauses import Limit
+from .clauses import Offset
 from .clauses import Order
 from .clauses.select import Select
 
@@ -47,8 +48,9 @@ def clear_list(f: Callable[..., Any]):
     def wrapper(self: MySQLStatements, *args, **kwargs):
         try:
             return f(self, *args, **kwargs)
-        finally:
-            self._query_list.clear()
+        except Exception as err:
+            self._query_builder.clear()
+            raise err
 
     return wrapper
 
@@ -155,6 +157,7 @@ class QueryBuilder(IQuery):
 class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnection]):
     def __init__(self, model: tuple[T, *Ts], repository: IRepositoryBase[MySQLConnection]) -> None:
         super().__init__(model, repository=repository)
+        self._query_builder = QueryBuilder()
 
     @property
     @override
@@ -209,7 +212,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         delete = DeleteQuery(self._model, self._repository)
         delete.delete(instances)
         delete.execute()
-        # not necessary to call self._query_list.clear() because select() method already call it
+        # not necessary to call self._query_builder.clear() because select() method already call it
         return None
 
     @override
@@ -223,7 +226,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        update = UpdateQuery(self._model, self._repository, self._query_list["where"])
+        update = UpdateQuery(self._model, self._repository, self._query_builder.WHERE)
         update.update(dicc)
         update.execute()
 
@@ -231,15 +234,15 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def limit(self, number: int) -> IStatements_two_generic[T, MySQLConnection]:
-        limit = LimitQuery(number)
+        limit = Limit(number)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
-        self._query_list["limit"] = [limit]
+        self._query_builder.add_statement(limit)
         return self
 
     @override
     def offset(self, number: int) -> IStatements_two_generic[T, MySQLConnection]:
-        offset = OffsetQuery(number)
-        self._query_list["offset"] = [offset]
+        offset = Offset(number)
+        self._query_builder.add_statement(offset)
         return self
 
     @override
@@ -250,7 +253,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
     ) -> IQuery:
         if GlobalChecker.is_lambda_function(selection):
             selection = selection(*self.models)
-        return Count[T](values=selection, alias_clause=alias_clause, context=self._context)
+        return Count[T](values=selection, alias_clause=alias_clause)
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
@@ -260,35 +263,35 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
             conditions = conditions(*self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
-        self._query_list["where"].append(Where(*conditions, context=self._context))
+        self._query_builder.add_statement(Where(*conditions))
         return self
 
     @override
     def order[TValue](self, columns: Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, MySQLConnection]:
         query = columns(*self._models) if GlobalChecker.is_lambda_function(columns) else columns
         order = Order(query, order_type)
-        self._query_list["order"].append(order)
+        self._query_builder.add_statement(order)
         return self
 
     @override
     def concat[*Ts](self, selector: Callable[[T], tuple[*Ts]], alias: bool = True, alias_name: str = "CONCAT") -> IAggregate:
-        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name, context=self._context)
+        return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name, context=self._query_builder._context)
 
     @override
     def max[TProp](self, column: Callable[[T], TProp], alias_name: str = "max") -> TProp:
-        return func.Max(column=column, alias_clause=alias_name, context=self._context)
+        return func.Max(column=column, alias_clause=alias_name, context=self._query_builder._context)
 
     @override
     def min[TProp](self, column: Callable[[T], TProp], alias_name: str = "min") -> TProp:
-        return func.Min(column=column, alias_clause=alias_name, context=self._context)
+        return func.Min(column=column, alias_clause=alias_name, context=self._query_builder._context)
 
     @override
     def sum[TProp](self, column: Callable[[T], TProp], alias_name: str = "sum") -> TProp:
-        return func.Sum(column=column, alias_clause=alias_name, context=self._context)
+        return func.Sum(column=column, alias_clause=alias_name, context=self._query_builder._context)
 
     @override
-    def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable,LProp,RTable,RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable,LProp,RTable,RProp]]]:
-        return JoinContext[LTable, *RTable, MySQLConnection](self, joins, self._context)
+    def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
+        return JoinContext[LTable, *RTable, MySQLConnection](self, joins, self._query_builder._context)
 
     @override
     def select[TValue, TFlavour, *Ts](
@@ -313,17 +316,12 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
-            by=by,
-            wheres=self._query_list.pop("where", None),
-            order=self._query_list.pop("order", None),
-            group_by=self._query_list.pop("group_by", None),
-            limit=self._query_list.pop("limit", None),
-            offset=self._query_list.pop("offset", None),
-            context=self._context,
         )
-        
-        self._query: str = select.query
+        self._query_builder.add_statement(select)
 
+        self._query: str = self._query_builder.query
+
+        self._query_builder.clear()
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
             if issubclass(flavour, tuple) and isinstance(select_clause, Column):
@@ -337,6 +335,8 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
         response = self.select(selector=selector, flavour=flavour, by=by)
 
+        if not isinstance(response, Iterable):
+            return response
         if flavour:
             return response[0] if response else None
 
@@ -354,7 +354,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         else:
             groupby = GroupBy[T, tuple[*Ts]](self._models, column)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
-        self._query_list["group by"].append(groupby)
+        self._query_builder.add_statement(groupby)
         return self
 
     @override
