@@ -23,7 +23,7 @@ class Where(AggregateFunctionBase):
     def query(self) -> str:
         if isinstance(self._comparer, tp.Iterable):
             context = ClauseInfoContext(table_context=self._context._table_context)
-            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=lambda: context)
+            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=context)
         else:
             comparer = self._comparer
         return f"{self.FUNCTION_NAME()} {comparer}"
@@ -37,6 +37,6 @@ class Where(AggregateFunctionBase):
         comparers: list[Comparer] = []
         for where in wheres:
             for c in where._comparer:
-                c.set_context(lambda: context)
+                c.set_context(context)
                 comparers.append(c)
         return Where(*comparers, restrictive=restrictive, context=context).query
