@@ -34,6 +34,9 @@ class Where(AggregateFunctionBase):
 
     @staticmethod
     def join_condition(wheres: tp.Iterable[Where], restrictive: bool, context: ClauseInfoContext) -> str:
+        if not isinstance(wheres, tp.Iterable):
+            wheres = (wheres,)
+
         comparers: list[Comparer] = []
         for where in wheres:
             for c in where._comparer:
