@@ -1,29 +1,33 @@
 import typing as tp
-from ormlambda import Table
-from ormlambda.common.interfaces import ICustomAlias
 
+from ormlambda.types import AliasType, ColumnType
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
-from ..mysql_decomposition import MySQLDecompositionQuery
+from ormlambda import Table, Column
+from ormlambda.utils.foreign_key import ForeignKey
 
 
-class Alias[T: tp.Type[Table], *Ts](MySQLDecompositionQuery[T, *Ts], ICustomAlias[T, *Ts]):
-    def __init__(
+class Alias(ClauseInfo[None]):
+    def __init__[TProp](
         self,
-        table: T,
-        query: tp.Callable[[T, *Ts], tp.Any],
-        *,
-        alias: bool = True,
-        alias_name: str | None = None,
-    ) -> None:
+        column: tp.Optional[ColumnType[TProp]] = None,
+        alias_table: tp.Optional[AliasType[ClauseInfo[None]]] = None,
+        alias_clause: tp.Optional[AliasType[ClauseInfo[None]]] = None,
+        context=None,
+    ):
         super().__init__(
-            table,
-            columns=query,
-            alias=alias,
-            alias_name=alias_name,
+            table=self._extract_table(column),
+            column=column,
+            alias_table=alias_table,
+            alias_clause=alias_clause,
+            context=context,
         )
 
-    @property
-    def query(self) -> str:
-        assert len(self.all_clauses) == 1
+    def _extract_table[TProp](self, obj: ColumnType[TProp]) -> tp.Optional[Table]:
+        if isinstance(obj, type) and issubclass(obj, Table):
+            return obj
 
-        return self.all_clauses[0].query
+        if isinstance(obj, ForeignKey):
+            return obj.tright
+        if isinstance(obj, Column):
+            return obj.table
+        return None
