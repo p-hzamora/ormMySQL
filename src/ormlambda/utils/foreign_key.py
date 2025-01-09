@@ -111,5 +111,5 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         left = self._tleft
         right = self._tright
         comparer = self._relationship(left, right)
-        comparer.set_context(lambda: context)
+        comparer.set_context(context)
         return comparer
