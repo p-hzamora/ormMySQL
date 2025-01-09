@@ -58,10 +58,10 @@ def clear_list(f: Callable[..., Any]):
 class QueryBuilder(IQuery):
     __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "Order", "GroupBy", "Limit", "Offset")
 
-    def __init__(self):
+    def __init__(self, by: JoinType = JoinType.INNER_JOIN):
         self._context = ClauseInfoContext()
         self._query_list: dict[str, IQuery] = {}
-        self._by = JoinType.INNER_JOIN
+        self._by = by
 
         self._joins: Optional[IQuery] = None
         self._select: Optional[IQuery] = None
@@ -72,13 +72,20 @@ class QueryBuilder(IQuery):
         self._offset: Optional[IQuery] = None
 
     def add_statement[T](self, clause: Type[ClauseInfo[T]]):
+        self._context.update(clause.context)
         clause.context = self._context
         self._query_list[type(clause).__name__] = clause
 
     @property
-    def JOINS(self) -> IQuery:
-        if not self._joins:
-            self._joins = self.pop_tables_and_create_joins_from_ForeignKey(self._by)
+    def by(self) -> JoinType:
+        return self._by
+
+    @by.setter
+    def by(self, value: JoinType) -> None:
+        self._by = value
+
+    @property
+    def JOINS(self) -> Optional[set[JoinSelector]]:
         return self._joins
 
     @property
@@ -115,9 +122,12 @@ class QueryBuilder(IQuery):
         # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
         # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
 
+        extract_joins = self.pop_tables_and_create_joins_from_ForeignKey(self._by)
+
+        JOINS = self.stringify_foreign_key(extract_joins, " ")
         query_list: tuple[str, ...] = (
             self.SELECT.query,
-            self.stringify_foreign_key(self.JOINS, " "),
+            JOINS,
             Where.join_condition(self.WHERE, True, self._context) if self.WHERE else None,
             self.ORDER.query if self.ORDER else None,
             self.GROUP_BY.query if self.GROUP_BY else None,
@@ -142,15 +152,14 @@ class QueryBuilder(IQuery):
         # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
         for _ in range(len(ForeignKey.stored_calls)):
             fk = ForeignKey.stored_calls.pop()
+            self._context._add_table_alias(fk.tright, fk.alias)
             join = JoinSelector(fk.resolved_function(lambda: self._context), by, context=self._context, alias=fk.alias)
             joins.add(join)
-            self._context._add_table_alias(join.right_table, join.alias)
 
         return joins
 
     def clear(self) -> None:
         self.__init__()
-
         return None
 
 
@@ -319,6 +328,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         )
         self._query_builder.add_statement(select)
 
+        self._query_builder.by = by
         self._query: str = self._query_builder.query
 
         self._query_builder.clear()
