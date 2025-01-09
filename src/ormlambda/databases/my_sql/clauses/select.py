@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import override, Type, Callable, TYPE_CHECKING
+from typing import Optional, override, Type, Callable, TYPE_CHECKING
 
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
@@ -22,7 +22,7 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], IQuery):
         columns: Callable[[T], tuple] = lambda x: x,
         *,
         alias_table: AliasType[ClauseInfo] = "{table}",
-        context: ClauseInfoContext = ClauseInfoContext(),
+        context: Optional[ClauseInfoContext] = None,
     ) -> None:
         super().__init__(
             tables,
@@ -30,6 +30,8 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], IQuery):
             context=context,
         )
         self._alias_table = alias_table
+        # We always need to add the self alias of the Select
+        self._context._add_table_alias(self.table, self._alias_table)
 
     # TODOL: see who to deal when we will have to add more mysql methods
     @override
@@ -39,7 +41,7 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], IQuery):
         # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
         SELECT = self.CLAUSE
         FROM = "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query
-        COLUMNS = ClauseInfo.join_clauses(self._all_clauses, ",")
+        COLUMNS = ClauseInfo.join_clauses(self._all_clauses, ",", self.context)
 
         select_clauses = [
             SELECT,
