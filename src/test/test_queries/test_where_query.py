@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext  # noqa: E402
 from ormlambda.common.abstract_classes.comparer import Regex, Like  # noqa: E402
 from models import (  # noqa: E402
     Address,
@@ -162,6 +163,25 @@ class TestCondition(unittest.TestCase):
         variable_ = "var_string"
         cond = Where(City.city > variable_)
         self.assertEqual(cond.query, "WHERE city.city > 'var_string'")
+
+    def test_pass_multiples_comparers(self):
+        ctx = ClauseInfoContext(
+            table_context={
+                Address: "address",
+                City: "city",
+                Country: "country",
+            }
+        )
+        cond = Where(
+            Address.address_id >= 40,
+            Address.address_id < 100,
+            Address.City.city_id >= 30,
+            Address.City.city_id < 100,
+            Address.City.Country.country_id >= 60,
+            Address.City.Country.country_id < 100,
+            context=ctx,
+        )
+        self.assertEqual(cond.query, "WHERE `address`.address_id >= 40 AND `address`.address_id < 100 AND `city`.city_id >= 30 AND `city`.city_id < 100 AND `country`.country_id >= 60 AND `country`.country_id < 100")
 
 
 if __name__ == "__main__":
