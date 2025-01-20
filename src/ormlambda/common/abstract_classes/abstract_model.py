@@ -43,7 +43,7 @@ class AbstractSQLStatements[T: Table, *Ts, TRepo](IStatements_two_generic[T, *Ts
     def _return_flavour[TValue](self, query, flavour: Type[TValue], select, **kwargs) -> tuple[TValue]:
         return self._repository.read_sql(query, flavour=flavour, model=self._model, select=select, **kwargs)
 
-    def _return_model(self, select, query: str):
+    def _return_model(self, select, query: str) -> tuple[tuple[T, *Ts]]:
         response_sql = self._repository.read_sql(query, flavour=dict, model=self._model, select=select)  # store all columns of the SQL query
 
         if response_sql and isinstance(response_sql, Iterable):
