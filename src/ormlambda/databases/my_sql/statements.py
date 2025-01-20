@@ -71,9 +71,8 @@ class QueryBuilder(IQuery):
         self._limit: Optional[IQuery] = None
         self._offset: Optional[IQuery] = None
 
-    def add_statement[T](self, clause: Type[ClauseInfo[T]]):
-        self._context.update(clause.context)
-        clause.context = self._context
+    def add_statement[T](self, clause: ClauseInfo[T]):
+        self.update_context(clause)
         self._query_list[type(clause).__name__] = clause
 
     @property
@@ -161,6 +160,14 @@ class QueryBuilder(IQuery):
     def clear(self) -> None:
         self.__init__()
         return None
+
+    def update_context(self, clause: ClauseInfo) -> None:
+        if not hasattr(clause, "context"):
+            return None
+
+        if clause.context is not None:
+            self._context.update(clause.context)
+        clause.context = self._context
 
 
 class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnection]):
