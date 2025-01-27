@@ -312,6 +312,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         return JoinContext(self, joins, self._query_builder._context)
 
     @override
+    @clear_list
     def select[TValue, TFlavour, *Ts](
         self,
         selector: Optional[tuple[TValue, *Ts]] = None,
