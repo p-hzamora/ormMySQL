@@ -49,8 +49,10 @@ def clear_list(f: Callable[..., Any]):
         try:
             return f(self, *args, **kwargs)
         except Exception as err:
-            self._query_builder.clear()
             raise err
+        finally:
+            ForeignKey.stored_calls.clear()
+            self._query_builder.clear()
 
     return wrapper
 
