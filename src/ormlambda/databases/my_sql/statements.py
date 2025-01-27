@@ -309,7 +309,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
-        return JoinContext[LTable, *RTable, MySQLConnection](self, joins, self._query_builder._context)
+        return JoinContext(self, joins, self._query_builder._context)
 
     @override
     def select[TValue, TFlavour, *Ts](
