@@ -361,9 +361,12 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
         # response var could be return more than one element when we work with models an we
         # select columns from different tables using a join query
-        # FIXME [ ]: before it was if len(response) == 1 and len(response[0]) == 1: return response[0][0]
+        # FIXME [x]: before it was if len(response) == 1 and len(response[0]) == 1: return response[0][0]
         if len(response) == 1:
-            return response[0]
+            if isinstance(response[0], Iterable) and len(response[0]) == 1:
+                return response[0][0]
+            else:
+                return response[0]
         return tuple([res[0] for res in response])
 
     @override
