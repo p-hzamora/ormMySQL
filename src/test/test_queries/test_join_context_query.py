@@ -24,12 +24,12 @@ class TestSelect(unittest.TestCase):
         selected = Select[D](
             D,
             lambda d: (
-                func.Concat[D]((D.pk_d, "-", D.C.pk_c, "-", D.C.B.pk_b, "-", D.C.B.A, "-", D.C.B.data), alias_clause="concat_pks", context=context),
+                func.Concat[D]((D.pk_d, "-", D.C.pk_c, "-", D.C.B.pk_b, "-", D.C.B.A, "-", D.C.B.data), alias_clause="concat_pks"),
                 d,
                 d.C.B.A.data_a,
                 d.C,
-                Count(D.C.B.A.name_a, context=context),
-                func.Max(D.C.B.A.data_a, context=context),
+                Count(D.C.B.A.name_a),
+                func.Max(D.C.B.A.data_a),
             ),
             context=context,
         )

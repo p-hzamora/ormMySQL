@@ -99,40 +99,25 @@ class TestJoinStatements(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.ddbb.drop_database(DDBBNAME)
 
-    # # FIXME [x]: Review this method in the future
-    # def test_pass_multiple_joins(self):
-    #     result1 = (
-    #         self.model_b.join(
-    #             (
-    #                 (JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN),
-    #                 (JoinC, lambda b, c: b.fk_c == c.pk_c, JoinType.INNER_JOIN),
-    #             )
-    #         )
-    #         .where(
-    #             [
-    #                 lambda b_var, a, c: b_var.fk_a == 2,
-    #                 lambda b_var, a, c: b_var.fk_c == 2,
-    #             ]
-    #         )
-    #         .select(lambda b, a, c: (b.data_b, a.data_a, c.data_c), flavour=dict, columns=[1, 2, 3, 4])
-    #     )
-    #     result2 = (
-    #         self.model_b.join(
-    #             (
-    #                 (JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN),
-    #                 (JoinC, lambda b, c: b.fk_c == c.pk_c, JoinType.INNER_JOIN),
-    #             )
-    #         )
-    #         .where(
-    #             [
-    #                 lambda _, a, __: a.pk_a == 2,
-    #                 lambda _, __, c: c.pk_c == 2,
-    #             ]
-    #         )
-    #         .select(lambda b, a, c: (b.data_b, a.data_a, c.data_c), flavour=dict)
-    #     )
+    # FIXME [x]: Review this method in the future
+    def test_pass_multiple_joins(self):
+        with self.model_b.join(
+            [
+                ("JA", JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
+                ("JC", JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
+            ]
+        ) as ctx:
+            result1 = self.model_b.where([JoinB.fk_a == 2, JoinB.fk_c == 2]).select((JoinB.data_b, ctx.JA.data_a, ctx.JC.data_c), flavour=dict, columns=[1, 2, 3, 4])
 
-    #     self.assertTupleEqual(result1, result2)
+        with self.model_b.join(
+            (
+                ("JA", JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
+                ("JC", JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
+            )
+        ) as ctx:
+            result2 = self.model_b.where([ctx.JA.pk_a == 2, ctx.JC.pk_c == 2]).select((JoinB.data_b, ctx.JA.data_a, ctx.JC.data_c), flavour=dict)
+
+        self.assertTupleEqual(result1, result2)
 
     # def test_pass_one_join(self):
     #     select = (
@@ -285,7 +270,7 @@ class TestJoinStatements(unittest.TestCase):
                 ("A", B.fk_a == A.pk_a, JoinType.LEFT_EXCLUSIVE),
             ]
         ) as ctx:
-            select = modelB.where(ctx.A.pk_a >= 3).select_one(modelB.count("*"), flavour=dict)
+            select = modelB.where(ctx.A.pk_a >= 3).select_one(modelB.count("*"), flavour=dict, by=JoinType.LEFT_EXCLUSIVE)
         self.assertEqual(select["count"], 6)
         ddbb.drop_database(DDBBNAME)
 
