@@ -17,7 +17,7 @@ type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[str, Comp
 
 
 class JoinContext[TParent: Table, *T, TRepo]:
-    def __init__(self, statements: IStatements_two_generic[TParent, *T, TRepo], joins: tuple[*T], context: ClauseContextType) -> None:
+    def __init__(self, statements: IStatements_two_generic[TParent, *T, TRepo], joins: tuple, context: ClauseContextType) -> None:
         self._statements = statements
         self._parent: TParent = statements.model
         self._joins: Iterable[tuple[str, Comparer, JoinType]] = joins
