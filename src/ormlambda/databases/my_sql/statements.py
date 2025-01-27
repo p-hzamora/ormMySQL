@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from ormlambda.common.interfaces.IRepositoryBase import TypeExists
     from ormlambda.common.interfaces import IAggregate
     from ormlambda.common.interfaces.IStatements import WhereTypes
-    from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 
 
+from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ormlambda import AbstractSQLStatements
 from .clauses import DeleteQuery
 from .clauses import InsertQuery
