@@ -94,7 +94,7 @@ class CountTest(unittest.TestCase):
         self.assertEqual(n_80, 60)
         self.assertEqual(n_100, 20)
 
-        self.assertEqual(self.model._query_list, {})
+        self.assertEqual(self.model._query_builder._query_list, {})
 
 
 if __name__ == "__main__":
