@@ -1,7 +1,7 @@
 from decouple import config
 
-USERNAME = config("USERNAME")
-PASSWORD = config("PASSWORD")
+USERNAME = config("DB_USERNAME")
+PASSWORD = config("DB_PASSWORD")
 HOST = config("HOST")
 DATABASE = config("DATABASE")
 
