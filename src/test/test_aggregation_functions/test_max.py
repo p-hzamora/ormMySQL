@@ -16,7 +16,7 @@ class TestMax(unittest.TestCase):
     def test_Concat(self) -> None:
         concat = func.Max(
             alias_clause="concat-for-table",
-            column=(
+            elements=(
                 D.data_d,
                 D.fk_c,
                 D.pk_d,
@@ -28,10 +28,10 @@ class TestMax(unittest.TestCase):
         self.assertEqual(concat.query, query)
 
     def test_Concat_with_context(self) -> None:
-        context = ClauseInfoContext(clause_context={D: "new-d-table"})
+        context = ClauseInfoContext(table_context={D: "new-d-table"})
         concat = func.Max(
             alias_clause="concat-for-table",
-            column=(
+            elements=(
                 D.data_d,
                 D.fk_c,
                 D.pk_d,

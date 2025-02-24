@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from mysql.connector import MySQLConnection
 
+from ormlambda.common.abstract_classes.comparer import Comparer
+
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
@@ -107,7 +109,15 @@ class TestJoinStatements(unittest.TestCase):
                 ("JC", JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
             ]
         ) as ctx:
-            result1 = self.model_b.where([JoinB.fk_a == 2, JoinB.fk_c == 2]).select((JoinB.data_b, ctx.JA.data_a, ctx.JC.data_c), flavour=dict, columns=[1, 2, 3, 4])
+            result1 = self.model_b.where([JoinB.fk_a == 2, JoinB.fk_c == 2]).select(
+                (
+                    JoinB.data_b,
+                    ctx.JA.data_a,
+                    ctx.JC.data_c,
+                ),
+                flavour=dict,
+                columns=[1, 2, 3, 4],
+            )
 
         with self.model_b.join(
             (
@@ -276,4 +286,7 @@ class TestJoinStatements(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    comp = Comparer[JoinA, str, JoinB, str](JoinA.data_a == JoinB.data_b)
+    comp.left_condition
+
     unittest.main(failfast=True)

@@ -34,7 +34,7 @@ class TestClauseInfo(unittest.TestCase):
         )
     )
     def test_column_property(self, table, column, result):
-        ci = ClauseInfo[A](table, column, "alias_table", "alias_clause")
+        ci = ClauseInfo[None | A](table, column, "alias_table", "alias_clause")
         self.assertEqual(ci.column, result)
 
     def test_passing_only_table_with_alias_table(self):
@@ -97,9 +97,17 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfo[A](A, A.date_a, alias_table=lambda x: "custom_alias_for_{column}_column")
         self.assertEqual(ci.query, "`custom_alias_for_date_a_column`.date_a")
 
-    def test_passing_asterisk(self):
+    def test_AAApassing_asterisk(self):
         ci = ClauseInfo[A](A, "*")
         self.assertEqual(ci.query, "a.pk_a, a.name_a, a.data_a, a.date_a, a.value")
+
+    def test_hardcoding_asterisk(self):
+        ci = ClauseInfo[A](A, "*", keep_asterisk=True)
+        self.assertEqual(ci.query, "a.*")
+
+    def test_hardcoding_asterisk_with_alias_table(self):
+        ci = ClauseInfo[A](A, "*", alias_table="new_name", keep_asterisk=True)
+        self.assertEqual(ci.query, "`new_name`.*")
 
     def test_passing_table(self):
         ci = ClauseInfo[A](A, A)
@@ -256,6 +264,9 @@ class TestContextClauseInfo(unittest.TestCase):
 
         self.assertEqual(parent.alias_table, "my-custom-alias")
         self.assertEqual(parent.alias_table, child.alias_table)
+
+    def test_alias_clause_NULL_when_no_column_is_specified(self):
+        self.assertEqual(ClauseInfo(A).column, "NULL")
 
 
 if __name__ == "__main__":

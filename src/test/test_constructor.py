@@ -15,20 +15,18 @@ class TestTypeHint(unittest.TestCase):
     def test_initialize_MySQLRepository_with_kwargs(self) -> None:
         ddbb: IRepositoryBase = MySQLRepository(**config_dict)
 
-        ddbb.connect()
         self.assertEqual(ddbb.database, config_dict["database"])
-        self.assertEqual(ddbb.connection.database, config_dict["database"])
+        self.assertEqual(ddbb.database, config_dict["database"])
 
-        self.assertEqual(ddbb.connection.user, config_dict["user"])
-        self.assertEqual(ddbb.connection._password, config_dict["password"])
-        self.assertEqual(ddbb.connection._host, config_dict["host"])
+        self.assertEqual(ddbb._pool._cnx_config["user"], config_dict["user"])
+        self.assertEqual(ddbb._pool._cnx_config["password"], config_dict["password"])
+        self.assertEqual(ddbb._pool._cnx_config["host"], config_dict["host"])
 
     def test_raise_ValueError_if_Model_has_not_get_IRepositoryModel(self) -> None:
-        ddbb: IRepositoryBase = MySQLRepository(**config_dict).connect()
 
         with self.assertRaises(ValueError):
             try:
-                CountryModel(ddbb)
+                CountryModel(None)
             except ValueError as err:
                 mssg: str = "`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class"
                 self.assertEqual(mssg, err.args[0])

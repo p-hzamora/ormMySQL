@@ -297,7 +297,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def max[TProp](self, column: Callable[[T], TProp], alias_name: str = "max") -> TProp:
-        return func.Max(column=column, alias_clause=alias_name, context=self._query_builder._context)
+        return func.Max(elements=column, alias_clause=alias_name, context=self._query_builder._context)
 
     @override
     def min[TProp](self, column: Callable[[T], TProp], alias_name: str = "min") -> TProp:

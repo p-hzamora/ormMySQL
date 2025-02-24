@@ -1,13 +1,13 @@
 import typing as tp
 
 if tp.TYPE_CHECKING:
-    from ormlambda import Table, Column
+    from ormlambda import Table, Column, ForeignKey
     from ormlambda.common.abstract_classes.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
 
 
 type AsteriskType = str
-type TableType[T: Table] = tp.Type[T]
+type TableType[T: Table] = tp.Type[T] | ForeignKey[T]
 type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType | tuple[Column]
 type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
 

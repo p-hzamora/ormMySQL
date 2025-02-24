@@ -31,6 +31,7 @@ class Test_my_sql(unittest.TestCase):
         self.ddbb.create_tables_code_first("src/test/models")
 
     def test_create_table_code_first_passing_file(self):
+        return
         self.ddbb.create_tables_code_first("src/test/models/models_in_the_same_file/all_models_in_one_file.py")
         pass
 

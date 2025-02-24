@@ -1,9 +1,9 @@
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
+from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
 from ormlambda.types import ColumnType, AliasType
 from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
 
 
-class ST_AsText(AggregateFunctionBase):
+class ST_AsText(AggregateFunctionBase[None]):
     """
     https://dev.mysql.com/doc/refman/8.4/en/fetching-spatial-data.html
 
@@ -21,9 +21,10 @@ class ST_AsText(AggregateFunctionBase):
         alias_clause: AliasType[ColumnType[TProp]] = None,
         context: ClauseContextType = None,
     ) -> None:
-        point_column: ClauseInfo[T] = ClauseInfo[T](point.table, point, alias_table=alias_table, context=context)
         super().__init__(
-            column=point_column,
+            table=point.table,
+            column=point,
+            alias_table=alias_table,
             alias_clause=alias_clause,
-            context=None,
+            context=context,
         )

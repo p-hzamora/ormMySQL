@@ -14,15 +14,20 @@ class Sum(AggregateFunctionBase):
 
     def __init__[TProp](
         self,
-        column: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
+        elements: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
         alias_clause: AliasType[ColumnType[TProp]] = "sum",
         context: ClauseContextType = None,
     ):
         super().__init__(
-            column=column,
+            table=None,
+            column=elements,
+            alias_table=None,
             alias_clause=alias_clause,
             context=context,
+            keep_asterisk=False,
+            preserve_context=False,
         )
+
 
     @tp.override
     @property
@@ -36,4 +41,4 @@ class Sum(AggregateFunctionBase):
             columns.append(new_clause)
 
         method_string = f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})"
-        return self._concat_alias_and_column(method_string, self._alias_clause)
+        return self._concat_alias_and_column(method_string, self._alias_aggregate)

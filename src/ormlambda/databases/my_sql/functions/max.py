@@ -1,27 +1,31 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext,ClauseContextType
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
 from ormlambda.common.abstract_classes.clause_info import ClauseInfo
 from ormlambda.types import ColumnType, AliasType
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
 
 
-class Max(AggregateFunctionBase):
+class Max(AggregateFunctionBase[None]):
     @staticmethod
     def FUNCTION_NAME() -> str:
         return "MAX"
 
     def __init__[TProp](
         self,
-        column: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
+        elements: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
         alias_clause: AliasType[ColumnType[TProp]] = "max",
         context: ClauseContextType = None,
     ):
         super().__init__(
-            column=column,
+            table=None,
+            column=elements,
+            alias_table=None,
             alias_clause=alias_clause,
             context=context,
+            keep_asterisk=False,
+            preserve_context=False,
         )
 
     @tp.override
@@ -36,4 +40,4 @@ class Max(AggregateFunctionBase):
             columns.append(new_clause)
 
         method_string = f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})"
-        return self._concat_alias_and_column(method_string, self._alias_clause)
+        return self._concat_alias_and_column(method_string, self._alias_aggregate)

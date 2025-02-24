@@ -20,7 +20,31 @@ from ormlambda.utils.foreign_key import ForeignKey
 from .clause_info_context import ClauseInfoContext, ClauseContextType
 
 
-class ClauseInfo[T: Table](IQuery):
+class IClauseInfo[T: Table](IQuery):
+    @property
+    @abc.abstractmethod
+    def table(self) -> TableType[T]: ...
+    @property
+    @abc.abstractmethod
+    def alias_clause(self) -> tp.Optional[str]: ...
+    @property
+    @abc.abstractmethod
+    def alias_table(self) -> tp.Optional[str]: ...
+    @property
+    @abc.abstractmethod
+    def column(self) -> str: ...
+    @property
+    @abc.abstractmethod
+    def unresolved_column(self) -> ColumnType: ...
+    @property
+    @abc.abstractmethod
+    def context(self) -> ClauseContextType: ...
+    @property
+    @abc.abstractmethod
+    def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]: ...
+
+
+class ClauseInfo[T: Table](IClauseInfo):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
     @tp.overload
@@ -33,6 +57,10 @@ class ClauseInfo[T: Table](IQuery):
     def __init__(self, table: TableType[T], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
     @tp.overload
     def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], context: ClauseContextType): ...
+    @tp.overload
+    def __init__(self, table: TableType[T], keep_asterisk: tp.Optional[bool] = ...): ...
+    @tp.overload
+    def __init__(self, table: TableType[T], preserve_context: tp.Optional[bool] = ...): ...
 
     def __init__[TProp](
         self,
@@ -41,19 +69,27 @@ class ClauseInfo[T: Table](IQuery):
         alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         context: ClauseContextType = None,
+        keep_asterisk: bool = False,
+        preserve_context: bool = False,
     ):
+        if not self.is_table(table):
+            column = table if not column else column
+            table = self.extract_table(table)
+
         self._table: TableType[T] = table
         self._column: ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
         self._context: ClauseContextType = context if context else ClauseInfoContext()
+        self._keep_asterisk: bool = keep_asterisk
+        self._preserve_context: bool = preserve_context
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": lambda x: self._column_resolver(x),
             "table": lambda x: self.table.__table_name__,
         }
 
-        if self._context and any([alias_table, alias_clause]):
+        if not self._preserve_context and (self._context and any([alias_table, alias_clause])):
             self._context.add_clause_to_context(self)
 
     def __repr__(self) -> str:
@@ -88,6 +124,9 @@ class ClauseInfo[T: Table](IQuery):
     @alias_table.setter
     def alias_table(self, value: str) -> str:
         self._alias_table = value
+
+    def replaced_alias(self, value:str) -> tp.Optional[str]:
+        return value
 
     @property
     def column(self) -> str:
@@ -139,7 +178,7 @@ class ClauseInfo[T: Table](IQuery):
             return self._get_all_columns()
         return self._join_table_and_column(self._column)
 
-    def _join_table_and_column(self, column: str) -> str:
+    def _join_table_and_column[TProp](self, column: ColumnType[TProp]) -> str:
         if self.alias_table:
             table = self._wrapped_with_quotes(self.alias_table)
         else:
@@ -151,6 +190,8 @@ class ClauseInfo[T: Table](IQuery):
         return self._concat_alias_and_column(table_column, self.alias_clause)
 
     def _return_all_columns(self) -> bool:
+        if self._keep_asterisk:
+            return False
         if isinstance(self._column, ForeignKey):
             return True
 
@@ -163,15 +204,16 @@ class ClauseInfo[T: Table](IQuery):
 
     def _get_all_columns(self) -> str:
         def ClauseCreator(column: str) -> ClauseInfo:
-            return type(self)(
+            return ClauseInfo(
                 table=self.table,
                 column=column,
                 alias_table=self._alias_table,
                 alias_clause=self._alias_clause,
                 context=self._context,
+                keep_asterisk=self._keep_asterisk,
             )
 
-        if self._alias_table:
+        if self._alias_table and self._alias_clause:  # We'll add an "*" when we are certain that we have included 'alias_clause' attr
             return self._join_table_and_column(ASTERISK)
 
         columns: list[ClauseInfo] = [ClauseCreator(column).query for column in self.table.get_columns()]
@@ -209,7 +251,7 @@ class ClauseInfo[T: Table](IQuery):
             return match.group(0)  # No placeholder / value
         return func(self._column)
 
-    def _concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str]) -> str:
+    def _concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str] = None) -> str:
         if alias_clause is None:
             return column
         alias = f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
@@ -248,39 +290,54 @@ class ClauseInfo[T: Table](IQuery):
     def _wrapped_with_quotes(string: str) -> str:
         return f"`{string}`"
 
+    @classmethod
+    def extract_table(cls, element: ColumnType[T] | TableType) -> T:
+        if element is None:
+            return None
 
-class AggregateFunctionBase(ClauseInfo[None], IAggregate):
+        if cls.is_table(element):
+            if issubclass(element, ForeignKey):
+                return element.tright
+            return element
+        if isinstance(element, Column):
+            return element.table
+
+    @staticmethod
+    def is_table(data: tp.Optional[ColumnType]) -> bool:
+        if (isinstance(data, type) and issubclass(data, Table)) or isinstance(data, ForeignKey):
+            return True
+        return False
+
+
+class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
     def __init__[TProp: Column](
         self,
+        table: TableType[T],
         column: tp.Optional[ColumnType[TProp]] = None,
-        alias_clause: tp.Optional[AliasType[ClauseInfo[None]]] = None,
+        alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
+        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         context: ClauseContextType = None,
-        table: Table = None,
+        keep_asterisk: bool = False,
+        preserve_context: bool = False,
     ):
+        self._alias_aggregate = alias_clause
         super().__init__(
-            table=Table if not table else table,  # if table is not None, the column strings will not wrapped with ''. we need to treat as object not strings
-            alias_table=None,
+            table=table,
             column=column,
-            alias_clause=alias_clause,
+            alias_table=alias_table,
             context=context,
+            keep_asterisk=keep_asterisk,
+            preserve_context=preserve_context,
         )
 
     @staticmethod
     @abc.abstractmethod
     def FUNCTION_NAME() -> str: ...
 
-    @tp.override
-    def _create_query(self) -> str:
-        # avoid use placeholder when using IAggregate because no make sense.
-        if self._alias_clause and (found := self._keyRegex.findall(self._alias_clause)):
-            raise NotKeysInIAggregateError(found)
-
-        columns = self._column_resolver(self._column)
-        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({columns})", self.alias_clause)
-
-    @staticmethod
-    def _convert_into_clauseInfo[TProp](columns: ClauseInfo | ColumnType[TProp], context: ClauseContextType) -> list[ClauseInfo]:
-        type ClusterType = ColumnType | str | ForeignKey
+    @classmethod
+    def _convert_into_clauseInfo[TProp](cls, columns: ClauseInfo | ColumnType[TProp], context: ClauseContextType) -> list[ClauseInfo]:
+        type DEFAULT = tp.Literal["default"]
+        type ClusterType = ColumnType | ForeignKey | DEFAULT
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
             Column: lambda column: ClauseInfo(column.table, column, context=context),
             ClauseInfo: lambda column: column,
@@ -288,11 +345,34 @@ class AggregateFunctionBase(ClauseInfo[None], IAggregate):
             Table: lambda tbl: ClauseInfo(tbl.table, None, context=context),
             "default": lambda column: ClauseInfo(table=None, column=column, context=context),
         }
-
         all_clauses: list[ClauseInfo] = []
         if isinstance(columns, str) or not isinstance(columns, tp.Iterable):
             columns = (columns,)
         for value in columns:
-            all_clauses.append(dicc_type.get(type(value), dicc_type["default"])(value))
+            key = Table if cls.is_table(value) else type(value)
+            all_clauses.append(dicc_type.get(key, dicc_type["default"])(value))
 
         return all_clauses
+
+    @tp.override
+    @property
+    def query(self) -> str:
+        wrapped_ci = self.wrapped_clause_info(self)
+        if not self._alias_aggregate:
+            return wrapped_ci
+
+        return ClauseInfo(
+            table=None,
+            column=wrapped_ci,
+            alias_clause=self._alias_aggregate,
+            context=self._context,
+            keep_asterisk=self._keep_asterisk,
+            preserve_context=self._preserve_context,
+        ).query
+
+    def wrapped_clause_info(self, ci: ClauseInfo[T]) -> str:
+        # avoid use placeholder when using IAggregate because no make sense.
+        if self._alias_aggregate and (found := self._keyRegex.findall(self._alias_aggregate)):
+            raise NotKeysInIAggregateError(found)
+
+        return f"{self.FUNCTION_NAME()}({ci._create_query()})"

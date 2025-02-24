@@ -33,7 +33,7 @@ class TestSelect(unittest.TestCase):
             ),
             context=context,
         )
-        query_string: str = "SELECT CONCAT(`d`.pk_d, '-', `c`.pk_c, '-', b.pk_b, '-', `a`.pk_a, `a`.name_a, `a`.data_a, `a`.date_a, `a`.value, '-', b.data) AS `concat_pks`, `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `a`.data_a AS `a_data_a`, `c`.pk_c AS `c_pk_c`, `c`.data_c AS `c_data_c`, `c`.fk_b AS `c_fk_b` FROM d AS `d` INNER JOIN c AS `c` ON `d`.fk_c = `c`.pk_c"
+        query_string: str = "SELECT CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', b.pk_b, '-', `a`.pk_a, `a`.name_a, `a`.data_a, `a`.date_a, `a`.value, '-', b.data) AS `concat_pks`, `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
         self.assertEqual(selected.query, query_string)
 
 

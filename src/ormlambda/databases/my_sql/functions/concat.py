@@ -1,5 +1,5 @@
 from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext,ClauseContextType
+from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
 
 
 import typing as tp
@@ -19,6 +19,7 @@ class Concat[*Ts](AggregateFunctionBase):
         context: ClauseContextType = None,
     ) -> None:
         super().__init__(
+            table=None,
             column=values,
             alias_clause=alias_clause,
             context=context,
@@ -35,4 +36,4 @@ class Concat[*Ts](AggregateFunctionBase):
             new_clause = clause
             new_clause.alias_clause = None
             columns.append(new_clause)
-        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})", self._alias_clause)
+        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})", self._alias_aggregate)

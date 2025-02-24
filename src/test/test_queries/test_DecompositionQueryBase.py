@@ -28,7 +28,8 @@ class TestQueryBuilder(unittest.TestCase):
                 Address.City.Country.country_id,
             ), context=ctx
         )
-        [print(x) for x in mysql.all_clauses]
+        pass
+
 
 
 if __name__ == "__main__":
