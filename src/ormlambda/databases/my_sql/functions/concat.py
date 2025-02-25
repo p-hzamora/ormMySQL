@@ -32,8 +32,7 @@ class Concat[*Ts](AggregateFunctionBase):
 
         context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None
 
-        for clause in self._convert_into_clauseInfo(self.unresolved_column, context):
-            new_clause = clause
-            new_clause.alias_clause = None
-            columns.append(new_clause)
+        for clause in self._convert_into_clauseInfo(self.unresolved_column, context=context):
+            clause.alias_clause = None
+            columns.append(clause)
         return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns)})", self._alias_aggregate)
