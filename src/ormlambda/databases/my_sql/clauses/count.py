@@ -20,17 +20,21 @@ class Count[T: Table](AggregateFunctionBase[T]):
 
     def __init__[TProp: Table](
         self,
-        table: ColumnType[T] | TableType[TProp],
+        element: ColumnType[T] | TableType[TProp],
         alias_table: AliasType[ColumnType[TProp]] = None,
         alias_clause: AliasType[ColumnType[TProp]] = "count",
         context: ClauseContextType = None,
+        keep_asterisk: bool = True,
+        preserve_context: bool = True,
     ) -> None:
+        table = self.extract_table(element)
+
         super().__init__(
-            table=self.extract_table(table) if alias_table else None,
+            table=table if (alias_table or (context and table in context._table_context)) else None,
             column="*",
             alias_table=alias_table,
             alias_clause=alias_clause,
             context=context,
-            keep_asterisk=True,
-            preserve_context=True,
+            keep_asterisk=keep_asterisk,
+            preserve_context=preserve_context,
         )
