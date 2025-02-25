@@ -19,12 +19,12 @@ class Alias[T: Table](IQuery):
     def __init__(
         self,
         element: IAggregate | ClauseInfo[T],
-        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
+        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]],
     ):
         context = ClauseInfoContext(table_context=element.context._table_context, clause_context={})
-        element.context=context
+        element.context = context
         self._element = element
-        self._element._alias_clause = alias_clause if alias_clause else element.alias_clause
+        self._element._alias_clause = alias_clause
 
     @tp.override
     @property
