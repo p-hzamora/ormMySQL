@@ -1,14 +1,13 @@
-from decouple import config
-
-USERNAME = config("DB_USERNAME")
-PASSWORD = config("DB_PASSWORD")
-HOST = config("HOST")
-DATABASE = config("DATABASE")
-
+from env import (
+    DB_USERNAME,
+    DB_PASSWORD,
+    DB_HOST,
+    DB_DATABASE,
+)
 
 config_dict: dict[str, str] = {
-    "user": USERNAME,
-    "password": PASSWORD,
-    "host": HOST,
-    "database": DATABASE,
+    "user": DB_USERNAME,
+    "password": DB_PASSWORD,
+    "host": DB_HOST,
+    "database": DB_DATABASE,
 }

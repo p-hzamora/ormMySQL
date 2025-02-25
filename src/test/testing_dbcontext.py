@@ -1,6 +1,11 @@
 import sys
 from pathlib import Path
-from decouple import config
+from env import (
+    DB_USERNAME,
+    DB_PASSWORD,
+    DB_HOST,
+    DB_DATABASE,
+)
 import math
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
@@ -14,13 +19,9 @@ from models.actor import ActorModel, Actor  # noqa: E402
 from models.store import StoreModel  # noqa: E402
 
 
-USERNAME = config("USERNAME")
-PASSWORD = config("PASSWORD")
-HOST = config("HOST")
-
 a = Staff.find_dependent_tables()
 
-database: IRepositoryBase = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", host=HOST)
+database: IRepositoryBase = MySQLRepository(user=DB_USERNAME, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)
 
 actor_model = ActorModel(database)
 store_model = StoreModel(database)
