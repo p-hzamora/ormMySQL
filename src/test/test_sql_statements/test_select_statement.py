@@ -94,7 +94,7 @@ class TestJoinQueries(unittest.TestCase):
             ),
         )
         real_query: str = "SELECT `A`.data_a AS `A_data_a`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `B_fk_c_pk_c`.name AS `C_name`, `B_fk_c_pk_c`.name AS `C_name` FROM A AS `A` INNER JOIN B AS `A_fk_b1_pk_b` ON `A`.fk_b1 = `A_fk_b1_pk_b`.pk_b INNER JOIN B AS `A_fk_b2_pk_b` ON `A`.fk_b2 = `A_fk_b2_pk_b`.pk_b INNER JOIN B AS `A_fk_b3_pk_b` ON `A`.fk_b3 = `A_fk_b3_pk_b`.pk_b INNER JOIN C AS `B_fk_c_pk_c` ON `A_fk_b3_pk_b`.fk_c = `B_fk_c_pk_c`.pk_c"
-        self.assertAlmostEqual(self.model.query, real_query)
+        self.assertEqual(self.model.query, real_query)
 
 
 if __name__ == "__main__":

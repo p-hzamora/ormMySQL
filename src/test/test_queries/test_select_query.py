@@ -311,7 +311,7 @@ class TestSelect(unittest.TestCase):
         mssg: str = "SELECT `d_fk_extra_c_pk_extra_c`.pk_extra_c AS `extra_c_pk_extra_c`, `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c"
         self.assertEqual(qb.query, mssg)
 
-    def test_select_with_concat(self):
+    def test_AAAselect_with_concat(self):
         context = ClauseInfoContext()
         selected = Select[D](
             D,
@@ -344,12 +344,12 @@ class TestSelect(unittest.TestCase):
         selected = Select[D](
             D,
             columns=(
-                Alias(Count(D.C), alias_clause="COUNT~fk"),
-                Alias(Count(D), alias_clause="COUNT~pk"),
+                Count(D.C, alias_table="c", alias_clause="COUNT~fk"),
+                Count(D, alias_table="d", alias_clause="COUNT~pk"),
             ),
             context=context,
         )
-        mssg: str = "SELECT COUNT(*) AS `COUNT~fk`, COUNT(*) AS `COUNT~pk` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
+        mssg: str = "SELECT COUNT(`d_fk_c_pk_c`.*) AS `COUNT~fk`, COUNT(`d`.*) AS `COUNT~pk` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
         qb = QueryBuilder()
         qb.add_statement(selected)
         self.assertEqual(qb.query, mssg)
