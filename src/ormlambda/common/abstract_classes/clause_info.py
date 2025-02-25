@@ -15,6 +15,7 @@ from ormlambda.types import (
 from ormlambda.common.interfaces import IAggregate
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.utils.foreign_key import ForeignKey
+from ormlambda.utils.table_constructor import TableMeta
 
 
 from .clause_info_context import ClauseInfoContext, ClauseContextType
@@ -125,7 +126,7 @@ class ClauseInfo[T: Table](IClauseInfo):
     def alias_table(self, value: str) -> str:
         self._alias_table = value
 
-    def replaced_alias(self, value:str) -> tp.Optional[str]:
+    def replaced_alias(self, value: str) -> tp.Optional[str]:
         return value
 
     @property
@@ -291,16 +292,17 @@ class ClauseInfo[T: Table](IClauseInfo):
         return f"`{string}`"
 
     @classmethod
-    def extract_table(cls, element: ColumnType[T] | TableType) -> T:
+    def extract_table(cls, element: ColumnType[T] | TableType) -> tp.Optional[T]:
         if element is None:
             return None
 
         if cls.is_table(element):
-            if issubclass(element, ForeignKey):
+            if isinstance(element, ForeignKey):
                 return element.tright
             return element
         if isinstance(element, Column):
             return element.table
+        return None
 
     @staticmethod
     def is_table(data: tp.Optional[ColumnType]) -> bool:
@@ -335,22 +337,22 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
     def FUNCTION_NAME() -> str: ...
 
     @classmethod
-    def _convert_into_clauseInfo[TProp](cls, columns: ClauseInfo | ColumnType[TProp], context: ClauseContextType) -> list[ClauseInfo]:
+    def _convert_into_clauseInfo[TypeColumns, TProp](cls, columns: ClauseInfo | ColumnType[TProp], context: ClauseContextType) -> list[ClauseInfo]:
         type DEFAULT = tp.Literal["default"]
         type ClusterType = ColumnType | ForeignKey | DEFAULT
+
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
             Column: lambda column: ClauseInfo(column.table, column, context=context),
             ClauseInfo: lambda column: column,
             ForeignKey: lambda tbl: ClauseInfo(tbl.tright, tbl.tright, context=context),
-            Table: lambda tbl: ClauseInfo(tbl.table, None, context=context),
+            TableMeta: lambda tbl: ClauseInfo(tbl, tbl, context=context),
             "default": lambda column: ClauseInfo(table=None, column=column, context=context),
         }
         all_clauses: list[ClauseInfo] = []
         if isinstance(columns, str) or not isinstance(columns, tp.Iterable):
             columns = (columns,)
         for value in columns:
-            key = Table if cls.is_table(value) else type(value)
-            all_clauses.append(dicc_type.get(key, dicc_type["default"])(value))
+            all_clauses.append(dicc_type.get(type(value), dicc_type["default"])(value))
 
         return all_clauses
 
