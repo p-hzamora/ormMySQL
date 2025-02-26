@@ -49,8 +49,8 @@ class TestResolverType(unittest.TestCase):
             (Country.country, "country"),
         ]
     )
-    def test_resolve_MySQLReadCastBase(self, object_: tp.Any, result: str) -> tp.Any:
-        resolver = MySQLReadCastBase().resolve(object_)
+    def test_resolve_MySQLWriteCastBase(self, object_: tp.Any, result: str) -> tp.Any:
+        resolver = MySQLWriteCastBase().resolve(object_)
         self.assertEqual(resolver, result)
 
     @parameterized.expand(
@@ -63,8 +63,8 @@ class TestResolverType(unittest.TestCase):
             (table_obj.data_datetime, datetime(1998, 12, 16, 10, 50, 59)),
         ]
     )
-    def test_resolve_MySQLWriteCastBase(self, column: Column, result: tp.Any) -> tp.Any:
-        resolver = MySQLWriteCastBase().resolve(column)
+    def test_resolve_MySQLReadCastBase(self, column: Column, result: tp.Any) -> tp.Any:
+        resolver = MySQLReadCastBase().resolve(column)
         self.assertEqual(resolver, result)
 
 
