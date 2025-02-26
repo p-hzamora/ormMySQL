@@ -16,7 +16,7 @@ class TableType(Table):
     pk: int = Column(int, is_primary_key=True, is_auto_increment=True)
     strings: str
     integers: int
-    floats: int
+    floats: float
     points: Point
     datetimes: datetime
 
