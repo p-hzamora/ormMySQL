@@ -60,4 +60,8 @@ class ReadCastBase(CastBase):
     def resolve[TProp](self, value: ColumnType[TProp]) -> TProp:
         if isinstance(value, Column):
             return value.column_name
+
+        if type(value) in self.SELECTOR:
+            return value
+
         return self.SELECTOR.get(type(value), lambda c: str(c))(value)
