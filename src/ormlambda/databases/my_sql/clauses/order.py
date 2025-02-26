@@ -20,8 +20,8 @@ class Order(AggregateFunctionBase):
         context: ClauseContextType = None,
     ):
         super().__init__(
+            table=None,
             column=column,
-            alias_clause=None,
             context=context,
         )
 

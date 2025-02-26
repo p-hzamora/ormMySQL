@@ -4,33 +4,33 @@ from types import NoneType
 from ormlambda.common.abstract_classes.resolver import WriteCastBase
 
 from .types.datetime import MySQLWriteDatetime
-from .types.string import MySQLCastString
-from .types.int import MySQLCastInt
-from .types.float import MySQLCastFloat
-from .types.point import MySQLCastPoint
-from .types.none import MySQLCastNoneType
+from .types.string import MySQLWriteString
+from .types.int import MySQLWriteInt
+from .types.float import MySQLWriteFloat
+from .types.point import MySQLWritePoint
+from .types.none import MySQLWriteNoneType
 
 
 class MySQLWriteCastBase(WriteCastBase):
     @staticmethod
     def cast_str(value: str) -> str:
-        return MySQLCastString.cast(value)
+        return MySQLWriteString.cast(value)
 
     @staticmethod
     def cast_int(value: int) -> str:
-        return MySQLCastInt.cast(value)
+        return MySQLWriteInt.cast(value)
 
     @staticmethod
     def cast_float(value: float) -> str:
-        return MySQLCastFloat.cast(value)
+        return MySQLWriteFloat.cast(value)
 
     @staticmethod
     def cast_Point(value: Point) -> str:
-        return MySQLCastPoint.cast(value)
+        return MySQLWritePoint.cast(value)
 
     @staticmethod
     def cast_NoneType(value: NoneType) -> str:
-        return MySQLCastNoneType.cast(value)
+        return MySQLWriteNoneType.cast(value)
 
     @staticmethod
     def cast_datetime(value: datetime) -> str:

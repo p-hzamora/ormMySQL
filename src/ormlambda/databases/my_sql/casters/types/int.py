@@ -2,7 +2,7 @@ from .base_write import IWrite
 from .base_read import IRead
 
 
-class MySQLCastInt(IWrite[int]):
+class MySQLWriteInt(IWrite[int]):
     @staticmethod
     def cast(value: int) -> str:
         return str(value)

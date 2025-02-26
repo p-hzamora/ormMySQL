@@ -40,7 +40,8 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
                     col_names.append(col.column_name)
                     wildcards.append(MySQLWriteCastBase.PLACEHOLDER)
                 # COMMENT: avoid MySQLWriteCastBase.resolve when using PLACEHOLDERs
-                col_values[-1].append(instances[i][col])
+                clean_data = MySQLWriteCastBase().resolve(instances[i][col])
+                col_values[-1].append(clean_data)
 
         join_cols = ", ".join(col_names)
         unknown_rows = f'({", ".join(wildcards)})'  # The number of "%s" must match the dict 'dicc_0' length
