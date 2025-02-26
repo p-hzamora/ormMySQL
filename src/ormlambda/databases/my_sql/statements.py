@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
-from mysql.connector import MySQLConnection, errors, errorcode
+from mysql.connector import errors, errorcode
 import functools
 
 from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
@@ -10,6 +10,7 @@ from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.common.interfaces import IQuery
 
 if TYPE_CHECKING:
+    from mysql.connector import MySQLConnection
     from ormlambda import Table
     from ormlambda.common.interfaces.IStatements import OrderTypes
     from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic
