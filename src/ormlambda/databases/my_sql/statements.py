@@ -278,7 +278,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
 
         if GlobalChecker.is_lambda_function(conditions):
-            conditions = conditions(*self._models)
+            conditions = GlobalChecker.resolved_callback_object(conditions,self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
         self._query_builder.add_statement(Where(*conditions))
@@ -286,7 +286,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
 
     @override
     def order[TValue](self, columns: Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, MySQLConnection]:
-        query = columns(*self._models) if GlobalChecker.is_lambda_function(columns) else columns
+        query = GlobalChecker.resolved_callback_object(columns,self._models) if GlobalChecker.is_lambda_function(columns) else columns
         order = Order(query, order_type)
         self._query_builder.add_statement(order)
         return self
@@ -321,7 +321,7 @@ class MySQLStatements[T: Table, *Ts](AbstractSQLStatements[T, *Ts, MySQLConnecti
         by: JoinType = JoinType.INNER_JOIN,
         **kwargs,
     ):
-        select_clause = selector(*self._models) if GlobalChecker.is_lambda_function(selector) else selector
+        select_clause = GlobalChecker.resolved_callback_object(selector, self._models) if GlobalChecker.is_lambda_function(selector) else selector
 
         if selector is None:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
