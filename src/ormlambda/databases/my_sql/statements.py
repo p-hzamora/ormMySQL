@@ -8,9 +8,9 @@ from ormlambda.databases.my_sql.clauses.joins import JoinSelector
 from ormlambda.utils.foreign_key import ForeignKey
 
 from ormlambda.common.interfaces import IQuery
+from mysql.connector import MySQLConnection
 
 if TYPE_CHECKING:
-    from mysql.connector import MySQLConnection
     from ormlambda import Table
     from ormlambda.common.interfaces.IStatements import OrderTypes
     from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic

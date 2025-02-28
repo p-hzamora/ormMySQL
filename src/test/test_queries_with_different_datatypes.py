@@ -37,6 +37,15 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.ddbb.drop_database(DDBBNAME)
 
+    def test_create_model_with_wrong_types(self):
+        with self.assertRaises(ValueError):
+            TableType(
+                pk=None,
+                strings=1,
+                integers=10.00,
+                floats=5,
+            )
+
     def test_insert_different_types(self):
         instance = TableType(
             pk=None,

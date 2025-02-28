@@ -1,9 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, Concatenate, Iterable, Optional, Type, override, Callable, TYPE_CHECKING
+from typing import Any, Concatenate, Iterable, Optional, Type, override, Callable, Protocol, TypeVar, Generic, cast, TYPE_CHECKING
+import contextlib
 import shapely as shp
 
-# from mysql.connector.pooling import MySQLConnectionPool
+# Imports for MySQL
 from mysql.connector import MySQLConnection, Error  # noqa: F401
 from mysql.connector.pooling import PooledMySQLConnection, MySQLConnectionPool  # noqa: F401
 
@@ -11,22 +12,35 @@ from mysql.connector.pooling import PooledMySQLConnection, MySQLConnectionPool  
 from ormlambda import IRepositoryBase
 from ormlambda.utils.module_tree.dynamic_module import ModuleTree
 
-from .clauses import CreateDatabase, TypeExists
-from .clauses import DropDatabase
-from .clauses import DropTable
-
+from .clauses import CreateDatabase, TypeExists, DropDatabase, DropTable
 
 if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
     from ormlambda import Table
     from ormlambda.databases.my_sql.clauses.select import Select
 
+# Define type variables for type hints
+TConn = TypeVar('TConn')  # Generic connection type
+TFlavour = TypeVar('TFlavour', bound=Iterable)  # For response types
+Ts = TypeVar('Ts')  # For tuple parameters in response
+
+# Type alias for response types
 type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]
+
+# Protocol for database connections
+class DBConnection(Protocol):
+    def cursor(self, **kwargs): ...
+    def commit(self): ...
+    def rollback(self): ...
+    
+# Protocol for connection pools
+class ConnectionPool(Protocol, Generic[TConn]):
+    @contextlib.contextmanager
+    def get_connection(self) -> TConn: ...
 
 
 class Response[TFlavour, *Ts]:
-    def __init__(self, repository: IRepositoryBase, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], model: Optional[Table] = None, select: Optional[Select] = None) -> None:
-        self._repository: IRepositoryBase = repository
+    def __init__(self, response_values: list[tuple[*Ts]], columns: tuple[str], flavour: Type[TFlavour], model: Optional[Table] = None, select: Optional[Select] = None) -> None:
         self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
         self._flavour: Type[TFlavour] = flavour
@@ -34,7 +48,6 @@ class Response[TFlavour, *Ts]:
         self._select: Select = select
 
         self._response_values_index: int = len(self._response_values)
-        # self.select_values()
 
     @property
     def is_one(self) -> bool:
@@ -96,8 +109,6 @@ class Response[TFlavour, *Ts]:
         return selector.get(self._flavour, _default)(**kwargs)
 
     def _parser_response(self) -> TFlavour:
-        from ormlambda.caster import Caster
-
         new_response: list[list] = []
         for row in self._response_values:
             new_row: list = []
@@ -108,8 +119,8 @@ class Response[TFlavour, *Ts]:
                     new_row = row
                     break
                 else:
-                    parse_data = Caster(self._repository).for_value(data,forced_type=clause_info.dtype).from_database
-                    new_row.append(parse_data)
+                    parser_data = self.parser_data(clause_info, data)
+                    new_row.append(parser_data)
             if not isinstance(new_row, tuple):
                 new_row = tuple(new_row)
 
@@ -130,30 +141,58 @@ class Response[TFlavour, *Ts]:
         return data
 
 
-class MySQLRepository(IRepositoryBase[MySQLConnection]):
-    def get_connection[**P, TReturn](func: Callable[Concatenate[MySQLRepository, MySQLConnection, P], TReturn]) -> Callable[P, TReturn]:
-        def wrapper(self: MySQLRepository, *args: P.args, **kwargs: P.kwargs):
-            with self._pool.get_connection() as cnx:
-                try:
-                    return func(self, cnx._cnx, *args, **kwargs)
-                except Exception as e:
-                    cnx._cnx.rollback()
-                    raise e
+# MySQL specific connection pool implementation
+class MySQLPoolAdapter:
+    def __init__(self, pool: MySQLConnectionPool):
+        self._pool = pool
+    
+    @contextlib.contextmanager
+    def get_connection(self):
+        conn = None
+        try:
+            conn = self._pool.get_connection()
+            yield conn._cnx  # Access the underlying connection
+        except Exception as e:
+            if conn and conn._cnx:
+                conn._cnx.rollback()
+            raise e
+        finally:
+            if conn:
+                conn.close()
 
-        return wrapper
 
+class BaseRepository(Generic[TConn]):
+    """Base repository class that can work with different database connections"""
+    
+    def __init__(self, pool: ConnectionPool[TConn]):
+        self._pool = pool
+    
+    @contextlib.contextmanager
+    def connection(self) -> TConn:
+        """Context manager for database connections"""
+        with self._pool.get_connection() as conn:
+            try:
+                yield conn
+            except Exception as e:
+                # This assumes connection has rollback method - might need to adjust based on DB type
+                if hasattr(conn, 'rollback'):
+                    conn.rollback()
+                raise e
+
+
+class MySQLRepository(BaseRepository[MySQLConnection], IRepositoryBase[MySQLConnection]):
     def __init__(self, **kwargs: str) -> None:
         self._data_config: dict[str, str] = kwargs
-        self._pool: MySQLConnectionPool = self.__create_MySQLConnectionPool()
-
+        mysql_pool = self.__create_MySQLConnectionPool()
+        pool_adapter = MySQLPoolAdapter(mysql_pool)
+        super().__init__(pool_adapter)
+        
     def __create_MySQLConnectionPool(self):
         return MySQLConnectionPool(pool_name="mypool", pool_size=10, **self._data_config)
 
     @override
-    @get_connection
     def read_sql[TFlavour: Iterable](
         self,
-        cnx: MySQLConnection,
         query: str,
         flavour: tuple | Type[TFlavour] = tuple,
         **kwargs,
@@ -166,20 +205,18 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             - query:str: string of request to the server
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
-
         model: Table = kwargs.pop("model", None)
         select: Select = kwargs.pop("select", None)
         cast_to_tuple: bool = kwargs.pop("cast_to_tuple", True)
 
-        with cnx.cursor(buffered=True) as cursor:
-            cursor.execute(query)
-            values: list[tuple] = cursor.fetchall()
-            columns: tuple[str] = cursor.column_names
-            return Response[TFlavour](repository=self, model=model, response_values=values, columns=columns, flavour=flavour, select=select).response(_tuple=cast_to_tuple, **kwargs)
+        with self.connection() as cnx:
+            with cnx.cursor(buffered=True) as cursor:
+                cursor.execute(query)
+                values: list[tuple] = cursor.fetchall()
+                columns: tuple[str] = cursor.column_names
+                return Response[TFlavour](model=model, response_values=values, columns=columns, flavour=flavour, select=select).response(_tuple=cast_to_tuple, **kwargs)
 
-    # FIXME [ ]: this method does not comply with the implemented interface
-    @get_connection
-    def create_tables_code_first(self, cnx: MySQLConnection, path: str | Path) -> None:
+    def create_tables_code_first(self, path: str | Path) -> None:
         if not isinstance(path, Path | str):
             raise ValueError
 
@@ -190,37 +227,37 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
             raise FileNotFoundError
 
         module_tree: ModuleTree = ModuleTree(path)
-
         queries_list: list[str] = module_tree.get_queries()
 
-        for query in queries_list:
+        with self.connection() as cnx:
+            for query in queries_list:
+                with cnx.cursor(buffered=True) as cursor:
+                    cursor.execute(query)
+            cnx.commit()
+        return None
+
+    @override
+    def executemany_with_values(self, query: str, values) -> None:
+        with self.connection() as cnx:
+            with cnx.cursor(buffered=True) as cursor:
+                cursor.executemany(query, values)
+            cnx.commit()
+        return None
+
+    @override
+    def execute_with_values(self, query: str, values) -> None:
+        with self.connection() as cnx:
+            with cnx.cursor(buffered=True) as cursor:
+                cursor.execute(query, values)
+            cnx.commit()
+        return None
+
+    @override
+    def execute(self, query: str) -> None:
+        with self.connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-        cnx.commit()
-        return None
-
-    @override
-    @get_connection
-    def executemany_with_values(self, cnx: MySQLConnection, query: str, values) -> None:
-        with cnx.cursor(buffered=True) as cursor:
-            cursor.executemany(query, values)
-        cnx.commit()
-        return None
-
-    @override
-    @get_connection
-    def execute_with_values(self, cnx: MySQLConnection, query: str, values) -> None:
-        with cnx.cursor(buffered=True) as cursor:
-            cursor.execute(query, values)
-        cnx.commit()
-        return None
-
-    @override
-    @get_connection
-    def execute(self, cnx: MySQLConnection, query: str) -> None:
-        with cnx.cursor(buffered=True) as cursor:
-            cursor.execute(query)
-        cnx.commit()
+            cnx.commit()
         return None
 
     @override
@@ -228,29 +265,29 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
         return DropTable(self).execute(name)
 
     @override
-    @get_connection
-    def database_exists(self, cnx: MySQLConnection, name: str) -> bool:
-        query = "SHOW DATABASES LIKE %s;"
-        with cnx.cursor(buffered=True) as cursor:
-            cursor.execute(query, (name,))
-            res = cursor.fetchmany(1)
-        return len(res) > 0
+    def database_exists(self, name: str) -> bool:
+        with self.connection() as cnx:
+            query = "SHOW DATABASES LIKE %s;"
+            with cnx.cursor(buffered=True) as cursor:
+                cursor.execute(query, (name,))
+                res = cursor.fetchmany(1)
+            return len(res) > 0
 
     @override
     def drop_database(self, name: str) -> None:
         return DropDatabase(self).execute(name)
 
     @override
-    @get_connection
-    def table_exists(self, cnx: MySQLConnection, name: str) -> bool:
-        if not cnx.database:
-            raise Exception("No database selected")
+    def table_exists(self, name: str) -> bool:
+        with self.connection() as cnx:
+            if not cnx.database:
+                raise Exception("No database selected")
 
-        query = "SHOW TABLES LIKE %s;"
-        with cnx.cursor(buffered=True) as cursor:
-            cursor.execute(query, (name,))
-            res = cursor.fetchmany(1)
-        return len(res) > 0
+            query = "SHOW TABLES LIKE %s;"
+            with cnx.cursor(buffered=True) as cursor:
+                cursor.execute(query, (name,))
+                res = cursor.fetchmany(1)
+            return len(res) > 0
 
     @override
     def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
@@ -263,4 +300,41 @@ class MySQLRepository(IRepositoryBase[MySQLConnection]):
     @database.setter
     def database(self, value: str) -> None:
         self._data_config["database"] = value
-        self._pool = self.__create_MySQLConnectionPool()
+        # Recreate the pool with the new database
+        mysql_pool = self.__create_MySQLConnectionPool()
+        self._pool = MySQLPoolAdapter(mysql_pool)
+
+
+# Example of how to extend for PostgreSQL
+"""
+class PostgreSQLPoolAdapter:
+    def __init__(self, pool):
+        self._pool = pool
+    
+    @contextlib.contextmanager
+    def get_connection(self):
+        conn = None
+        try:
+            conn = self._pool.getconn()
+            yield conn
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            raise e
+        finally:
+            if conn:
+                self._pool.putconn(conn)
+
+class PostgreSQLRepository(BaseRepository[SomePostgreSQLConnType], IRepositoryBase[SomePostgreSQLConnType]):
+    def __init__(self, **kwargs: str) -> None:
+        self._data_config: dict[str, str] = kwargs
+        pg_pool = self.__create_PostgreSQLConnectionPool()
+        pool_adapter = PostgreSQLPoolAdapter(pg_pool)
+        super().__init__(pool_adapter)
+        
+    def __create_PostgreSQLConnectionPool(self):
+        # Create and return a PostgreSQL connection pool
+        pass
+        
+    # Implement the rest of the IRepositoryBase methods
+"""

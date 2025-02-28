@@ -16,6 +16,7 @@ from ormlambda.common.interfaces import IAggregate
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.utils.foreign_key import ForeignKey
 from ormlambda.utils.table_constructor import TableMeta
+from ormlambda.caster import Caster
 
 
 from .clause_info_context import ClauseInfoContext, ClauseContextType
@@ -223,7 +224,8 @@ class ClauseInfo[T: Table](IClauseInfo):
 
     # FIXME [ ]: Study how to deacoplate from mysql database
     def _column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
-        from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
+        from ormlambda.databases.my_sql.repository import MySQLRepository
+
 
         if isinstance(column, ClauseInfo):
             return column.query
@@ -240,7 +242,7 @@ class ClauseInfo[T: Table](IClauseInfo):
 
         if self.is_asterisk(column):
             return ASTERISK
-        return MySQLWriteCastBase().resolve(column)
+        return Caster(MySQLRepository).for_value(column,self.dtype)
 
     def _replace_placeholder(self, string: str) -> str:
         return self._keyRegex.sub(self._replace, string)

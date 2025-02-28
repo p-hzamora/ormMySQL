@@ -4,7 +4,7 @@ from mysql.connector import MySQLConnection
 from ormlambda.components.update import UpdateQueryBase
 from ormlambda import Table, Column
 from ormlambda import IRepositoryBase
-from ormlambda.databases.my_sql.casters import MySQLWriteCastBase
+from ormlambda.caster import PLACEHOLDER
 from .where import Where
 from ormlambda.types import ColumnType
 
@@ -59,7 +59,7 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnec
                 name_cols.append(col)
                 self._values.append(value)
 
-        set_query: str = ",".join(["=".join([col.column_name, MySQLWriteCastBase.PLACEHOLDER]) for col in name_cols])
+        set_query: str = ",".join(["=".join([col.column_name, PLACEHOLDER]) for col in name_cols])
 
         self._query = f"{self.CLAUSE} {self._model.__table_name__} SET {set_query}"
         self._values = tuple(self._values)

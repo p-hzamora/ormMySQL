@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Optional
 from shapely import Point
 from types import NoneType
-from ormlambda.common.abstract_classes.resolver import ReadCastBase
+from ormlambda.common.abstract_classes.caster.cast_base import ReadCastBase
 
 
 from .types.datetime import MySQLReadDatetime

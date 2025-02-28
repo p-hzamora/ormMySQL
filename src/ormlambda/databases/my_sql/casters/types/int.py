@@ -4,7 +4,7 @@ from .base_read import IRead
 
 class MySQLWriteInt(IWrite[int]):
     @staticmethod
-    def cast(value: int) -> str:
+    def cast(value: int, insert_data: bool = False) -> str:
         return str(value)
 
 

@@ -6,7 +6,7 @@ from .int import MySQLWriteInt
 
 class MySQLWriteFloat(IWrite[float]):
     @staticmethod
-    def cast(value: float) -> str:
+    def cast(value: float, insert_data: bool = False) -> str:
         return MySQLWriteInt.cast(value)
 
 

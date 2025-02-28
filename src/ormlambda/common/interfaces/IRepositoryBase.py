@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, Iterable
 
 TypeExists = Literal["fail", "replace", "append"]
 
@@ -9,7 +9,7 @@ class IRepositoryBase[T](ABC):
         return f"{IRepositoryBase.__name__}: {self.__class__.__name__}"
 
     @abstractmethod
-    def read_sql[TFlavour](self, cnx: T, query: str, flavour: Optional[Type[TFlavour]], **kwargs) -> tuple[TFlavour]: ...
+    def read_sql[TFlavour:Iterable](self, cnx: T, query: str, flavour: Optional[Type[TFlavour]], **kwargs) -> tuple[TFlavour]: ...
 
     @abstractmethod
     def executemany_with_values(self, query: str, values) -> None: ...

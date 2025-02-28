@@ -5,3 +5,4 @@ from .IStatements import IStatements as IStatements, IStatements_two_generic as 
 from .IDecompositionQuery import IDecompositionQuery as IDecompositionQuery
 from .IAggregate import IAggregate as IAggregate
 from .ICustomAlias import ICustomAlias as ICustomAlias
+from .ICaster import ICaster as ICaster

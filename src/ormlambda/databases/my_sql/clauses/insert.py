@@ -5,7 +5,7 @@ from ormlambda import Table
 from ormlambda import Column
 from ormlambda.components.insert import InsertQueryBase
 from ormlambda import IRepositoryBase
-from ..casters import MySQLWriteCastBase
+from ormlambda.caster import Caster
 
 
 class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]):
@@ -24,10 +24,10 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         return self._repository.executemany_with_values(self.query, self._values)
 
     @override
-    def insert(self, instances: T | list[T]) -> None:
+    def insert[TProp](self, instances: T | list[T]) -> None:
         if not isinstance(instances, Iterable):
             instances = (instances,)
-        valid_cols: list[list[Column]] = []
+        valid_cols: list[list[Column[TProp]]] = []
         self.__fill_dict_list(valid_cols, instances)
 
         col_names: list[str] = []
@@ -35,13 +35,14 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         col_values: list[list[str]] = []
         for i, cols in enumerate(valid_cols):
             col_values.append([])
+            CASTER = Caster(self._repository, instances[i], insert=True)
             for col in cols:
+                clean_data = CASTER.for_column(col)  # .resolve(instances[i][col])
                 if i == 0:
                     col_names.append(col.column_name)
-                    wildcards.append(MySQLWriteCastBase.PLACEHOLDER)
+                    wildcards.append(clean_data.wildcard)
                 # COMMENT: avoid MySQLWriteCastBase.resolve when using PLACEHOLDERs
-                clean_data = MySQLWriteCastBase().resolve(instances[i][col])
-                col_values[-1].append(clean_data)
+                col_values[-1].append(clean_data.to_query)
 
         join_cols = ", ".join(col_names)
         unknown_rows = f'({", ".join(wildcards)})'  # The number of "%s" must match the dict 'dicc_0' length

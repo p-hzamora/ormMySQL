@@ -1,7 +1,7 @@
 from datetime import datetime
 from shapely import Point
 from types import NoneType
-from ormlambda.common.abstract_classes.resolver import WriteCastBase
+from ormlambda.common.abstract_classes.caster.cast_base import WriteCastBase
 
 from .types.datetime import MySQLWriteDatetime
 from .types.string import MySQLWriteString
@@ -13,25 +13,25 @@ from .types.none import MySQLWriteNoneType
 
 class MySQLWriteCastBase(WriteCastBase):
     @staticmethod
-    def cast_str(value: str) -> str:
-        return MySQLWriteString.cast(value)
+    def cast_str(value: str, insert_data: bool = False) -> str:
+        return MySQLWriteString.cast(value, insert_data)
 
     @staticmethod
-    def cast_int(value: int) -> str:
-        return MySQLWriteInt.cast(value)
+    def cast_int(value: int, insert_data: bool = False) -> str:
+        return MySQLWriteInt.cast(value, insert_data)
 
     @staticmethod
-    def cast_float(value: float) -> str:
-        return MySQLWriteFloat.cast(value)
+    def cast_float(value: float, insert_data: bool = False) -> str:
+        return MySQLWriteFloat.cast(value, insert_data)
 
     @staticmethod
-    def cast_Point(value: Point) -> str:
-        return MySQLWritePoint.cast(value)
+    def cast_Point(value: Point, insert_data: bool = False) -> str:
+        return MySQLWritePoint.cast(value, insert_data)
 
     @staticmethod
-    def cast_NoneType(value: NoneType) -> str:
-        return MySQLWriteNoneType.cast(value)
+    def cast_NoneType(value: NoneType, insert_data: bool = False) -> str:
+        return MySQLWriteNoneType.cast(value, insert_data)
 
     @staticmethod
-    def cast_datetime(value: datetime) -> str:
-        return MySQLWriteDatetime.cast(value)
+    def cast_datetime(value: datetime, insert_data: bool = False) -> str:
+        return MySQLWriteDatetime.cast(value, insert_data)
