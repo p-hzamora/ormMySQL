@@ -22,7 +22,7 @@ class TableCount(Table):
 
 
 class TableCountModel(BaseModel[TableCount]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, TableCount, repository)
 
 

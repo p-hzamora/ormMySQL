@@ -8,7 +8,7 @@ from mysql.connector import MySQLConnection
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda.common.interfaces import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from ormlambda.databases.my_sql import MySQLRepository
 from config import config_dict  # noqa: E402
 from ormlambda import Table, Column, BaseModel, ForeignKey  # noqa: E402
@@ -46,24 +46,24 @@ class AWithMultipleReferencesToB(Table):
 
 
 class AModel(BaseModel[AWithMultipleReferencesToB]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, AWithMultipleReferencesToB, repository)
 
 
 class CSimpleModel(BaseModel[CSimple]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, CSimple, repository)
 
 
 class BSimpleModel(BaseModel[BSimple]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, BSimple, repository)
 
 
 class TestJoinQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
 

@@ -1,15 +1,20 @@
-from typing import override, Iterable
+from __future__ import annotations
+
+from typing import override, Iterable, TYPE_CHECKING
 from mysql.connector import MySQLConnection
 
 from ormlambda import Table
 from ormlambda import Column
 from ormlambda.components.insert import InsertQueryBase
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from ormlambda.caster import Caster
 
+if TYPE_CHECKING:
+    from ormlambda.databases.my_sql import MySQLRepository
 
-class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]):
-    def __init__(self, model: T, repository: IRepositoryBase[IRepositoryBase[MySQLConnection]]) -> None:
+
+class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase]):
+    def __init__(self, model: T, repository: MySQLRepository) -> None:
         super().__init__(model, repository)
 
     @override
@@ -35,9 +40,9 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase[MySQLConnection]]
         col_values: list[list[str]] = []
         for i, cols in enumerate(valid_cols):
             col_values.append([])
-            CASTER = Caster(self._repository, instances[i], insert=True)
+            CASTER = Caster[MySQLRepository](self._repository)
             for col in cols:
-                clean_data = CASTER.for_column(col)  # .resolve(instances[i][col])
+                clean_data = CASTER.for_column(col, instances[i])  # .resolve(instances[i][col])
                 if i == 0:
                     col_names.append(col.column_name)
                     wildcards.append(clean_data.wildcard)

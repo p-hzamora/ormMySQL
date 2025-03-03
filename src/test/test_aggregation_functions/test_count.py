@@ -9,7 +9,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop
 
 from ormlambda.databases.my_sql.clauses import Count
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from models import D
 
 

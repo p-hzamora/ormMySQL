@@ -6,7 +6,7 @@ from ormlambda.common.abstract_classes import NonQueryBase
 from ormlambda.databases.my_sql.clauses.where import Where
 
 if TYPE_CHECKING:
-    from ormlambda import IRepositoryBase
+    from ormlambda.repository import IRepositoryBase
     from ormlambda import Table
 
 from .IUpdate import IUpdate

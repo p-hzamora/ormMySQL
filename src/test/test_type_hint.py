@@ -97,7 +97,7 @@ class TestTypeHint(unittest.TestCase):
     #         bytearray_data: bytearray
 
     #     class BytearrayModel(BaseModel[TableWithBytearray]):
-    #         def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[TableWithBytearray, TRepo]:
+    #         def __new__[TRepo](cls, repository: IRepositoryBase) -> IStatements_two_generic[TableWithBytearray, TRepo]:
     #             return super().__new__(cls, TableWithBytearray, repository)
 
     #     DDBB_NAME: str = "__TEST_DATABASE__"

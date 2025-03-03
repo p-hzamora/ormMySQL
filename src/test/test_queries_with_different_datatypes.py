@@ -25,7 +25,7 @@ DDBBNAME = "__test_ddbb__"
 class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
 
     def setUp(self) -> None:
         self.ddbb.create_database(DDBBNAME, "replace")

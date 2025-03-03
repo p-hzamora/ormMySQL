@@ -1,6 +1,6 @@
 from typing import Literal, override
 
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 
 from mysql.connector import MySQLConnection
 
@@ -8,8 +8,8 @@ TypeExists = Literal["fail", "replace", "append"]
 
 
 class DropTable:
-    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
-        self._repository: IRepositoryBase[MySQLConnection] = repository
+    def __init__(self, repository: IRepositoryBase) -> None:
+        self._repository: IRepositoryBase = repository
 
     @override
     def execute(self, name: str = None) -> None:

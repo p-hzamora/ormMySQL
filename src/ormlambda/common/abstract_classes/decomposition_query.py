@@ -3,13 +3,14 @@ import typing as tp
 import abc
 from ormlambda import Table, Column
 
-from ormlambda.common.interfaces import IAggregate, IDecompositionQuery, ICustomAlias
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
-from ormlambda.utils.foreign_key import ForeignKey
-from ormlambda.utils.global_checker import GlobalChecker
+from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
+from ormlambda.statements.interfaces import IAggregate
+from ormlambda.sql.clause_info import ClauseInfo, AggregateFunctionBase
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda import ForeignKey
+from ormlambda.common.global_checker import GlobalChecker
 
-from ormlambda.types import AliasType, TableType, ColumnType
+from ormlambda.sql.types import AliasType, TableType, ColumnType
 
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]

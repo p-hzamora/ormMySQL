@@ -4,7 +4,7 @@ from ormlambda import (
     BaseModel,
 )
 
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 
 
 class TestTable(Table):
@@ -37,5 +37,5 @@ class TestTable(Table):
 
 
 class TestTableModel(BaseModel[TestTable]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, TestTable, repository)

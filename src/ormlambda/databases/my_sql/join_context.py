@@ -2,14 +2,14 @@ from __future__ import annotations
 from typing import Any, Iterable, TYPE_CHECKING
 
 from ormlambda import ForeignKey
-from ormlambda.common.abstract_classes.comparer import Comparer
+from ormlambda.sql.comparer import Comparer
 
 
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+    from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.common.interfaces import IStatements_two_generic
-    from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
+    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.common.enums.join_type import JoinType
 
 

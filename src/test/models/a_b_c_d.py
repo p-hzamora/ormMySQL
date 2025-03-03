@@ -55,5 +55,5 @@ class D(Table):
 
 
 class ModelAB[T, *Ts](BaseModel[T, *Ts]):
-    def __new__[TRepo](cls, model: T, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, model: T, repository: IRepositoryBase):
         return super().__new__(cls, model, repository)

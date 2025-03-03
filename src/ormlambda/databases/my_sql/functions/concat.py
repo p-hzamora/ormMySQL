@@ -1,10 +1,10 @@
-from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.clause_info import AggregateFunctionBase
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
 
 
 import typing as tp
-from ormlambda.types import ColumnType, AliasType
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.sql.types import ColumnType, AliasType
+from ormlambda.sql.clause_info import ClauseInfo
 
 
 class Concat[*Ts](AggregateFunctionBase):

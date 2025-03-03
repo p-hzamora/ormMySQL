@@ -7,7 +7,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from ormlambda.databases.my_sql import functions as func
 from models import D, C
 

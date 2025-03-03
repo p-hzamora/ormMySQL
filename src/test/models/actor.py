@@ -23,5 +23,5 @@ class Actor(Table):
 
 
 class ActorModel(BaseModel[Actor]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, Actor, repository)

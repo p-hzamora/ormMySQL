@@ -2,13 +2,13 @@ from typing import override, Any
 
 from ormlambda import Table
 from ormlambda.components.upsert import UpsertQueryBase
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from mysql.connector import MySQLConnection
 
 from .insert import InsertQuery
 
 
-class UpsertQuery[T: Table](UpsertQueryBase[T, IRepositoryBase[MySQLConnection]]):
+class UpsertQuery[T: Table](UpsertQueryBase[T, IRepositoryBase]):
     def __init__(self, model: T, repository: Any) -> None:
         super().__init__(model, repository)
 

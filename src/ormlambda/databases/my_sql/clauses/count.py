@@ -1,16 +1,16 @@
 from __future__ import annotations
-from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
-from ormlambda.common.abstract_classes.clause_info_context import ClauseContextType
+from ormlambda.sql.clause_info import AggregateFunctionBase
+from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 
-from ormlambda.types import AliasType, ColumnType
+from ormlambda.sql.types import AliasType, ColumnType
 
-from ormlambda.utils.table_constructor import Table
+from ormlambda import Table
 
 import typing as tp
 
 if tp.TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.types import ColumnType, AliasType, TableType
+    from ormlambda.sql.types import ColumnType, AliasType, TableType
 
 
 class Count[T: Table](AggregateFunctionBase[T]):

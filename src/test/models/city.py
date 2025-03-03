@@ -7,7 +7,7 @@ from ormlambda import (
 
 from datetime import datetime
 
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from .country import Country
 
 
@@ -23,5 +23,5 @@ class City(Table):
 
 
 class CityModel(BaseModel[City]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, City, repository)

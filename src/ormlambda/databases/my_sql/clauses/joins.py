@@ -7,9 +7,9 @@ from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import JoinType
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
-from ormlambda.common.abstract_classes.comparer import Comparer
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.comparer import Comparer
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
 
 # TODOL [x]: Try to import Table module without circular import Error
 if TYPE_CHECKING:

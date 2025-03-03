@@ -1,11 +1,11 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
-from ormlambda.types import ColumnType
-from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.types import ColumnType
+from ormlambda.sql.clause_info import AggregateFunctionBase
 
-from ormlambda.common.interfaces.IStatements import OrderType
+from ormlambda.statements import OrderType
 
 
 class Order(AggregateFunctionBase):

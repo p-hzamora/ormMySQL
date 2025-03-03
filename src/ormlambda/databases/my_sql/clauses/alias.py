@@ -1,18 +1,18 @@
 from __future__ import annotations
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
+from ormlambda.sql.clause_info import ClauseInfo
 
-from ormlambda.utils.table_constructor import Table
+from ormlambda import Table
 
 import typing as tp
 
 from ormlambda.common.interfaces.IQueryCommand import IQuery
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 
 
 if tp.TYPE_CHECKING:
-    from ormlambda.common.interfaces.IAggregate import IAggregate
+    from ormlambda.statements.interfaces import IAggregate
     from ormlambda import Table
-    from ormlambda.types import AliasType
+    from ormlambda.sql.types import AliasType
 
 
 class Alias[T: Table](IQuery):

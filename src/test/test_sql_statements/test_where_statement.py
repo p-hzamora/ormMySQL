@@ -10,7 +10,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.common.interfaces import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from models import Address, AddressModel  # noqa: F401
 
 import re
@@ -25,7 +25,7 @@ class RegexFilter:
 class TestWhereStatement(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
         cls.tmodel = AddressModel(cls.ddbb)
 
     def test_where(self):

@@ -4,13 +4,13 @@ if TYPE_CHECKING:
     from ormlambda import Column
 
 from ormlambda import Table
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from ormlambda.components.delete import DeleteQueryBase
 from mysql.connector import MySQLConnection
 
 
-class DeleteQuery[T: Table](DeleteQueryBase[T, IRepositoryBase[MySQLConnection]]):
-    def __init__(self, model: T, repository: IRepositoryBase[MySQLConnection]) -> None:
+class DeleteQuery[T: Table](DeleteQueryBase[T, IRepositoryBase]):
+    def __init__(self, model: T, repository: IRepositoryBase) -> None:
         super().__init__(model, repository)
 
     @property

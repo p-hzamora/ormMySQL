@@ -1,13 +1,11 @@
 from typing import override
-from mysql.connector import MySQLConnection
 
-
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 
 
 class DropDatabase:
-    def __init__(self, repository: IRepositoryBase[MySQLConnection]) -> None:
-        self._repository: IRepositoryBase[MySQLConnection] = repository
+    def __init__(self, repository: IRepositoryBase) -> None:
+        self._repository: IRepositoryBase = repository
 
     @override
     def execute(self, name: str) -> None:

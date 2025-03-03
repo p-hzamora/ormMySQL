@@ -5,7 +5,7 @@ from typing import Any, Optional, Type, override, TYPE_CHECKING
 from ormlambda.common.interfaces.INonQueryCommand import INonQueryCommand
 
 if TYPE_CHECKING:
-    from ormlambda import IRepositoryBase
+    from ormlambda.repository import IRepositoryBase
     from ormlambda import Table
 
 

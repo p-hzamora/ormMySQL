@@ -1,14 +1,17 @@
+from __future__ import annotations
 import sys
 from pathlib import Path
-from typing import Optional, Type
+from typing import Optional, Type, TYPE_CHECKING
 from collections import defaultdict
 import importlib.util
 import inspect
 import re
 
-from ormlambda import ForeignKey
+if TYPE_CHECKING:
+    from ormlambda import Table
 
-from ormlambda import Table
+
+# from ormlambda import ForeignKey
 from .dfs_traversal import DFSTraversal
 
 
@@ -176,19 +179,20 @@ class ModuleTree:
         return None
 
     def order_modules_from_file(self) -> tuple[str]:
-        """
-        Method whose main used is sorting all .py inside of folder to avoid import errors and overall for the creation of tables in SQL, comply with foreign key referenced table
-        This method's main purpose is to sort all .py inside a folder to avoid import errors and to ensure that tables referenced by foreign key in other tables are created first
-        """
-        tables: list[tuple[str, Table]] = self.get_member_table(self.load_module("", self.module_path))
+        return
+        # """
+        # Method whose main used is sorting all .py inside of folder to avoid import errors and overall for the creation of tables in SQL, comply with foreign key referenced table
+        # This method's main purpose is to sort all .py inside a folder to avoid import errors and to ensure that tables referenced by foreign key in other tables are created first
+        # """
+        # tables: list[tuple[str, Table]] = self.get_member_table(self.load_module("", self.module_path))
 
-        graph: dict[str, list[str]] = defaultdict(list)
-        for _, tbl in tables:
-            graph[tbl.__table_name__] = [x.__table_name__ for x in tbl.find_dependent_tables()]
+        # graph: dict[str, list[str]] = defaultdict(list)
+        # for _, tbl in tables:
+        #     graph[tbl.__table_name__] = [x.__table_name__ for x in tbl.find_dependent_tables()]
 
-        sorted_tables = DFSTraversal.sort(graph)
-        res = [ForeignKey.MAPPED[x].table_object.create_table_query() for x in sorted_tables]
-        return res
+        # sorted_tables = DFSTraversal.sort(graph)
+        # res = [ForeignKey.MAPPED[x].table_object.create_table_query() for x in sorted_tables]
+        # return res
 
     @staticmethod
     def find_module(module_name: str, nodes: list["Node"]) -> Optional["Node"]:
@@ -236,4 +240,6 @@ class ModuleTree:
 
     @staticmethod
     def get_member_table(module) -> list[tuple[str, Type[Table]]]:
+        from ormlambda import Table
+
         return inspect.getmembers(module, lambda x: inspect.isclass(x) and issubclass(x, Table) and x is not Table)

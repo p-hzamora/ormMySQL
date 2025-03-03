@@ -3,10 +3,10 @@ from mysql.connector import MySQLConnection
 
 from ormlambda.components.update import UpdateQueryBase
 from ormlambda import Table, Column
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from ormlambda.caster import PLACEHOLDER
 from .where import Where
-from ormlambda.types import ColumnType
+from ormlambda.sql.types import ColumnType
 
 
 class UpdateKeyError(KeyError):
@@ -21,7 +21,7 @@ class UpdateKeyError(KeyError):
         return f"The column '{self._key}' does not belong to the table '{self._table.__table_name__}'. Please check the columns in the query."
 
 
-class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase[MySQLConnection]]):
+class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase]):
     def __init__(self, model: T, repository: Any, where: list[Where]) -> None:
         super().__init__(model, repository, where)
 

@@ -1,10 +1,10 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext, ClauseContextType
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
-from ormlambda.types import ColumnType, AliasType
-from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.types import ColumnType, AliasType
+from ormlambda.sql.clause_info import AggregateFunctionBase
 
 
 class Max(AggregateFunctionBase[None]):

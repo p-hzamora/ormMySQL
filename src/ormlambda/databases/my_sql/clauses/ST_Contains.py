@@ -3,8 +3,8 @@ import typing as tp
 from shapely import Point
 
 from ormlambda import Column
-from ormlambda.types import ColumnType, AliasType
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, IAggregate
+from ormlambda.sql.types import ColumnType, AliasType
+from ormlambda.sql.clause_info import ClauseInfo, IAggregate
 
 
 class ST_Contains(IAggregate):

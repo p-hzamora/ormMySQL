@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from mysql.connector import MySQLConnection
 
-from ormlambda.common.abstract_classes.comparer import Comparer
+from ormlambda.sql.comparer import Comparer
 
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
@@ -48,24 +48,24 @@ class JoinC(Table):
 
 
 class JoinAModel(BaseModel[JoinA]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, JoinA, repository)
 
 
 class JoinBModel(BaseModel[JoinB]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, JoinB, repository)
 
 
 class JoinCModel(BaseModel[JoinC]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, JoinC, repository)
 
 
 class TestJoinStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
 
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
@@ -255,7 +255,7 @@ class TestJoinStatements(unittest.TestCase):
         """
         New way to use join with 'with' clause
         """
-        ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        ddbb: IRepositoryBase = MySQLRepository(**config_dict)
         ddbb.create_database(DDBBNAME, "replace")
         ddbb.database = DDBBNAME
 

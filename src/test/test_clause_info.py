@@ -12,11 +12,11 @@ from shapely import Point
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.clause_info import AggregateFunctionBase
+    from ormlambda.sql.clause_info import AggregateFunctionBase
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo, ClauseInfoContext
+from ormlambda.sql.clause_info import ClauseInfo, ClauseInfoContext
 
 from ormlambda.databases.my_sql import functions as func
 from models import A, C, TableType

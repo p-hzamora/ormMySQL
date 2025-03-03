@@ -26,14 +26,14 @@ class TestOrder(Table):
 
 
 class TestOrderModel(BaseModel[TestOrder]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]) -> IStatements_two_generic[TestOrder, TRepo]:
+    def __new__[TRepo](cls, repository: IRepositoryBase) -> IStatements_two_generic[TestOrder, TRepo]:
         return super().__new__(cls, TestOrder, repository)
 
 
 class TestSQLStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase[MySQLConnection] = MySQLRepository(**config_dict)
+        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
 

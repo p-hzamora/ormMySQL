@@ -12,7 +12,7 @@ from parameterized import parameterized
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 
-from ormlambda.databases.my_sql.casters import MySQLReadCastBase, MySQLWriteCastBase
+from ormlambda.databases.my_sql.caster import MySQLReadCastBase, MySQLWriteCastBase
 from models import Country
 from ormlambda import Table, Column
 

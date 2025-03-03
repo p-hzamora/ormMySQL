@@ -8,7 +8,7 @@ from ormlambda import (
 
 from datetime import datetime
 
-from ormlambda import IRepositoryBase
+from ormlambda.repository import IRepositoryBase
 from .address import Address
 
 
@@ -24,5 +24,5 @@ class Store(Table):
 
 
 class StoreModel(BaseModel[Store]):
-    def __new__[TRepo](cls, repository: IRepositoryBase[TRepo]):
+    def __new__[TRepo](cls, repository: IRepositoryBase):
         return super().__new__(cls, Store, repository)

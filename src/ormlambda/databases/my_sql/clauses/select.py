@@ -1,16 +1,15 @@
 from __future__ import annotations
 from typing import Optional, override, Type, Callable, TYPE_CHECKING
 
-from ormlambda.common.abstract_classes.clause_info import ClauseInfo
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
-from ormlambda.types import AliasType
+from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
+from ormlambda.sql.types import AliasType
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 
 
 if TYPE_CHECKING:
     from ormlambda import Table
-
 
 
 class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], IQuery):

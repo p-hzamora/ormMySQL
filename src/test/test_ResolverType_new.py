@@ -11,7 +11,7 @@ from parameterized import parameterized
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda.caster import Caster
-from ormlambda.databases import repository as repository
+import ormlambda.databases  as repository
 from ormlambda import Column
 from ormlambda import Table
 import config

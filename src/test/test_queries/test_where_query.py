@@ -6,8 +6,8 @@ from pathlib import Path
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext  # noqa: E402
-from ormlambda.common.abstract_classes.comparer import Regex, Like  # noqa: E402
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext  # noqa: E402
+from ormlambda.sql.comparer import Regex, Like  # noqa: E402
 from models import (  # noqa: E402
     Address,
     City,
@@ -16,7 +16,7 @@ from models import (  # noqa: E402
     C,
 )
 from ormlambda.databases.my_sql.clauses.where import Where  # noqa: E402
-from ormlambda.common.abstract_classes.comparer import Comparer  # noqa: E402
+from ormlambda.sql.comparer import Comparer  # noqa: E402
 
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)

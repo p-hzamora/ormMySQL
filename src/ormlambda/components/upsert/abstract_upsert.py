@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ormlambda import IRepositoryBase
+    from ormlambda.repository import IRepositoryBase
     from ormlambda import Table
 
 from ormlambda.common.abstract_classes import NonQueryBase
