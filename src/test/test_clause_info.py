@@ -42,8 +42,22 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query, "a AS `custom_table_name`")
 
     def test_passing_only_table_with_alias_table_placeholder_of_column(self):
-        ci = ClauseInfo[A](A, alias_table=lambda x: "{column}")
-        self.assertEqual(ci.query, "a AS `NULL`")
+        with self.assertRaises(ValueError) as err:
+            try:
+                ClauseInfo[A](A, alias_table=lambda x: "{column}").query
+            except ValueError as err:
+                mssg = "You cannot use {column} placeholder without using 'column' attribute"
+                self.assertEqual(str(err), mssg)
+                raise ValueError
+
+    def test_passing_only_column_with_alias_table_placeholder_of_table(self):
+        with self.assertRaises(ValueError) as err:
+            try:
+                ClauseInfo[A](None, "random_value", alias_clause=lambda x: "{table}").query
+            except ValueError as err:
+                mssg = "You cannot use {table} placeholder without using 'table' attribute"
+                self.assertEqual(str(err), mssg)
+                raise ValueError
 
     def test_passing_only_table_with_alias_table_placeholder_of_table(self):
         ci = ClauseInfo[A](A, alias_table=lambda x: "{table}")

@@ -22,6 +22,16 @@ from ormlambda.caster import Caster
 from .clause_info_context import ClauseInfoContext, ClauseContextType
 
 
+class ReplacePlaceholderError(ValueError):
+    def __init__(self, placeholder: str, attribute: str, *args):
+        super().__init__(*args)
+        self.placeholder: str = placeholder
+        self.attr: str = attribute
+
+    def __str__(self):
+        return "You cannot use {" + self.placeholder + "} placeholder without using '" + self.attr + "' attribute"
+
+
 class IClauseInfo[T: Table](IQuery):
     @property
     @abc.abstractmethod
@@ -79,7 +89,7 @@ class ClauseInfo[T: Table](IClauseInfo):
             table = self.extract_table(table)
 
         self._table: TableType[T] = table
-        self._column: ColumnType[TProp] = column
+        self._column: TableType[T] | ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
         self._context: ClauseContextType = context if context else ClauseInfoContext()
@@ -87,8 +97,8 @@ class ClauseInfo[T: Table](IClauseInfo):
         self._preserve_context: bool = preserve_context
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
-            "column": lambda x: self._column_resolver(x),
-            "table": lambda x: self.table.__table_name__,
+            "column": self.replace_column_placeholder,
+            "table": self.replace_table_placeholder,
         }
 
         if not self._preserve_context and (self._context and any([alias_table, alias_clause])):
@@ -96,6 +106,16 @@ class ClauseInfo[T: Table](IClauseInfo):
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}: query -> {self.query}"
+
+    def replace_column_placeholder[TProp](self, column: ColumnType[TProp]) -> str:
+        if not column:
+            raise ReplacePlaceholderError("column", "column")
+        return self._column_resolver(column)
+
+    def replace_table_placeholder[TProp](self, _: ColumnType[TProp]) -> str:
+        if not self.table:
+            raise ReplacePlaceholderError("table", "table")
+        return self.table.__table_name__
 
     @property
     def table(self) -> TableType[T]:
@@ -194,10 +214,10 @@ class ClauseInfo[T: Table](IClauseInfo):
     def _return_all_columns(self) -> bool:
         if self._keep_asterisk:
             return False
-        if isinstance(self._column, ForeignKey):
+        if self.is_foreign_key(self._column) or self.is_table(self._column):
             return True
 
-        C1 = self._column is self.table and issubclass(self._column, Table)
+        C1 = self._column is self.table and self.is_table(self._column)
         return any([self.is_asterisk(self._column), C1])
 
     @staticmethod
@@ -241,7 +261,13 @@ class ClauseInfo[T: Table](IClauseInfo):
 
         if self.is_asterisk(column):
             return ASTERISK
-        return Caster(MySQLRepository).for_value(column, self.dtype)
+
+        if self.is_table(self._column):
+            return self._column.__table_name__
+
+        if self.is_foreign_key(self._column):
+            return self._column.tright.__table_name__
+        return Caster(MySQLRepository).for_value(column, self.dtype).wildcard_to_select
 
     def _replace_placeholder(self, string: str) -> str:
         return self._keyRegex.sub(self._replace, string)
@@ -251,6 +277,7 @@ class ClauseInfo[T: Table](IClauseInfo):
 
         if not (func := self._placeholderValues.get(key, None)):
             return match.group(0)  # No placeholder / value
+
         return func(self._column)
 
     def _concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str] = None) -> str:
@@ -293,23 +320,27 @@ class ClauseInfo[T: Table](IClauseInfo):
         return f"`{string}`"
 
     @classmethod
-    def extract_table(cls, element: ColumnType[T] | TableType) -> tp.Optional[T]:
+    def extract_table(cls, element: ColumnType[T] | TableType[T]) -> tp.Optional[T]:
         if element is None:
             return None
 
         if cls.is_table(element):
-            if isinstance(element, ForeignKey):
-                return element.tright
             return element
+
+        if cls.is_foreign_key(element):
+            return element.tright
+
         if isinstance(element, Column):
             return element.table
         return None
 
     @staticmethod
-    def is_table(data: tp.Optional[ColumnType]) -> bool:
-        if (isinstance(data, type) and issubclass(data, Table)) or isinstance(data, ForeignKey):
-            return True
-        return False
+    def is_table(data: ColumnType | Table | ForeignKey) -> bool:
+        return isinstance(data, type) and issubclass(data, Table)
+
+    @staticmethod
+    def is_foreign_key(data: ColumnType | Table | ForeignKey) -> bool:
+        return isinstance(data, ForeignKey)
 
 
 class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
