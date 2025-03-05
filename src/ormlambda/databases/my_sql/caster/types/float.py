@@ -24,3 +24,7 @@ class FloatCaster[TType](BaseCaster[float, TType]):
     @property
     def from_database(self) -> float:
         return float(self.value)
+
+    @property
+    def string_data(self)->str:
+        return str(self.value)

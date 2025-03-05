@@ -27,3 +27,7 @@ class NoneTypeCaster[TType](BaseCaster[NoneType, TType]):
     @property
     def from_database(self) -> None:
         return None
+    
+    @property
+    def string_data(self)->str:
+        return "NULL"

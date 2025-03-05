@@ -24,3 +24,8 @@ class StringCaster[TType](BaseCaster[str, TType]):
     @property
     def from_database(self) -> str:
         return str(self.value)
+
+
+    @property
+    def string_data(self)->str:
+        return f"'{self.value}'"

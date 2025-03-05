@@ -36,3 +36,8 @@ class PointCaster[TType](BaseCaster[Point, TType]):
         elif isinstance(self.value, str):
             return wkt.loads(self.value)
         return self.value
+
+    @property
+    def string_data(self)->str:
+        
+        return type(self)(str(self.value),str).wildcard_to_select

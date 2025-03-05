@@ -1,5 +1,6 @@
 from ormlambda.caster import BaseCaster, PLACEHOLDER
 from datetime import datetime
+from .string import StringCaster
 
 
 class DatetimeCaster[TType](BaseCaster[datetime, TType]):
@@ -25,3 +26,8 @@ class DatetimeCaster[TType](BaseCaster[datetime, TType]):
     @property
     def from_database(self) -> datetime:
         return self.value
+
+    @property
+    def string_data(self) -> str:
+        datetime_string = self.value.strftime(r"%d/%m/%Y, %H:%M:%S")
+        return StringCaster(datetime_string, str)
