@@ -31,6 +31,10 @@ class BaseCaster[TProp, TType](abc.ABC):
     def from_database(self) -> TProp: ...
 
     @property
+    @abc.abstractmethod
+    def string_data(self) -> str: ...
+
+    @property
     def value(self) -> TProp:
         return self._value
 
