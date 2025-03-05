@@ -12,7 +12,7 @@ from ormlambda.sql.types import (
     ColumnType,
     AliasType,
 )
-from ormlambda.statements.interfaces import IAggregate
+from .interface import IAggregate
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.sql import ForeignKey
 from ormlambda.sql.table import TableMeta
@@ -119,7 +119,7 @@ class ClauseInfo[T: Table](IClauseInfo):
 
     @property
     def table(self) -> TableType[T]:
-        if isinstance(self._table, ForeignKey):
+        if self.is_foreign_key(self._table):
             return self._table.tright
         return self._table
 
@@ -246,6 +246,7 @@ class ClauseInfo[T: Table](IClauseInfo):
     def _column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
         from ormlambda.databases.my_sql.repository import MySQLRepository
 
+        caster = Caster(MySQLRepository)
         if isinstance(column, ClauseInfo):
             return column.query
 
@@ -267,7 +268,12 @@ class ClauseInfo[T: Table](IClauseInfo):
 
         if self.is_foreign_key(self._column):
             return self._column.tright.__table_name__
-        return Caster(MySQLRepository).for_value(column, self.dtype).wildcard_to_select
+
+        casted_value = caster.for_value(column, self.dtype)
+        if not self._table:
+            # if we haven't some table atrribute, we assume that the user want to retrieve the string_data from caster.
+            return casted_value.string_data
+        return casted_value.wildcard_to_select
 
     def _replace_placeholder(self, string: str) -> str:
         return self._keyRegex.sub(self._replace, string)
