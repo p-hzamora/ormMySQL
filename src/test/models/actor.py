@@ -3,12 +3,7 @@ from pathlib import Path
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from ormlambda import (
-    IRepositoryBase,
-    Column,
-    Table,
-    BaseModel,
-)
+from ormlambda import Column, Table, BaseModel, BaseRepository
 
 from datetime import datetime
 
@@ -23,5 +18,5 @@ class Actor(Table):
 
 
 class ActorModel(BaseModel[Actor]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
+    def __new__(cls, repository: BaseRepository):
         return super().__new__(cls, Actor, repository)
