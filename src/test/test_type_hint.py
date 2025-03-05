@@ -7,15 +7,13 @@ from config import config_dict
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic  # noqa: E402
 from models.address import AddressModel  # noqa: E402
 from models import Address, City, Country  # noqa: E402
-from ormlambda import Table, Column, BaseModel  # noqa: E402
 
 
 class TestTypeHint(unittest.TestCase):
     def setUp(self) -> None:
-        self.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
+        self.ddbb = MySQLRepository(**config_dict)
         self.a_model = AddressModel(self.ddbb)
 
     def test_SELECT_method_passing_3_columns(self):

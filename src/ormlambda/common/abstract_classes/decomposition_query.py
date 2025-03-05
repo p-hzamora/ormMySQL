@@ -4,7 +4,7 @@ import abc
 from ormlambda import Table, Column
 
 from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
-from ormlambda.statements.interfaces import IAggregate
+from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.clause_info import ClauseInfo, AggregateFunctionBase
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
 from ormlambda import ForeignKey

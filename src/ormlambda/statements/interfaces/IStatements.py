@@ -4,12 +4,12 @@ from enum import Enum
 from abc import abstractmethod, ABC
 
 
-from ormlambda.repository import IRepositoryBase
 from ormlambda.common.enums import JoinType
 
 if TYPE_CHECKING:
+    from ormlambda.repository import BaseRepository
     from ormlambda import Table
-    from .IAggregate import IAggregate
+    from ormlambda.sql.clause_info import IAggregate
     from ormlambda.sql.types import TupleJoinType
     from ormlambda.databases.my_sql.join_context import JoinContext
 

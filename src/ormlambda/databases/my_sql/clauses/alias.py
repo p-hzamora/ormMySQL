@@ -10,7 +10,7 @@ from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 
 
 if tp.TYPE_CHECKING:
-    from ormlambda.statements.interfaces import IAggregate
+    from ormlambda.sql.clause_info import IAggregate
     from ormlambda import Table
     from ormlambda.sql.types import AliasType
 

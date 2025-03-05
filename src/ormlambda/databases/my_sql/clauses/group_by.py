@@ -1,6 +1,6 @@
 import typing as tp
 from ormlambda.common.enums.join_type import JoinType
-from ormlambda.statements.interfaces import IAggregate
+from ormlambda.sql.clause_info import IAggregate
 from ormlambda import Table
 from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 
