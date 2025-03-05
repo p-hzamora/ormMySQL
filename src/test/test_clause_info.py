@@ -172,7 +172,7 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_aggregation_method_ST_Contains(self):
         comparer = ST_Contains(TableType.points, Point(5, -5))
-        mssg: str = "ST_Contains(table_type.points, ST_GeomFromText('POINT (5 -5)'))"
+        mssg: str = "ST_Contains(table_type.points, ST_AsText(%s))"
         self.assertEqual(comparer.query, mssg)
 
     def test_alias_table_property(self):
@@ -280,7 +280,7 @@ class TestContextClauseInfo(unittest.TestCase):
         self.assertEqual(parent.alias_table, child.alias_table)
 
     def test_alias_clause_NULL_when_no_column_is_specified(self):
-        self.assertEqual(ClauseInfo(A).column, "NULL")
+        self.assertEqual(ClauseInfo(A).column, "%s")
 
 
 if __name__ == "__main__":
