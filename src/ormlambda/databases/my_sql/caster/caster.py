@@ -12,6 +12,8 @@ from .types import (
     PointCaster,
     NoneTypeCaster,
     DatetimeCaster,
+    BytesCaster,
+    IterableCaster
 )
 
 from shapely import Point
@@ -29,6 +31,9 @@ class MySQLCaster(ICaster):
             Point: PointCaster,
             NoneType: NoneTypeCaster,
             datetime: DatetimeCaster,
+            bytes: BytesCaster,
+            tuple: IterableCaster,
+            list: IterableCaster,
         }
 
     @classmethod
