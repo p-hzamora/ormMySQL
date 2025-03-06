@@ -61,7 +61,7 @@ class TestJoinSelector(unittest.TestCase):
         query = "LEFT JOIN country AS `country` ON city.country_id = `country`.country_id"
         self.assertEqual(query, query_parser)
 
-    def test_AAjoin_selectors(self):
+    def test_join_selectors(self):
         ctx = ClauseInfoContext()
 
         s1 = JoinSelector[Address, City](

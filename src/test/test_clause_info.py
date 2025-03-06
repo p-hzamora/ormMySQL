@@ -111,7 +111,7 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfo[A](A, A.date_a, alias_table=lambda x: "custom_alias_for_{column}_column")
         self.assertEqual(ci.query, "`custom_alias_for_date_a_column`.date_a")
 
-    def test_AAApassing_asterisk(self):
+    def test_passing_asterisk(self):
         ci = ClauseInfo[A](A, "*")
         self.assertEqual(ci.query, "a.pk_a, a.name_a, a.data_a, a.date_a, a.value")
 

@@ -311,7 +311,7 @@ class TestSelect(unittest.TestCase):
         mssg: str = "SELECT `d_fk_extra_c_pk_extra_c`.pk_extra_c AS `extra_c_pk_extra_c`, `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c"
         self.assertEqual(qb.query, mssg)
 
-    def test_AAAselect_with_concat(self):
+    def test_select_with_concat(self):
         context = ClauseInfoContext()
         selected = Select[D](
             D,

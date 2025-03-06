@@ -243,7 +243,7 @@ class TestSQLStatements(unittest.TestCase):
         }
         self.assertDictEqual(dicc, select)
 
-    def test_AAAAwhere_passing_tuples(self):
+    def test_where_passing_tuples(self):
         ddbb = MySQLRepository(**config_dict)
 
         model = AddressModel(ddbb)

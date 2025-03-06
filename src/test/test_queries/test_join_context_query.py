@@ -19,7 +19,7 @@ from ormlambda.databases.my_sql.clauses import Count
 
 
 class TestSelect(unittest.TestCase):
-    def test_AAselect_with_concat(self):
+    def test_select_with_concat(self):
         ctx = ClauseInfoContext()
         selected = Select[D](
             D,

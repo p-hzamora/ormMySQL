@@ -3,14 +3,12 @@ from datetime import datetime
 import unittest
 import sys
 from pathlib import Path
-from mysql.connector import MySQLConnection
-
-from ormlambda.sql.comparer import Comparer
 
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
+from ormlambda.sql.comparer import Comparer
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import BaseRepository, Table, Column, BaseModel, JoinType  # noqa: E402
@@ -47,21 +45,6 @@ class JoinC(Table):
     fk_b: Column[int] = Column(int)
 
 
-class JoinAModel(BaseModel[JoinA]):
-    def __new__[TRepo](cls, repository: BaseRepository):
-        return super().__new__(cls, JoinA, repository)
-
-
-class JoinBModel(BaseModel[JoinB]):
-    def __new__[TRepo](cls, repository: BaseRepository):
-        return super().__new__(cls, JoinB, repository)
-
-
-class JoinCModel(BaseModel[JoinC]):
-    def __new__[TRepo](cls, repository: BaseRepository):
-        return super().__new__(cls, JoinC, repository)
-
-
 class TestJoinStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -70,9 +53,9 @@ class TestJoinStatements(unittest.TestCase):
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
 
-        cls.model_a = JoinAModel(cls.ddbb)
-        cls.model_b = JoinBModel(cls.ddbb)
-        cls.model_c = JoinCModel(cls.ddbb)
+        cls.model_a = BaseModel(JoinA, cls.ddbb)
+        cls.model_b = BaseModel(JoinB, cls.ddbb)
+        cls.model_c = BaseModel(JoinC, cls.ddbb)
 
         cls.model_a.create_table()
         cls.model_b.create_table()
@@ -286,7 +269,4 @@ class TestJoinStatements(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    comp = Comparer[JoinA, str, JoinB, str](JoinA.data_a == JoinB.data_b)
-    comp.left_condition
-
     unittest.main(failfast=True)
