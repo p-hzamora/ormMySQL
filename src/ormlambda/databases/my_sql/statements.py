@@ -14,10 +14,11 @@ from mysql.connector import MySQLConnection
 if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.statements.types import OrderTypes
-    from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic
+    from ormlambda.repository.interfaces import IRepositoryBase
+    from ormlambda.statements.interfaces import IStatements_two_generic
     from ormlambda.repository.interfaces.IRepositoryBase import TypeExists
-    from ormlambda.common.interfaces import IAggregate
-    from ormlambda.statements.IStatements import WhereTypes
+    from ormlambda.sql.clause_info import IAggregate
+    from ormlambda.statements.types import WhereTypes
 
 
 from ormlambda.sql.clause_info import ClauseInfo
@@ -273,7 +274,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     ) -> IQuery:
         if GlobalChecker.is_lambda_function(selection):
             selection = selection(*self.models)
-        return Count[T](values=selection, alias_clause=alias_clause)
+        return Count[T](element=selection, alias_clause=alias_clause, context=self._query_builder._context)
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
@@ -303,11 +304,11 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
 
     @override
     def min[TProp](self, column: Callable[[T], TProp], alias_name: str = "min") -> TProp:
-        return func.Min(column=column, alias_clause=alias_name, context=self._query_builder._context)
+        return func.Min(elements=column, alias_clause=alias_name, context=self._query_builder._context)
 
     @override
     def sum[TProp](self, column: Callable[[T], TProp], alias_name: str = "sum") -> TProp:
-        return func.Sum(column=column, alias_clause=alias_name, context=self._query_builder._context)
+        return func.Sum(elements=column, alias_clause=alias_name, context=self._query_builder._context)
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
@@ -383,5 +384,5 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return self
 
     @override
-    def alias(self, column: Callable[[T, *Ts], Any], alias: str) -> IStatements_two_generic[T, *Ts, MySQLConnection]:
-        return Alias[T, *Ts](self.models, column, alias_name=alias)
+    def alias(self, column: Callable[[T, *Ts], Any], alias: str) -> IStatements_two_generic[T, MySQLConnection]:
+        return Alias(self.models, column, alias_name=alias)
