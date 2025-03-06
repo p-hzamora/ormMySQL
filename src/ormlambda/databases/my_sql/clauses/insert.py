@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import override, Iterable, TYPE_CHECKING
-from mysql.connector import MySQLConnection
 
 from ormlambda import Table
 from ormlambda import Column
@@ -45,9 +44,9 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase]):
                 clean_data = CASTER.for_column(col, instances[i])  # .resolve(instances[i][col])
                 if i == 0:
                     col_names.append(col.column_name)
-                    wildcards.append(clean_data.wildcard)
+                    wildcards.append(clean_data.wildcard_to_insert)
                 # COMMENT: avoid MySQLWriteCastBase.resolve when using PLACEHOLDERs
-                col_values[-1].append(clean_data.to_query)
+                col_values[-1].append(clean_data.to_database)
 
         join_cols = ", ".join(col_names)
         unknown_rows = f'({", ".join(wildcards)})'  # The number of "%s" must match the dict 'dicc_0' length
