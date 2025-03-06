@@ -52,13 +52,13 @@ class CountTest(unittest.TestCase):
         return insert_values
 
     def test_count_all_rows(self):
-        n_before_insert = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n_before_insert = self.model.select_one(self.model.count(), flavour=tuple)
 
         self.model.insert(self.TableCount_generator(4))
-        n_after_insert = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n_after_insert = self.model.select_one(self.model.count(), flavour=tuple)
 
         self.model.delete()
-        n_after_delete = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n_after_delete = self.model.select_one(self.model.count(), flavour=tuple)
 
         self.assertEqual(n_before_insert, 0)
         self.assertEqual(n_after_insert, 4)
@@ -67,7 +67,7 @@ class CountTest(unittest.TestCase):
     def test_count_when_filtering(self):
         self.model.insert(self.TableCount_generator(100))
 
-        n_select = self.model.where((TableCount.pos <= 70) & (TableCount.pos >= 50)).select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n_select = self.model.where((TableCount.pos <= 70) & (TableCount.pos >= 50)).select_one(self.model.count(), flavour=tuple)
 
         self.assertEqual(n_select, 21)
 
@@ -85,10 +85,10 @@ class CountTest(unittest.TestCase):
             insert.append(table_count)
 
         self.model.insert(insert)
-        n = self.model.select_one(lambda x: self.model.count(), flavour=tuple)[0]
-        n_20 = self.model.where(TableCount.a == 20).select_one(lambda x: self.model.count(), flavour=tuple)[0]
-        n_80 = self.model.where(TableCount.a == 80).select_one(lambda x: self.model.count(), flavour=tuple)[0]
-        n_100 = self.model.where(TableCount.a == 100).select_one(lambda x: self.model.count(), flavour=tuple)[0]
+        n = self.model.select_one(self.model.count(), flavour=tuple)
+        n_20 = self.model.where(TableCount.a == 20).select_one(self.model.count(), flavour=tuple)
+        n_80 = self.model.where(TableCount.a == 80).select_one(self.model.count(), flavour=tuple)
+        n_100 = self.model.where(TableCount.a == 100).select_one(self.model.count(), flavour=tuple)
 
         self.assertEqual(n, 100)
         self.assertEqual(n_20, 20)
