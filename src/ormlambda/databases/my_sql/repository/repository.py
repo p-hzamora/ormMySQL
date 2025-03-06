@@ -11,6 +11,7 @@ from ormlambda.repository import BaseRepository
 
 # Custom libraries
 from ormlambda.repository import IRepositoryBase
+from ormlambda.caster import Caster
 
 from ..clauses import CreateDatabase, TypeExists
 from ..clauses import DropDatabase
@@ -36,6 +37,7 @@ class Response[TFlavour, *Ts]:
 
         self._response_values_index: int = len(self._response_values)
         # self.select_values()
+        self._caster = Caster(repository)
 
     @property
     def is_one(self) -> bool:
@@ -97,9 +99,7 @@ class Response[TFlavour, *Ts]:
         return selector.get(self._flavour, _default)(**kwargs)
 
     def _parser_response(self) -> TFlavour:
-        from ormlambda.caster import Caster
-
-        new_response: list[list] = []
+        new_response: list[tuple] = []
         for row in self._response_values:
             new_row: list = []
             for i, data in enumerate(row):
@@ -109,8 +109,9 @@ class Response[TFlavour, *Ts]:
                     new_row = row
                     break
                 else:
-                    parse_data = Caster(self._repository).for_value(data, forced_type=clause_info.dtype).from_database
+                    parse_data = self._caster.for_value(data, value_type=clause_info.dtype).from_database
                     new_row.append(parse_data)
+            new_row = tuple(new_row)
             if not isinstance(new_row, tuple):
                 new_row = tuple(new_row)
 
@@ -214,7 +215,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             with self.get_connection() as cnx:
                 with cnx.cursor(buffered=True) as cursor:
                     cursor.execute(query)
-        cnx.commit()
         return None
 
     @override
@@ -222,7 +222,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
                 cursor.executemany(query, values)
-        cnx.commit()
         return None
 
     @override
@@ -230,7 +229,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query, values)
-        cnx.commit()
         return None
 
     @override
@@ -238,7 +236,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query)
-        cnx.commit()
         return None
 
     @override
@@ -248,10 +245,19 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
     @override
     def database_exists(self, name: str) -> bool:
         query = "SHOW DATABASES LIKE %s;"
+        temp_config = self._pool._cnx_config
+
+        config_without_db = temp_config.copy()
+
+        if "database" in config_without_db:
+            config_without_db.pop("database")
+        self._pool.set_config(**config_without_db)
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query, (name,))
             res = cursor.fetchmany(1)
+
+        self._pool.set_config(**temp_config)
         return len(res) > 0
 
     @override
@@ -271,7 +277,13 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     @override
     def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
-        return CreateDatabase(self).execute(name, if_exists)
+        temp_config = self._pool._cnx_config
+
+        config_without_db = temp_config.copy()
+
+        if "database" in config_without_db:
+            config_without_db.pop("database")
+        return CreateDatabase(type(self)(**config_without_db)).execute(name, if_exists)
 
     @property
     def database(self) -> Optional[str]:
@@ -280,4 +292,4 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
     @database.setter
     def database(self, value: str) -> None:
         self._data_config["database"] = value
-        self._pool = self.create_connection_pool()
+        self._pool.set_config(**self._data_config)
