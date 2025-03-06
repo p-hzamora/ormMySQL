@@ -1,4 +1,4 @@
-import typing as tp
+from typing import Type, Callable, Optional
 import abc
 
 
@@ -24,7 +24,7 @@ class BaseCaster[TProp, TType](abc.ABC):
 
     @property
     @abc.abstractmethod
-    def to_database(self) -> tp.Type[TProp]: ...
+    def to_database(self) -> Type[TProp]: ...
 
     @property
     @abc.abstractmethod
@@ -39,9 +39,19 @@ class BaseCaster[TProp, TType](abc.ABC):
         return self._value
 
     @property
-    def value_type(self) -> tp.Type[TProp]:
+    def value_type(self) -> Type[TProp]:
         return type(self._value)
 
     @property
     def type_to_cast(self) -> TType:
         return self._type_value
+
+    @staticmethod
+    def return_value_if_exists[TType, **P](func: Callable[P, Optional[TType]]) -> Callable[P, Optional[TType]]:
+        def wrapped(self:"BaseCaster") -> Optional[TType]:
+            if self._value is None:
+                return None
+
+            return func(self)
+
+        return wrapped
