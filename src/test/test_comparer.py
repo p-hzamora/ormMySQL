@@ -41,7 +41,7 @@ class TestComparer(unittest.TestCase):
 
     def test_condition_with_ST_Contains(self):
         comparer = ST_Contains(TableType.points, Point(5, -5))
-        mssg: str = "ST_Contains(table_type.points, ST_GeomFromText('POINT (5 -5)'))"
+        mssg: str = "ST_Contains(table_type.points, ST_AsText(%s))"
         self.assertEqual(comparer.query, mssg)
 
     # def test_retrieve_string_from_class_property(self):

@@ -2,9 +2,11 @@ import unittest
 import sys
 from pathlib import Path
 
+
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from ormlambda.databases.my_sql.clauses import (  # noqa: E402
     JoinSelector,
     JoinType,
@@ -59,15 +61,19 @@ class TestJoinSelector(unittest.TestCase):
         query = "LEFT JOIN country AS `country` ON city.country_id = `country`.country_id"
         self.assertEqual(query, query_parser)
 
-    def test_join_selectors(self):
+    def test_AAjoin_selectors(self):
+        ctx = ClauseInfoContext()
+
         s1 = JoinSelector[Address, City](
             by=JoinType.LEFT_EXCLUSIVE,
             where=Address.city_id == City.city_id,
+            context=ctx,
         )
 
         s2 = JoinSelector[City, Country](
             by=JoinType.LEFT_EXCLUSIVE,
             where=City.country_id == Country.country_id,
+            context=ctx,
         )
         query_parser = JoinSelector.join_selectors(s1, s2)
         query = "LEFT JOIN city AS `city` ON address.city_id = `city`.city_id\nLEFT JOIN country AS `country` ON `city`.country_id = `country`.country_id"

@@ -74,7 +74,7 @@ class TestWhere(unittest.TestCase):
         w = Where(Address.address.like(pattern))
         self.assertEqual(w.query, f"WHERE address.address LIKE '{pattern}'")
 
-    def test_where_contains(self):
+    def test_AAwhere_contains(self):
         w = Where(Address.address_id.contains((1, 2, 3, 4, 5, 6, 7, 8, 9)))
         self.assertEqual(w.query, "WHERE address.address_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9)")
 

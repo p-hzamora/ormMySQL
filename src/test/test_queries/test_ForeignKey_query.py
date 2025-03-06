@@ -7,7 +7,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop(
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.utils import ForeignKey  # noqa: E402
+from ormlambda import ForeignKey  # noqa: E402
 from models import Address, City  # noqa: E402
 
 

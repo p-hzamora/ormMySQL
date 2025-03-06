@@ -7,13 +7,12 @@ sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.common.interfaces import IRepositoryBase  # noqa: E402
 from models import CountryModel  # noqa: E402
 
 
 class TestTypeHint(unittest.TestCase):
     def test_initialize_MySQLRepository_with_kwargs(self) -> None:
-        ddbb: IRepositoryBase = MySQLRepository(**config_dict)
+        ddbb = MySQLRepository(**config_dict)
 
         self.assertEqual(ddbb.database, config_dict["database"])
         self.assertEqual(ddbb.database, config_dict["database"])

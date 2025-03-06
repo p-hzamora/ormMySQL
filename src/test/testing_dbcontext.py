@@ -11,7 +11,6 @@ import math
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import IRepositoryBase  # noqa: E402
 from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from models.staff import StaffModel, Staff  # noqa: E402
 from models.address import AddressModel, Address  # noqa: E402
@@ -21,7 +20,7 @@ from models.store import StoreModel  # noqa: E402
 
 a = Staff.find_dependent_tables()
 
-database: IRepositoryBase = MySQLRepository(user=DB_USERNAME, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)
+database = MySQLRepository(user=DB_USERNAME, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)
 
 actor_model = ActorModel(database)
 store_model = StoreModel(database)
@@ -63,7 +62,7 @@ s_model.repository.drop_database(asdf)
 staff = s_model.where(Staff.staff_id == 1).select_one()
 staff.staff_id = 100
 s_model.upsert(staff)
-id = s_model.order(lambda x: x.staff_id, order_type="DESC").select_one().staff_id
+id = s_model.order(lambda x: x.staff_id, order_type="DESC").where(Staff.staff_id == staff.staff_id).select_one().staff_id
 new_staff = s_model.where(Staff.staff_id == id).select_one()
 new_staff.first_name = "PEPON"
 s_model.upsert(new_staff)

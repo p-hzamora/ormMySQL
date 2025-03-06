@@ -2,14 +2,13 @@ from __future__ import annotations
 import unittest
 import sys
 from pathlib import Path
-from mysql.connector import MySQLConnection
 
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import IRepositoryBase  # noqa: E402
+from ormlambda import BaseRepository  # noqa: E402
 from ormlambda.common.errors import UnmatchedLambdaParameterError
 
 from models import (
@@ -25,7 +24,7 @@ MSSG_ERROR: str = "Unmatched number of parameters in lambda function with the nu
 class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
+        cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
 
     def setUp(self) -> None:
         self.ddbb.create_database(DDBBNAME, "replace")

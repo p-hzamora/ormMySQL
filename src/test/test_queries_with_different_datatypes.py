@@ -5,8 +5,10 @@ from pathlib import Path
 from datetime import datetime
 
 
+
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
+from ormlambda.databases.my_sql.clauses import ST_AsText
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda.repository import BaseRepository  # noqa: E402
@@ -27,10 +29,10 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
 
     def setUp(self) -> None:
-        self.ddbb.create_database(DDBBNAME, "replace")
         self.ddbb.database = DDBBNAME
+        self.ddbb.create_database(DDBBNAME, "replace")
         self.model = TableTypeModel(self.ddbb)
-        self.model.create_table("replace")
+        self.model.create_table()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -56,7 +58,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         )
 
         self.model.insert(instance)
-        select = self.model.select_one(lambda x: x.points, flavour=tuple)
+        select = self.model.select_one(lambda x: ST_AsText(x.points), flavour=tuple)
         self.assertEqual(select, shp.Point(5, 5))
 
     def test_update_different_types(self):

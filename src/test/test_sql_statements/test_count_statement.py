@@ -3,11 +3,12 @@ import sys
 from pathlib import Path
 import random
 
+
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from config import config_dict
-from ormlambda import Table, BaseModel, IRepositoryBase, Column
+from ormlambda import Table, BaseModel, BaseRepository, Column
 from ormlambda.databases.my_sql import MySQLRepository
 
 DATABASE_NAME = "__ddbb_test__"
@@ -22,7 +23,7 @@ class TableCount(Table):
 
 
 class TableCountModel(BaseModel[TableCount]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
+    def __new__[TRepo](cls, repository: BaseRepository[TRepo]):
         return super().__new__(cls, TableCount, repository)
 
 

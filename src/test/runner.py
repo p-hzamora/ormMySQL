@@ -10,7 +10,7 @@ import test_depth_first_search
 import test_errors
 import test_mapped_table
 import test_queries_with_different_datatypes
-import test_ResolverType
+import test_cast
 import test_table_class
 import test_type_hint
 
@@ -67,7 +67,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_errors),
         *loader.loadTestsFromModule(test_mapped_table),
         *loader.loadTestsFromModule(test_queries_with_different_datatypes),
-        *loader.loadTestsFromModule(test_ResolverType),
+        *loader.loadTestsFromModule(test_cast),
         *loader.loadTestsFromModule(test_table_class),
         *loader.loadTestsFromModule(test_type_hint),
         # endregion

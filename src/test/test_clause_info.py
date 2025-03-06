@@ -153,7 +153,7 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_aggregation_method_with_alias_inside_of_the_method(self):
         ci = ST_AsText(A.data_a, alias_table="new_table")
-        self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a)")
+        self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a) AS `data_a`")
 
     @parameterized.expand(
         (

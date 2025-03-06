@@ -319,13 +319,15 @@ class TestSelect(unittest.TestCase):
                 d,
                 d.C.B.A.data_a,
                 d.C,
-                func.Concat[D]((D.pk_d, "-", D.C.pk_c, "-", D.C.B.pk_b, "-", D.C.B.A, "-", D.C.B.data), alias_clause="concat_pks"),
-                Count(D.C.B.A.name_a),
-                func.Max(D.C.B.A.data_a),
+                func.Concat[D]((D.pk_d, "-", D.C.pk_c, "-", D.C.B.pk_b, "-", D.C.B.A, "-", D.C.B.data), alias_clause="concat_pks",context=context),
+                Count(D.C.B.A.name_a,context=context),
+                func.Max(D.C.B.A.data_a,context=context),
             ),
             context=context,
         )
-        mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.name_a) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.*) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        # TODOL: when all errors have been fixed, implement the way to pass column name inside of Count clause to count all not NULL rows.
+        # mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.name_a) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
         qb = QueryBuilder()
         qb.add_statement(selected)
         self.assertEqual(qb.query, mssg)

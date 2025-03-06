@@ -8,8 +8,8 @@ from parameterized import parameterized
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda.utils import ForeignKey, Table, Column  # noqa: E402
-from ormlambda.utils.table.table_constructor import __init_constructor__
+from ormlambda import ForeignKey, Table, Column  # noqa: E402
+from ormlambda.sql.table.table_constructor import __init_constructor__
 from models import City  # noqa: E402
 
 

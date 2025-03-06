@@ -13,7 +13,7 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import IRepositoryBase, Table, Column, BaseModel, JoinType  # noqa: E402
+from ormlambda import BaseRepository, Table, Column, BaseModel, JoinType  # noqa: E402
 from models import (  # noqa: E402
     TestTable,
     ModelAB,
@@ -48,24 +48,24 @@ class JoinC(Table):
 
 
 class JoinAModel(BaseModel[JoinA]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
+    def __new__[TRepo](cls, repository: BaseRepository):
         return super().__new__(cls, JoinA, repository)
 
 
 class JoinBModel(BaseModel[JoinB]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
+    def __new__[TRepo](cls, repository: BaseRepository):
         return super().__new__(cls, JoinB, repository)
 
 
 class JoinCModel(BaseModel[JoinC]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
+    def __new__[TRepo](cls, repository: BaseRepository):
         return super().__new__(cls, JoinC, repository)
 
 
 class TestJoinStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
+        cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
 
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
@@ -255,7 +255,7 @@ class TestJoinStatements(unittest.TestCase):
         """
         New way to use join with 'with' clause
         """
-        ddbb: IRepositoryBase = MySQLRepository(**config_dict)
+        ddbb: BaseRepository = MySQLRepository(**config_dict)
         ddbb.create_database(DDBBNAME, "replace")
         ddbb.database = DDBBNAME
 

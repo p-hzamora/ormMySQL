@@ -2,7 +2,6 @@ from __future__ import annotations
 import unittest
 import sys
 from pathlib import Path
-from mysql.connector import MySQLConnection
 
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
@@ -10,7 +9,8 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.common.interfaces import IRepositoryBase, IStatements_two_generic
+from ormlambda.repository import BaseRepository
+from ormlambda.statements.interfaces import IStatements_two_generic
 
 from ormlambda import OrderType, Table, BaseModel, Column
 
@@ -26,14 +26,14 @@ class TestOrder(Table):
 
 
 class TestOrderModel(BaseModel[TestOrder]):
-    def __new__[TRepo](cls, repository: IRepositoryBase) -> IStatements_two_generic[TestOrder, TRepo]:
+    def __new__[TRepo](cls, repository: BaseRepository) -> IStatements_two_generic[TestOrder, TRepo]:
         return super().__new__(cls, TestOrder, repository)
 
 
 class TestSQLStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
+        cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
 
