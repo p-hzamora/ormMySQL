@@ -35,7 +35,13 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
 
         return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
 
-    def __init__[LProp, RProp](self, where: Comparer[TLeft, LProp, TRight, RProp], by: JoinType, alias: Optional[str] = "{table}", context: ClauseContextType = None) -> None:
+    def __init__[LProp, RProp](
+        self,
+        where: Comparer[TLeft, LProp, TRight, RProp],
+        by: JoinType,
+        alias: Optional[str] = "{table}",
+        context: ClauseContextType = None,
+    ) -> None:
         self._comparer: Comparer[TLeft, LProp, TRight, RProp] = where
         self._orig_table: TLeft = where.left_condition.table
         self._right_table: TRight = where.right_condition.table
@@ -43,10 +49,14 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         self._left_col: str = where.left_condition._column.column_name
         self._right_col: str = where.right_condition._column.column_name
         self._compareop = where._compare
-        self._context: ClauseContextType = context
+        self._context: ClauseContextType = context if context else ClauseInfoContext()
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
         self._alias: Optional[str] = alias
+
+        self._from_clause = ClauseInfo(self.right_table, alias_table=alias, context=self._context)
+        self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, context=self._create_partial_context())
+        self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, context=self._create_partial_context())
 
     def __eq__(self, __value: "JoinSelector") -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
@@ -63,6 +73,14 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
             )
         )
 
+    def _create_partial_context(self) -> ClauseInfoContext:
+        '''
+        Only use table_context from global context
+        '''
+        if not self._context:
+            return ClauseInfoContext()
+        return ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
+
     @classmethod
     def join_selectors(cls, *args: "JoinSelector") -> str:
         return "\n".join([x.query for x in args])
@@ -70,17 +88,14 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
     @property
     @override
     def query(self) -> str:
-        ltable = self.left_table
-        rtable = self.right_table
-
-        context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context) if self._context else ClauseInfoContext()
+        self._context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
         list_ = [
             self._by.value,  # inner join
-            ClauseInfo[TRight](rtable, alias_table=self.alias, context=context).query,
+            self._from_clause.query,
             "ON",
-            ClauseInfo[TLeft](ltable, column=self.left_col, context=context).query,
+            self._left_table_clause.query,
             self._compareop,  # =
-            ClauseInfo[TRight](rtable, column=self.right_col, context=context).query,
+            self._right_table_clause.query,
         ]
         return " ".join([x for x in list_ if x is not None])
 
