@@ -38,6 +38,5 @@ class PointCaster[TType](BaseCaster[Point, TType]):
         return self.value
 
     @property
-    def string_data(self)->str:
-        
-        return type(self)(str(self.value),str).wildcard_to_select
+    def string_data(self) -> str:
+        return type(self)(str(self.value), str).wildcard_to_select

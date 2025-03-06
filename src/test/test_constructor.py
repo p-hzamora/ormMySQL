@@ -22,7 +22,6 @@ class TestTypeHint(unittest.TestCase):
         self.assertEqual(ddbb._pool._cnx_config["host"], config_dict["host"])
 
     def test_raise_ValueError_if_Model_has_not_get_IRepositoryModel(self) -> None:
-
         with self.assertRaises(ValueError):
             try:
                 CountryModel(None)

@@ -24,8 +24,7 @@ class BytesCaster[TType](BaseCaster[bytes, TType]):
     @property
     def from_database(self) -> bytes:
         return bytes(self.value)
-    
 
     @property
-    def string_data(self)->str:
+    def string_data(self) -> str:
         return str(self.value)

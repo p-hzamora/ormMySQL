@@ -74,9 +74,9 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         )
 
     def _create_partial_context(self) -> ClauseInfoContext:
-        '''
+        """
         Only use table_context from global context
-        '''
+        """
         if not self._context:
             return ClauseInfoContext()
         return ClauseInfoContext(clause_context=None, table_context=self._context._table_context)

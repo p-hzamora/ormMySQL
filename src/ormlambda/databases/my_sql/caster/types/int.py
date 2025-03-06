@@ -24,8 +24,7 @@ class IntegerCaster[TType](BaseCaster[int, TType]):
     @property
     def from_database(self) -> int:
         return int(self.value)
-    
 
     @property
-    def string_data(self)->str:
+    def string_data(self) -> str:
         return str(self.value)

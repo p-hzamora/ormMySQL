@@ -9,7 +9,7 @@ BASE_DIR = SRC_DIR.parent
 try:
     from dotenv import load_dotenv, find_dotenv
 
-    load_dotenv(find_dotenv(str(BASE_DIR/'.env')))
+    load_dotenv(find_dotenv(str(BASE_DIR / ".env")))
 
 except ImportError:
     print("python-dotenv is not installed. Skipping...")
@@ -19,11 +19,10 @@ except ImportError:
 # Load DATABASE ENV
 #################################
 
-DB_USERNAME = os.getenv("USERNAME",None)
+DB_USERNAME = os.getenv("USERNAME", None)
 
-DB_PASSWORD = os.getenv("PASSWORD",None)
+DB_PASSWORD = os.getenv("PASSWORD", None)
 
-DB_HOST = os.getenv("HOST",'localhost')
+DB_HOST = os.getenv("HOST", "localhost")
 
-DB_DATABASE = os.getenv("DATABASE",'sakila')
-
+DB_DATABASE = os.getenv("DATABASE", "sakila")

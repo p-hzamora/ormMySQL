@@ -5,16 +5,7 @@ from ormlambda.caster import BaseCaster
 from ormlambda.caster import ICaster
 
 
-from .types import (
-    StringCaster,
-    IntegerCaster,
-    FloatCaster,
-    PointCaster,
-    NoneTypeCaster,
-    DatetimeCaster,
-    BytesCaster,
-    IterableCaster
-)
+from .types import StringCaster, IntegerCaster, FloatCaster, PointCaster, NoneTypeCaster, DatetimeCaster, BytesCaster, IterableCaster
 
 from shapely import Point
 from types import NoneType

@@ -26,5 +26,5 @@ class FloatCaster[TType](BaseCaster[float, TType]):
         return float(self.value)
 
     @property
-    def string_data(self)->str:
+    def string_data(self) -> str:
         return str(self.value)

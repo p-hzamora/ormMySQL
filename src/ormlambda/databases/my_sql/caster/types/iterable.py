@@ -25,7 +25,6 @@ class IterableCaster[TType](BaseCaster[bytes, TType]):
     def from_database(self) -> bytes:
         return tuple(self.value)
 
-
     @property
-    def string_data(self)->str:
+    def string_data(self) -> str:
         return str(self.value)
