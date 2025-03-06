@@ -346,7 +346,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         self._query_builder.clear()
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
-            if issubclass(flavour, tuple) and isinstance(select_clause, Column):
+            if issubclass(flavour, tuple) and isinstance(select_clause, Column|ClauseInfo):
                 return tuple([x[0] for x in result])
             return result
         return self._return_model(select, self.query)

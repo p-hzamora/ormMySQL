@@ -97,14 +97,16 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self._tables: tuple[TableType[T]] = tables if isinstance(tables, tp.Iterable) else (tables,)
 
         self._columns: tp.Callable[[T], tuple] = columns
-        self._all_clauses: list[ClauseInfo] = []
+        self._all_clauses: list[ClauseInfo | AggregateFunctionBase] = []
         self._context: ClauseContextType = context if context else ClauseInfoContext()
         self._alias_table: str = alias_table
         self.__clauses_list_generetor()
 
-    def __getitem__(self, key: str) -> ClauseInfo:
+    def __getitem__(self, key: str) -> ClauseInfo | AggregateFunctionBase:
         for clause in self._all_clauses:
-            if clause.alias_clause == key:
+            is_agg_function = isinstance(clause, AggregateFunctionBase)
+            is_clause_info = isinstance(clause, ClauseInfo)
+            if (is_agg_function and clause._alias_aggregate == key) or (is_clause_info and clause.alias_clause == key):
                 return clause
 
     def __clauses_list_generetor(self) -> None:
