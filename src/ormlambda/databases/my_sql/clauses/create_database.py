@@ -1,14 +1,14 @@
 from typing import Literal, override
 from mysql.connector import errorcode, errors
 
-from ormlambda.repository import IRepositoryBase
+from ormlambda.repository import BaseRepository
 
 TypeExists = Literal["fail", "replace", "append"]
 
 
 class CreateDatabase:
-    def __init__(self, repository: IRepositoryBase) -> None:
-        self._repository: IRepositoryBase = repository
+    def __init__(self, repository: BaseRepository) -> None:
+        self._repository: BaseRepository = repository
 
     @override
     @property

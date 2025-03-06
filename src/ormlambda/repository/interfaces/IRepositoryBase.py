@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Literal, Optional, Type, Iterable
 
-TypeExists = Literal["fail", "replace", "append"]
+type TypeExists = Literal["fail", "replace", "append"]
 
 
 class IRepositoryBase(ABC):

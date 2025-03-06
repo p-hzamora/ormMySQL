@@ -1,5 +1,4 @@
 from typing import Type, override, Any
-from mysql.connector import MySQLConnection
 
 from ormlambda.components.update import UpdateQueryBase
 from ormlambda import Table, Column
