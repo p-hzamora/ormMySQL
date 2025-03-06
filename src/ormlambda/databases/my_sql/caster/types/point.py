@@ -1,3 +1,4 @@
+from typing import Optional
 from ormlambda.caster import BaseCaster, PLACEHOLDER
 from shapely import Point
 import shapely.wkt as wkt
@@ -21,13 +22,15 @@ class PointCaster[TType](BaseCaster[Point, TType]):
         return f"ST_GeomFromText({PLACEHOLDER})"
 
     @property
-    def to_database(self) -> str:
+    @BaseCaster.return_value_if_exists
+    def to_database(self) -> Optional[str]:
         if isinstance(self.value, Point):
             return self.value.wkt
         return self.value
 
     @property
-    def from_database(self) -> Point:
+    @BaseCaster.return_value_if_exists
+    def from_database(self) -> Optional[Point]:
         """
         Always should get string because we're using 'ST_AsText' when calling wildcard_to_select prop.
         """
@@ -38,5 +41,6 @@ class PointCaster[TType](BaseCaster[Point, TType]):
         return self.value
 
     @property
-    def string_data(self) -> str:
+    @BaseCaster.return_value_if_exists
+    def string_data(self) -> Optional[str]:
         return type(self)(str(self.value), str).wildcard_to_select

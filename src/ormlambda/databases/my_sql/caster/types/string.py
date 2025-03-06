@@ -1,3 +1,4 @@
+from typing import Optional
 from ormlambda.caster import BaseCaster, PLACEHOLDER
 
 
@@ -18,13 +19,16 @@ class StringCaster[TType](BaseCaster[str, TType]):
         return PLACEHOLDER
 
     @property
-    def to_database(self) -> str:
+    @BaseCaster.return_value_if_exists
+    def to_database(self) -> Optional[str]:
         return str(self.value)
 
     @property
-    def from_database(self) -> str:
+    @BaseCaster.return_value_if_exists
+    def from_database(self) -> Optional[str]:
         return str(self.value)
 
     @property
-    def string_data(self) -> str:
+    @BaseCaster.return_value_if_exists
+    def string_data(self) -> Optional[str]:
         return f"'{self.value}'"

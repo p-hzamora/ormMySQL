@@ -1,3 +1,4 @@
+from typing import Optional
 from ormlambda.caster import BaseCaster, PLACEHOLDER
 from datetime import datetime
 from .string import StringCaster
@@ -20,14 +21,17 @@ class DatetimeCaster[TType](BaseCaster[datetime, TType]):
         return PLACEHOLDER
 
     @property
-    def to_database(self) -> datetime:
+    @BaseCaster.return_value_if_exists
+    def to_database(self) -> Optional[datetime]:
         return self.value
 
     @property
-    def from_database(self) -> datetime:
+    @BaseCaster.return_value_if_exists
+    def from_database(self) -> Optional[datetime]:
         return self.value
 
     @property
-    def string_data(self) -> str:
+    @BaseCaster.return_value_if_exists
+    def string_data(self) -> Optional[str]:
         datetime_string = self.value.strftime(r"%Y-%m-%d %H:%M:%S")
         return StringCaster(datetime_string, str).string_data
