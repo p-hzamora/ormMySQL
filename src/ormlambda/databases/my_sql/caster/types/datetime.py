@@ -29,5 +29,5 @@ class DatetimeCaster[TType](BaseCaster[datetime, TType]):
 
     @property
     def string_data(self) -> str:
-        datetime_string = self.value.strftime(r"%d/%m/%Y, %H:%M:%S")
-        return StringCaster(datetime_string, str)
+        datetime_string = self.value.strftime(r"%Y-%m-%d %H:%M:%S")
+        return StringCaster(datetime_string, str).string_data
