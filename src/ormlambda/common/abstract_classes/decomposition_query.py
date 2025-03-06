@@ -15,10 +15,10 @@ from ormlambda.sql.types import AliasType, TableType, ColumnType
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
 type ValueType = tp.Union[
-    IAggregate,
-    Table,
-    str,
-    ICustomAlias,
+    tp.Type[IAggregate],
+    tp.Type[Table],
+    tp.Type[str],
+    tp.Type[ICustomAlias],
 ]
 
 
@@ -120,7 +120,10 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
             resolved_function = (self.table,) if ClauseInfo.is_asterisk(resolved_function) else (resolved_function,)
 
         for data in resolved_function:
-            values = self.__convert_into_ClauseInfo(data)
+            if not isinstance(data, ClauseInfo):
+                values = self.__convert_into_ClauseInfo(data)
+            else:
+                values = [data]
             self.__add_clause(values)
 
         return None
@@ -131,21 +134,16 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         """
 
         def validation(data: TProp, type_: ValueType) -> bool:
-            is_table: bool = isinstance(data, type) and issubclass(data, type_)
-            return any(
-                [
-                    isinstance(data, type_),
-                    is_table,
-                ]
-            )
+            is_valid_type: bool = isinstance(data, type) and issubclass(data, type_)
+            return isinstance(data, type_) or is_valid_type
 
-        value_type_mapped: dict[tp.Type[ValueType], ClauseInfoConverter[T, TProp]] = {
+        VALUE_TYPE_MAPPED: dict[tp.Type[ValueType], ClauseInfoConverter[T, TProp]] = {
             ForeignKey: ConvertFromForeignKey[T, Table],
             Column: ConvertFromColumn[TProp],
             IAggregate: ConvertFromIAggregate,
             Table: ConvertFromTable[T],
         }
-        classConverter = next((handler for cls, handler in value_type_mapped.items() if validation(data, cls)), ConvertFromAnyType)
+        classConverter = next((converter for obj, converter in VALUE_TYPE_MAPPED.items() if validation(data, obj)), ConvertFromAnyType)
 
         return classConverter.convert(data, alias_table=self._alias_table, context=self._context)
 
