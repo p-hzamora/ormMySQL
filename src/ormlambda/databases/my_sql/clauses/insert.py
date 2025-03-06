@@ -40,7 +40,7 @@ class InsertQuery[T: Table](InsertQueryBase[T, IRepositoryBase]):
         col_values: list[list[str]] = []
         for i, cols in enumerate(valid_cols):
             col_values.append([])
-            CASTER = Caster[MySQLRepository](self._repository)
+            CASTER = Caster(self._repository)
             for col in cols:
                 clean_data = CASTER.for_column(col, instances[i])  # .resolve(instances[i][col])
                 if i == 0:
