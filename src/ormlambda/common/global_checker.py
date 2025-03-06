@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 from typing import Any, TYPE_CHECKING
 
 from ormlambda.common.errors import UnmatchedLambdaParameterError
@@ -19,5 +20,7 @@ class GlobalChecker:
 
         try:
             return obj(*tables)
-        except TypeError:
-            raise UnmatchedLambdaParameterError(len(tables), obj)
+        except TypeError as err:
+            if re.search(r"takes \d+ positional argument but \d+ were given", err.args[0]):
+                raise UnmatchedLambdaParameterError(len(tables), obj)
+            raise err
