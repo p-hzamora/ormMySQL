@@ -32,7 +32,7 @@ from ..types import (
 
 class IStatements[T: Table, *Ts](ABC):
     @abstractmethod
-    def create_table(self, if_exists: TypeExists) -> None: ...
+    def create_table(self, if_exists: TypeExists = "fail") -> None: ...
 
     # #TODOL [ ]: We must to implement this mehtod
     # @abstractmethod
