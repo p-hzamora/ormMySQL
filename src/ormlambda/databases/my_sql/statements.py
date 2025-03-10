@@ -143,8 +143,8 @@ class QueryBuilder(IQuery):
     def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> Optional[str]:
         if not joins:
             return None
-        sorted_joins = JoinSelector.sort_join_selectors(joins)
-        return f"{sep}".join([join.query for join in sorted_joins])
+        # sorted_joins = JoinSelector.sort_join_selectors(joins)
+        return f"{sep}".join([join.query for join in joins])
 
     def pop_tables_and_create_joins_from_ForeignKey(self, by: JoinType = JoinType.INNER_JOIN) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
