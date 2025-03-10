@@ -42,7 +42,7 @@ class ClauseInfoContext(IClauseInfo):
         self._clause_context: dict[AliasKey[T, TProp], str] = clause_context if clause_context else {}
         self._table_context: dict[AliasKey[T, TProp], str] = table_context if table_context else {}
 
-    def add_clause_to_context[T: Table, TProp](self, clause: ClauseInfo[T]) -> None:
+    def add_clause_to_context[T: Table](self, clause: ClauseInfo[T]) -> None:
         if not clause:
             return None
 
