@@ -56,7 +56,7 @@ class IClauseInfo[T: Table](IQuery):
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]: ...
 
 
-class ClauseInfo[T: Table](IClauseInfo):
+class ClauseInfo[T: Table](IClauseInfo[T]):
     _keyRegex: re.Pattern = re.compile(r"{([^{}:]+)}")
 
     @tp.overload
