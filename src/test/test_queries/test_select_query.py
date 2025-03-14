@@ -25,7 +25,6 @@ from ormlambda.databases.my_sql.clauses.select import Select
 from ormlambda.databases.my_sql.clauses import JoinType  # noqa: E402
 from ormlambda.databases.my_sql import functions as func
 from ormlambda.databases.my_sql.clauses import Count
-from ormlambda.databases.my_sql.clauses import Alias
 
 
 class TestSelect(unittest.TestCase):
@@ -75,10 +74,16 @@ class TestSelect(unittest.TestCase):
                 a.City.Country.country,
             ),
         )
-        query: str = "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `address_city_id_city_id`.city_id AS `city_city_id`, `address_city_id_city_id`.city AS `city_city`, `address_city_id_city_id`.country_id AS `city_country_id`, `address_city_id_city_id`.last_update AS `city_last_update`, `city_country_id_country_id`.country_id AS `country_country_id`, `city_country_id_country_id`.country AS `country_country`, `city_country_id_country_id`.last_update AS `country_last_update`, `address_city_id_city_id`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `city_country_id_country_id`.country AS `country_country` FROM address AS `address` INNER JOIN city AS `address_city_id_city_id` ON `address`.city_id = `address_city_id_city_id`.city_id INNER JOIN country AS `city_country_id_country_id` ON `address_city_id_city_id`.country_id = `city_country_id_country_id`.country_id"
+        select: str = "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `address_city_id_city_id`.city_id AS `city_city_id`, `address_city_id_city_id`.city AS `city_city`, `address_city_id_city_id`.country_id AS `city_country_id`, `address_city_id_city_id`.last_update AS `city_last_update`, `city_country_id_country_id`.country_id AS `country_country_id`, `city_country_id_country_id`.country AS `country_country`, `city_country_id_country_id`.last_update AS `country_last_update`, `address_city_id_city_id`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `city_country_id_country_id`.country AS `country_country` FROM address AS `address`"
+        joins = set(
+            [
+                "INNER JOIN city AS `address_city_id_city_id` ON `address`.city_id = `address_city_id_city_id`.city_id",
+                "INNER JOIN country AS `city_country_id_country_id` ON `address_city_id_city_id`.country_id = `city_country_id_country_id`.country_id",
+            ]
+        )
         qb = QueryBuilder()
         qb.add_statement(q)
-        self.assertEqual(qb.query, query)
+        self.select_joins_testing(qb, select, joins)
 
     def test_cols_from_foreign_keys_NEW_METHOD(self):
         # this response must not be the real one,
@@ -94,10 +99,17 @@ class TestSelect(unittest.TestCase):
                 Address.City.Country.country,
             ),
         )
-        query: str = "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `address_city_id_city_id`.city_id AS `city_city_id`, `address_city_id_city_id`.city AS `city_city`, `address_city_id_city_id`.country_id AS `city_country_id`, `address_city_id_city_id`.last_update AS `city_last_update`, `city_country_id_country_id`.country_id AS `country_country_id`, `city_country_id_country_id`.country AS `country_country`, `city_country_id_country_id`.last_update AS `country_last_update`, `address_city_id_city_id`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `city_country_id_country_id`.country AS `country_country` FROM address AS `address` INNER JOIN city AS `address_city_id_city_id` ON `address`.city_id = `address_city_id_city_id`.city_id INNER JOIN country AS `city_country_id_country_id` ON `address_city_id_city_id`.country_id = `city_country_id_country_id`.country_id"
         qb = QueryBuilder()
         qb.add_statement(q)
-        self.assertEqual(qb.query, query)
+
+        select: str = "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `address_city_id_city_id`.city_id AS `city_city_id`, `address_city_id_city_id`.city AS `city_city`, `address_city_id_city_id`.country_id AS `city_country_id`, `address_city_id_city_id`.last_update AS `city_last_update`, `city_country_id_country_id`.country_id AS `country_country_id`, `city_country_id_country_id`.country AS `country_country`, `city_country_id_country_id`.last_update AS `country_last_update`, `address_city_id_city_id`.country_id AS `city_country_id`, `address`.city_id AS `address_city_id`, `address`.last_update AS `address_last_update`, `city_country_id_country_id`.country AS `country_country` FROM address AS `address`"
+        joins = set(
+            [
+                "INNER JOIN city AS `address_city_id_city_id` ON `address`.city_id = `address_city_id_city_id`.city_id",
+                "INNER JOIN country AS `city_country_id_country_id` ON `address_city_id_city_id`.country_id = `city_country_id_country_id`.country_id",
+            ]
+        )
+        self.select_joins_testing(qb, select, joins)
 
     def test_all_columns_from_all_tables(self):
         # this response must not be the real one,
@@ -154,10 +166,17 @@ class TestSelect(unittest.TestCase):
                 d.C.B.A.data_a,
             ),
         )
-        mssg: str = "SELECT `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d`.data_d AS `d_data_d`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `b_fk_a_pk_a`.data_a AS `a_data_a` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
         qb = QueryBuilder()
         qb.add_statement(q)
-        self.assertEqual(qb.query, mssg)
+        select = "SELECT `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d`.data_d AS `d_data_d`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `b_fk_a_pk_a`.data_a AS `a_data_a` FROM d AS `d`"
+        joins = set(
+            [
+                "INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c",
+                "INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b",
+                "INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a",
+            ]
+        )
+        self.select_joins_testing(qb, select, joins)
 
     def test_all_a(self):
         q = Select[A](A)
@@ -194,10 +213,23 @@ class TestSelect(unittest.TestCase):
             ),
         )
 
-        mssg: str = "SELECT `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
+        select: str = "SELECT `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`"
+        joins: str = set(
+            [
+                "INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c",
+                "INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b",
+                "INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a",
+            ]
+        )
         qb = QueryBuilder()
         qb.add_statement(q)
-        self.assertEqual(qb.query, mssg)
+        self.select_joins_testing(qb, select, joins)
+
+    def select_joins_testing(self, query_builder: QueryBuilder, select_result: str, join_result: set[str]):
+        extract_joins = set([x.query for x in query_builder.pop_tables_and_create_joins_from_ForeignKey(query_builder.by)])
+
+        self.assertEqual(query_builder.SELECT.query, select_result)
+        self.assertSetEqual(extract_joins, join_result)
 
     # def test_get_involved_table_method_consistency(self):
     #     q = Select[D](
@@ -271,7 +303,9 @@ class TestSelect(unittest.TestCase):
         q = Select[D](D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.INNER_JOIN)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        select = "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d`"
+        joins = set(["INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"])
+        self.select_joins_testing(qb, select, joins)
 
     def test_one_column_without_fk(self):
         q = Select[D](D, lambda d: (d.pk_d))
@@ -289,7 +323,9 @@ class TestSelect(unittest.TestCase):
         q = Select[D](D, lambda d: (d.pk_d, d.C.data_c))
         qb = QueryBuilder()
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d`.pk_d AS `d_pk_d`, `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        select = "SELECT `d`.pk_d AS `d_pk_d`, `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d`"
+        joins = set(["INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"])
+        self.select_joins_testing(qb, select, joins)
 
     def test_all_column_from_all_tables_with_one_fk(self):
         q = Select[D](D, lambda d: (d, d.C))
@@ -325,12 +361,19 @@ class TestSelect(unittest.TestCase):
             ),
             context=context,
         )
-        mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.*) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
         # TODOL: when all errors have been fixed, implement the way to pass column name inside of Count clause to count all not NULL rows.
         # mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.name_a) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
         qb = QueryBuilder()
         qb.add_statement(selected)
-        self.assertEqual(qb.query, mssg)
+        select = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, CONCAT(`d`.pk_d, '-', `d_fk_c_pk_c`.pk_c, '-', `c_fk_b_pk_b`.pk_b, '-', `b_fk_a_pk_a`.pk_a, `b_fk_a_pk_a`.name_a, `b_fk_a_pk_a`.data_a, `b_fk_a_pk_a`.date_a, `b_fk_a_pk_a`.value, '-', `c_fk_b_pk_b`.data) AS `concat_pks`, COUNT(`b_fk_a_pk_a`.*) AS `count`, MAX(`b_fk_a_pk_a`.data_a) AS `max` FROM d AS `d`"
+        joins = set(
+            [
+                "INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c",
+                "INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b",
+                "INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a",
+            ]
+        )
+        self.select_joins_testing(qb, select, joins)
 
     def test_select_with_count(self):
         context = ClauseInfoContext()
@@ -387,11 +430,18 @@ class TestSelect(unittest.TestCase):
             context=context,
         )
 
-        query: str = "SELECT `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, CONCAT(`d`.pk_d, '-', `d`.data_d) AS `concat` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a"
-
         qb = QueryBuilder()
         qb.add_statement(q)
-        self.assertEqual(qb.query, query)
+
+        select = "SELECT `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b`, `c_fk_b_pk_b`.pk_b AS `b_pk_b`, `c_fk_b_pk_b`.data_b AS `b_data_b`, `c_fk_b_pk_b`.fk_a AS `b_fk_a`, `c_fk_b_pk_b`.data AS `b_data`, `b_fk_a_pk_a`.pk_a AS `a_pk_a`, `b_fk_a_pk_a`.name_a AS `a_name_a`, `b_fk_a_pk_a`.data_a AS `a_data_a`, `b_fk_a_pk_a`.date_a AS `a_date_a`, `b_fk_a_pk_a`.value AS `a_value`, CONCAT(`d`.pk_d, '-', `d`.data_d) AS `concat` FROM d AS `d`"
+        joins = set(
+            [
+                "INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c",
+                "INNER JOIN b AS `c_fk_b_pk_b` ON `d_fk_c_pk_c`.fk_b = `c_fk_b_pk_b`.pk_b",
+                "INNER JOIN a AS `b_fk_a_pk_a` ON `c_fk_b_pk_b`.fk_a = `b_fk_a_pk_a`.pk_a",
+            ]
+        )
+        self.select_joins_testing(qb, select, joins)
 
 
 if "__main__" == __name__:
