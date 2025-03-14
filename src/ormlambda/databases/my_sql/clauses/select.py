@@ -4,15 +4,14 @@ from typing import Optional, override, Type, Callable, TYPE_CHECKING
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from ormlambda.sql.types import AliasType
-from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
-
+from ormlambda.components import ISelect
 
 if TYPE_CHECKING:
     from ormlambda import Table
 
 
-class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], IQuery):
+class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ISelect):
     CLAUSE: str = "SELECT"
 
     def __init__(
@@ -32,20 +31,20 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], IQuery):
         # We always need to add the self alias of the Select
         self._context._add_table_alias(self.table, self._alias_table)
 
+    @property
+    def FROM(self) -> ClauseInfo[T]:
+        return ClauseInfo(self.table, None, alias_table=self._alias_table, context=self._context)
+
+    @property
+    def COLUMNS(self) -> str:
+        return ClauseInfo.join_clauses(self._all_clauses, ",", self.context)
+
     # TODOL: see who to deal when we will have to add more mysql methods
     @override
     @property
     def query(self) -> str:
         # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
         # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
-        SELECT = self.CLAUSE
-        FROM = "FROM " + ClauseInfo[T](self.table, None, alias_table=self._alias_table, context=self._context).query
-        COLUMNS = ClauseInfo.join_clauses(self._all_clauses, ",", self.context)
+        FROM = self.FROM
 
-        select_clauses = [
-            SELECT,
-            COLUMNS,
-            FROM,
-        ]
-
-        return " ".join(select_clauses)
+        return f"{self.CLAUSE} {self.COLUMNS} FROM {FROM.query}"
