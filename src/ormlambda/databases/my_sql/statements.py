@@ -157,7 +157,7 @@ class QueryBuilder(IQuery):
         for _ in range(len(ForeignKey.stored_calls)):
             fk = ForeignKey.stored_calls.pop()
             self._context._add_table_alias(fk.tright, fk.alias)
-            join = JoinSelector(fk.resolved_function(lambda: self._context), by, context=self._context, alias=fk.alias)
+            join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk.alias)
             joins.add(join)
 
         return joins
