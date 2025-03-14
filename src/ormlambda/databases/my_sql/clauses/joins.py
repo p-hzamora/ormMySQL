@@ -58,7 +58,7 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, context=self._create_partial_context())
         self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, context=self._create_partial_context())
 
-    def __eq__(self, __value: "JoinSelector") -> bool:
+    def __eq__(self, __value: JoinSelector) -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
 
     def __hash__(self) -> int:
@@ -82,7 +82,7 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         return ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
 
     @classmethod
-    def join_selectors(cls, *args: "JoinSelector") -> str:
+    def join_selectors(cls, *args: JoinSelector) -> str:
         return "\n".join([x.query for x in args])
 
     @property
