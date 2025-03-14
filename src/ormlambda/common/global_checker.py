@@ -21,6 +21,8 @@ class GlobalChecker:
         try:
             return obj(*tables)
         except TypeError as err:
-            if re.search(r"takes \d+ positional argument but \d+ were given", err.args[0]):
+            cond1 = r"takes \d+ positional argument but \d+ were given"
+            cond2 = r"missing \d+ required positional arguments:"
+            if re.search(r"("+f"{cond1}|{cond2}"+r")", err.args[0]):
                 raise UnmatchedLambdaParameterError(len(tables), obj)
             raise err
