@@ -32,3 +32,6 @@ class BaseModel[T]:
             raise Exception(f"The selected repository '{repository}' does not exist.")
 
         return new_cls(model, repository)
+
+
+ORM = BaseModel
