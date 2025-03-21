@@ -18,7 +18,7 @@ PLACEHOLDER: str = "%s"
 class Caster[TRepo]:
     def __init__(self, repository: IRepositoryBase):
         self._repository: IRepositoryBase = repository
-        self._caster = RepositoryTemplateDict[TRepo]().get(repository).caster
+        self._caster = RepositoryTemplateDict().get(repository).caster
 
     @overload
     def for_column[T, TProp](self, column: Callable[[T], TProp], instance: T) -> BaseCaster[TProp, Type[TProp]]: ...
