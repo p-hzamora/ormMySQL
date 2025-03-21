@@ -19,12 +19,12 @@ import config
 
 class TestValues(Table):
     __table_name__ = "test_values"
-    data_str: str
-    data_int: int
-    data_float: float
-    data_Point: Point
-    data_NoneType: NoneType
-    data_datetime: datetime
+    data_str: Column[str]
+    data_int: Column[int]
+    data_float: Column[float]
+    data_Point: Column[Point]
+    data_NoneType: Column[NoneType]
+    data_datetime: Column[datetime]
 
 
 table_obj = TestValues(
@@ -115,10 +115,10 @@ RESULT_FOR_datetime = TestResultCast(
 class TestResolverType(unittest.TestCase):
     @parameterized.expand(
         [
+            (TestValues.data_Point, table_obj, RESULT_FOR_Point),
             (TestValues.data_str, table_obj, RESULT_FOR_str),
             (TestValues.data_int, table_obj, RESULT_FOR_int),
             (TestValues.data_float, table_obj, RESULT_FOR_float),
-            (TestValues.data_Point, table_obj, RESULT_FOR_Point),
             (TestValues.data_NoneType, table_obj, RESULT_FOR_NoneType),
             (TestValues.data_datetime, table_obj, RESULT_FOR_datetime),
         ]
@@ -126,10 +126,9 @@ class TestResolverType(unittest.TestCase):
     def test_for_column_with_column_obj[TProp](self, column: Column[TProp], table_obj: TestValues, result: TestResultCast) -> None:
         caster = Caster(mysql_repo)
         casted_data = caster.for_column(column, table_obj)
-
-        self.assertEqual(casted_data.wildcard_to_select, result.wildcard_to_select)
-        self.assertEqual(casted_data.wildcard_to_where, result.wildcard_to_where)
-        self.assertEqual(casted_data.wildcard_to_insert, result.wildcard_to_insert)
+        self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
+        self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)
+        self.assertEqual(casted_data.wildcard_to_insert(), result.wildcard_to_insert)
         self.assertEqual(casted_data.to_database, result.to_database)
         self.assertEqual(casted_data.from_database, result.from_database)
         self.assertEqual(casted_data.value, result.value)
@@ -149,9 +148,9 @@ class TestResolverType(unittest.TestCase):
     def test_for_value[TProp](self, value: TProp, result: TestResultCast) -> None:
         caster = Caster(mysql_repo)
         casted_data = caster.for_value(value)
-        self.assertEqual(casted_data.wildcard_to_select, result.wildcard_to_select)
-        self.assertEqual(casted_data.wildcard_to_where, result.wildcard_to_where)
-        self.assertEqual(casted_data.wildcard_to_insert, result.wildcard_to_insert)
+        self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
+        self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)
+        self.assertEqual(casted_data.wildcard_to_insert(), result.wildcard_to_insert)
         self.assertEqual(casted_data.to_database, result.to_database)
         self.assertEqual(casted_data.from_database, result.from_database)
         self.assertEqual(casted_data.value, result.value)

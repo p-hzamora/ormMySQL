@@ -4,9 +4,6 @@ from pathlib import Path
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-
-from ormlambda import BaseRepository  # noqa: E402
-from ormlambda import BaseModel  # noqa: E402
 from ormlambda import Table, Column, ForeignKey  # noqa: E402
 
 
@@ -52,8 +49,3 @@ class D(Table):
 
     C = ForeignKey["D", C](C, lambda self, c: self.fk_c == c.pk_c)
     ExtraC = ForeignKey["D", ExtraC](ExtraC, lambda self, extra_c: self.fk_extra_c == extra_c.pk_extra_c)
-
-
-class ModelAB[T](BaseModel[T]):
-    def __new__(cls, model: T, repository: BaseRepository):
-        return super().__new__(cls, model, repository)

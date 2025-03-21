@@ -2,7 +2,6 @@ from __future__ import annotations
 import unittest
 import sys
 from pathlib import Path
-from mysql.connector import MySQLConnection
 
 
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
@@ -10,8 +9,8 @@ sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.repository import IRepositoryBase
-from models import Address, AddressModel  # noqa: F401
+from models import Address, City, Country  # noqa: F401
+from ormlambda import ORM
 
 import re
 
@@ -25,8 +24,8 @@ class RegexFilter:
 class TestWhereStatement(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: IRepositoryBase = MySQLRepository(**config_dict)
-        cls.tmodel = AddressModel(cls.ddbb)
+        cls.ddbb = MySQLRepository(**config_dict)
+        cls.tmodel = ORM(Address, cls.ddbb)
 
     def test_where(self):
         co = "Spain"
@@ -46,6 +45,52 @@ class TestWhereStatement(unittest.TestCase):
             ("Santiago de Compostela"),
         )
         self.assertTupleEqual(select, res)
+
+    def test_multiple_wheres_using_tables(self) -> None:
+        city = "Ourense (Orense)"
+        country = r"[sS]pain"
+
+        result = self.tmodel.where(
+            [
+                Address.City.Country.country.regex(country),
+                Address.City.city == city,
+            ]
+        ).select(
+            (City.city, Country.country),
+            flavour=dict,
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertDictEqual(
+            result[0],
+            {
+                "city_city": "Ourense (Orense)",
+                "country_country": "Spain",
+            },
+        )
+
+    def test_multiple_wheres_using_lambda(self) -> None:
+        city = "Ourense (Orense)"
+        country = r"[sS]pain"
+
+        result = self.tmodel.where(
+            lambda x: (
+                x.City.Country.country.regex(country),
+                x.City.city == city,
+            )
+        ).select(
+            lambda x: (x.City.city, x.City.Country.country),
+            flavour=dict,
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertDictEqual(
+            result[0],
+            {
+                "city_city": "Ourense (Orense)",
+                "country_country": "Spain",
+            },
+        )
 
 
 if __name__ == "__main__":

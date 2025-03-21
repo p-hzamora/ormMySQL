@@ -1,5 +1,4 @@
 from __future__ import annotations
-from datetime import datetime
 import unittest
 import sys
 from pathlib import Path
@@ -8,15 +7,12 @@ from pathlib import Path
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda.sql.comparer import Comparer
 from config import config_dict  # noqa: E402
+from ormlambda import ORM
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import BaseRepository, Table, Column, BaseModel, JoinType  # noqa: E402
+from ormlambda import BaseRepository, Table, Column, JoinType  # noqa: E402
 from models import (  # noqa: E402
     TestTable,
-    ModelAB,
-    A,
-    B,
 )
 
 
@@ -53,9 +49,9 @@ class TestJoinStatements(unittest.TestCase):
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
 
-        cls.model_a = BaseModel(JoinA, cls.ddbb)
-        cls.model_b = BaseModel(JoinB, cls.ddbb)
-        cls.model_c = BaseModel(JoinC, cls.ddbb)
+        cls.model_a = ORM(JoinA, cls.ddbb)
+        cls.model_b = ORM(JoinB, cls.ddbb)
+        cls.model_c = ORM(JoinC, cls.ddbb)
 
         cls.model_a.create_table()
         cls.model_b.create_table()
@@ -88,86 +84,58 @@ class TestJoinStatements(unittest.TestCase):
     def test_pass_multiple_joins(self):
         with self.model_b.join(
             [
-                ("JA", JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
-                ("JC", JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
+                (JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
+                (JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
             ]
-        ) as ctx:
+        ):
             result1 = self.model_b.where([JoinB.fk_a == 2, JoinB.fk_c == 2]).select(
                 (
                     JoinB.data_b,
-                    ctx.JA.data_a,
-                    ctx.JC.data_c,
+                    JoinA.data_a,
+                    JoinC.data_c,
                 ),
                 flavour=dict,
-                columns=[1, 2, 3, 4],
             )
 
         with self.model_b.join(
             (
-                ("JA", JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
-                ("JC", JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
+                (JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
+                (JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
             )
-        ) as ctx:
-            result2 = self.model_b.where([ctx.JA.pk_a == 2, ctx.JC.pk_c == 2]).select((JoinB.data_b, ctx.JA.data_a, ctx.JC.data_c), flavour=dict)
+        ):
+            result2 = self.model_b.where([JoinA.pk_a == 2, JoinC.pk_c == 2]).select(
+                (
+                    JoinB.data_b,
+                    JoinA.data_a,
+                    JoinC.data_c,
+                ),
+                flavour=dict,
+            )
 
         self.assertTupleEqual(result1, result2)
 
-    # def test_pass_one_join(self):
-    #     select = (
-    #         self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
-    #         .where(
-    #             [
-    #                 lambda b_var, _: b_var.fk_a == 2,
-    #             ]
-    #         )
-    #         .select(lambda b, a: (b.data_b, a.data_a), flavour=dict)
-    #     )
+    def test_pass_one_join(self):
+        with self.model_b.join(
+            [
+                (JoinB.fk_a == JoinA.pk_a, JoinType.LEFT_EXCLUSIVE),
+            ]
+        ):
+            select = self.model_b.where([JoinB.fk_a == 2]).select(
+                (
+                    JoinB.data_b,
+                    JoinA.data_a,
+                ),
+                flavour=dict,
+            )
 
-    #     theorical_result = (
-    #         {"b_data_b": "data_b_pk_5", "a_data_a": "data_a_pk2"},
-    #         {"b_data_b": "data_b_pk_6", "a_data_a": "data_a_pk2"},
-    #         {"b_data_b": "data_b_pk_7", "a_data_a": "data_a_pk2"},
-    #         {"b_data_b": "data_b_pk_8", "a_data_a": "data_a_pk2"},
-    #     )
-    #     self.assertTupleEqual(select, theorical_result)
+        theorical_result = (
+            {"b_data_b": "data_b_pk_5", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_6", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_7", "a_data_a": "data_a_pk2"},
+            {"b_data_b": "data_b_pk_8", "a_data_a": "data_a_pk2"},
+        )
+        self.assertTupleEqual(select, theorical_result)
 
-    # def test_pass_one_join_with_where(self):
-    #     select = (
-    #         self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
-    #         .where(lambda b_var, _: b_var.fk_a == 2)
-    #         .select(
-    #             lambda b, a: (
-    #                 b.data_b,
-    #                 a.data_a,
-    #             ),
-    #             flavour=dict,
-    #         )
-    #     )
-
-    #     theorical_result = (
-    #         {"b_data_b": "data_b_pk_5", "a_data_a": "data_a_pk2"},
-    #         {"b_data_b": "data_b_pk_6", "a_data_a": "data_a_pk2"},
-    #         {"b_data_b": "data_b_pk_7", "a_data_a": "data_a_pk2"},
-    #         {"b_data_b": "data_b_pk_8", "a_data_a": "data_a_pk2"},
-    #     )
-    #     self.assertTupleEqual(select, theorical_result)
-
-    # def test_used_of_count_agg_with_join_deleting_NULL(self):
-    #     result = (
-    #         self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.LEFT_EXCLUSIVE)
-    #         .where(
-    #             [
-    #                 lambda b, a_foreign: a_foreign.pk_a == 1,
-    #                 lambda b, _: b.fk_c == 2,
-    #                 lambda b, _: b.data_b is not None,
-    #             ]
-    #         )
-    #         .select_one(
-    #             lambda b, a: (self.model_a.count(lambda a: a.pk_a),),
-    #             flavour=dict,
-    #         )
-    #     )
-    #     self.assertEqual(result["count"], 3)
 
     # def test_used_of_count_agg_with_join_allowing_NULL(self):
     #     result = (
@@ -233,39 +201,6 @@ class TestJoinStatements(unittest.TestCase):
 
     #     self.assertTupleEqual(tuple(keys), ("data_b_de b", "fk_a de b"))
     #     self.assertEqual(mssg, self.model_b.query)
-
-    def test_join(self):
-        """
-        New way to use join with 'with' clause
-        """
-        ddbb: BaseRepository = MySQLRepository(**config_dict)
-        ddbb.create_database(DDBBNAME, "replace")
-        ddbb.database = DDBBNAME
-
-        modelA = ModelAB(A, ddbb)
-        modelB = ModelAB(B, ddbb)
-
-        a_insert = [A(x, "a", "data_a", datetime.today(), f"pk_with_value_{x}") for x in range(1, 6)]
-        b_insert = [
-            *[B(None, "data_b", 1, "pk_b_with_data_1") for x in range(20)],
-            *[B(None, "data_b", 2, "pk_b_with_data_2") for x in range(10)],
-            *[B(None, "data_b", 3, "pk_b_with_data_3") for x in range(5)],
-            B(None, "data_b", 4, "pk_b_with_data_4"),
-        ]
-
-        modelA.create_table()
-        modelB.create_table()
-        modelA.insert(a_insert)
-        modelB.insert(b_insert)
-
-        with modelB.join(
-            [
-                ("A", B.fk_a == A.pk_a, JoinType.LEFT_EXCLUSIVE),
-            ]
-        ) as ctx:
-            select = modelB.where(ctx.A.pk_a >= 3).select_one(modelB.count("*"), flavour=dict, by=JoinType.LEFT_EXCLUSIVE)
-        self.assertEqual(select["count"], 6)
-        ddbb.drop_database(DDBBNAME)
 
 
 if __name__ == "__main__":

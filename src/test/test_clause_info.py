@@ -172,7 +172,7 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_aggregation_method_ST_Contains(self):
         comparer = ST_Contains(TableType.points, Point(5, -5))
-        mssg: str = "ST_Contains(table_type.points, ST_AsText(%s))"
+        mssg: str = "ST_Contains(ST_AsText(table_type.points), ST_AsText(%s))"
         self.assertEqual(comparer.query, mssg)
 
     def test_alias_table_property(self):

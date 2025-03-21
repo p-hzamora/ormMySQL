@@ -28,12 +28,12 @@ class TestCount(unittest.TestCase):
         self.assertEqual(Count(D, alias_table="{table}", context=ctx).query, query)
 
     def test_count_passing_column(self) -> None:
-        query = "COUNT(*) AS `other_name`"
+        query = "COUNT(data_d) AS `other_name`"
         self.assertEqual(Count(D.data_d, alias_clause="other_name").query, query)
 
     def test_count_passing_column_with_context(self) -> None:
         ctx = ClauseInfoContext(table_context={D: "new-d-table"})
-        query = "COUNT(`new-d-table`.*) AS `other_name`"
+        query = "COUNT(`new-d-table`.data_d) AS `other_name`"
         self.assertEqual(Count(D.data_d, alias_table="{table}", alias_clause="other_name", context=ctx).query, query)
 
 

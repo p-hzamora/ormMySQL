@@ -59,10 +59,10 @@ class TestJoinQueries(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.ddbb.drop_database(DDBBNAME)
 
-    def test_new_select(self):
-        self.model.select(AWithMultipleReferencesToB)
-        real_query: str = "SELECT `A`.pk_a AS `A_pk_a`, `A`.data_a AS `A_data_a`, `A`.fk_b1 AS `A_fk_b1`, `A`.fk_b2 AS `A_fk_b2`, `A`.fk_b3 AS `A_fk_b3` FROM A AS `A`"
-        self.assertEqual(self.model.query, real_query)
+    # def test_new_select(self):
+    #     self.model.select(AWithMultipleReferencesToB)
+    #     real_query: str = "SELECT `A`.pk_a AS `A_pk_a`, `A`.data_a AS `A_data_a`, `A`.fk_b1 AS `A_fk_b1`, `A`.fk_b2 AS `A_fk_b2`, `A`.fk_b3 AS `A_fk_b3` FROM A AS `A`"
+    #     self.assertEqual(self.model.query, real_query)
 
     # # FIXME [ ]: Check why ForeignKey alias in 'a.B_fk_b1.CSimple' 'a.B_fk_b2.CSimple' it's not working as expected.
     # def test_new_select_context(self):

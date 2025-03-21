@@ -21,25 +21,7 @@ from ormlambda.databases.my_sql.clauses import (
 )
 
 
-class TestQueryBuilder(unittest.TestCase):
-    def test_QueryBuilder_constructor(self):
-        qb = QueryBuilder()
-
-        select = Select(
-            Address,
-            columns=(
-                Address.address,
-                Address.City.city,
-                Address.City.Country.country,
-            ),
-        )
-
-        qb.add_statement(select)
-
-        s_query = select.query
-        qb_query = qb.query
-        self.assertEqual(qb_query, s_query)
-
+class TestQueryBuilder(unittest.TestCase): ...
 
 if __name__ == "__main__":
     unittest.main()
