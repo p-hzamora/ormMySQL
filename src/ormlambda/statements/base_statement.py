@@ -74,6 +74,7 @@ class ClusterQuery[T]:
     def __init__(self, select: DecompositionQueryBase[T], response_sql: tuple[dict[str, Any]]) -> None:
         self._select: DecompositionQueryBase[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
+        self._caster = Caster(repository)
 
     def clean_response(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
         tbl_dicc: dict[Type[Table], list[Table]] = self.__loop_foo()
@@ -84,7 +85,8 @@ class ClusterQuery[T]:
         for table, attribute_list in tbl_dicc.items():
             new_instance = []
             for attrs in attribute_list:
-                new_instance.append(table(**attrs))
+                casted_attr = {key: self._caster.for_value(value, table.get_column(key).dtype).from_database for key, value in attrs.items()}
+                new_instance.append(table(**casted_attr))
             response[table] = tuple(new_instance)
             tuple_response.append(tuple(new_instance))
         return tuple(tuple_response)
