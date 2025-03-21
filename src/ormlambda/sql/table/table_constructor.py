@@ -170,6 +170,12 @@ class Table(metaclass=TableMeta):
         return tuple([x for x in cls.__annotations__.values() if isinstance(x, Column)])
 
     @classmethod
+    def get_column[TProp](cls,name:str) -> Column[TProp]:
+        for key,value in cls.__annotations__.items():
+            if name == key:
+                return value
+
+    @classmethod
     def create_table_query(cls) -> str:
         """It's classmethod because of it does not matter the columns values to create the table"""
         all_clauses: list[str] = []
