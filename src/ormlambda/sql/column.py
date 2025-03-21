@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Type, Optional, TYPE_CHECKING
+from typing import Iterable, Type, Optional, TYPE_CHECKING
 import abc
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
 
 if TYPE_CHECKING:
+    import re
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer, Regex, Like
 
@@ -107,10 +108,17 @@ class Column[TProp]:
     def not_contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
         return self.__comparer_creator(other, ConditionType.NOT_IN.value, *args)
 
-    def regex[LProp, RProp](self, pattern: str) -> Regex[LProp, RProp]:
+    def regex[LProp, RProp](self, pattern: str, flags: Optional[re.RegexFlag | Iterable[re.RegexFlag]] = None) -> Regex[LProp, RProp]:
         from ormlambda.sql.comparer import Regex
 
-        return Regex(self, pattern)
+        if not isinstance(flags, Iterable):
+            flags = (flags,)
+        return Regex(
+            left_condition=self,
+            right_condition=pattern,
+            context=None,
+            flags=flags,
+        )
 
     def like[LProp, RProp](self, pattern: str) -> Like[LProp, RProp]:
         from ormlambda.sql.comparer import Like
