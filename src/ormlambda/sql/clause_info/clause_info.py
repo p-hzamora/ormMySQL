@@ -201,6 +201,11 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._join_table_and_column(self._column)
 
     def _join_table_and_column[TProp](self, column: ColumnType[TProp]) -> str:
+        # FIXME [ ]: Study how to deacoplate from mysql database
+        from ormlambda.databases.my_sql.repository import MySQLRepository
+
+        caster = Caster(MySQLRepository)
+
         if self.alias_table:
             table = self._wrapped_with_quotes(self.alias_table)
         else:
@@ -209,7 +214,10 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         column: str = self._column_resolver(column)
 
         table_column = f"{table}.{column}"
-        return self._concat_alias_and_column(table_column, self.alias_clause)
+
+        dtype = str if self.is_table(self.dtype) else self.dtype
+        wrapped_column = caster.for_value(table_column, dtype).wildcard_to_select(table_column)
+        return self._concat_alias_and_column(wrapped_column, self.alias_clause)
 
     def _return_all_columns(self) -> bool:
         if self._keep_asterisk:
