@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 from ormlambda.engine.template import RepositoryTemplateDict
 
@@ -22,7 +22,7 @@ class BaseModel[T]:
 
     # region Constructor
 
-    def __new__[TPool](cls, model: T, repository: BaseRepository[TPool]) -> IStatements_two_generic[T, TPool]:
+    def __new__[TPool](cls, model: Type[T], repository: BaseRepository[TPool]) -> IStatements_two_generic[T, TPool]:
         if repository is None:
             raise ValueError("`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class")
 
