@@ -1,4 +1,6 @@
 from __future__ import annotations
+import abc
+import re
 import typing as tp
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
@@ -12,6 +14,37 @@ if tp.TYPE_CHECKING:
     from ormlambda.sql import Table
 
 
+class ICleaner(abc.ABC):
+    @staticmethod
+    @abc.abstractmethod
+    def clean(value: str): ...
+
+
+class IgnoreCase(ICleaner):
+    @staticmethod
+    def clean(value: str) -> str:
+        return value.lower()
+
+
+DICC_FLAGS = {
+    re.IGNORECASE: IgnoreCase,
+}
+
+
+class CleanValue:
+    def __init__(self, name: str, *flags: re.RegexFlag):
+        self._flags = flags
+        self._filename: str = name
+
+    def clean(self) -> str:
+        temp_name = self._filename
+        for flag in self._flags:
+            cleaner = DICC_FLAGS.get(flag, None)
+            if cleaner:
+                temp_name = cleaner.clean(temp_name)
+        return temp_name
+
+
 class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
     def __init__(
         self,
@@ -19,11 +52,13 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         right_condition: ConditionType[RProp],
         compare: ComparerTypes,
         context: ClauseContextType = None,
+        flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ) -> None:
         self._context: ClauseContextType = context
         self._compare: ComparerTypes = compare
         self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = left_condition
         self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = right_condition
+        self._flags = flags
 
     def set_context(self, context: ClauseContextType) -> None:
         self._context = context
@@ -55,7 +90,13 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
 
     @property
     def query(self) -> str:
-        return f"{self.left_condition.query} {self._compare} {self.right_condition.query}"
+        lcond = self.left_condition.query
+        rcond = self.right_condition.query
+
+        if self._flags:
+            rcond = CleanValue(rcond, self._flags).clean()
+
+        return f"{lcond} {self._compare} {rcond}"
 
     def __and__(self, other: Comparer, context: ClauseContextType = None) -> Comparer:
         # Customize the behavior of '&'
@@ -94,8 +135,15 @@ class Regex[LProp, RProp](Comparer[None, LProp, None, RProp]):
         left_condition: ConditionType[LProp],
         right_condition: ConditionType[RProp],
         context: ClauseContextType = None,
+        flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ):
-        super().__init__(left_condition, right_condition, ConditionEnum.REGEXP.value, context)
+        super().__init__(
+            left_condition=left_condition,
+            right_condition=right_condition,
+            compare=ConditionEnum.REGEXP.value,
+            context=context,
+            flags=flags,  # Pass as a named parameter instead
+        )
 
 
 class Like[LProp, RProp](Comparer[None, LProp, None, RProp]):
