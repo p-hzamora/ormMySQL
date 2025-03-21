@@ -178,34 +178,7 @@ class IStatements[T: Table, **P](ABC):
         alias_name: Optional[str] = ...,
     ) -> TProp: ...
 
-    # endregion
-    # region join
-
-    # @overload
-    # def join[T1](self, table: T1, relation: WhereCondition[T, T1], join_type: Optional[JoinType]) -> IStatements[T, T1]: ...
-    # @overload
-    # def join[T1](self, table: JoinCondition[T, T1]) -> IStatements[T, T1]: ...
-    # @overload
-    # def join[T1](self, table: TupleJoins1[T, T1]) -> IStatements[T, T1]: ...
-    # @overload
-    # def join[T1, T2](self, table: TupleJoins2[T, T1, T2]) -> IStatements[T, T1, T2]: ...
-    # @overload
-    # def join[T1, T2, T3](self, table: TupleJoins3[T, T1, T2, T3]) -> IStatements[T, T1, T2, T3]: ...
-    # @overload
-    # def join[T1, T2, T3, T4](self, table: TupleJoins4[T, T1, T2, T3, T4]) -> IStatements[T, T1, T2, T3, T4]: ...
-    # @overload
-    # def join[T1, T2, T3, T4, T5](self, table: TupleJoins5[T, T1, T2, T3, T4, T5]) -> IStatements[T, T1, T2, T3, T4, T5]: ...
-    # @overload
-    # def join[T1, T2, T3, T4, T5, T6](self, table: TupleJoins6[T, T1, T2, T3, T4, T5, T6]) -> IStatements[T, T1, T2, T3, T4, T5, T6]: ...
-
-    # @abstractmethod
-    # def join[*FKTables](
-    #     self,
-    #     table: Optional[T] = ...,
-    #     relation: Optional[WhereCondition[T, FKTables]] = ...,
-    #     join_type: Optional[JoinType] = ...,
-    # ) -> IStatements[T, *FKTables]: ...
-
+    @overload
     def join[FKTable](self, joins: TupleJoinType[FKTable] | tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]: ...
 
     # endregion
@@ -268,7 +241,7 @@ class IStatements[T: Table, **P](ABC):
     @overload
     def select_one[TFlavour](self, selector: Callable[Concatenate[T, P], tuple], *, by: Optional[Enum] = ..., flavour: Type[TFlavour]) -> TFlavour: ...
     @abstractmethod
-    def select_one[TValue, TFlavour, P](
+    def select_one[TValue, TFlavour, **P](
         self,
         selector: Optional[Callable[Concatenate[T, P], tuple[TValue, P]]] = lambda: None,
         *,
