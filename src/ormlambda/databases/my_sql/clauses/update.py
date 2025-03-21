@@ -3,7 +3,7 @@ from typing import Type, override, Any
 from ormlambda.components.update import UpdateQueryBase
 from ormlambda import Table, Column
 from ormlambda.repository import IRepositoryBase
-from ormlambda.caster import PLACEHOLDER
+from ormlambda.caster.caster import Caster
 from .where import Where
 from ormlambda.sql.types import ColumnType
 
@@ -44,8 +44,8 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase]):
         if not isinstance(dicc, dict):
             raise TypeError
 
-        name_cols: list[Column] = []
-
+        col_names: list[Column] = []
+        CASTER = Caster(self._repository)
         for col, value in dicc.items():
             if isinstance(col, str):
                 if not hasattr(self._model, col):
@@ -55,10 +55,11 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase]):
                 raise ValueError
 
             if self.__is_valid__(col):
-                name_cols.append(col)
-                self._values.append(value)
+                clean_data = CASTER.for_value(value)
+                col_names.append((col.column_name,clean_data.wildcard_to_insert()))
+                self._values.append(clean_data.to_database)
 
-        set_query: str = ",".join(["=".join([col.column_name, PLACEHOLDER]) for col in name_cols])
+        set_query: str = ",".join(["=".join(col_data) for col_data in col_names])
 
         self._query = f"{self.CLAUSE} {self._model.__table_name__} SET {set_query}"
         self._values = tuple(self._values)
