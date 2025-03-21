@@ -8,6 +8,8 @@ from ormlambda import Table
 
 import typing as tp
 
+from ormlambda.sql.types import ASTERISK
+
 if tp.TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import ColumnType, AliasType, TableType
@@ -28,10 +30,11 @@ class Count[T: Table](AggregateFunctionBase[T]):
         preserve_context: bool = True,
     ) -> None:
         table = self.extract_table(element)
+        column = element if self.is_column(element) else ASTERISK
 
         super().__init__(
             table=table if (alias_table or (context and table in context._table_context)) else None,
-            column="*",
+            column=column,
             alias_table=alias_table,
             alias_clause=alias_clause,
             context=context,
