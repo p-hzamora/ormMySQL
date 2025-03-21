@@ -356,6 +356,14 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def is_foreign_key(data: ColumnType | Table | ForeignKey) -> bool:
         return isinstance(data, ForeignKey)
 
+    @classmethod
+    def is_column(cls, data: tp.Any) -> bool:
+        if cls.is_table(data) or cls.is_foreign_key(data) or cls.is_asterisk(data):
+            return False
+        if isinstance(data, Column):
+            return True
+        return False
+
 
 class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
     def __init__[TProp: Column](
