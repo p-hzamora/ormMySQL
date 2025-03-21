@@ -9,17 +9,14 @@ class PointCaster[TType](BaseCaster[Point, TType]):
     def __init__(self, value: bytes | str, type_value: TType):
         super().__init__(value, type_value)
 
-    @property
-    def wildcard_to_select(self) -> str:
-        return f"ST_AsText({PLACEHOLDER})"
+    def wildcard_to_select(self, value: str = PLACEHOLDER) -> str:
+        return f"ST_AsText({value})"
 
-    @property
-    def wildcard_to_where(self) -> str:
-        return f"ST_AsText({PLACEHOLDER})"
+    def wildcard_to_where(self, value: str = PLACEHOLDER) -> str:
+        return f"ST_AsText({value})"
 
-    @property
-    def wildcard_to_insert(self) -> str:
-        return f"ST_GeomFromText({PLACEHOLDER})"
+    def wildcard_to_insert(self, value: str = PLACEHOLDER) -> str:
+        return f"ST_GeomFromText({value})"
 
     @property
     @BaseCaster.return_value_if_exists
@@ -43,4 +40,4 @@ class PointCaster[TType](BaseCaster[Point, TType]):
     @property
     @BaseCaster.return_value_if_exists
     def string_data(self) -> Optional[str]:
-        return type(self)(str(self.value), str).wildcard_to_select
+        return type(self)(str(self.value), str).wildcard_to_select()

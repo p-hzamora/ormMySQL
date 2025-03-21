@@ -1,4 +1,4 @@
-from typing import Type, Callable, Optional
+from typing import Type, Callable, Optional, overload
 import abc
 
 
@@ -10,15 +10,27 @@ class BaseCaster[TProp, TType](abc.ABC):
     def __repr__(self):
         return f"{BaseCaster.__name__}: [{type(self._value).__name__}] -> [{self.type_to_cast.__name__}]"
 
-    @property
+    @overload
+    def wildcard_to_select(self, value: str) -> str: ...
+    @overload
+    def wildcard_to_select(self) -> str: ...
+    
     @abc.abstractmethod
     def wildcard_to_select(self) -> str: ...
 
-    @property
+    @overload
+    def wildcard_to_where(self, value: str) -> str: ...
+    @overload
+    def wildcard_to_where(self) -> str: ...
+    
     @abc.abstractmethod
     def wildcard_to_where(self) -> str: ...
 
-    @property
+    @overload
+    def wildcard_to_insert(self, value: str) -> str: ...
+    @overload
+    def wildcard_to_insert(self) -> str: ...
+    
     @abc.abstractmethod
     def wildcard_to_insert(self) -> str: ...
 
@@ -48,7 +60,7 @@ class BaseCaster[TProp, TType](abc.ABC):
 
     @staticmethod
     def return_value_if_exists[TType, **P](func: Callable[P, Optional[TType]]) -> Callable[P, Optional[TType]]:
-        def wrapped(self:"BaseCaster") -> Optional[TType]:
+        def wrapped(self: "BaseCaster") -> Optional[TType]:
             if self._value is None:
                 return None
 

@@ -273,7 +273,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if not self._table:
             # if we haven't some table atrribute, we assume that the user want to retrieve the string_data from caster.
             return casted_value.string_data
-        return casted_value.wildcard_to_select
+        return casted_value.wildcard_to_select()
 
     def _replace_placeholder(self, string: str) -> str:
         return self._keyRegex.sub(self._replace, string)

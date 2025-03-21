@@ -8,17 +8,14 @@ class DatetimeCaster[TType](BaseCaster[datetime, TType]):
     def __init__(self, value: datetime, type_value: TType):
         super().__init__(value, type_value)
 
-    @property
-    def wildcard_to_select(self) -> str:
-        return PLACEHOLDER
+    def wildcard_to_select(self, value:str=PLACEHOLDER) -> str:
+        return value
 
-    @property
-    def wildcard_to_where(self) -> str:
-        return PLACEHOLDER
+    def wildcard_to_where(self, value:str=PLACEHOLDER) -> str:
+        return value
 
-    @property
-    def wildcard_to_insert(self) -> str:
-        return PLACEHOLDER
+    def wildcard_to_insert(self, value:str=PLACEHOLDER) -> str:
+        return value
 
     @property
     @BaseCaster.return_value_if_exists

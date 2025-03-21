@@ -6,17 +6,14 @@ class NoneTypeCaster[TType](BaseCaster[NoneType, TType]):
     def __init__(self, value: NoneType, type_value: TType):
         super().__init__(value, type_value)
 
-    @property
-    def wildcard_to_select(self) -> str:
-        return PLACEHOLDER
+    def wildcard_to_select(self, value:str=PLACEHOLDER) -> str:
+        return value
 
-    @property
-    def wildcard_to_where(self) -> str:
-        return PLACEHOLDER
+    def wildcard_to_where(self, value:str=PLACEHOLDER) -> str:
+        return value
 
-    @property
-    def wildcard_to_insert(self) -> str:
-        return PLACEHOLDER
+    def wildcard_to_insert(self, value:str=PLACEHOLDER) -> str:
+        return value
 
     # TODOL: cheched if it's right
     @property
