@@ -21,6 +21,7 @@ class Column[TProp]:
         "is_auto_increment",
         "is_unique",
         "__private_name",
+        "_check",
     )
 
     def __init__[T: Table](
@@ -30,11 +31,13 @@ class Column[TProp]:
         is_auto_generated: bool = False,
         is_auto_increment: bool = False,
         is_unique: bool = False,
+        check_types: bool = True,
     ) -> None:
         self.dtype: Type[TProp] = dtype
         self.table: Optional[TableType[T]] = None
         self.column_name: Optional[str] = None
         self.__private_name: Optional[str] = None
+        self._check = check_types
 
         self.is_primary_key: bool = is_primary_key
         self.is_auto_generated: bool = is_auto_generated
@@ -58,7 +61,7 @@ class Column[TProp]:
         return getattr(obj, self.__private_name)
 
     def __set__(self, obj, value):
-        if value is not None:
+        if self._check and value is not None:
             if not isinstance(value, self.dtype):
                 raise ValueError(f"The '{self.column_name}' Column from '{self.table.__table_name__}' table expected '{str(self.dtype)}' type. You passed '{type(value).__name__}' type")
         setattr(obj, self.__private_name, value)
