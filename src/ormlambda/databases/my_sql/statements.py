@@ -269,9 +269,13 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     @override
     def count(
         self,
-        selection: Callable[[T], tuple] = lambda x: "*",
+        selection: None | Iterable[Table] | Callable[[T], tuple] = lambda x: "*",
         alias_clause="count",
-    ) -> IQuery:
+        execute: bool = False,
+    ) -> Optional[int]:
+        if execute is True:
+            return self.select_one(self.count(selection, alias_clause, False), flavour=dict)[alias_clause]
+
         if GlobalChecker.is_lambda_function(selection):
             selection = selection(*self.models)
         return Count[T](element=selection, alias_clause=alias_clause, context=self._query_builder._context)

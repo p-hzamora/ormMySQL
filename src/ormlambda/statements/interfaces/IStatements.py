@@ -108,10 +108,10 @@ class IStatements[T: Table, **P](ABC):
     @abstractmethod
     def count(
         self,
-        selection: Callable[[T], property],
-        alias: bool = ...,
-        alias_name: Optional[str] = ...,
-    ) -> int: ...
+        selection: Callable[[T], tuple] = lambda x: "*",
+        alias_clause="count",
+        execute: bool = False,
+    ) -> Optional[IStatements[T]]: ...
 
     # endregion
     # region delete
