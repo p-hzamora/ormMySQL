@@ -1,5 +1,12 @@
 from __future__ import annotations
-from typing import Callable, Iterable, Optional, Literal, Union, TYPE_CHECKING
+from typing import (
+    Callable,
+    Iterable,
+    Optional,
+    Literal,
+    Union,
+    TYPE_CHECKING,
+)
 import enum
 
 
@@ -18,16 +25,16 @@ class OrderType(enum.Enum):
 
 type Tuple[T] = tuple[T, ...]
 
-type SelectRes1[T1] = tuple[Tuple[T1]]
-type SelectRes2[T1, T2] = tuple[*SelectRes1[T1], Tuple[T2]]
-type SelectRes3[T1, T2, T3] = tuple[*SelectRes2[T1, T2], Tuple[T3]]
-type SelectRes4[T1, T2, T3, T4] = tuple[*SelectRes3[T1, T2, T3], Tuple[T4]]
-type SelectRes5[T1, T2, T3, T4, T5] = tuple[*SelectRes4[T1, T2, T3, T4], Tuple[T5]]
-type SelectRes6[T1, T2, T3, T4, T5, T6] = tuple[*SelectRes5[T1, T2, T3, T4, T5], Tuple[T6]]
-type SelectRes7[T1, T2, T3, T4, T5, T6, T7] = tuple[*SelectRes6[T1, T2, T3, T4, T5, T6], Tuple[T7]]
-type SelectRes8[T1, T2, T3, T4, T5, T6, T7, T8] = tuple[*SelectRes7[T1, T2, T3, T4, T5, T6, T7], Tuple[T8]]
-type SelectRes9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = tuple[*SelectRes8[T1, T2, T3, T4, T5, T6, T7, T8], Tuple[T9]]
-type SelectRes10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = tuple[*SelectRes9[T1, T2, T3, T4, T5, T6, T7, T8, T9], Tuple[T10]]
+type Select1[T1] = tuple[Tuple[T1]]
+type Select2[T1, T2] = tuple[*Select1[T1], Tuple[T2]]
+type Select3[T1, T2, T3] = tuple[*Select2[T1, T2], Tuple[T3]]
+type Select4[T1, T2, T3, T4] = tuple[*Select3[T1, T2, T3], Tuple[T4]]
+type Select5[T1, T2, T3, T4, T5] = tuple[*Select4[T1, T2, T3, T4], Tuple[T5]]
+type Select6[T1, T2, T3, T4, T5, T6] = tuple[*Select5[T1, T2, T3, T4, T5], Tuple[T6]]
+type Select7[T1, T2, T3, T4, T5, T6, T7] = tuple[*Select6[T1, T2, T3, T4, T5, T6], Tuple[T7]]
+type Select8[T1, T2, T3, T4, T5, T6, T7, T8] = tuple[*Select7[T1, T2, T3, T4, T5, T6, T7], Tuple[T8]]
+type Select9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = tuple[*Select8[T1, T2, T3, T4, T5, T6, T7, T8], Tuple[T9]]
+type Select10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = tuple[*Select9[T1, T2, T3, T4, T5, T6, T7, T8, T9], Tuple[T10]]
 
 type WhereCondition[T, T1] = Callable[[T, T1], bool]
 type JoinCondition[T, T1] = tuple[T1, WhereCondition[T, T1], Optional[JoinType]]
