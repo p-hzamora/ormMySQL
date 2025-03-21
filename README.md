@@ -22,9 +22,17 @@ database = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", 
 
 ## Select all columns
 ```python
-from models.address import AddressModel
+from ormlambda import ORM
+from ormlambda.databases.my_sql import MySQLRepository
 
-result = AddressModel(database).select()
+from models.address import Address
+from config import config_dict
+
+db = MySQLRepository(**config_dict)
+
+AddressModel = ORM(Address,db)
+
+result = AddressModel.select()
 ```
 The `result` var will be of type `tuple[Address, ...]` 
 
@@ -32,11 +40,13 @@ The `result` var will be of type `tuple[Address, ...]`
 Once the `AddressModel` class is created, we will not only be able to access all the information in that table, but also all the information in all the tables that have foreign keys related to it."
 
 ```python
-from ormlambda import ConditionType
-from models.address import AddressModel
+from models.address import Address
 
+db = MySQLRepository(**config_dict)
 
-result = AddressModel(database).where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[aA]")).select(
+AddressModel = ORM(Address,db)
+
+result = AddressModel.where(Address.City.Country.country.regex(r"^[aA]")).select(
     lambda address: (
         address,
         address.City,
@@ -51,30 +61,49 @@ If we were used `select_one` method, we retrieved `tuple[Address, City, Country]
 ## Filter by `where` condition
 
 ```python
-result = AddressModel(database).where(lambda x: 10 <= x.address_id <= 30).select()
+result = AddressModel.where(
+    [
+        Address.address_id >= 10,
+        Address.address_id <= 30,
+    ]
+).select()
 ```
+or we can use only the Original Table to pass the variables like
 
+```python
+result = AddressModel.where(
+    lambda x: [
+        x.address_id >= 10,
+        x.address_id <= 30,
+    ]
+).select()
+
+```
 Additionally, we can filter by others tables. For example, we can return all addresses for each city where `country_id` = 87 (Spain)
 
 ```python
-result = AddressModel(database).where(lambda x: x.City.Country.country_id  == 87).select()
+result = AddressModel.where(Address.City.Country.country_id  == 87).select()
 ```
 
 We can also return `Address`, `City` or `Country` if needed.
 
 ```python
-result = AddressModel(database).where(lambda x: x.City.Country.country_id == 87).select(lambda x: (x, x.City, x.City.Country))
+result = AddressModel.where(Address.City.Country.country_id == 87).select(lambda x: (x, x.City, x.City.Country))
 ```
 
 ### Pass variables to the `where` method
-Since we generally work with lambda methods, I often have to work with `bytecode` to retrieve the name of the string variables. For this reason, it's imperative that we map these variables to replace them with the actual values.
-
 ```python
 LOWER = 10
 UPPER = 30
-AddressModel(database).where(lambda x: LOWER <= x.address_id <= UPPER, LOWER=LOWER, UPPER=UPPER).select()
+
+AddressModel.where(
+    [
+        Address.address_id >= LOWER,
+        Address.address_id <= UPPER,
+    ]
+).select()
 ```
-That solution is somewhat `awkward` and not very clean, but it's necessary for automating queries.
+
 
 ## Writable methods INSERT, UPDATE, DELETE
 The easiest way to add or delete data in your database is by using its appropiate methods. You just need to instantiate an object with the data and pass it to the method
@@ -83,22 +112,21 @@ The easiest way to add or delete data in your database is by using its appropiat
 ```python
 address = Address(address_id=1, address="C/ ...", phone="XXXXXXXXX", postal_code="28026")
 
-AddressModel(database).insert(address)
+AddressModel.insert(address)
 ```
 
 ### Update
-
 You can use either the properties of the same object or `str` values.
 ```python
 
-AddressModel(database).where(lambda x: x.address_id == 1).update(
+AddressModel.where(lambda x: x.address_id == 1).update(
     {
         Address.phone: "YYYYYYYYY",
         Address.postal_code: "28030",
     }
 )
 
-AddressModel(database).where(lambda x: x.address_id == 1).update(
+AddressModel.where(lambda x: x.address_id == 1).update(
     {
         "phone": "YYYYYYYYY",
         "postal_code": "28030",
@@ -108,7 +136,7 @@ AddressModel(database).where(lambda x: x.address_id == 1).update(
 ### Delete
 
 ```python
-AddressModel(database).where(lambda x: x.address_id == 1).delete()
+AddressModel.where(lambda x: x.address_id == 1).delete()
 ```
 
 
@@ -125,67 +153,46 @@ The easiest way to map your tables is:
 
 ```python
 from datetime import datetime
-
 from ormlambda import (
-    Column,
     Table,
-    BaseModel,
+    Column,
     ForeignKey,
 )
-from ormlambda.common.interfaces import IStatements_two_generic, IRepositoryBase
-
 
 class Country(Table):
     __table_name__ = "country"
 
-    country_id: int = Column(int, is_primary_key=True)
-    country: str
-    last_update: datetime
-
-
-class Address(Table):
-    __table_name__ = "address"
-
-    address_id: int = Column(int, is_primary_key=True)
-    address: str
-    address2: str
-    district: str
-    city_id: int
-    postal_code: str
-    phone: str
-    location: str
-    last_update: datetime = Column(datetime, is_auto_generated=True)
-
-    City = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
+    country_id: Column[int] = Column(int, is_primary_key=True)
+    country: Column[str]
+    last_update: Column[datetime]
 
 
 class City(Table):
     __table_name__ = "city"
 
-    city_id: int = Column(int, is_primary_key=True)
-    city: str
-    country_id: int
-    last_update: datetime
+    city_id: Column[int] = Column(int, is_primary_key=True)
+    city: Column[str]
+    country_id: Column[int]
+    last_update: Column[datetime]
 
     Country = ForeignKey["City", Country](Country, lambda ci, co: ci.country_id == co.country_id)
-```
-
-Once created, you need to create a Model for each Table
-
-```python
-class CountryModel(BaseModel[Country]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
-        return super().__new__(cls, Country, repository)
 
 
-class AddressModel(BaseModel[Address]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
-        return super().__new__(cls, Address, repository)
+class Address(Table):
+    __table_name__ = "address"
 
+    address_id: Column[int] = Column(int, is_primary_key=True)
+    address: Column[str]
+    address2: Column[str]
+    district: Column[str]
+    city_id: Column[int]
+    postal_code: Column[str]
+    phone: Column[str]
+    location: Column[str]
+    last_update: Column[datetime] = Column(datetime, is_auto_generated=True)
 
-class CityModel(BaseModel[City]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
-        return super().__new__(cls, City, repository)
+    City = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
+
 ```
 
 # Creating complex queries with lambda
@@ -197,10 +204,10 @@ To retrieve all `Address` object where the fk reference to the `City` table, and
 
 ```python
 result = (
-    AddressModel(database)
+    AddressModel
     .order(lambda a: a.address_id, order_type="DESC")
     .where(lambda x: x.City.Country.country_id >= 50)
-    .select(lambda a: (a))
+    .select(Address)
 )
 
 ```
@@ -209,9 +216,8 @@ Also you can use `ConditionType` enum for `regular expressions` and get, for exa
 
 ```python
 address, city, country = (
-    AddressModel(database)
-    .order(lambda a: a.address_id, order_type="DESC")
-    .where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[A]"))
+    AddressModel.order(Address.address_id, order_type="DESC")
+    .where(Address.City.Country.country.regex(r"^[A]"))
     .limit(100)
     .select(
         lambda a: (
@@ -239,8 +245,7 @@ In the example above, we see that the `result` var returns a tuple of tuples. Ho
 
 ```python
 result = (
-    a_model
-    .where(lambda x: (x.City.Country, ConditionType.REGEXP, r"^[A]"))
+    AddressModel.where(Address.City.Country.country.regex(r"^[A]"))
     .limit(100)
     .select(
         lambda a: (
