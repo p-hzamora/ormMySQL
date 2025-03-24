@@ -15,7 +15,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: testdb
+          MYSQL_DATABASE: sakila
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -30,7 +30,7 @@ jobs:
 
     - name: Execute SQL script
       run: |
-        mysql -h127.0.0.1 -uroot -proot testdb < /src/test/schema/sakila-db.sql
+        mysql -h127.0.0.1 -uroot -proot sakila < ./src/test/schema/sakila-db.sql
 
     # Step 3: Set up Python environment
     - name: Set up Python
@@ -51,4 +51,4 @@ jobs:
 
     # Step 6: Run the tests using Poetry
     - name: Run tests
-      run: poetry run python src/test/test_queries/test_select.py
+      run: poetry run python ./src/test/runner.py
