@@ -27,6 +27,7 @@ from test_sql_statements import (
     test_select_statement,
     test_sql_statement,
     test_where_statement,
+    test_max_statement,
 )
 
 import test_abstract_model
@@ -69,6 +70,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_select_query),
         *loader.loadTestsFromModule(test_table_query),
         *loader.loadTestsFromModule(test_where_query),
+        *loader.loadTestsFromModule(test_max_statement),
         # region statement tests
         *loader.loadTestsFromModule(test_count_statement),
         *loader.loadTestsFromModule(test_join_statement),
