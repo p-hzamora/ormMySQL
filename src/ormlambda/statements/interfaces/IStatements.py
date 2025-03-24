@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Concatenate, Optional, Type, overload, TYPE_CHECKING
+from typing import Any, Callable, Optional, Type, overload, TYPE_CHECKING
 from enum import Enum
 from abc import abstractmethod, ABC
 
@@ -10,12 +10,12 @@ if TYPE_CHECKING:
     from ormlambda.repository import BaseRepository
     from ormlambda import Table
     from ormlambda.sql.clause_info import IAggregate
-    from ormlambda.sql.types import TupleJoinType
+    from ormlambda.sql.types import TupleJoinType, ColumnType
     from ormlambda.databases.my_sql.join_context import JoinContext
 
 from ..types import (
     OrderTypes,
-    Select1,
+    Tuple,
     Select2,
     Select3,
     Select4,
