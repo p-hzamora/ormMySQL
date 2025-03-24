@@ -17,12 +17,16 @@ from models import (  # noqa: E402
 )
 from ormlambda.databases.my_sql.clauses.where import Where  # noqa: E402
 from ormlambda.sql.comparer import Comparer  # noqa: E402
+from ormlambda import ForeignKey  # noqa: E402
 
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)
 
 
 class TestWhere(unittest.TestCase):
+    def tearDown(self):
+        ForeignKey.stored_calls.clear()
+
     def test_one_where(self):
         w = Where(Address.address == 10)
         self.assertEqual(w.query, "WHERE address.address = 10")
