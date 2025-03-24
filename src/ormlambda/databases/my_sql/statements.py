@@ -303,16 +303,22 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return func.Concat[T](self._model, selector, alias=alias, alias_name=alias_name, context=self._query_builder._context)
 
     @override
-    def max[TProp](self, column: Callable[[T], TProp], alias_name: str = "max") -> TProp:
-        return func.Max(elements=column, alias_clause=alias_name, context=self._query_builder._context)
+    def max[TProp](self, column: Callable[[T], TProp], alias: str = "max", execute: bool = False) -> TProp:
+        if execute is True:
+            return self.select_one(self.max(column, alias, execute=False), flavour=dict)[alias]
+        return func.Max(elements=column, alias_clause=alias, context=self._query_builder._context)
 
     @override
-    def min[TProp](self, column: Callable[[T], TProp], alias_name: str = "min") -> TProp:
-        return func.Min(elements=column, alias_clause=alias_name, context=self._query_builder._context)
+    def min[TProp](self, column: Callable[[T], TProp], alias: str = "min", execute: bool = False) -> TProp:
+        if execute is True:
+            return self.select_one(self.min(column, alias, execute=False), flavour=dict)[alias]
+        return func.Min(elements=column, alias_clause=alias, context=self._query_builder._context)
 
     @override
-    def sum[TProp](self, column: Callable[[T], TProp], alias_name: str = "sum") -> TProp:
-        return func.Sum(elements=column, alias_clause=alias_name, context=self._query_builder._context)
+    def sum[TProp](self, column: Callable[[T], TProp], alias: str = "sum", execute: bool = False) -> TProp:
+        if execute is True:
+            return self.select_one(self.sum(column, alias, execute=False), flavour=dict)[alias]
+        return func.Sum(elements=column, alias_clause=alias, context=self._query_builder._context)
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:

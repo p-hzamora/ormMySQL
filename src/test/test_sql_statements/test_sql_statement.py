@@ -488,9 +488,9 @@ class TestAggregateFunctions(unittest.TestCase):
         cls.ddbb.drop_database(DDBBNAME)
 
     def test_max_function(self) -> None:
-        max_fn = self.model.max(TestTable.Col1, alias_name="max_with_alias")
-        min_fn = self.model.min(TestTable.Col1, alias_name="min_with_alias")
-        sum_fn = self.model.sum(TestTable.Col1, alias_name="sum_with_alias")
+        max_fn = self.model.max(TestTable.Col1, alias="max_with_alias")
+        min_fn = self.model.min(TestTable.Col1, alias="min_with_alias")
+        sum_fn = self.model.sum(TestTable.Col1, alias="sum_with_alias")
         select = self.model.select(
             (
                 max_fn,
@@ -509,7 +509,7 @@ class TestAggregateFunctions(unittest.TestCase):
 
     def test_min_function(self) -> None:
         select = self.model.select_one(
-            lambda x: self.model.min(x.Col1, alias_name="min_with_alias"),
+            lambda x: self.model.min(x.Col1, alias="min_with_alias"),
             flavour=dict,
         )
 
@@ -518,7 +518,7 @@ class TestAggregateFunctions(unittest.TestCase):
         self.assertDictEqual(select, dicc)
 
     def test_sum_function(self) -> None:
-        select = self.model.select_one(lambda x: self.model.sum(x.Col10, alias_name="custom_sum"), flavour=dict)
+        select = self.model.select_one(lambda x: self.model.sum(x.Col10, alias="custom_sum"), flavour=dict)
         dicc = {"custom_sum": Decimal("55")}
         self.assertEqual(select, dicc)
 

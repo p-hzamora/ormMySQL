@@ -180,7 +180,8 @@ class IStatements[T: Table](ABC):
     def max[TProp](
         self,
         column: Callable[[T], TProp],
-        alias_name: Optional[str] = ...,
+        alias: Optional[str] = ...,
+        execute: bool = ...,
     ) -> TProp: ...
     # endregion
     # region min
@@ -188,7 +189,8 @@ class IStatements[T: Table](ABC):
     def min[TProp](
         self,
         column: Callable[[T], TProp],
-        alias_name: Optional[str] = ...,
+        alias: Optional[str] = ...,
+        execute: bool = ...,
     ) -> TProp: ...
     # endregion
     # region sum
@@ -196,7 +198,8 @@ class IStatements[T: Table](ABC):
     def sum[TProp](
         self,
         column: Callable[[T], TProp],
-        alias_name: Optional[str] = ...,
+        alias: Optional[str] = ...,
+        execute: bool = ...,
     ) -> TProp: ...
 
     @overload
