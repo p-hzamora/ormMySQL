@@ -90,8 +90,32 @@ class IStatements[T: Table, **P](ABC):
         """
         ...
 
+    @overload
+    def update(self, dicc: list[dict[ColumnType, Any]]) -> None:
+        """
+        An Iterable of ColumnType
+
+        type ColumnType[TProp]:
+            - TProp
+            - Column[TProp]
+            - AsteriskType
+            - tuple[Column]
+        """
+        ...
+
+    @overload
+    def update(self, dicc: dict[ColumnType, Any]) -> None:
+        """
+        type ColumnType[TProp]:
+            - TProp
+            - Column[TProp]
+            - AsteriskType
+            - tuple[Column]
+        """
+        ...
+
     @abstractmethod
-    def update(self, dicc: dict[str | property, Any]) -> None: ...
+    def update(self, dicc) -> None: ...
 
     # endregion
     # region limit
