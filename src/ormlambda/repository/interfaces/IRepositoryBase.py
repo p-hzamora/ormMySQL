@@ -1,8 +1,9 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Literal, Optional, Type, Iterable
+from typing import Optional, Type, Iterable, TYPE_CHECKING
 
-type TypeExists = Literal["fail", "replace", "append"]
-
+if TYPE_CHECKING:
+    from ormlambda.statements.types import TypeExists
 
 class IRepositoryBase(ABC):
     def __repr__(self) -> str:
