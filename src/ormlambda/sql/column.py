@@ -56,7 +56,7 @@ class Column[TProp]:
         self.column_name = name
         self.__private_name = self.PRIVATE_CHAR + name
 
-    def __get__(self, obj, objtype=None) -> Column[TProp] | TProp:
+    def __get__(self, obj, objtype=None) -> ColumnType[TProp]:
         if not obj:
             return self
         return getattr(obj, self.__private_name)
