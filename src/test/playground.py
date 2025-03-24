@@ -104,12 +104,11 @@ WHERE country.country REGEXP '^[FHA]' AND (city.city REGEXP '[^W]') AND (177 >= 
 ORDER BY address.address_id DESC
 """
 address = AddressModel.repository.read_sql(query, flavour=dict)
-pass
 
 
 def pagination(page: int):
     limit = 20
-    total_register: int = AddressModel.repository.read_sql(f"SELECT COUNT(*) FROM {AddressModel._model.__table_name__}")[0][0]
+    total_register: int = AddressModel.count(execute=True)
     total_pages = int(math.ceil(total_register / limit))
 
     if page > total_pages:
@@ -119,5 +118,3 @@ def pagination(page: int):
 
 
 a = [pagination(x) for x in range(1, 11)]
-print("Corrido con exito")
-pass
