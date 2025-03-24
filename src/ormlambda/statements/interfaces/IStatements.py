@@ -30,7 +30,7 @@ from ..types import (
 )
 
 
-class IStatements[T: Table, **P](ABC):
+class IStatements[T: Table](ABC):
     @abstractmethod
     def create_table(self, if_exists: TypeExists = "fail") -> None: ...
 
@@ -155,10 +155,10 @@ class IStatements[T: Table, **P](ABC):
     # region where
 
     @overload
-    def where[LProp, RTable, RProp](self, conditions: Callable[[T], WhereTypes[T, LProp, RTable, RProp]]) -> IStatements[T, P]: ...
+    def where[LProp, RTable, RProp](self, conditions: Callable[[T], WhereTypes[T, LProp, RTable, RProp]]) -> IStatements[T]: ...
 
     @abstractmethod
-    def where[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T, P]: ...
+    def where[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T]: ...
 
     # endregion
     # region order
@@ -282,15 +282,15 @@ class IStatements[T: Table, **P](ABC):
 
     # region group_by
     @abstractmethod
-    def group_by[TRepo](self, column: Callable[Concatenate[T, P], TRepo]) -> IStatements[T, P]: ...
+    def group_by[TRepo](self, column: Callable[[T], TRepo]) -> IStatements[T]: ...
 
     # endregion
 
     @abstractmethod
-    def alias(self, column: Callable[Concatenate[T, P], Any], alias: str) -> IStatements[T, P]: ...
+    def alias(self, column: Callable[[T], Any], alias: str) -> IStatements[T]: ...
 
 
-class IStatements_two_generic[T, TPool](IStatements[T, TPool]):
+class IStatements_two_generic[T, TPool](IStatements[T]):
     @property
     @abstractmethod
     def repository(self) -> BaseRepository[TPool]: ...
