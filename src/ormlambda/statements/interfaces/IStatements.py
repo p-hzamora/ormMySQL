@@ -156,7 +156,6 @@ class IStatements[T: Table, **P](ABC):
     def max[TProp](
         self,
         column: Callable[[T], TProp],
-        alias: bool = ...,
         alias_name: Optional[str] = ...,
     ) -> TProp: ...
     # endregion
@@ -165,7 +164,6 @@ class IStatements[T: Table, **P](ABC):
     def min[TProp](
         self,
         column: Callable[[T], TProp],
-        alias: bool = ...,
         alias_name: Optional[str] = ...,
     ) -> TProp: ...
     # endregion
@@ -174,7 +172,6 @@ class IStatements[T: Table, **P](ABC):
     def sum[TProp](
         self,
         column: Callable[[T], TProp],
-        alias: bool = ...,
         alias_name: Optional[str] = ...,
     ) -> TProp: ...
 
