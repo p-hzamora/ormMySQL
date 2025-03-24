@@ -73,5 +73,3 @@ class JoinContext[TParent: Table, TRepo]:
 
         return clause_dicc[parent_table], clause_dicc[parent_table].table.__name__
 
-
-# type JoinCondition = tuple[str,Comparer[],JoinType]
