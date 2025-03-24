@@ -60,6 +60,7 @@ If we were used `select_one` method, we retrieved `tuple[Address, City, Country]
 
 ## Filter by `where` condition
 
+we can use only the Original Table to pass the variables like
 ```python
 result = AddressModel.where(
     [
@@ -68,7 +69,7 @@ result = AddressModel.where(
     ]
 ).select()
 ```
-or we can use only the Original Table to pass the variables like
+Or by using a lambda function that returns an iterable for tables where the name is unusually long.
 
 ```python
 result = AddressModel.where(
@@ -216,7 +217,8 @@ Also you can use `ConditionType` enum for `regular expressions` and get, for exa
 
 ```python
 address, city, country = (
-    AddressModel.order(Address.address_id, order_type="DESC")
+    AddressModel
+    .order(Address.address_id, order_type="DESC")
     .where(Address.City.Country.country.regex(r"^[A]"))
     .limit(100)
     .select(
@@ -230,7 +232,6 @@ address, city, country = (
 
 
 for a in address:
-
     print(a.address_id)
 
 for c in city:
@@ -261,3 +262,61 @@ result = (
 
 with this approach, we will obtain a dictionary where the key will be the concatenation between the selected table name and the column name specified in the lambda function, to avoid overwritting data from tables that sharing column names.
 
+# Other methods
+
+## max
+```python
+res = AddressModel.max(Address.address_id, execute=True)
+```
+## min
+```python
+res = AddressModel.min(Address.address_id, execute=True)
+```
+## sum
+```python
+res = AddressModel.sum(Address.address_id, execute=True)
+```
+## count
+```python
+res = AddressModel.count(Address.address_id, execute=True)
+```
+
+## Combine aggregation method
+As shown in the previous examples, setting the `execute` attribute to `True` allows us to perform the corresponding query in a single line. However, if you're looking to improve efficiency, you can combine all of them into one query.
+```python
+result = AddressModel.select_one(
+            lambda x: (
+                AddressModel.min(x.address_id),
+                AddressModel.max(x.address_id),
+                AddressModel.count(x.address_id),
+            ),flavour=dict
+        )
+```
+Getting something like
+
+```python
+# {
+#     "min": 1,
+#     "max": 605,
+#     "count": 603,
+# }
+```
+
+You also can use custom alias for each method
+
+```python
+AddressModel.select_one(
+    lambda x: (
+        AddressModel.min(x.address_id),
+        AddressModel.max(x.address_id, alias="custom-max"),
+        AddressModel.count(x.address_id),
+    ),
+    flavour=dict,
+)
+
+# {
+#     "min": 1,
+#     "custom-max": 605,
+#     "count": 603,
+# }
+```
