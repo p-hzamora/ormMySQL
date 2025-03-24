@@ -14,13 +14,13 @@ class Address(Table):
     __table_name__ = "address"
 
     address_id: Column[int] = Column(int, is_primary_key=True)
-    address: Column[str] = Column(str)
-    address2: Column[str] = Column(str)
-    district: Column[str] = Column(str)
-    city_id: Column[int] = Column(int)
-    postal_code: Column[str] = Column(str)
-    phone: Column[str] = Column(str)
-    location: Column[None | bytes] = Column(None | bytes)
+    address: Column[str]
+    address2: Column[str]
+    district: Column[str]
+    city_id: Column[int]
+    postal_code: Column[str]
+    phone: Column[str]
+    location: Column[None | bytes]
     last_update: Column[datetime] = Column(datetime, is_auto_generated=True)
 
     City = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)
