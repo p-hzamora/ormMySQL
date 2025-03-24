@@ -378,6 +378,10 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return tuple([res[0] for res in response])
 
     @override
+    def first[TValue, *Ts](self, selector: Optional[tuple[TValue, *Ts]] = None):
+        return self.select_one(selector)
+
+    @override
     def group_by(self, column: str | Callable[[T, *Ts], Any]):
         if isinstance(column, str):
             groupby = GroupBy[T, tuple[*Ts]](self._models, lambda x: column)

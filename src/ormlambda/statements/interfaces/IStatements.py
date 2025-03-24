@@ -250,6 +250,13 @@ class IStatements[T: Table, **P](ABC):
     ): ...
 
     # endregion
+
+    # region first
+    @overload
+    def first(self) -> T: ...
+
+    # endregion
+
     # region group_by
     @abstractmethod
     def group_by[TRepo](self, column: Callable[Concatenate[T, P], TRepo]) -> IStatements[T, P]: ...
