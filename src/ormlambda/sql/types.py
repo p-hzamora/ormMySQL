@@ -1,9 +1,11 @@
 import typing as tp
 
+
 if tp.TYPE_CHECKING:
     from ormlambda import Table, Column, ForeignKey
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
+    from ormlambda.common.enums.join_type import JoinType
 
 
 type AsteriskType = str
@@ -18,6 +20,6 @@ type UnionType = tp.Literal["AND", "OR", ""]
 type ComparerTypes = ComparerType | UnionType | ConditionEnum
 # endregion
 
-type TupleJoinType[T] = tuple[str, T, Comparer[T]]
+type TupleJoinType[T] = tuple[Comparer[T], JoinType]
 
 ASTERISK: AsteriskType = "*"
