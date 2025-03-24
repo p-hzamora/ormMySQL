@@ -1,7 +1,10 @@
 from enum import Enum
 
 
-class JoinType(Enum):
+class JoinType(str, Enum):
+    def __str__(self):
+        return super().__str__()
+
     RIGHT_INCLUSIVE = "RIGHT JOIN"
     LEFT_INCLUSIVE = "LEFT JOIN"
     RIGHT_EXCLUSIVE = "RIGHT JOIN"
