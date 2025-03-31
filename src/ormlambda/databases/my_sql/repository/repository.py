@@ -86,7 +86,16 @@ class Response[TFlavour, *Ts]:
             return [list(x) for x in data]
 
         def _default(**kwargs) -> list[TFlavour]:
-            return self._flavour(data, **kwargs)
+            replacer_dicc: dict[str, str] = {x.alias_clause: x.column for x in self._select.all_clauses}
+
+            cleaned_column_names = [replacer_dicc[col] for col in self._columns]
+
+            result = []
+            for attr in data:
+                dicc_attr = dict(zip(cleaned_column_names, attr))
+                result.append(self._flavour(**dicc_attr, **kwargs))
+
+            return result
 
         selector: dict[Type[object], Any] = {
             dict: _dict,
