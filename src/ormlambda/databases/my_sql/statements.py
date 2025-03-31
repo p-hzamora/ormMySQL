@@ -354,7 +354,6 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         self._query_builder.by = by
         self._query: str = self._query_builder.query
 
-        self._query_builder.clear()
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)
             if issubclass(flavour, tuple) and isinstance(select_clause, Column | ClauseInfo):
@@ -363,10 +362,17 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return self._return_model(select, self.query)
 
     @override
-    def select_one[TValue, TFlavour, *Ts](self, selector: Optional[tuple[TValue, *Ts]] = None, *, flavour: Optional[Type[TFlavour]] = None, by: JoinType = JoinType.INNER_JOIN):
+    def select_one[TValue, TFlavour, *Ts](
+        self,
+        selector: Optional[tuple[TValue, *Ts]] = None,
+        *,
+        flavour: Optional[Type[TFlavour]] = None,
+        by: JoinType = JoinType.INNER_JOIN,
+        **kwargs,
+    ):
         self.limit(1)
 
-        response = self.select(selector=selector, flavour=flavour, by=by)
+        response = self.select(selector=selector, flavour=flavour, by=by,**kwargs)
 
         if not isinstance(response, Iterable):
             return response
@@ -384,8 +390,20 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return tuple([res[0] for res in response])
 
     @override
-    def first[TValue, *Ts](self, selector: Optional[tuple[TValue, *Ts]] = None):
-        return self.select_one(selector)
+    def first[TValue, TFlavour, *Ts](
+        self,
+        selector: Optional[tuple[TValue, *Ts]] = None,
+        *,
+        flavour: Optional[Type[TFlavour]] = None,
+        by: JoinType = JoinType.INNER_JOIN,
+        **kwargs,
+    ):
+        return self.select_one(
+            selector=selector,
+            flavour=flavour,
+            by=by,
+            **kwargs,
+        )
 
     @override
     def group_by(self, column: str | Callable[[T, *Ts], Any]):
