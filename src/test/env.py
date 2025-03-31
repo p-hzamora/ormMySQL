@@ -19,9 +19,9 @@ except ImportError:
 # Load DATABASE ENV
 #################################
 
-DB_USERNAME = os.getenv("USERNAME", None)
+DB_USERNAME = os.getenv("USERNAME", 'root')
 
-DB_PASSWORD = os.getenv("PASSWORD", None)
+DB_PASSWORD = os.getenv("PASSWORD", 'root')
 
 DB_HOST = os.getenv("HOST", "localhost")
 

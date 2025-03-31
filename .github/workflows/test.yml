@@ -10,6 +10,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sakila
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
     strategy:
       fail-fast: false
       
@@ -18,23 +28,27 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3
 
-    # Step 2: Set up Python environment
+    - name: Execute SQL script
+      run: |
+        mysql -h127.0.0.1 -uroot -proot sakila < ./src/test/schema/sakila-db.sql
+
+    # Step 3: Set up Python environment
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.12
 
-    # Step 3: Install dependencies (if needed)
+    # Step 4: Install dependencies (if needed)
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install poetry
         poetry install --with test
 
-    # Step 4: Set PYTHONPATH to include src
+    # Step 5: Set PYTHONPATH to include src
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/src" >> $GITHUB_ENV
 
-    # Step 5: Run the tests using Poetry
+    # Step 6: Run the tests using Poetry
     - name: Run tests
-      run: poetry run python src/test/test_queries/test_select.py
+      run: poetry run python ./src/test/runner.py
