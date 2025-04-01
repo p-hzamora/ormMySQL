@@ -36,6 +36,21 @@ result = AddressModel.select()
 ```
 The `result` var will be of type `tuple[Address, ...]` 
 
+## Improving Typing
+For those cases where you need to pass the database configuration from a `dict`, you can use `MySQLArgs` TypedDict object to improve type annotations.
+
+```python
+from ormlambda.databases.my_sql.types import MySQLArgs
+
+config_dict: MySQLArgs = {
+    "user": DB_USERNAME,
+    "password": DB_PASSWORD,
+    "host": DB_HOST,
+    "database": DB_DATABASE,
+}
+db = MySQLRepository(**config_dict)
+```
+
 ## Select multiples tables
 Once the `AddressModel` class is created, we will not only be able to access all the information in that table, but also all the information in all the tables that have foreign keys related to it."
 
