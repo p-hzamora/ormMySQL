@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 import unittest
-from config import config_dict
+from test.config import config_dict
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
