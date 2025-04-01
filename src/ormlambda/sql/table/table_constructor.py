@@ -170,8 +170,8 @@ class Table(metaclass=TableMeta):
         return tuple([x for x in cls.__annotations__.values() if isinstance(x, Column)])
 
     @classmethod
-    def get_column[TProp](cls,name:str) -> Column[TProp]:
-        for key,value in cls.__annotations__.items():
+    def get_column[TProp](cls, name: str) -> Column[TProp]:
+        for key, value in cls.__annotations__.items():
             if name == key:
                 return value
 

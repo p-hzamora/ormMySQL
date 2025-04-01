@@ -156,7 +156,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     #
 
-    def __init__(self, **kwargs:Unpack[MySQLArgs]):
+    def __init__(self, **kwargs: Unpack[MySQLArgs]):
         super().__init__(MySQLConnectionPool, **kwargs)
 
     @contextlib.contextmanager

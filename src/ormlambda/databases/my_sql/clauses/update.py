@@ -56,7 +56,7 @@ class UpdateQuery[T: Type[Table]](UpdateQueryBase[T, IRepositoryBase]):
 
             if self.__is_valid__(col):
                 clean_data = CASTER.for_value(value)
-                col_names.append((col.column_name,clean_data.wildcard_to_insert()))
+                col_names.append((col.column_name, clean_data.wildcard_to_insert()))
                 self._values.append(clean_data.to_database)
 
         set_query: str = ",".join(["=".join(col_data) for col_data in col_names])

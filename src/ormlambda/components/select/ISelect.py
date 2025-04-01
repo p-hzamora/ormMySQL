@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ormlambda.sql.clause_info import ClauseInfo
 
+
 class ISelect(IQuery):
     @property
     @abc.abstractmethod
-    def FROM(self)->ClauseInfo: ...
-    
+    def FROM(self) -> ClauseInfo: ...
+
     @property
     @abc.abstractmethod
-    def COLUMNS(self)->str: ...
-
+    def COLUMNS(self) -> str: ...

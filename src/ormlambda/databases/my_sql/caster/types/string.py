@@ -6,13 +6,13 @@ class StringCaster[TType](BaseCaster[str, TType]):
     def __init__(self, value: str, type_value: TType):
         super().__init__(value, type_value)
 
-    def wildcard_to_select(self, value:str = PLACEHOLDER) -> str:
+    def wildcard_to_select(self, value: str = PLACEHOLDER) -> str:
         return value
 
-    def wildcard_to_where(self, value:str = PLACEHOLDER) -> str:
+    def wildcard_to_where(self, value: str = PLACEHOLDER) -> str:
         return value
 
-    def wildcard_to_insert(self, value:str = PLACEHOLDER) -> str:
+    def wildcard_to_insert(self, value: str = PLACEHOLDER) -> str:
         return value
 
     @property

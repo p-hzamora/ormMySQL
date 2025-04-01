@@ -372,7 +372,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     ):
         self.limit(1)
 
-        response = self.select(selector=selector, flavour=flavour, by=by,**kwargs)
+        response = self.select(selector=selector, flavour=flavour, by=by, **kwargs)
 
         if not isinstance(response, Iterable):
             return response

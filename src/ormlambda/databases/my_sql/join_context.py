@@ -72,4 +72,3 @@ class JoinContext[TParent: Table, TRepo]:
         parent_table = conditions.difference(model).pop()
 
         return clause_dicc[parent_table], clause_dicc[parent_table].table.__name__
-

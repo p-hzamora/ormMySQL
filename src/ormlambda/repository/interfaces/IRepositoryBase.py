@@ -5,6 +5,7 @@ from typing import Optional, Type, Iterable, TYPE_CHECKING
 if TYPE_CHECKING:
     from ormlambda.statements.types import TypeExists
 
+
 class IRepositoryBase(ABC):
     def __repr__(self) -> str:
         return f"{IRepositoryBase.__name__}: {self.__class__.__name__}"
