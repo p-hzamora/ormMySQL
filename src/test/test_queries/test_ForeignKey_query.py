@@ -3,18 +3,18 @@ import sys
 from pathlib import Path
 import unittest
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
 from ormlambda import ForeignKey  # noqa: E402
-from models import Address, City  # noqa: E402
+from test.models import Address, City  # noqa: E402
 
 
 class TestForeignKey(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         return ForeignKey.stored_calls.clear()
+
     def test_init_with_comparer(self):
         comparer = Address.city_id == City.city_id
         fk = ForeignKey(comparer=comparer, clause_name="FK between A~C")

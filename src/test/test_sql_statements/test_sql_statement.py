@@ -8,13 +8,13 @@ import pandas as pd
 from datetime import datetime
 
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+
 
 from config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import ORM
-from models import (
+from test.models import (
     AddressModel,
     Address,
     TestTable,

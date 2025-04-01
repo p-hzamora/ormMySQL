@@ -8,13 +8,13 @@ from parameterized import parameterized
 from typing import Any, NamedTuple, Type
 
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.caster import Caster, PLACEHOLDER
 import ormlambda.databases as repository
 from ormlambda import Column
 from ormlambda import Table
-import config
+from test.config import config_dict
 
 
 class TestValues(Table):
@@ -36,7 +36,7 @@ table_obj = TestValues(
     data_datetime=datetime(1998, 12, 16, 10, 50, 59),
 )
 
-mysql_repo = repository.MySQLRepository(**config.config_dict)
+mysql_repo = repository.MySQLRepository(**config_dict)
 
 
 class TestResultCast[TProp, TType](NamedTuple):

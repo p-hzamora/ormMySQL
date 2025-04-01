@@ -1,6 +1,4 @@
-import sys
-from pathlib import Path
-from env import (
+from test.env import (
     DB_USERNAME,
     DB_PASSWORD,
     DB_HOST,
@@ -8,15 +6,14 @@ from env import (
 )
 import math
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import ORM
 from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
-from models.staff import Staff  # noqa: E402
-from models.address import Address  # noqa: E402
-from models.actor import Actor  # noqa: E402
-from models.store import Store  # noqa: E402
+from test.models.staff import Staff  # noqa: E402
+from test.models.address import Address  # noqa: E402
+from test.models.actor import Actor  # noqa: E402
+from test.models.store import Store  # noqa: E402
 
 
 db = MySQLRepository(user=DB_USERNAME, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)

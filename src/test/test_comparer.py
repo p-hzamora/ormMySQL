@@ -7,11 +7,10 @@ from parameterized import parameterized
 from shapely import Point
 
 
-sys.path = [str(Path(__file__).parent.parent), *sys.path]
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+sys.path.insert(0, new_file := [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.sql.comparer import Comparer  # noqa: E402
-from models import Address, City, TableType, A  # noqa: E402
+from test.models import Address, City, TableType, A  # noqa: E402
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains  # noqa: E402
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)

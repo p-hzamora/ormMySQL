@@ -1,13 +1,13 @@
 import sys
 from pathlib import Path
 import unittest
-from config import config_dict
+from test.config import config_dict
 
 sys.path = [str(Path(__file__).parent.parent.parent), *sys.path]
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from models import CountryModel  # noqa: E402
+from test.models import CountryModel  # noqa: E402
 
 
 class TestTypeHint(unittest.TestCase):

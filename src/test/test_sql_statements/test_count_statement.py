@@ -4,10 +4,10 @@ from pathlib import Path
 import random
 
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from config import config_dict
+
+from test.config import config_dict
 from ormlambda import Table, BaseModel, BaseRepository, Column
 from ormlambda.databases.my_sql import MySQLRepository
 

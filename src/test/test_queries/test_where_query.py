@@ -4,11 +4,11 @@ from pathlib import Path
 
 
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext  # noqa: E402
 from ormlambda.sql.comparer import Regex, Like  # noqa: E402
-from models import (  # noqa: E402
+from test.models import (  # noqa: E402
     Address,
     City,
     Country,

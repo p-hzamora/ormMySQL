@@ -4,14 +4,14 @@ import sys
 from pathlib import Path
 
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+
 
 from config import config_dict  # noqa: E402
 from ormlambda import ORM
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import BaseRepository, Table, Column, JoinType  # noqa: E402
-from models import (  # noqa: E402
+from test.models import (  # noqa: E402
     TestTable,
 )
 
@@ -135,7 +135,6 @@ class TestJoinStatements(unittest.TestCase):
             {"b_data_b": "data_b_pk_8", "a_data_a": "data_a_pk2"},
         )
         self.assertTupleEqual(select, theorical_result)
-
 
     # def test_used_of_count_agg_with_join_allowing_NULL(self):
     #     result = (

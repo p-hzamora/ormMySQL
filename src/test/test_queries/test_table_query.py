@@ -5,12 +5,12 @@ import unittest
 from typing import Self, Type, Optional
 from parameterized import parameterized
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+
 
 from ormlambda import ForeignKey, Table, Column  # noqa: E402
 from ormlambda.sql.table.table_constructor import __init_constructor__
-from models import City  # noqa: E402
+from test.models import City  # noqa: E402
 
 
 class PersonInherit(Table):

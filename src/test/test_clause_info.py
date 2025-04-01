@@ -9,7 +9,7 @@ from parameterized import parameterized
 from shapely import Point
 
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 if TYPE_CHECKING:
     from ormlambda.sql.clause_info import AggregateFunctionBase
@@ -19,7 +19,7 @@ from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
 from ormlambda.sql.clause_info import ClauseInfo, ClauseInfoContext
 
 from ormlambda.databases.my_sql import functions as func
-from models import A, C, TableType
+from test.models import A, C, TableType
 
 
 class TestClauseInfo(unittest.TestCase):

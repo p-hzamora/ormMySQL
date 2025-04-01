@@ -1,14 +1,19 @@
 import sys
 import unittest
 import logging
-from test_aggregation_functions import (
+
+from pathlib import Path
+
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+
+from test.test_aggregation_functions import (
     test_alias,
     test_concat,
     test_count,
     test_max,
 )
 
-from test_queries import (
+from test.test_queries import (
     test_DecompositionQueryBase,
     test_ForeignKey_query,
     # test_group_by,
@@ -20,7 +25,7 @@ from test_queries import (
     test_where_query,
 )
 
-from test_sql_statements import (
+from test.test_sql_statements import (
     test_count_statement,
     test_join_statement,
     test_order_statement,
@@ -30,25 +35,21 @@ from test_sql_statements import (
     test_max_statement,
 )
 
-import test_abstract_model
-import test_cast
-import test_clause_info
-import test_code_first
-import test_column
-import test_comparer
-import test_constructor
-import test_depth_first_search
-import test_errors
-import test_mapped_table
-import test_queries_with_different_datatypes
-import test_table_class
-import test_type_hint
+import test.test_abstract_model as test_abstract_model
+import test.test_cast as test_cast
+import test.test_clause_info as test_clause_info
+import test.test_code_first as test_code_first
+import test.test_column as test_column
+import test.test_comparer as test_comparer
+import test.test_constructor as test_constructor
+import test.test_depth_first_search as test_depth_first_search
+import test.test_errors as test_errors
+import test.test_mapped_table as test_mapped_table
+import test.test_queries_with_different_datatypes as test_queries_with_different_datatypes
+import test.test_table_class as test_table_class
+import test.test_type_hint as test_type_hint
 
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format='%(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
 log = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ class CustomTextTestRunner(unittest.TextTestRunner):
 
 
 class CustomTestResult(unittest.TextTestResult):
-    def __init__(self, stream, descriptions, verbosity, *, durations = None):
+    def __init__(self, stream, descriptions, verbosity, *, durations=None):
         super().__init__(stream, descriptions, verbosity, durations=durations)
 
     def startTest(self, test):

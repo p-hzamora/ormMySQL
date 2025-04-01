@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "test"].pop())
+sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+
 
 from ormlambda.sql.foreign_key import ForeignKey
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
@@ -12,16 +12,17 @@ from ormlambda.databases.my_sql.clauses import (  # noqa: E402
     JoinSelector,
     JoinType,
 )
-from models import City, Country, Address  # noqa: E402
-# from models.address import Address
+from test.models import City, Country, Address  # noqa: E402
+# from test.models.address import Address
 
 
 class TestJoinSelector(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         ForeignKey.stored_calls.clear()
-        
+
         return None
+
     def test_constructor(self):
         join_selector = JoinSelector[Address, City](
             where=Address.city_id == City.city_id,

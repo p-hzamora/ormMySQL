@@ -1,11 +1,8 @@
 import unittest
-import sys
-from pathlib import Path
 
-sys.path.append([str(x) for x in Path(__file__).parents if x.name == "src"].pop())
 
-from config import config_dict
-from models import (  # noqa: E402
+from test.config import config_dict
+from test.models import (  # noqa: E402
     City,
     Country,
 )
