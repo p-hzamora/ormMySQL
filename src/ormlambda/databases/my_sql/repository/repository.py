@@ -1,7 +1,7 @@
 from __future__ import annotations
 import contextlib
 from pathlib import Path
-from typing import Any, Generator, Iterable, Optional, Type, override, TYPE_CHECKING
+from typing import Any, Generator, Iterable, Optional, Type, override, TYPE_CHECKING, Unpack
 import shapely as shp
 
 # from mysql.connector.pooling import MySQLConnectionPool
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
     from ormlambda import Table
     from ormlambda.databases.my_sql.clauses.select import Select
+    from ..types import MySQLArgs
 
 type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]
 
@@ -155,7 +156,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     #
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs:Unpack[MySQLArgs]):
         super().__init__(MySQLConnectionPool, **kwargs)
 
     @contextlib.contextmanager
