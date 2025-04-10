@@ -11,7 +11,7 @@ from datetime import datetime
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from config import config_dict  # noqa: E402
+from test.config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import ORM
 from test.models import (
@@ -537,6 +537,7 @@ class TestAggregateFunctions(unittest.TestCase):
             address: str
             city: str
             country: str
+
             model_config: ConfigDict = {"extra": "forbid"}
 
         ddbb = MySQLRepository(**config_dict)

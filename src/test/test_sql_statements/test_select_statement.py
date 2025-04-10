@@ -9,7 +9,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from ormlambda.repository import IRepositoryBase
 from ormlambda.databases.my_sql import MySQLRepository
-from config import config_dict  # noqa: E402
+from test.config import config_dict  # noqa: E402
 from ormlambda import Table, Column, BaseModel, ForeignKey  # noqa: E402
 
 DDBBNAME = "__test_ddbb__"
