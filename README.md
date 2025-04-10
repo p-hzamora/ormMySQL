@@ -26,7 +26,7 @@ from ormlambda import ORM
 from ormlambda.databases.my_sql import MySQLRepository
 
 from models.address import Address
-from config import config_dict
+from test.config import config_dict
 
 db = MySQLRepository(**config_dict)
 
