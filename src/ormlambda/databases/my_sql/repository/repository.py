@@ -2,6 +2,7 @@ from __future__ import annotations
 import contextlib
 from pathlib import Path
 from typing import Any, Generator, Iterable, Optional, Type, override, TYPE_CHECKING, Unpack
+import uuid
 import shapely as shp
 
 # from mysql.connector.pooling import MySQLConnectionPool
@@ -168,7 +169,34 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
     #
 
     def __init__(self, **kwargs: Unpack[MySQLArgs]):
-        super().__init__(MySQLConnectionPool, **kwargs)
+        timeout = self.__add_connection_timeout(kwargs)
+        name = self.__add_pool_name(kwargs)
+        size = self.__add_pool_size(kwargs)
+        attr = kwargs.copy()
+        attr["connection_timeout"] = timeout
+        attr["pool_name"] = name
+        attr["pool_size"] = size
+
+        super().__init__(MySQLConnectionPool, **attr)
+
+    @staticmethod
+    def __add_connection_timeout(kwargs: MySQLArgs) -> int:
+        if "connection_timeout" not in kwargs.keys():
+            return 60
+        return int(kwargs.pop("connection_timeout"))
+
+    @staticmethod
+    def __add_pool_name(kwargs: MySQLArgs) -> str:
+        if "pool_name" not in kwargs.keys():
+            return str(uuid.uuid4())
+
+        return kwargs.pop("pool_name")
+
+    @staticmethod
+    def __add_pool_size(kwargs: MySQLArgs) -> int:
+        if "pool_size" not in kwargs.keys():
+            return 5
+        return int(kwargs.pop("pool_size"))
 
     @contextlib.contextmanager
     def get_connection(self) -> Generator[MySQLConnection, None, None]:
@@ -308,9 +336,17 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     @property
     def database(self) -> Optional[str]:
-        return self._data_config.get("database", None)
+        return self._pool._cnx_config.get("database", None)
 
     @database.setter
     def database(self, value: str) -> None:
-        self._data_config["database"] = value
-        self._pool.set_config(**self._data_config)
+        """Change the current database using USE statement"""
+
+        if not self.database_exists(value):
+            raise ValueError(f"You cannot set the non-existent '{value}' database.")
+
+        old_config: MySQLArgs = self._pool._cnx_config.copy()
+        old_config["database"] = value
+
+        self._pool._remove_connections()
+        self._pool = type(self)(**old_config)._pool
