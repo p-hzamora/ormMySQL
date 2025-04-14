@@ -416,6 +416,10 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return self
 
     @override
-    def alias[TProp](self, column: ColumnType[TProp], alias: str) -> Alias[T, TProp]:
-        ci = ClauseInfo(table=column.table, column=column, alias_clause=alias, context=self._query_builder._context)
-        return Alias(ci, alias_clause=alias)
+    def alias[TProp](self, column: ColumnType[TProp], alias: str) -> ClauseInfo[T, TProp]:
+        return Alias(
+            table=column.table,
+            column=column,
+            alias_clause=alias,
+            context=self._query_builder._context,
+        )

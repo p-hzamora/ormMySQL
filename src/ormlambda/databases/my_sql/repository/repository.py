@@ -16,6 +16,7 @@ from ormlambda.caster import Caster
 from ..clauses import CreateDatabase, TypeExists
 from ..clauses import DropDatabase
 from ..clauses import DropTable
+from ..clauses import Alias
 
 
 if TYPE_CHECKING:
@@ -87,9 +88,15 @@ class Response[TFlavour, *Ts]:
             return [list(x) for x in data]
 
         def _default(**kwargs) -> list[TFlavour]:
-            replacer_dicc: dict[str, str] = {x.alias_clause: x.column for x in self._select.all_clauses}
+            nonlocal data
+            replacer_dicc: dict[str, str] = {}
 
-            cleaned_column_names = [replacer_dicc[col] for col in self._columns]
+            for col in self._select.all_clauses:
+                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, Alias):
+                    continue
+                replacer_dicc[col.alias_clause] = col.column
+
+            cleaned_column_names = [replacer_dicc.get(col, col) for col in self._columns]
 
             result = []
             for attr in data:

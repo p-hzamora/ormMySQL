@@ -1,10 +1,10 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda import Table, Column
+from ormlambda import Table
 from ormlambda.sql.clause_info import ClauseInfo
-from ormlambda.common.interfaces.IQueryCommand import IQuery
-from ormlambda.sql.clause_info import ClauseInfoContext, IAggregate
+from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
+from ormlambda.sql.types import TableType
 
 if tp.TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType
@@ -12,23 +12,17 @@ if tp.TYPE_CHECKING:
     from ormlambda.sql.types import AliasType
 
 
-class Alias[T: Table, TProp](ClauseInfo, IQuery):
-    def __init__(
+class Alias[T: Table](ClauseInfo[T]):
+    def __init__[TProp](
         self,
-        element: IAggregate | ClauseInfo[T] | ColumnType[TProp],
-        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]],
+        table: TableType[T],
+        column: tp.Optional[ColumnType[TProp]] = None,
+        alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
+        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
+        context: ClauseContextType = None,
+        keep_asterisk: bool = False,
+        preserve_context: bool = False,
     ):
-        if isinstance(element, Column):
-            context = ClauseInfoContext()
-            element = ClauseInfo(table=element.table, column=element, alias_clause=alias_clause)
-        else:
-            context = ClauseInfoContext(table_context=element.context._table_context, clause_context={})
-            element.context = context
-            element._alias_clause = alias_clause
-
-        self._element = element
-
-    @tp.override
-    @property
-    def query(self) -> str:
-        return self._element.query
+        if not alias_clause:
+            raise TypeError
+        super().__init__(table, column, alias_table, alias_clause, context, keep_asterisk, preserve_context)
