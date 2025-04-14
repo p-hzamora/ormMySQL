@@ -44,6 +44,13 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         else:
             self.__init_with_callable(tright, relationship)
 
+    @classmethod
+    def clear(cls) -> None:
+        for fk in cls.stored_calls:
+            if fk._keep_alive:
+                continue
+            cls.stored_calls.remove(fk)
+
     def __init__with_comparer[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
         self._relationship = None
         self._tleft: TLeft = comparer.left_condition.table
