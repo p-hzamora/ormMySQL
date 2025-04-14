@@ -69,12 +69,15 @@ class Response[TFlavour, *Ts]:
 
     def _cast_to_flavour(self, data: list[tuple[*Ts]], **kwargs) -> list[dict[str, tuple[*Ts]]] | list[tuple[*Ts]] | list[TFlavour]:
         def _dict(**kwargs) -> list[dict[str, tuple[*Ts]]]:
+            nonlocal data
             return [dict(zip(self._columns, x)) for x in data]
 
         def _tuple(**kwargs) -> list[tuple[*Ts]]:
+            nonlocal data
             return data
 
         def _set(**kwargs) -> list[set]:
+            nonlocal data
             for d in data:
                 n = len(d)
                 for i in range(n):
@@ -85,6 +88,7 @@ class Response[TFlavour, *Ts]:
             return [set(x) for x in data]
 
         def _list(**kwargs) -> list[list]:
+            nonlocal data
             return [list(x) for x in data]
 
         def _default(**kwargs) -> list[TFlavour]:
