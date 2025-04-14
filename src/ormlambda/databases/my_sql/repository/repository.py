@@ -293,7 +293,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     @override
     def database_exists(self, name: str) -> bool:
-        query = "SHOW DATABASES LIKE %s;"
         temp_config = self._pool._cnx_config
 
         config_without_db = temp_config.copy()
@@ -301,10 +300,11 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         if "database" in config_without_db:
             config_without_db.pop("database")
         self._pool.set_config(**config_without_db)
+
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
-                cursor.execute(query, (name,))
-            res = cursor.fetchmany(1)
+                cursor.execute("SHOW DATABASES LIKE %s;", (name,))
+                res = cursor.fetchmany(1)
 
         self._pool.set_config(**temp_config)
         return len(res) > 0
@@ -315,12 +315,11 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     @override
     def table_exists(self, name: str) -> bool:
-        query = "SHOW TABLES LIKE %s;"
         with self.get_connection() as cnx:
             if not cnx.database:
                 raise Exception("No database selected")
             with cnx.cursor(buffered=True) as cursor:
-                cursor.execute(query, (name,))
+                cursor.execute("SHOW TABLES LIKE %s;", (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
 
