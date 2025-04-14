@@ -10,10 +10,10 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from test.config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda.repository import BaseRepository  # noqa: E402
+from ormlambda import ORM
 
 from test.models import (
     TableType,
-    TableTypeModel,
 )  # noqa: E402
 
 import shapely as shp
@@ -25,12 +25,14 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
+        cls.ddbb.create_database(DDBBNAME, "replace")
+        cls.ddbb.database = DDBBNAME
+        cls.model = ORM(TableType, cls.ddbb)
+        cls.model.create_table("fail")
 
     def setUp(self) -> None:
-        self.ddbb.database = DDBBNAME
-        self.ddbb.create_database(DDBBNAME, "replace")
-        self.model = TableTypeModel(self.ddbb)
-        self.model.create_table()
+        if self.model.count(execute=True):
+            self.model.delete()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -39,7 +41,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
     def test_create_model_with_wrong_types(self):
         with self.assertRaises(ValueError):
             TableType(
-                pk=None,
+                pk=1,
                 strings=1,
                 integers=10.00,
                 floats=5,
@@ -47,7 +49,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
 
     def test_insert_different_types(self):
         instance = TableType(
-            pk=None,
+            pk=1,
             strings="strings",
             integers=10,
             floats=0.99,
@@ -61,7 +63,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
 
     def test_update_different_types(self):
         instance = TableType(
-            pk=None,
+            pk=1,
             strings="strings",
             integers=10,
             floats=0.99,

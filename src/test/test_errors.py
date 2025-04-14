@@ -8,11 +8,11 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from test.config import config_dict  # noqa: E402
 from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import BaseRepository  # noqa: E402
+from ormlambda import BaseRepository, ORM  # noqa: E402
 from ormlambda.common.errors import UnmatchedLambdaParameterError
 
 from test.models import (
-    TableTypeModel,
+    TableType,
 )  # noqa: E402
 
 
@@ -29,7 +29,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb.create_database(DDBBNAME, "replace")
         self.ddbb.database = DDBBNAME
-        self.model = TableTypeModel(self.ddbb)
+        self.model = ORM(TableType, self.ddbb)
         self.model.create_table("replace")
 
     @classmethod

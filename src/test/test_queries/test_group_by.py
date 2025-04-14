@@ -12,16 +12,15 @@ from test.models import D
 class TestGroupBy(unittest.TestCase):
     def test_Concat(self) -> None:
         concat = func.Concat(
-            D,
-            lambda d: (
-                d.data_d,
+            (
+                D.data_d,
                 "-",
-                d.data_d,
-                func.Concat(D, lambda d: ("main", d.data_d), alias_name="main_data"),
+                D.data_d,
+                func.Concat(("main", D.data_d), alias_clause="main_data"),
             ),
         )
 
-        query = "CONCAT(d.data_d, '-', d.data_d, d.CONCAT('main', d.data_d) as `main_data`) as `CONCAT`"
+        query = "CONCAT(d.data_d, '-', d.data_d, CONCAT('main', d.data_d) AS `main_data`) AS `concat`"
 
         self.assertEqual(concat.query, query)
 
