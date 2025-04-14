@@ -154,8 +154,8 @@ class QueryBuilder(IQuery):
         joins = set()
         # Always it's gonna be a set of two
         # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-        for _ in range(len(ForeignKey.stored_calls)):
-            fk = ForeignKey.stored_calls.pop()
+        for fk in ForeignKey.stored_calls.copy():
+            fk = ForeignKey.stored_calls.pop(fk)
             self._context._add_table_alias(fk.tright, fk.alias)
             join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk.alias)
             joins.add(join)

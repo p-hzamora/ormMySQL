@@ -27,12 +27,12 @@ class JoinContext[TParent: Table, TRepo]:
         for comparer, by in self._joins:
             fk_clause, alias = self.get_fk_clause(comparer)
 
-            foreign_key: ForeignKey = ForeignKey(comparer=comparer, clause_name=alias,keep_alive=True)
+            foreign_key: ForeignKey = ForeignKey(comparer=comparer, clause_name=alias, keep_alive=True)
             fk_clause.alias_table = foreign_key.alias
             self._context.add_clause_to_context(fk_clause)
             setattr(self._parent, alias, foreign_key)
 
-            # TODOH []: We need to preserve the 'foreign_key' variable while inside the 'with' clause.
+            # TODOH [x]: We need to preserve the 'foreign_key' variable while inside the 'with' clause.
             # Keep in mind that 'ForeignKey.stored_calls' is cleared every time we call methods like
             # .select(), .select_one(), .insert(), .update(), or .count(). This means we only retain
             # the context from the first call of any of these methods.
@@ -49,6 +49,7 @@ class JoinContext[TParent: Table, TRepo]:
             fk: ForeignKey = getattr(self._parent, attribute)
             delattr(self._parent, attribute)
             del self._context._table_context[fk.tright]
+            ForeignKey.stored_calls.remove(fk)
         return None
 
     def __getattr__(self, name: str) -> TParent:

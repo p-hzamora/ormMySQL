@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 
 
-class ForeignKeyContext(set):
+class ForeignKeyContext(set["ForeignKey"]):
     def clear(self):
         to_remove = {x for x in self if not cast(ForeignKey, x)._keep_alive}
         for el in to_remove:
@@ -19,8 +19,11 @@ class ForeignKeyContext(set):
     def remove(self, element):
         return super().remove(element)
 
-    def pop(self):
+    def pop(self, item):
         for el in self:
+            if el != item:
+                continue
+
             if not cast(ForeignKey, el)._keep_alive:
                 super().remove(el)
             return el
@@ -30,7 +33,7 @@ class ForeignKeyContext(set):
 
 
 class ForeignKey[TLeft: Table, TRight: Table](IQuery):
-    stored_calls: set[ForeignKey] = ForeignKeyContext()
+    stored_calls: ForeignKeyContext = ForeignKeyContext()
 
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
