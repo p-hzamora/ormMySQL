@@ -305,9 +305,9 @@ class IStatements[T: Table](ABC):
 
     # endregion
 
-    # region group_by
+    # region groupby
     @abstractmethod
-    def group_by[TRepo](self, column: Callable[[T], TRepo]) -> IStatements[T]: ...
+    def groupby[TRepo](self, column: Callable[[T], TRepo]) -> IStatements[T]: ...
 
     # endregion
 

@@ -28,7 +28,7 @@ from .clauses import InsertQuery
 from .clauses import Limit
 from .clauses import Offset
 from .clauses import Order
-from .clauses.select import Select
+from .clauses import Select
 
 from .clauses import UpsertQuery
 from .clauses import UpdateQuery
@@ -410,11 +410,8 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         )
 
     @override
-    def group_by(self, column: str | Callable[[T, *Ts], Any]):
-        if isinstance(column, str):
-            groupby = GroupBy[T, tuple[*Ts]](self._models, lambda x: column)
-        else:
-            groupby = GroupBy[T, tuple[*Ts]](self._models, column)
+    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T, *Ts], Any]):
+        groupby = GroupBy(table=self.model, column=column, context=self._query_builder._context)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         self._query_builder.add_statement(groupby)
         return self
