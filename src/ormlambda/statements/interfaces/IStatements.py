@@ -172,7 +172,7 @@ class IStatements[T: Table](ABC):
     # endregion
     # region concat
     @overload
-    def concat[P](self, selector: Callable[[T], tuple[P]]) -> IAggregate: ...
+    def concat(self, selector: Callable[[T], str], alias: str = "CONCAT") -> IAggregate: ...
 
     # endregion
     # region max
