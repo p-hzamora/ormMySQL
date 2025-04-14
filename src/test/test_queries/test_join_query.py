@@ -19,7 +19,7 @@ from test.models import City, Country, Address  # noqa: E402
 class TestJoinSelector(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        ForeignKey.clear()
+        ForeignKey.stored_calls.clear()
 
         return None
 

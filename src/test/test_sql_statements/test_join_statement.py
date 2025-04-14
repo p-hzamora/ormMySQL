@@ -97,12 +97,6 @@ class TestJoinStatements(unittest.TestCase):
                 flavour=dict,
             )
 
-        with self.model_b.join(
-            (
-                (JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
-                (JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
-            )
-        ):
             result2 = self.model_b.where([JoinA.pk_a == 2, JoinC.pk_c == 2]).select(
                 (
                     JoinB.data_b,

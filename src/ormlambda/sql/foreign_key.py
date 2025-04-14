@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Optional, Any, Type, overload
+from typing import Callable, TYPE_CHECKING, Optional, Any, Type, cast, overload
 
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
@@ -10,13 +10,32 @@ if TYPE_CHECKING:
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 
 
+class ForeignKeyContext(set):
+    def clear(self):
+        to_remove = {x for x in self if not cast(ForeignKey, x)._keep_alive}
+        for el in to_remove:
+            self.remove(el)
+
+    def remove(self, element):
+        return super().remove(element)
+
+    def pop(self):
+        for el in self:
+            if not cast(ForeignKey, el)._keep_alive:
+                super().remove(el)
+            return el
+
+    def add(self, element):
+        return super().add(element)
+
+
 class ForeignKey[TLeft: Table, TRight: Table](IQuery):
-    stored_calls: set[ForeignKey] = set()
+    stored_calls: set[ForeignKey] = ForeignKeyContext()
 
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
-    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]],keep_alive:bool) -> TRight: ...
+    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]], keep_alive: bool) -> TRight: ...
 
     def __new__[LProp, TRight, RProp](
         cls,
@@ -25,7 +44,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         *,
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
-        keep_alive:bool=False,
+        keep_alive: bool = False,
     ) -> TRight:
         return super().__new__(cls)
 
@@ -43,13 +62,6 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
             self.__init__with_comparer(comparer, clause_name)
         else:
             self.__init_with_callable(tright, relationship)
-
-    @classmethod
-    def clear(cls) -> None:
-        for fk in cls.stored_calls:
-            if fk._keep_alive:
-                continue
-            cls.stored_calls.remove(fk)
 
     def __init__with_comparer[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
         self._relationship = None

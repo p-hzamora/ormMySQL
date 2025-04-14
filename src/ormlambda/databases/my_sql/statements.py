@@ -54,7 +54,7 @@ def clear_list[T, **P](f: Callable[Concatenate[MySQLStatements, P], T]) -> Calla
         except Exception as err:
             raise err
         finally:
-            ForeignKey.clear()
+            ForeignKey.stored_calls.clear()
             self._query_builder.clear()
 
     return wrapper

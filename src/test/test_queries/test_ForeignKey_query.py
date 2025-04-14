@@ -13,7 +13,7 @@ from test.models import Address, City  # noqa: E402
 class TestForeignKey(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        return ForeignKey.clear()
+        return ForeignKey.stored_calls.clear()
 
     def test_init_with_comparer(self):
         comparer = Address.city_id == City.city_id
