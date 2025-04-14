@@ -32,8 +32,8 @@ class Where(AggregateFunctionBase):
     def alias_clause(self) -> None:
         return None
 
-    @staticmethod
-    def join_condition(wheres: tp.Iterable[Where], restrictive: bool, context: ClauseInfoContext) -> str:
+    @classmethod
+    def join_condition(cls, wheres: tp.Iterable[Where], restrictive: bool, context: ClauseInfoContext) -> str:
         if not isinstance(wheres, tp.Iterable):
             wheres = (wheres,)
 
@@ -42,4 +42,4 @@ class Where(AggregateFunctionBase):
             for c in where._comparer:
                 c.set_context(context)
                 comparers.append(c)
-        return Where(*comparers, restrictive=restrictive, context=context).query
+        return cls(*comparers, restrictive=restrictive, context=context).query

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Concatenate, Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
+from typing import Concatenate, Iterable, TypedDict, override, Type, TYPE_CHECKING, Any, Callable, Optional
 from mysql.connector import errors, errorcode
 
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
@@ -33,6 +33,7 @@ from .clauses import Select
 from .clauses import UpsertQuery
 from .clauses import UpdateQuery
 from .clauses import Where
+from .clauses import Having
 from .clauses import Count
 from .clauses import GroupBy
 from .clauses import Alias
@@ -60,12 +61,23 @@ def clear_list[T, **P](f: Callable[Concatenate[MySQLStatements, P], T]) -> Calla
     return wrapper
 
 
+class OrderType(TypedDict):
+    Select: Select
+    JoinSelector: JoinSelector
+    Where: Where
+    Order: Order
+    GroupBy: GroupBy
+    Having: Having
+    Limit: Limit
+    Offset: Offset
+
+
 class QueryBuilder(IQuery):
-    __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "Order", "GroupBy", "Limit", "Offset")
+    __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "Order", "GroupBy", "Having", "Limit", "Offset")
 
     def __init__(self, by: JoinType = JoinType.INNER_JOIN):
         self._context = ClauseInfoContext()
-        self._query_list: dict[str, IQuery] = {}
+        self._query_list: OrderType = {}
         self._by = by
 
         self._joins: Optional[IQuery] = None
@@ -114,6 +126,15 @@ class QueryBuilder(IQuery):
         return self._query_list.get("GroupBy", None)
 
     @property
+    def HAVING(self) -> IQuery:
+        where = self._query_list.get("Having", None)
+        if not isinstance(where, Iterable):
+            if not where:
+                return ()
+            return (where,)
+        return where
+
+    @property
     def LIMIT(self) -> IQuery:
         return self._query_list.get("Limit", None)
 
@@ -135,6 +156,7 @@ class QueryBuilder(IQuery):
             Where.join_condition(self.WHERE, True, self._context) if self.WHERE else None,
             self.ORDER.query if self.ORDER else None,
             self.GROUP_BY.query if self.GROUP_BY else None,
+            Having.join_condition(self.HAVING, True, self._context) if self.HAVING else None,
             self.LIMIT.query if self.LIMIT else None,
             self.OFFSET.query if self.OFFSET else None,
         )
@@ -289,6 +311,15 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
         self._query_builder.add_statement(Where(*conditions))
+        return self
+
+    @override
+    def having(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
+        if GlobalChecker.is_lambda_function(conditions):
+            conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
+        if not isinstance(conditions, Iterable):
+            conditions = (conditions,)
+        self._query_builder.add_statement(Having(*conditions))
         return self
 
     @override

@@ -12,6 +12,7 @@ from .order import Order as Order
 from .update import UpdateQuery as UpdateQuery
 from .upsert import UpsertQuery as UpsertQuery
 from .where import Where as Where
+from .having import Having as Having
 from .count import Count as Count
 from .group_by import GroupBy as GroupBy
 from .alias import Alias as Alias

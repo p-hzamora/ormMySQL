@@ -161,6 +161,16 @@ class IStatements[T: Table](ABC):
     def where[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T]: ...
 
     # endregion
+
+    # region having
+
+    @overload
+    def having[LProp, RTable, RProp](self, conditions: Callable[[T], WhereTypes[T, LProp, RTable, RProp]]) -> IStatements[T]: ...
+
+    @abstractmethod
+    def having[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T]: ...
+
+    # endregion
     # region order
     @overload
     def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> IStatements[T]: ...

@@ -33,10 +33,12 @@ class Column[TProp]:
         is_auto_increment: bool = False,
         is_unique: bool = False,
         check_types: bool = True,
+        *,
+        column_name: Optional[str] = None,
     ) -> None:
         self.dtype: Type[TProp] = dtype
         self.table: Optional[TableType[T]] = None
-        self.column_name: Optional[str] = None
+        self.column_name: Optional[str] = column_name
         self.__private_name: Optional[str] = None
         self._check = check_types
 
