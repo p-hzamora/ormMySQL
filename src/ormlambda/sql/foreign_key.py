@@ -16,9 +16,17 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
-    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]]) -> TRight: ...
+    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]],keep_alive:bool) -> TRight: ...
 
-    def __new__[LProp, TRight, RProp](cls, tright: Optional[TRight] = None, relationship: Optional[Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]]] = None, *, comparer: Optional[Comparer] = None, clause_name: Optional[str] = None) -> TRight:
+    def __new__[LProp, TRight, RProp](
+        cls,
+        tright: Optional[TRight] = None,
+        relationship: Optional[Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]]] = None,
+        *,
+        comparer: Optional[Comparer] = None,
+        clause_name: Optional[str] = None,
+        keep_alive:bool=False,
+    ) -> TRight:
         return super().__new__(cls)
 
     def __init__[LProp, RProp](
@@ -28,7 +36,9 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         *,
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
+        keep_alive: bool = False,
     ) -> None:
+        self._keep_alive = keep_alive
         if comparer is not None and clause_name is not None:
             self.__init__with_comparer(comparer, clause_name)
         else:
