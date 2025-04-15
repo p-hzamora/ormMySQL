@@ -20,3 +20,5 @@ from .model.base_model import (
     BaseModel as BaseModel,
     ORM as ORM,
 )  # COMMENT: to avoid relative import we need to import BaseModel after import Table,Column, ForeignKey, IRepositoryBase and Disassembler
+
+from .engine import create_engine, URL  # noqa: F401
