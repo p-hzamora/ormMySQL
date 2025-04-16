@@ -5,19 +5,12 @@ import unittest
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 from ormlambda import ORM
 from test.models import Address, City, Country  # noqa: E402
+from test.config import create_sakila_engine
 
 
-from test.env import (
-    DB_USERNAME,
-    DB_PASSWORD,
-    DB_HOST,
-    DB_DATABASE,
-)
-
-db = MySQLRepository(user=DB_USERNAME, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)
+db = create_sakila_engine()
 
 AddressModel = ORM(Address, db)
 CountryModel = ORM(Country, db)
