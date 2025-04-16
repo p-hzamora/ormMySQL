@@ -21,9 +21,9 @@ except ImportError:
 
 DB_PREFIX = os.getenv("DB_PREFIX","mysql://")
 
-DB_USERNAME = os.getenv("USERNAME", "root")
+DB_USERNAME = os.getenv("DB_USERNAME", "root")
 
-DB_PASSWORD = os.getenv("PASSWORD", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "root")
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 
