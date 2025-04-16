@@ -442,7 +442,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
 
     @override
     def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T, *Ts], Any]):
-        groupby = GroupBy(table=self.model, column=column, context=self._query_builder._context)
+        groupby = GroupBy(column=column, context=self._query_builder._context)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         self._query_builder.add_statement(groupby)
         return self
