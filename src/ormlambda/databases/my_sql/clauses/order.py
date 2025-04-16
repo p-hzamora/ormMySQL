@@ -48,13 +48,18 @@ class Order(AggregateFunctionBase):
         columns = self.unresolved_column
 
         # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
+        if isinstance(columns, str):
+            string_columns = f"{columns} {str(self._order_type[0])}"
+            return f"{self.FUNCTION_NAME()} {string_columns}"
+
         if not isinstance(columns, tp.Iterable):
             columns = (columns,)
+
         assert len(columns) == len(self._order_type)
 
         context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None
         for index, clause in enumerate(self._convert_into_clauseInfo(columns, context)):
             clause.alias_clause = None
-            string_columns.append(f"{clause.query} {self._order_type[index].value}")
+            string_columns.append(f"{clause.query} {str(self._order_type[index])}")
 
         return f"{self.FUNCTION_NAME()} {', '.join(string_columns)}"

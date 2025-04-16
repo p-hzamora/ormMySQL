@@ -73,7 +73,7 @@ class OrderType(TypedDict):
 
 
 class QueryBuilder(IQuery):
-    __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "Order", "GroupBy", "Having", "Limit", "Offset")
+    __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "GroupBy", "Having", "Order", "Limit", "Offset")
 
     def __init__(self, by: JoinType = JoinType.INNER_JOIN):
         self._context = ClauseInfoContext()
@@ -154,9 +154,9 @@ class QueryBuilder(IQuery):
             self.SELECT.query,
             JOINS,
             Where.join_condition(self.WHERE, True, self._context) if self.WHERE else None,
-            self.ORDER.query if self.ORDER else None,
             self.GROUP_BY.query if self.GROUP_BY else None,
             Having.join_condition(self.HAVING, True, self._context) if self.HAVING else None,
+            self.ORDER.query if self.ORDER else None,
             self.LIMIT.query if self.LIMIT else None,
             self.OFFSET.query if self.OFFSET else None,
         )
