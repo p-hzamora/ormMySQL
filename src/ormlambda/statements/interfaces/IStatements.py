@@ -29,6 +29,8 @@ from ..types import (
     WhereTypes,
 )
 
+type SelectCols[T, TProp] = Callable[[T], ColumnType[TProp]] | ColumnType[TProp]
+
 
 class IStatements[T: Table](ABC):
     @abstractmethod
@@ -189,7 +191,7 @@ class IStatements[T: Table](ABC):
     @overload
     def max[TProp](
         self,
-        column: Callable[[T], TProp],
+        column: SelectCols[T, TProp],
         alias: Optional[str] = ...,
         execute: bool = ...,
     ) -> TProp: ...
@@ -198,7 +200,7 @@ class IStatements[T: Table](ABC):
     @overload
     def min[TProp](
         self,
-        column: Callable[[T], TProp],
+        column: SelectCols[T, TProp],
         alias: Optional[str] = ...,
         execute: bool = ...,
     ) -> TProp: ...
@@ -207,7 +209,7 @@ class IStatements[T: Table](ABC):
     @overload
     def sum[TProp](
         self,
-        column: Callable[[T], TProp],
+        column: SelectCols[T, TProp],
         alias: Optional[str] = ...,
         execute: bool = ...,
     ) -> TProp: ...
