@@ -338,19 +338,34 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         )
 
     @override
-    def max[TProp](self, column: Callable[[T], TProp], alias: str = "max", execute: bool = False) -> TProp:
+    def max[TProp](
+        self,
+        column: Callable[[T], TProp],
+        alias: str = "max",
+        execute: bool = False,
+    ) -> TProp:
         if execute is True:
             return self.select_one(self.max(column, alias, execute=False), flavour=dict)[alias]
         return func.Max(elements=column, alias_clause=alias, context=self._query_builder._context)
 
     @override
-    def min[TProp](self, column: Callable[[T], TProp], alias: str = "min", execute: bool = False) -> TProp:
+    def min[TProp](
+        self,
+        column: Callable[[T], TProp],
+        alias: str = "min",
+        execute: bool = False,
+    ) -> TProp:
         if execute is True:
             return self.select_one(self.min(column, alias, execute=False), flavour=dict)[alias]
         return func.Min(elements=column, alias_clause=alias, context=self._query_builder._context)
 
     @override
-    def sum[TProp](self, column: Callable[[T], TProp], alias: str = "sum", execute: bool = False) -> TProp:
+    def sum[TProp](
+        self,
+        column: Callable[[T], TProp],
+        alias: str = "sum",
+        execute: bool = False,
+    ) -> TProp:
         if execute is True:
             return self.select_one(self.sum(column, alias, execute=False), flavour=dict)[alias]
         return func.Sum(elements=column, alias_clause=alias, context=self._query_builder._context)
