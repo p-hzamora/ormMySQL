@@ -7,9 +7,8 @@ import random
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import config_dict
+from test.config import create_env_engine
 from ormlambda import Table, BaseModel, BaseRepository, Column
-from ormlambda.databases.my_sql import MySQLRepository
 
 DATABASE_NAME = "__ddbb_test__"
 
@@ -29,7 +28,7 @@ class TableCountModel(BaseModel[TableCount]):
 
 class CountTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.ddbb = MySQLRepository(**config_dict)
+        self.ddbb = create_env_engine()
 
         self.ddbb.create_database(DATABASE_NAME, "replace")
         self.ddbb.database = DATABASE_NAME

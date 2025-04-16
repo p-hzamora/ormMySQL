@@ -8,24 +8,25 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 
 # Custom libraries
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from test.config import config_dict  # noqa: E402
+from test.config import create_env_engine, create_engine_for_db  # noqa: E402
+from test.models import Country  # noqa: E402
+from ormlambda import ORM
 
-from test.models import Country, CountryModel  # noqa: E402
-
-TDDBB_name = "__test_ddbb__"
+DB_NAME = "__test_ddbb__"
 
 
 class Test_my_sql(unittest.TestCase):
-    def setUp(self) -> None:
-        self.ddbb = MySQLRepository(**config_dict)
-        if self.ddbb.database_exists(TDDBB_name):
-            self.ddbb.drop_database(TDDBB_name)
-        self.ddbb.create_database(TDDBB_name, "replace")
-        self.ddbb.database = TDDBB_name
+    @classmethod
+    def setUpClass(cls):
+        cls.ddbb = create_env_engine()
+        cls.ddbb.create_database(DB_NAME, "replace")
+
+        cls.engine = create_engine_for_db(DB_NAME)
+        cls.country_model = ORM(Country, cls.engine)
+
 
     def tearDown(self) -> None:
-        self.ddbb.drop_database(TDDBB_name)
+        self.ddbb.drop_database(DB_NAME)
 
     def test_create_table_code_first_passing_folder(self):
         self.ddbb.create_tables_code_first("src/test/models")
@@ -36,9 +37,9 @@ class Test_my_sql(unittest.TestCase):
         pass
 
     def test_create_table(self):
-        if CountryModel(self.ddbb).table_exists():
+        if self.country_model.table_exists():
             self.ddbb.drop_table(Country.__table_name__)
-        CountryModel(self.ddbb).create_table()
+        self.country_model.create_table()
 
 
 if __name__ == "__main__":

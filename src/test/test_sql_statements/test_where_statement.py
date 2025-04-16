@@ -7,8 +7,7 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import config_dict  # noqa: E402
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from test.config import create_sakila_engine  # noqa: E402
 from test.models import Address, City, Country  # noqa: F401
 from ormlambda import ORM
 
@@ -24,7 +23,7 @@ class RegexFilter:
 class TestWhereStatement(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb = MySQLRepository(**config_dict)
+        cls.ddbb = create_sakila_engine()
         cls.tmodel = ORM(Address, cls.ddbb)
 
     def test_where(self):

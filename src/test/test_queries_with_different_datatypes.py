@@ -7,9 +7,7 @@ from datetime import datetime
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from test.config import config_dict  # noqa: E402
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.repository import BaseRepository  # noqa: E402
+from test.config import create_env_engine, create_engine_for_db  # noqa: E402
 from ormlambda import ORM
 
 from test.models import (
@@ -21,12 +19,13 @@ import shapely as shp
 DDBBNAME = "__test_ddbb__"
 
 
+env_engine= create_env_engine()
 class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
-        cls.ddbb.create_database(DDBBNAME, "replace")
-        cls.ddbb.database = DDBBNAME
+        env_engine.create_database(DDBBNAME, "replace")
+        cls.ddbb = create_engine_for_db(DDBBNAME)
+
         cls.model = ORM(TableType, cls.ddbb)
         cls.model.create_table("fail")
 

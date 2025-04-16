@@ -2,19 +2,20 @@ import sys
 from pathlib import Path
 from typing import Optional
 import unittest
-from test.config import config_dict
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from test.models.address import AddressModel  # noqa: E402
 from test.models import Address, City, Country  # noqa: E402
+from ormlambda import Table, Column, ORM
+from test.config import create_sakila_engine, create_engine_for_db
+
+engine = create_sakila_engine()
 
 
 class TestTypeHint(unittest.TestCase):
-    def setUp(self) -> None:
-        self.ddbb = MySQLRepository(**config_dict)
-        self.a_model = AddressModel(self.ddbb)
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.a_model = ORM(Address, engine)
 
     def test_SELECT_method_passing_3_columns(self):
         response = self.a_model.select(lambda a: (a, a.City, a.City.Country))
@@ -88,35 +89,25 @@ class TestTypeHint(unittest.TestCase):
         selection = self.a_model.select_one(lambda a: (a,), flavour=set)
         self.assertTrue(len(selection), 8)
 
-    # def test_SELECT_ONE_method_with_SET_as_flavour_and_raises_TypeError(self):
-    #     class TableWithBytearray(Table):
-    #         __table_name__ = "bytearray_table"
-    #         pk: int = Column(int, is_primary_key=True)
-    #         bytearray_data: bytearray
+    def test_SELECT_ONE_method_with_SET_as_flavour_and_avoid_raises_TypeError(self):
+        class TableWithBytearray(Table):
+            __table_name__ = "bytearray_table"
+            pk: int = Column(int, is_primary_key=True)
+            bytearray_data: Column[bytearray] = Column(bytearray, check_types=False)
 
-    #     class BytearrayModel(BaseModel[TableWithBytearray]):
-    #         def __new__[TRepo](cls, repository: IRepositoryBase) -> IStatements_two_generic[TableWithBytearray, TRepo]:
-    #             return super().__new__(cls, TableWithBytearray, repository)
+        DDBB_NAME: str = "__TEST_DATABASE__"
 
-    #     DDBB_NAME: str = "__TEST_DATABASE__"
-    #     self.ddbb.create_database(DDBB_NAME, "replace")
-    #     new_db_config = config_dict.copy()
+        engine.create_database(DDBB_NAME, "replace")
 
-    #     new_db_config["database"] = DDBB_NAME
-    #     db = MySQLRepository(**new_db_config)
-    #     byte_model = BytearrayModel(db)
-    #     byte_model.create_table()
+        new_engine = create_engine_for_db(DDBB_NAME)
 
-    #     with self.assertRaises(TypeError):
-    #         try:
-    #             # COMMENT: if we used 'mysql-connector', the BLOB data will be returned as a 'bytearray' (an unhashable data type). However, if you use the newer 'mysql-connector-python' you'll retrieve 'bytes' which are hashable
-    #             byte_model.insert(TableWithBytearray(1, bytearray(b"bytearray data")))
-    #             byte_model.select(flavour=set)
-    #         except TypeError as e:
-    #             self.assertEqual(e.args[0], "unhashable type '<class 'bytearray'>' found in '<class 'tuple'>' when attempting to cast the result into a 'set' object")
-    #             raise TypeError
-    #         finally:
-    #             db.drop_database(DDBB_NAME)
+        byte_model = ORM(TableWithBytearray, new_engine)
+        byte_model.create_table()
+
+        # COMMENT: if we used 'mysql-connector', the BLOB data will be returned as a 'bytearray' (an unhashable data type). However, if you use the newer 'mysql-connector-python' you'll retrieve 'bytes' which are hashable
+        byte_model.insert(TableWithBytearray(1, bytearray(b"bytearray data")))
+        byte_model.select(flavour=set)
+        new_engine.drop_database(DDBB_NAME)
 
 
 if __name__ == "__main__":

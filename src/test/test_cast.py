@@ -11,10 +11,11 @@ from typing import Any, NamedTuple, Type
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.caster import Caster, PLACEHOLDER
-import ormlambda.databases as repository
-from ormlambda import Column
-from ormlambda import Table
-from test.config import config_dict
+from ormlambda import Column, Table
+from test.config import create_env_engine
+
+
+repository = create_env_engine()
 
 
 class TestValues(Table):
@@ -35,8 +36,6 @@ table_obj = TestValues(
     data_NoneType=None,
     data_datetime=datetime(1998, 12, 16, 10, 50, 59),
 )
-
-mysql_repo = repository.MySQLRepository(**config_dict)
 
 
 class TestResultCast[TProp, TType](NamedTuple):
@@ -124,7 +123,7 @@ class TestResolverType(unittest.TestCase):
         ]
     )
     def test_for_column_with_column_obj[TProp](self, column: Column[TProp], table_obj: TestValues, result: TestResultCast) -> None:
-        caster = Caster(mysql_repo)
+        caster = Caster(repository)
         casted_data = caster.for_column(column, table_obj)
         self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
         self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)
@@ -146,7 +145,7 @@ class TestResolverType(unittest.TestCase):
         ]
     )
     def test_for_value[TProp](self, value: TProp, result: TestResultCast) -> None:
-        caster = Caster(mysql_repo)
+        caster = Caster(repository)
         casted_data = caster.for_value(value)
         self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
         self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)

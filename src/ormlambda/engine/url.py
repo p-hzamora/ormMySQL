@@ -1,9 +1,13 @@
+"""
+URL class extracted from SQLAlchemy
+"""
 from __future__ import annotations
 
 import re
 import collections.abc as collections_abc
 from typing import (
     Any,
+    Literal,
     cast,
     Iterable,
     Mapping,
@@ -23,7 +27,7 @@ from urllib.parse import (
 
 from . import utils
 
-
+type DrivernameType = Literal['mysql'] | str
 class URL(NamedTuple):
     """
     Represent the components of a URL used to connect to a database.
@@ -75,7 +79,7 @@ class URL(NamedTuple):
 
     """
 
-    drivername: str
+    drivername: DrivernameType
     """database backend and driver name, such as
     ``postgresql+psycopg2``
 
@@ -102,7 +106,7 @@ class URL(NamedTuple):
     """an immutable mapping representing the query string.  contains strings
        for keys and either strings or tuples of strings for values, e.g.::
 
-            >>> from sqlalchemy.engine import make_url
+            >>> from ormlambda.engine import make_url
             >>> url = make_url(
             ...     "postgresql+psycopg2://user:pass@host/dbname?alt_host=host1&alt_host=host2&ssl_cipher=%2Fpath%2Fto%2Fcrt"
             ... )
@@ -133,7 +137,7 @@ class URL(NamedTuple):
     @classmethod
     def create(
         cls,
-        drivername: str,
+        drivername: DrivernameType,
         username: Optional[str] = None,
         password: Optional[str] = None,
         host: Optional[str] = None,
@@ -148,7 +152,7 @@ class URL(NamedTuple):
             :ref:`database_urls`
 
         :param drivername: the name of the database backend. This name will
-          correspond to a module in sqlalchemy/databases or a third party
+          correspond to a module in ormlambda/databases or a third party
           plug-in.
         :param username: The user name.
         :param password: database password.  Is typically a string, but may
@@ -273,7 +277,7 @@ class URL(NamedTuple):
 
     def set(
         self,
-        drivername: Optional[str] = None,
+        drivername: Optional[DrivernameType] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
         host: Optional[str] = None,
@@ -345,7 +349,7 @@ class URL(NamedTuple):
 
         E.g.::
 
-            >>> from sqlalchemy.engine import make_url
+            >>> from ormlambda.engine import make_url
             >>> url = make_url("postgresql+psycopg2://user:pass@host/dbname")
             >>> url = url.update_query_string(
             ...     "alt_host=host1&alt_host=host2&ssl_cipher=%2Fpath%2Fto%2Fcrt"
@@ -383,7 +387,7 @@ class URL(NamedTuple):
 
         E.g.::
 
-            >>> from sqlalchemy.engine import make_url
+            >>> from ormlambda.engine import make_url
             >>> url = make_url("postgresql+psycopg2://user:pass@host/dbname")
             >>> url = url.update_query_pairs(
             ...     [
@@ -456,7 +460,7 @@ class URL(NamedTuple):
         E.g.::
 
 
-            >>> from sqlalchemy.engine import make_url
+            >>> from ormlambda.engine import make_url
             >>> url = make_url("postgresql+psycopg2://user:pass@host/dbname")
             >>> url = url.update_query_dict(
             ...     {"alt_host": ["host1", "host2"], "ssl_cipher": "/path/to/crt"}
@@ -548,7 +552,7 @@ class URL(NamedTuple):
         function.  E.g.::
 
 
-            >>> from sqlalchemy.engine import make_url
+            >>> from ormlambda.engine import make_url
             >>> url = make_url(
             ...     "postgresql+psycopg2://user:pass@host/dbname?alt_host=host1&alt_host=host2&ssl_cipher=%2Fpath%2Fto%2Fcrt"
             ... )

@@ -23,6 +23,7 @@ class MySQLCaster(ICaster):
             NoneType: NoneTypeCaster,
             datetime: DatetimeCaster,
             bytes: BytesCaster,
+            bytearray: BytesCaster,
             tuple: IterableCaster,
             list: IterableCaster,
         }

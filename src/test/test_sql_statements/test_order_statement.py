@@ -7,12 +7,8 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import config_dict  # noqa: E402
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda.repository import BaseRepository
-from ormlambda.statements.interfaces import IStatements_two_generic
-
-from ormlambda import OrderType, Table, BaseModel, Column
+from test.config import create_env_engine  # noqa: E402
+from ormlambda import OrderType, Table, ORM, Column
 
 DDBBNAME = "__test_ddbb__"
 
@@ -25,19 +21,14 @@ class TestOrder(Table):
     c: int
 
 
-class TestOrderModel(BaseModel[TestOrder]):
-    def __new__[TRepo](cls, repository: BaseRepository) -> IStatements_two_generic[TestOrder, TRepo]:
-        return super().__new__(cls, TestOrder, repository)
-
-
 class TestSQLStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
+        cls.ddbb = create_env_engine()
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME
 
-        cls.tmodel = TestOrderModel(cls.ddbb)
+        cls.tmodel = ORM(TestOrder, cls.ddbb)
         cls.tmodel.create_table()
         cls.tmodel.insert(
             (

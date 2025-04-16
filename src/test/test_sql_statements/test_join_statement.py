@@ -8,9 +8,8 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 
 from ormlambda import ORM
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import BaseRepository, Table, Column, JoinType  # noqa: E402
-from test.config import config_dict  # noqa: E402
+from ormlambda import Table, Column, JoinType  # noqa: E402
+from test.config import create_env_engine  # noqa: E402
 from test.models import (  # noqa: E402
     TestTable,
 )
@@ -44,7 +43,7 @@ class JoinC(Table):
 class TestJoinStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb: BaseRepository = MySQLRepository(**config_dict)
+        cls.ddbb = create_env_engine()
 
         cls.ddbb.create_database(DDBBNAME, "replace")
         cls.ddbb.database = DDBBNAME

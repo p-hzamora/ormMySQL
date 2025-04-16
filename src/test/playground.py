@@ -1,14 +1,8 @@
-from test.env import (
-    DB_USERNAME,
-    DB_PASSWORD,
-    DB_HOST,
-    DB_DATABASE,
-)
+from test.env import DATABASE_URL
 import math
 
 
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
-from ormlambda import ORM
+from ormlambda import ORM, create_engine
 from ormlambda.databases.my_sql.clauses.joins import JoinType  # noqa: E402
 from test.models.staff import Staff  # noqa: E402
 from test.models.address import Address  # noqa: E402
@@ -16,7 +10,7 @@ from test.models.actor import Actor  # noqa: E402
 from test.models.store import Store  # noqa: E402
 
 
-db = MySQLRepository(user=DB_USERNAME, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)
+db = create_engine(DATABASE_URL)
 
 StaffModel = ORM(Staff, db)
 AddressModel = ORM(Address, db)

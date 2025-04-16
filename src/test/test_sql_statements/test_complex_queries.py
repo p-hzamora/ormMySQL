@@ -8,17 +8,15 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 
 from pydantic import BaseModel
-from test.config import config_dict  # noqa: E402
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
+from test.config import create_sakila_engine  # noqa: E402
 from test.models import Address  # noqa: F401
 from ormlambda import ORM, Column
 
-
+engine = create_sakila_engine()
 class TestComplexQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb = MySQLRepository(**config_dict)
-        cls.tmodel = ORM(Address, cls.ddbb)
+        cls.tmodel = ORM(Address, engine)
 
     def test_complex_1(self):
         class Response(BaseModel):
@@ -40,6 +38,24 @@ class TestComplexQueries(unittest.TestCase):
                 flavour=Response,
             )
         )
+        self.assertEqual(res, Response(pkUser=100, addressIdMax=200, addressIdMin=100))
+
+    def test_complex_2(self):
+        class Response(BaseModel):
+            pkUser: int
+            pkCity: int
+            count: int
+
+        res = self.tmodel.select_one(
+            (
+                Address.address_id,
+                Address.city_id,
+                Address.City.city,
+            ),
+            flavour=Response,
+        )
+
+        res.pkCity
         self.assertEqual(res, Response(pkUser=100, addressIdMax=200, addressIdMin=100))
 
 
