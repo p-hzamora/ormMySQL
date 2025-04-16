@@ -300,7 +300,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
 
         if GlobalChecker.is_lambda_function(selection):
             selection = selection(*self.models)
-        return Count[T](element=selection, alias_clause=alias_clause, context=self._query_builder._context)
+        return Count(element=selection, alias_clause=alias_clause, context=self._query_builder._context)
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:

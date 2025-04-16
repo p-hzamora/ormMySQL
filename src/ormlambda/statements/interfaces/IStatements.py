@@ -134,7 +134,7 @@ class IStatements[T: Table](ABC):
     @abstractmethod
     def count(
         self,
-        selection: Callable[[T], tuple] = lambda x: "*",
+        selection: Callable[[T], tuple] = ...,
         alias_clause="count",
         execute: bool = False,
     ) -> Optional[IStatements[T]]: ...
@@ -221,7 +221,7 @@ class IStatements[T: Table](ABC):
     # region select
     type SelectorType[TOri, *T] = Callable[[TOri], tuple[*T]] | tuple[*T]
     type SelectorFlavourType[T, TResponse] = Optional[Callable[[T], TResponse]] | TResponse
-    type SelectorOneType[T,TResponse] = Callable[[T,TResponse]]| TResponse
+    type SelectorOneType[T, TResponse] = Callable[[T, TResponse]] | TResponse
 
     @overload
     def select[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](self, selector: SelectorType[T, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], *, by: Optional[Enum] = ...) -> Select10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]: ...
@@ -248,7 +248,6 @@ class IStatements[T: Table](ABC):
     @overload
     def select(self) -> Tuple[T]: ...
 
-
     # @overload
     # def select[TFlavour](self, selector: Optional[Callable[[T], tuple]] = ..., *, cast_to_tuple: bool = ..., flavour: Type[TFlavour], by: Optional[Enum] = ..., **kwargs) -> TFlavour: ...
     @overload
@@ -256,7 +255,7 @@ class IStatements[T: Table](ABC):
     @overload
     def select[*TRes](self, selector: SelectorFlavourType[T, tuple[*TRes]] = ..., *, flavour: Type[tuple], by: Optional[Enum] = ..., **kwargs) -> tuple[tuple[*TRes]]: ...
     @overload
-    def select[TFlavour](self, selector: SelectorFlavourType[T, tuple] = ..., *, flavour: Type[TFlavour], by: Optional[Enum] = ..., **kwargs) -> tuple[TFlavour,...]: ...
+    def select[TFlavour](self, selector: SelectorFlavourType[T, tuple] = ..., *, flavour: Type[TFlavour], by: Optional[Enum] = ..., **kwargs) -> tuple[TFlavour, ...]: ...
 
     @abstractmethod
     def select[TValue, TFlavour, P](self, selector: SelectorFlavourType[T, tuple[TValue, P]] = ..., *, cast_to_tuple: bool = ..., flavour: Type[TFlavour] = ..., by: JoinType = ..., **kwargs): ...
