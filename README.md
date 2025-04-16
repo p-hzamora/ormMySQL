@@ -2,7 +2,7 @@
 ![downloads](https://img.shields.io/pypi/dm/ormlambda?label=downloads)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
 
-# ormMySQL
+# ormlambda Documentation
 This ORM is designed to connect with a MySQL server, facilitating the management of various database queries. Built with flexibility and efficiency in mind, this ORM empowers developers to interact with the database using lambda functions, allowing for concise and expressive query construction. 
 
 # Creating your first lambda query
@@ -23,14 +23,14 @@ database = MySQLRepository(user=USERNAME, password=PASSWORD, database="sakila", 
 ## Select all columns
 ```python
 from ormlambda import ORM
-from ormlambda.databases.my_sql import MySQLRepository
+from ormlambda import create_engine
 
 from models.address import Address
 from test.config import config_dict
 
-db = MySQLRepository(**config_dict)
+db = create_engine('mysql://root:1234@localhost:3306/sakila')
 
-AddressModel = ORM(Address,db)
+AddressModel = ORM(Address, db)
 
 result = AddressModel.select()
 ```
@@ -295,6 +295,92 @@ res = AddressModel.sum(Address.address_id, execute=True)
 ```python
 res = AddressModel.count(Address.address_id, execute=True)
 ```
+
+## 1. Concat
+
+The `concat` method allows you to concatenate multiple columns or values into a single string. This is particularly useful for creating derived fields in your queries.
+
+#### Usage
+
+```python
+response = ORM(Address, db).where(Address.City.Country.country.regex(r"^Spain")).first(
+            (
+                Address.address,
+                Address.City.city,
+                self.tmodel.concat(
+                    (
+                        "Address: ",
+                        Address.address,
+                        " - city: ",
+                        Address.City.city,
+                        " - country: ",
+                        Address.City.Country.country,
+                    )
+                ),
+            ),
+            flavour=dict,
+        )
+
+{
+    "address_address": "939 Probolinggo Loop",
+    "city_city": "A Coruña (La Coruña)",
+    "CONCAT": "Address: 939 Probolinggo Loop - city: A Coruña (La Coruña) - country: Spain",
+}
+```
+As you can see in the response, the result is a dictionary where the keys are a combination of the table name and the column name. This is done to avoid collisions with columns from other tables that might have the same name.
+
+Another elegant approach to adjust the response and obtain an object is by using the `flavour` attribute. You can pass a callable object, which will be used to instantiate it with the returned data.
+
+## Using BaseModel for Custom Responses (Pydantic)
+
+You can utilize `BaseModel` from Pydantic to create structured response models. This allows you to define the expected structure of your data, ensuring type safety and validation.
+
+### Example: Creating a Custom Response Model
+
+You can create a custom response model by subclassing `BaseModel`. In this model, you define the fields that you expect in your response, along with their types.
+
+```python
+class AddressCombine(BaseModel):
+    address: str
+    city: str
+    country: str
+
+    model_config: ConfigDict = {"extra": "forbid"}
+
+ddbb = MySQLRepository(**config_dict)
+model = ORM(Address, ddbb)
+select = (
+    model.order(lambda x: x.City.Country.country, "DESC")
+    .limit(10)
+    .where(Address.City.Country.country == "Spain")
+    .first(
+        lambda x: (
+            x.address,
+            x.City.city,
+            x.City.Country.country,
+        ),
+        flavour=AddressCombine,
+    )
+)
+```
+
+Once you execute the query, the result will be an instance of your custom model. You can access the fields directly, ensuring that the data adheres to the structure you defined.
+
+```python
+
+
+print(select.address)
+print(select.city)
+print(select.country)
+```
+
+
+<!-- ### 2. Having
+
+The `having` method is used to filter results based on aggregate functions. It is typically used in conjunction with `group by` clauses.
+
+#### Usage -->
+
 
 ## Combine aggregation method
 As shown in the previous examples, setting the `execute` attribute to `True` allows us to perform the corresponding query in a single line. However, if you're looking to improve efficiency, you can combine all of them into one query.
