@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, Type, Optional, TYPE_CHECKING
+from typing import Iterable, Type, Optional, TYPE_CHECKING, overload
 import abc
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
@@ -25,17 +25,38 @@ class Column[TProp]:
         "_check",
     )
 
+    @overload
+    def __init__(self, *, column_name: str): ...
+
+    @overload
     def __init__[T: Table](
         self,
         dtype: Type[TProp],
+        *,
         is_primary_key: bool = False,
         is_auto_generated: bool = False,
         is_auto_increment: bool = False,
         is_unique: bool = False,
         check_types: bool = True,
+    ) -> None: ...
+
+    def __init__[T: Table](
+        self,
+        dtype: Optional[Type[TProp]] = None,
         *,
+        is_primary_key: bool = False,
+        is_auto_generated: bool = False,
+        is_auto_increment: bool = False,
+        is_unique: bool = False,
+        check_types: bool = True,
         column_name: Optional[str] = None,
     ) -> None:
+        if dtype is None and column_name is None:
+            raise AttributeError("You must specify either the 'dtype' or 'column_name' attribute.")
+
+        if column_name is not None:
+            dtype = type(column_name)
+
         self.dtype: Type[TProp] = dtype
         self.table: Optional[TableType[T]] = None
         self.column_name: Optional[str] = column_name
@@ -72,7 +93,9 @@ class Column[TProp]:
     def __hash__(self) -> int:
         return hash(
             (
+                self.dtype,
                 self.column_name,
+                self.table,
                 self.is_primary_key,
                 self.is_auto_generated,
                 self.is_auto_increment,
