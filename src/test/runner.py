@@ -26,6 +26,7 @@ from test.test_queries import (
 )
 
 from test.test_sql_statements import (
+    test_complex_queries,
     test_concat as test_concat_sql,
     test_count_statement,
     test_join_statement,
@@ -75,6 +76,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_where_query),
         *loader.loadTestsFromModule(test_max_statement),
         # region statement tests
+        *loader.loadTestsFromModule(test_complex_queries),
         *loader.loadTestsFromModule(test_concat_sql),
         *loader.loadTestsFromModule(test_count_statement),
         *loader.loadTestsFromModule(test_join_statement),
