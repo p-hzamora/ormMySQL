@@ -97,7 +97,7 @@ class TestComplexQueries(unittest.TestCase):
             .first(
                 (
                     self.amodel.alias(Address.City.Country.country, "countryName"),
-                    self.amodel.count(alias_clause="contar"),
+                    self.amodel.count(alias="contar"),
                 ),
                 flavour=Response,
                 by=JoinType.LEFT_EXCLUSIVE,
