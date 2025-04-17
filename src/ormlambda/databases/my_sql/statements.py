@@ -290,16 +290,16 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return self
 
     @override
-    def count(
+    def count[TProp](
         self,
-        selection: None | Iterable[Table] | Callable[[T], tuple] = lambda x: "*",
+        selection: None | SelectCols[T,TProp] = lambda x: "*",
         alias="count",
         execute: bool = False,
     ) -> Optional[int]:
         if execute is True:
             return self.select_one(self.count(selection, alias, False), flavour=dict)[alias]
 
-        selection = GlobalChecker.resolved_callback_object(selection,self.models)
+        selection = GlobalChecker.resolved_callback_object(selection, self.models)
         return Count(element=selection, alias_clause=alias, context=self._query_builder._context)
 
     @override
@@ -328,7 +328,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return self
 
     @override
-    def concat(self, selector: SelectCols[T,str], alias: str = "concat") -> IAggregate:
+    def concat(self, selector: SelectCols[T, str], alias: str = "concat") -> IAggregate:
         return func.Concat[T](
             values=selector,
             alias_clause=alias,
@@ -338,10 +338,11 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     @override
     def max[TProp](
         self,
-        column: Callable[[T], TProp],
+        column: SelectCols[T, TProp],
         alias: str = "max",
         execute: bool = False,
-    ) -> TProp:
+    ) -> int:
+        column = GlobalChecker.resolved_callback_object(column, self.models)
         if execute is True:
             return self.select_one(self.max(column, alias, execute=False), flavour=dict)[alias]
         return func.Max(elements=column, alias_clause=alias, context=self._query_builder._context)
@@ -349,10 +350,11 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     @override
     def min[TProp](
         self,
-        column: Callable[[T], TProp],
+        column: SelectCols[T, TProp],
         alias: str = "min",
         execute: bool = False,
-    ) -> TProp:
+    ) -> int:
+        column = GlobalChecker.resolved_callback_object(column, self.models)
         if execute is True:
             return self.select_one(self.min(column, alias, execute=False), flavour=dict)[alias]
         return func.Min(elements=column, alias_clause=alias, context=self._query_builder._context)
@@ -360,10 +362,11 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     @override
     def sum[TProp](
         self,
-        column: Callable[[T], TProp],
+        column: SelectCols[T, TProp],
         alias: str = "sum",
         execute: bool = False,
-    ) -> TProp:
+    ) -> int:
+        column = GlobalChecker.resolved_callback_object(column, self.models)
         if execute is True:
             return self.select_one(self.sum(column, alias, execute=False), flavour=dict)[alias]
         return func.Sum(elements=column, alias_clause=alias, context=self._query_builder._context)
