@@ -64,7 +64,7 @@ class TestConcat(unittest.TestCase):
                         Address.City.city,
                         " - country: ",
                         Address.City.Country.country,
-                    )
+                    ),alias="CONCAT"
                 ),
             ),
             flavour=dict,
