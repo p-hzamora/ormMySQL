@@ -31,7 +31,6 @@ from ..types import (
 )
 
 
-
 class IStatements[T: Table](ABC):
     @abstractmethod
     def create_table(self, if_exists: TypeExists = "fail") -> None: ...
@@ -132,12 +131,12 @@ class IStatements[T: Table](ABC):
     # endregion
     # region count
     @abstractmethod
-    def count(
+    def count[TProp](
         self,
-        selection: Callable[[T], tuple] = ...,
+        selection: None | SelectCols[T, TProp] = ...,
         alias: str = ...,
         execute: bool = False,
-    ) -> Optional[IStatements[T]]: ...
+    ) -> Optional[int]: ...
 
     # endregion
     # region delete
@@ -184,31 +183,31 @@ class IStatements[T: Table](ABC):
 
     # endregion
     # region max
-    @overload
+    @abstractmethod
     def max[TProp](
         self,
         column: SelectCols[T, TProp],
         alias: Optional[str] = ...,
-        execute: bool = ...,
-    ) -> TProp: ...
+        execute: bool = False,
+    ) -> int: ...
     # endregion
     # region min
-    @overload
+    @abstractmethod
     def min[TProp](
         self,
         column: SelectCols[T, TProp],
         alias: Optional[str] = ...,
-        execute: bool = ...,
-    ) -> TProp: ...
+        execute: bool = False,
+    ) -> int: ...
     # endregion
     # region sum
-    @overload
+    @abstractmethod
     def sum[TProp](
         self,
         column: SelectCols[T, TProp],
         alias: Optional[str] = ...,
-        execute: bool = ...,
-    ) -> TProp: ...
+        execute: bool = False,
+    ) -> int: ...
 
     @overload
     def join[FKTable](self, joins: TupleJoinType[FKTable] | tuple[*TupleJoinType[FKTable]]) -> JoinContext[tuple[*TupleJoinType[FKTable]]]: ...

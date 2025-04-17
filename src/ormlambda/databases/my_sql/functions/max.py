@@ -14,7 +14,7 @@ class Max(AggregateFunctionBase[None]):
 
     def __init__[TProp](
         self,
-        elements: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
+        elements: ColumnType[TProp],
         alias_clause: AliasType[ColumnType[TProp]] = "max",
         context: ClauseContextType = None,
     ):
