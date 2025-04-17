@@ -135,7 +135,7 @@ class IStatements[T: Table](ABC):
     def count(
         self,
         selection: Callable[[T], tuple] = ...,
-        alias_clause="count",
+        alias: str = ...,
         execute: bool = False,
     ) -> Optional[IStatements[T]]: ...
 

@@ -292,15 +292,15 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     def count(
         self,
         selection: None | Iterable[Table] | Callable[[T], tuple] = lambda x: "*",
-        alias_clause="count",
+        alias="count",
         execute: bool = False,
     ) -> Optional[int]:
         if execute is True:
-            return self.select_one(self.count(selection, alias_clause, False), flavour=dict)[alias_clause]
+            return self.select_one(self.count(selection, alias, False), flavour=dict)[alias]
 
         if GlobalChecker.is_lambda_function(selection):
             selection = selection(*self.models)
-        return Count(element=selection, alias_clause=alias_clause, context=self._query_builder._context)
+        return Count(element=selection, alias_clause=alias, context=self._query_builder._context)
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
