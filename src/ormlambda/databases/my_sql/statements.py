@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.statements.types import OrderTypes
     from ormlambda.sql.types import ColumnType
+    from ormlambda.statements.types import SelectCols
     from ormlambda.repository.interfaces import IRepositoryBase
     from ormlambda.statements.interfaces import IStatements_two_generic
     from ormlambda.repository.interfaces.IRepositoryBase import TypeExists
