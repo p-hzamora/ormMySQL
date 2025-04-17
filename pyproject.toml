@@ -3,7 +3,7 @@ line-length = 320
 
 [tool.poetry]
 name = "ormlambda"
-version = "3.10.1"
+version = "3.10.2"
 description = "ORM designed to interact with the database (currently with MySQL) using lambda functions and nested functions"
 authors = ["p-hzamora <p.hzamora@icloud.com>"]
 readme = "README.md"
