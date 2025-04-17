@@ -10,10 +10,10 @@ from typing import (
 import enum
 
 
-from ormlambda.common.enums import JoinType
-
 if TYPE_CHECKING:
+    from ormlambda.common.enums import JoinType
     from ormlambda.sql.comparer import Comparer
+    from ormlambda.sql.types import ColumnType
 
 type OrderTypes = Literal["ASC", "DESC"] | OrderType | Iterable[OrderType]
 
@@ -52,3 +52,6 @@ type WhereTypes[LTable, LProp, RTable, RProp] = Union[
     tuple[Comparer[LTable, LProp, RTable, RProp], ...],
     Callable[[LTable], WhereTypes[LTable, LProp, RTable, RProp]],
 ]
+
+
+type SelectCols[T, TProp] = Callable[[T], ColumnType[TProp]] | ColumnType[TProp]

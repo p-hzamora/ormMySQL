@@ -27,9 +27,9 @@ from ..types import (
     Select10,
     TypeExists,
     WhereTypes,
+    SelectCols,
 )
 
-type SelectCols[T, TProp] = Callable[[T], ColumnType[TProp]] | ColumnType[TProp]
 
 
 class IStatements[T: Table](ABC):
@@ -174,17 +174,13 @@ class IStatements[T: Table](ABC):
 
     # endregion
     # region order
-    @overload
-    def order[TValue](self, _lambda_col: Callable[[T], TValue]) -> IStatements[T]: ...
-    @overload
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderTypes) -> IStatements[T]: ...
     @abstractmethod
-    def order[TValue](self, _lambda_col: Callable[[T], TValue], order_type: OrderTypes) -> IStatements[T]: ...
+    def order[TValue](self, columns: SelectCols[T, TValue], order_type: OrderTypes) -> IStatements[T]: ...
 
     # endregion
     # region concat
     @overload
-    def concat(self, selector: Callable[[T], str], alias: str = "CONCAT") -> IAggregate: ...
+    def concat(self, selector: SelectCols[T, str], alias: str = "concat") -> IAggregate: ...
 
     # endregion
     # region max
