@@ -299,16 +299,14 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         if execute is True:
             return self.select_one(self.count(selection, alias, False), flavour=dict)[alias]
 
-        if GlobalChecker.is_lambda_function(selection):
-            selection = selection(*self.models)
+        selection = GlobalChecker.resolved_callback_object(selection,self.models)
         return Count(element=selection, alias_clause=alias, context=self._query_builder._context)
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
 
-        if GlobalChecker.is_lambda_function(conditions):
-            conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
+        conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
         self._query_builder.add_statement(Where(*conditions))
@@ -316,8 +314,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
 
     @override
     def having(self, conditions: WhereTypes) -> IStatements_two_generic[T, MySQLConnection]:
-        if GlobalChecker.is_lambda_function(conditions):
-            conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
+        conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
         self._query_builder.add_statement(Having(*conditions))
@@ -325,13 +322,13 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
 
     @override
     def order[TValue](self, columns: Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, MySQLConnection]:
-        query = GlobalChecker.resolved_callback_object(columns, self._models) if GlobalChecker.is_lambda_function(columns) else columns
+        query = GlobalChecker.resolved_callback_object(columns, self._models)
         order = Order(query, order_type)
         self._query_builder.add_statement(order)
         return self
 
     @override
-    def concat(self, selector: str | Callable[[T], str], alias: str = "CONCAT") -> IAggregate:
+    def concat(self, selector: SelectCols[T,str], alias: str = "concat") -> IAggregate:
         return func.Concat[T](
             values=selector,
             alias_clause=alias,
@@ -385,7 +382,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         by: JoinType = JoinType.INNER_JOIN,
         **kwargs,
     ):
-        select_clause = GlobalChecker.resolved_callback_object(selector, self._models) if GlobalChecker.is_lambda_function(selector) else selector
+        select_clause = GlobalChecker.resolved_callback_object(selector, self._models)
 
         if selector is None:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
