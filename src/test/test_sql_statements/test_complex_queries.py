@@ -10,31 +10,54 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from pydantic import BaseModel
 from test.config import create_sakila_engine  # noqa: E402
-from test.models import Address  # noqa: F401
-from ormlambda import ORM, Column, OrderType
+from test.models import Address, City  # noqa: F401
+from ormlambda import ORM, Column, OrderType, JoinType
 
 engine = create_sakila_engine()
+
+
+class Response(BaseModel):
+    country: str
+    sumCities: int
 
 
 class TestComplexQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.tmodel = ORM(Address, engine)
+        cls.amodel = ORM(Address, engine)
+        cls.cmodel = ORM(City, engine)
+
+    def query(self, char_to_filter: str, limit: Optional[int] = None, offset: int = 0) -> tuple[Response, ...] | Response:
+        response = self.cmodel.order(Column(column_name="sumCities"), "DESC").where([City.Country.country.like(f"%{char_to_filter}%")]).groupby(City.Country.country)
+
+        if limit:
+            response.limit(limit)
+
+        if offset:
+            response.offset(offset)
+
+        res = response.select(
+            (
+                City.Country.country,
+                self.cmodel.count(City, "sumCities"),
+            ),
+            flavour=Response,
+        )
+        return res[0] if len(res) == 1 else res
 
     def test_complex_1(self):
         class Response(BaseModel):
             pkCity: int
             count: int
 
-        count = Column(column_name="count")
         res = (
-            self.tmodel.where(Address.city_id >= 312)
-            .having(count > 1)
+            self.amodel.where(Address.city_id >= 312)
+            .having(Column(column_name="count") > 1)
             .groupby(Address.city_id)
             .select(
                 (
-                    self.tmodel.alias(Address.city_id, "pkCity"),
-                    self.tmodel.count(Address.address_id, "count"),
+                    self.amodel.alias(Address.city_id, "pkCity"),
+                    self.amodel.count(Address.address_id, "count"),
                 ),
                 flavour=Response,
             )
@@ -45,64 +68,44 @@ class TestComplexQueries(unittest.TestCase):
         )
         self.assertTupleEqual(res, RESULT)
 
-    def test_AAextract_countries_with_white_space_in_the_name(self):
-        class Response(BaseModel):
-            country: str
-            sumAddress: int
-            sumCities: int
-            query: Optional[str] = None
+    def test_extract_countries_with_white_space_in_the_name(self):
+        res = self.query("spain")
+        self.assertEqual(res, Response(country="Spain", sumCities=5))
 
-        def query(char_to_filter: str, limit: Optional[int] = None, offset: int = 0) -> Response:
-            response = (
-                self.tmodel.order(Column(column_name="sumAddress"), "DESC")
-                .where(
-                    [
-                        Address.City.Country.country.like(f"%{char_to_filter}%"),
-                    ]
-                )
-                .groupby(Address.City.Country.country)
-            )
+    def test_dicctioanry_of_countries_with_commans_dots_and_white_spaces(self):
+        result = {}
 
-            if limit:
-                response.limit(limit)
+        for char in " ", ".", ",":
+            q = self.query(char, limit=1)
+            result[char] = q
 
-            if offset:
-                response.offset(offset)
+        EXPECTED = {
+            " ": Response(country="United States", sumCities=35),
+            ".": Response(country="Virgin Islands, U.S.", sumCities=1),
+            ",": Response(country="Congo, The Democratic Republic of the", sumCities=2),
+        }
+        self.assertEqual(result, EXPECTED)
 
-            _query = response.select(
-                (
-                    # self.tmodel.count(Address.address_id, "sumAddress"),
-                    self.tmodel.count(Address.City, "sumCities"),
-                    Address.City.Country.country,
-                ),
-                flavour=Response,
-            )
-            return _query, self.tmodel.query
-
-        res, query_ = query("spain")
-
-        self.assertEqual(res, Response(pkAddress=100, addressIdMax=200, addressIdMin=100))
-
-    def test_complex_3(self):
+    def test_get_country_with_more_address_registered(self):
         class Response(BaseModel):
             countryName: str
             contar: int
 
-        count = Column(column_name="contar")
         res = (
-            self.tmodel.order("contar", OrderType.DESC)
+            self.amodel.order("contar", OrderType.DESC)
             .groupby(Address.City.Country.country)
-            .having(count == 1)
             .first(
                 (
-                    self.tmodel.alias(Address.City.Country.country, "countryName"),
-                    self.tmodel.count(alias_clause="contar"),
+                    self.amodel.alias(Address.City.Country.country, "countryName"),
+                    self.amodel.count(alias_clause="contar"),
                 ),
                 flavour=Response,
+                by=JoinType.LEFT_EXCLUSIVE,
             )
         )
 
-        pass
+        EXPECTED = Response(countryName="India", contar=60)
+        self.assertEqual(res, EXPECTED)
 
 
 if __name__ == "__main__":
