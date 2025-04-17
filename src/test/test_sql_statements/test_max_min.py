@@ -47,5 +47,23 @@ class MaxMinTest(unittest.TestCase):
         self.assertEqual(res.addressIdMin, 100)
 
 
+    def test_max_with_lambda(self):
+        res1 = self.tmodel.groupby(Address.address_id).first(self.tmodel.max(Address.address_id), flavour=dict)
+        res2 = self.tmodel.groupby(Address.address_id).first(self.tmodel.max(lambda x: x.address_id), flavour=dict)
+
+        self.assertDictEqual(res1, res2)
+
+    def test_min_with_lambda(self):
+        res1 = self.tmodel.groupby(Address.address_id).first(self.tmodel.min(Address.address_id), flavour=dict)
+        res2 = self.tmodel.groupby(Address.address_id).first(self.tmodel.min(lambda x: x.address_id), flavour=dict)
+
+        self.assertDictEqual(res1, res2)
+
+    def test_sum_with_lambda(self):
+        res1 = self.tmodel.groupby(Address.address_id).first(self.tmodel.sum(Address.address_id), flavour=dict)
+        res2 = self.tmodel.groupby(Address.address_id).first(self.tmodel.sum(lambda x: x.address_id), flavour=dict)
+
+        self.assertDictEqual(res1, res2)
+
 if __name__ == "__main__":
     unittest.main()

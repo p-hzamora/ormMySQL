@@ -129,70 +129,30 @@ class TestJoinStatements(unittest.TestCase):
         )
         self.assertTupleEqual(select, theorical_result)
 
-    # def test_used_of_count_agg_with_join_allowing_NULL(self):
-    #     result = (
-    #         self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN)
-    #         .where(
-    #             [
-    #                 lambda b, a_foreign: a_foreign.pk_a == 1,
-    #                 lambda b, _: b.fk_c == 2,
-    #             ]
-    #         )
-    #         .select_one(
-    #             lambda b, a: (self.model_a.count(lambda a: a.pk_a),),
-    #             flavour=dict,
-    #         )
-    #     )
-    #     self.assertEqual(result["count"], 4)
+    def test_used_of_count_agg_with_join_allowing_NULL(self):
+        with self.model_b.join([(JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN)]):
+            result = self.model_b.where(
+                [
+                    JoinA.pk_a == 1,
+                    JoinB.fk_c == 2,
+                ]
+            ).count(JoinA.pk_a, execute=True)
+        self.assertEqual(result, 4)
 
-    # def test_used_of_pandas_as_flavour(self):
-    #     import pandas as pd
 
-    #     columns = [["ff", "aa", "count"]]
-    #     result = (
-    #         self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN)
-    #         .group_by(lambda b, a: b.fk_a)
-    #         .select(
-    #             lambda b, a: (
-    #                 b.fk_a,
-    #                 a.data_a,
-    #                 self.model_b.count(lambda b: b.fk_a),
-    #             ),
-    #             flavour=pd.DataFrame,
-    #             columns=columns,
-    #             cast_to_tuple=False,
-    #         )
-    #     )
-    #     result_to_tuple = (
-    #         self.model_b.join(JoinA, lambda b, a: b.fk_a == a.pk_a, JoinType.INNER_JOIN)
-    #         .group_by(lambda b, a: b.fk_a)
-    #         .select(
-    #             lambda b, a: (
-    #                 b.fk_a,
-    #                 a.data_a,
-    #                 self.model_b.count(lambda b: b.fk_a),
-    #             ),
-    #             flavour=tuple,
-    #             cast_to_tuple=True,
-    #         )
-    #     )
+    def test_alias(self):
+        keys = self.model_b.select_one(
+            lambda x: (
+                self.model_b.alias(x.data_b, "data_b_de b"),
+                self.model_b.alias(x.fk_a, "fk_a de b"),
+            ),
+            flavour=dict,
+        )
 
-    #     df2 = pd.DataFrame(columns=columns, data=result_to_tuple)
-    #     self.assertTrue(result.equals(df2))
+        mssg: str = "SELECT `b`.data_b AS `data_b_de b`, `b`.fk_a AS `fk_a de b` FROM b AS `b` LIMIT 1"
 
-    # def test_alias(self):
-    #     keys = self.model_b.select_one(
-    #         lambda x: (
-    #             self.model_b.alias(lambda x: x.data_b, "data_b_de b"),
-    #             self.model_b.alias(lambda x: x.fk_a, "fk_a de b"),
-    #         ),
-    #         flavour=dict,
-    #     )
-
-    #     mssg: str = "SELECT b.data_b as `data_b_de b`, b.fk_a as `fk_a de b` FROM b\nLIMIT 1"
-
-    #     self.assertTupleEqual(tuple(keys), ("data_b_de b", "fk_a de b"))
-    #     self.assertEqual(mssg, self.model_b.query)
+        self.assertTupleEqual(tuple(keys), ("data_b_de b", "fk_a de b"))
+        self.assertEqual(mssg, self.model_b.query)
 
 
 if __name__ == "__main__":
