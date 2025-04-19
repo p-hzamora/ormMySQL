@@ -5,11 +5,11 @@ from typing import Any, Optional, Type, override, TYPE_CHECKING
 from ormlambda.common.interfaces.INonQueryCommand import INonQueryCommand
 
 if TYPE_CHECKING:
-    from ormlambda.repository import IRepositoryBase
+    from ormlambda.repository import BaseRepository
     from ormlambda import Table
 
 
-class NonQueryBase[T: Type[Table], TRepo: IRepositoryBase](INonQueryCommand):
+class NonQueryBase[T: Type[Table], TRepo: BaseRepository](INonQueryCommand):
     __slots__: tuple[str, ...] = ("_model", "_repository", "_values", "_query")
 
     def __init__(self, model: T, repository: TRepo) -> None:
