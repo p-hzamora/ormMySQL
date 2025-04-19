@@ -6,7 +6,6 @@ if TYPE_CHECKING:
 from ormlambda import Table
 from ormlambda.repository import IRepositoryBase
 from ormlambda.components.delete import DeleteQueryBase
-from mysql.connector import MySQLConnection
 
 
 class DeleteQuery[T: Table](DeleteQueryBase[T, IRepositoryBase]):

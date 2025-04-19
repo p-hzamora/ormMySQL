@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 PLACEHOLDER: str = "%s"
 
 
-class Caster[TRepo]:
+class Caster:
     def __init__(self, repository: IRepositoryBase):
         self._repository: IRepositoryBase = repository
         self._caster = RepositoryTemplateDict().get(repository).caster
