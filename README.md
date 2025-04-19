@@ -56,10 +56,12 @@ Once the `AddressModel` class is created, we will not only be able to access all
 
 ```python
 from models.address import Address
+from ormlambda import create_engine, ORM
 
-db = MySQLRepository(**config_dict)
+db = create_engine('mysql://root:1234@localhost:3306/sakila')
 
-AddressModel = ORM(Address,db)
+
+AddressModel = ORM(Address, db)
 
 result = AddressModel.where(Address.City.Country.country.regex(r"^[aA]")).select(
     lambda address: (
@@ -347,10 +349,11 @@ class AddressCombine(BaseModel):
 
     model_config: ConfigDict = {"extra": "forbid"}
 
-ddbb = MySQLRepository(**config_dict)
-model = ORM(Address, ddbb)
+db = create_engine('mysql://root:1234@localhost:3306/sakila')
+
 select = (
-    model.order(lambda x: x.City.Country.country, "DESC")
+    ORM(Address, db)
+    .order(lambda x: x.City.Country.country, "DESC")
     .limit(10)
     .where(Address.City.Country.country == "Spain")
     .first(
