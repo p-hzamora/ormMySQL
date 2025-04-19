@@ -4,7 +4,6 @@ from enum import Enum
 from abc import abstractmethod, ABC
 
 
-from ormlambda.common.enums import JoinType
 
 if TYPE_CHECKING:
     from ormlambda.repository import BaseRepository
@@ -12,6 +11,10 @@ if TYPE_CHECKING:
     from ormlambda.sql.clause_info import IAggregate
     from ormlambda.sql.types import TupleJoinType, ColumnType
     from ormlambda.databases.my_sql.join_context import JoinContext
+    from ormlambda.common.enums import JoinType
+    from ormlambda.sql.clause_info import ClauseInfo
+    from ormlambda.sql.types import AliasType
+
 
 from ..types import (
     OrderTypes,
@@ -319,7 +322,7 @@ class IStatements[T: Table](ABC):
     # endregion
 
     @abstractmethod
-    def alias(self, column: Callable[[T], Any], alias: str) -> IStatements[T]: ...
+    def alias[TProp](self, column: ColumnType[TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]: ...
 
 
 class IStatements_two_generic[T, TPool](IStatements[T]):

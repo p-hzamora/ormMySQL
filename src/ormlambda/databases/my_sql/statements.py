@@ -11,6 +11,7 @@ from mysql.connector import MySQLConnection
 
 
 if TYPE_CHECKING:
+    from ormlambda.sql.types import AliasType
     from ormlambda import Table
     from ormlambda.statements.types import OrderTypes
     from ormlambda.sql.types import ColumnType
@@ -464,7 +465,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         return self
 
     @override
-    def alias[TProp](self, column: ColumnType[TProp], alias: str) -> ClauseInfo[T, TProp]:
+    def alias[TProp](self, column: ColumnType[TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]:
         return Alias(
             table=column.table,
             column=column,
