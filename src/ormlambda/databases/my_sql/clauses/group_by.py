@@ -1,7 +1,6 @@
 import typing as tp
 from ormlambda import Table
-from ormlambda.sql.clause_info.clause_info import AggregateFunctionBase
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
+from ormlambda.sql.clause_info import AggregateFunctionBase, ClauseInfoContext
 from ormlambda.sql.types import ColumnType
 
 
