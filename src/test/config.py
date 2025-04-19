@@ -1,17 +1,17 @@
 from typing import Optional, Sequence
-from ormlambda.engine.url import URL
 from ormlambda.repository.base_repository import BaseRepository
-from test.env import (
-    DB_USERNAME,
-    DB_PASSWORD,
-    DB_HOST,
-    DB_PORT,
-    DB_DATABASE,
-    DATABASE_URL,
-)
+from test.env import DATABASE_URL
 
 from ormlambda.databases.my_sql.types import MySQLArgs
-from ormlambda import create_engine
+from ormlambda import create_engine, URL, make_url
+
+url = make_url(DATABASE_URL)
+
+DB_USERNAME = url.username
+DB_PASSWORD = url.password
+DB_HOST = url.host
+DB_PORT = url.port
+DB_DATABASE = url.database
 
 config_dict: MySQLArgs = {
     "user": DB_USERNAME,
