@@ -33,6 +33,10 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
             # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
             raise Exception(f"'{model}' class does not inherit from Table class")
 
+    @override
+    def table_exists(self) -> bool:
+        return self._repository.table_exists(self._model.__table_name__)
+
     @staticmethod
     def __valid_repository(repository: Any) -> bool:
         if not isinstance(repository, BaseRepository):
@@ -67,8 +71,8 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         return self._models
 
     @property
-    @override
-    def repository(self) -> BaseRepository: ...
+    def repository(self) -> BaseRepository:
+        return self._repository
 
 
 class ClusterQuery[T]:

@@ -204,11 +204,6 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         super().__init__(model, repository=repository)
         self._query_builder = QueryBuilder()
 
-    @property
-    @override
-    def repository(self) -> IRepositoryBase:
-        return self._repository
-
     @override
     def create_table(self, if_exists: TypeExists = "fail") -> None:
         name: str = self._model.__table_name__
@@ -231,10 +226,6 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         query = self._model.create_table_query()
         self._repository.execute(query)
         return None
-
-    @override
-    def table_exists(self) -> bool:
-        return self._repository.table_exists(self._model.__table_name__)
 
     @override
     @clear_list
