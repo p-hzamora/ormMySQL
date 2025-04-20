@@ -21,11 +21,13 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ISelect):
         *,
         alias_table: AliasType[ClauseInfo] = "{table}",
         context: Optional[ClauseInfoContext] = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             tables,
             columns,
             context=context,
+            **kwargs,
         )
         self._alias_table = alias_table
         # We always need to add the self alias of the Select
