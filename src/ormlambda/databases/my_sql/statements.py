@@ -240,6 +240,9 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         by: JoinType = JoinType.INNER_JOIN,
         **kwargs,
     ):
+        if "alias" in kwargs:
+            alias = kwargs.pop("alias")
+            kwargs["alias_clause"] = alias
         select_clause = GlobalChecker.resolved_callback_object(selector, self._models)
 
         if selector is None:
@@ -254,6 +257,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         select = Select[T, *Ts](
             self._models,
             columns=select_clause,
+            **kwargs,
         )
         self._query_builder.add_statement(select)
 
