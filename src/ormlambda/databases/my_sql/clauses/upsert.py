@@ -1,15 +1,19 @@
-from typing import override, Any
+from __future__ import annotations
+from typing import override, TYPE_CHECKING
 
 from ormlambda import Table
 from ormlambda.components.upsert import UpsertQueryBase
-from ormlambda.repository import IRepositoryBase
-from mysql.connector import MySQLConnection
+from ormlambda.repository import IRepositoryBase, BaseRepository
+
 
 from .insert import InsertQuery
 
+if TYPE_CHECKING:
+    from mysql.connector import MySQLConnection
+
 
 class UpsertQuery[T: Table](UpsertQueryBase[T, IRepositoryBase]):
-    def __init__(self, model: T, repository: Any) -> None:
+    def __init__(self, model: T, repository: BaseRepository[MySQLConnection]) -> None:
         super().__init__(model, repository)
 
     @override
