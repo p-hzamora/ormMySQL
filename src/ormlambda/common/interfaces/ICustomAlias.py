@@ -1,4 +1,4 @@
-from ormlambda.common.interfaces import IDecompositionQuery
+# from ormlambda.common.interfaces import IDecompositionQuery
 
 
 class ICustomAlias[T, *Ts]: ...

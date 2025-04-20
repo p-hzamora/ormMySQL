@@ -2,7 +2,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from typing import Optional, Type, TYPE_CHECKING
-from collections import defaultdict
+# from collections import defaultdict
 import importlib.util
 import inspect
 import re
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 # from ormlambda import ForeignKey
-from .dfs_traversal import DFSTraversal
+# from .dfs_traversal import DFSTraversal
 
 
 class Node:
