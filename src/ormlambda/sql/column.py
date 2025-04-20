@@ -128,6 +128,9 @@ class Column[TProp]:
         return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value, *args)
 
     def contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
+        if not isinstance(other, tuple) and isinstance(other, Iterable):
+            other = tuple(other)
+
         return self.__comparer_creator(other, ConditionType.IN.value, *args)
 
     def not_contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
