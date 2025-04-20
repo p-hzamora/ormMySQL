@@ -1,6 +1,7 @@
 """
 URL class extracted from SQLAlchemy
 """
+
 from __future__ import annotations
 
 import re
@@ -27,7 +28,9 @@ from urllib.parse import (
 
 from . import utils
 
-type DrivernameType = Literal['mysql'] | str
+type DrivernameType = Literal["mysql"] | str
+
+
 class URL(NamedTuple):
     """
     Represent the components of a URL used to connect to a database.

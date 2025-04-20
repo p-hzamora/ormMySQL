@@ -12,7 +12,8 @@ from test.models import (  # noqa: E402
 
 from ormlambda.databases.my_sql import MySQLStatements  # noqa: E402
 
-engine = create_engine_for_db('sakila')
+engine = create_engine_for_db("sakila")
+
 
 class TestAbstractSQLStatements(unittest.TestCase):
     def test_constructor(self):

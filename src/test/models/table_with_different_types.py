@@ -1,11 +1,7 @@
 from shapely import Point
-from ormlambda import (
-    Column,
-    Table
-)
+from ormlambda import Column, Table
 
 from datetime import datetime
-
 
 
 class TableType(Table):

@@ -4,7 +4,6 @@ from enum import Enum
 from abc import abstractmethod, ABC
 
 
-
 if TYPE_CHECKING:
     from ormlambda.repository import BaseRepository
     from ormlambda import Table

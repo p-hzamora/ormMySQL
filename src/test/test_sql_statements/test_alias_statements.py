@@ -40,10 +40,10 @@ class TestAlias(unittest.TestCase):
     def test_alias_passing_alias_method(self):
         res = self.model.where(Address.City.Country.country == "Spain").first(
             (
-                self.model.alias(Address.address_id,'{column}'),
-                self.model.alias(Address.district,'{column}'),
-                self.model.alias(Address.City.city,'{column}'),
-                self.model.alias(Address.City.Country.country,'{column}'),
+                self.model.alias(Address.address_id, "{column}"),
+                self.model.alias(Address.district, "{column}"),
+                self.model.alias(Address.City.city, "{column}"),
+                self.model.alias(Address.City.Country.country, "{column}"),
             ),
             flavour=dict,
         )

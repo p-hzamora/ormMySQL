@@ -19,7 +19,9 @@ import shapely as shp
 DDBBNAME = "__test_ddbb__"
 
 
-env_engine= create_env_engine()
+env_engine = create_env_engine()
+
+
 class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

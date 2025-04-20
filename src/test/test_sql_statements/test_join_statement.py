@@ -139,7 +139,6 @@ class TestJoinStatements(unittest.TestCase):
             ).count(JoinA.pk_a, execute=True)
         self.assertEqual(result, 4)
 
-
     def test_alias(self):
         keys = self.model_b.select_one(
             lambda x: (

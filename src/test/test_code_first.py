@@ -24,7 +24,6 @@ class Test_my_sql(unittest.TestCase):
         cls.engine = create_engine_for_db(DB_NAME)
         cls.country_model = ORM(Country, cls.engine)
 
-
     def tearDown(self) -> None:
         self.ddbb.drop_database(DB_NAME)
 
