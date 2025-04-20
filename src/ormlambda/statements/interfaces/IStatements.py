@@ -316,13 +316,17 @@ class IStatements[T: Table](ABC):
     # endregion
 
     # region groupby
+    @overload
+    def groupby[TRepo](self, column: list[SelectCols[T, TRepo]]) -> IStatements[T]: ...
+    @overload
+    def groupby[TRepo](self, column: SelectCols[T, TRepo]) -> IStatements[T]: ...
     @abstractmethod
-    def groupby[TRepo](self, column: Callable[[T], TRepo]) -> IStatements[T]: ...
+    def groupby[TRepo](self, column: list[SelectCols[T, TRepo]] | SelectCols[T, TRepo]) -> IStatements[T]: ...
 
     # endregion
 
     @abstractmethod
-    def alias[TProp](self, column: ColumnType[TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]: ...
+    def alias[TProp](self, column: SelectCols[T, TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]: ...
 
 
 class IStatements_two_generic[T, TPool](IStatements[T]):

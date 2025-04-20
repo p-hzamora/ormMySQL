@@ -316,14 +316,18 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
         )
 
     @override
-    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T, *Ts], Any]):
+    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T, *Ts], Any]) -> IStatements_two_generic[T]:
+        column = GlobalChecker.resolved_callback_object(column, self.models)
+
         groupby = GroupBy(column=column, context=self._query_builder._context)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         self._query_builder.add_statement(groupby)
         return self
 
     @override
-    def alias[TProp](self, column: ColumnType[TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]:
+    def alias[TProp](self, column: SelectCols[T, TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]:
+        column = GlobalChecker.resolved_callback_object(column, self.models)
+
         return Alias(
             table=column.table,
             column=column,
