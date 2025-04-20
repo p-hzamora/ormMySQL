@@ -302,7 +302,7 @@ res = AddressModel.count(Address.address_id, execute=True)
 
 The `concat` method allows you to concatenate multiple columns or values into a single string. This is particularly useful for creating derived fields in your queries.
 
-#### Usage
+### Usage
 
 ```python
 response = ORM(Address, db).where(Address.City.Country.country.regex(r"^Spain")).first(
@@ -332,6 +332,60 @@ response = ORM(Address, db).where(Address.City.Country.country.regex(r"^Spain"))
 As you can see in the response, the result is a dictionary where the keys are a combination of the table name and the column name. This is done to avoid collisions with columns from other tables that might have the same name.
 
 Another elegant approach to adjust the response and obtain an object is by using the `flavour` attribute. You can pass a callable object, which will be used to instantiate it with the returned data.
+
+
+## 2. Group by
+
+The `groupby` method is used to filter results based on aggregate functions.
+
+### Usage
+```python
+from ormlambda import Column, ORM, create_engine
+from test.config import DATABASE_URL
+
+
+class Response(BaseModel):
+    district: str
+    count: int
+
+engine= create_engine(DATABASE_URL)
+model = ORM(Address,engine)
+
+count_name = Column(column_name="count")
+
+res = (
+    self.model
+    .groupby(Address.district)
+    .select(
+        (
+            Address.district,
+            self.model.count(Address.address),
+        ),
+        flavour=Response,
+    )
+)
+```
+
+## 3. Having
+
+The `having` method is used to filter results based on aggregate functions. It is typically used in conjunction with `group by` clauses.
+
+### Usage
+```python
+res = (
+    model
+    .groupby(Address.district)
+    .having(count_name > 4)
+    .select(
+        (
+            Address.district,
+            model.count(Address.address),
+        ),
+        flavour=Response,
+    )
+)
+```
+
 
 ## Using BaseModel for Custom Responses (Pydantic)
 
@@ -376,14 +430,6 @@ print(select.address)
 print(select.city)
 print(select.country)
 ```
-
-
-<!-- ### 2. Having
-
-The `having` method is used to filter results based on aggregate functions. It is typically used in conjunction with `group by` clauses.
-
-#### Usage -->
-
 
 ## Combine aggregation method
 As shown in the previous examples, setting the `execute` attribute to `True` allows us to perform the corresponding query in a single line. However, if you're looking to improve efficiency, you can combine all of them into one query.
