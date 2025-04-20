@@ -1,6 +1,5 @@
 from __future__ import annotations
 import typing as tp
-import abc
 from ormlambda import Table, Column
 
 from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
@@ -10,8 +9,15 @@ from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, Cla
 from ormlambda import ForeignKey
 from ormlambda.common.global_checker import GlobalChecker
 
-from ormlambda.sql.types import AliasType, TableType, ColumnType
-
+from ormlambda.sql.types import TableType, ColumnType
+from .clause_info_converter import (
+    ClauseInfoConverter,
+    ConvertFromAnyType,
+    ConvertFromForeignKey,
+    ConvertFromColumn,
+    ConvertFromIAggregate,
+    ConvertFromTable,
+)
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
 type ValueType = tp.Union[
@@ -22,69 +28,6 @@ type ValueType = tp.Union[
 ]
 
 
-class ClauseInfoConverter[T, TProp](abc.ABC):
-    @classmethod
-    @abc.abstractmethod
-    def convert(cls, data: T, alias_table: AliasType[ColumnType[TProp]] = "{table}", context: ClauseContextType = None) -> list[ClauseInfo[T]]: ...
-
-
-class ConvertFromAnyType(ClauseInfoConverter[None, None]):
-    @classmethod
-    def convert(cls, data: tp.Any, alias_table: AliasType = "{table}", context: ClauseContextType = None) -> list[ClauseInfo[None]]:
-        return [
-            ClauseInfo[None](
-                table=None,
-                column=data,
-                alias_table=alias_table,
-                alias_clause=None,
-                context=context,
-            )
-        ]
-
-
-class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None]):
-    @classmethod
-    def convert(cls, data: ForeignKey[LT, RT], alias_table=None, context: ClauseContextType = None) -> list[ClauseInfo[RT]]:
-        return ConvertFromTable[RT].convert(data.tright, data.alias, context)
-
-
-class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
-    @classmethod
-    def convert(cls, data: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = "{table}", context: ClauseContextType = None) -> list[ClauseInfo[None]]:
-        # COMMENT: if the property belongs to the main class, the columnn name in not prefixed. This only done if the property comes from any join.
-        clause_info = ClauseInfo[None](
-            table=data.table,
-            column=data,
-            alias_table=alias_table,
-            alias_clause="{table}_{column}",
-            context=context,
-        )
-        return [clause_info]
-
-
-class ConvertFromIAggregate(ClauseInfoConverter[None, None]):
-    @classmethod
-    def convert(cls, data: AggregateFunctionBase, alias_table=None, context: ClauseContextType = None) -> list[ClauseInfo[None]]:
-        return [data]
-
-
-class ConvertFromTable[T: Table](ClauseInfoConverter[T, None]):
-    @classmethod
-    def convert(cls, data: T, alias_table: AliasType[ColumnType] = "{table}", context: ClauseContextType = None) -> list[ClauseInfo[T]]:
-        """
-        if the data is Table, means that we want to retrieve all columns
-        """
-        return cls._extract_all_clauses(data, alias_table, context)
-
-    @staticmethod
-    def _extract_all_clauses(table: TableType[T], alias_table: AliasType[ColumnType], context: ClauseContextType = None) -> list[ClauseInfo[TableType[T]]]:
-        # all columns
-        column_clauses = []
-        for column in table.get_columns():
-            column_clauses.extend(ConvertFromColumn.convert(column, alias_table=alias_table, context=context))
-        return column_clauses
-
-
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
     def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType]) -> None: ...
@@ -93,7 +36,8 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
     def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str, context: ClauseContextType = ...) -> None: ...
 
-    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str = "{table}", *, context: ClauseContextType = ClauseInfoContext()) -> None:
+    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str = "{table}", *, context: ClauseContextType = ClauseInfoContext(), **kwargs) -> None:
+        self.kwargs = kwargs
         self._tables: tuple[TableType[T]] = tables if isinstance(tables, tp.Iterable) else (tables,)
 
         self._columns: tp.Callable[[T], tuple] = columns
@@ -145,7 +89,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         }
         classConverter = next((converter for obj, converter in VALUE_TYPE_MAPPED.items() if validation(data, obj)), ConvertFromAnyType)
 
-        return classConverter.convert(data, alias_table=self._alias_table, context=self._context)
+        return classConverter.convert(data, alias_table=self._alias_table, context=self._context, **self.kwargs)
 
     def __add_clause[TTable: TableType](self, clauses: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:
         if not isinstance(clauses, tp.Iterable):
