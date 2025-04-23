@@ -17,9 +17,8 @@ from ormlambda.repository.response import Response
 
 
 if TYPE_CHECKING:
-    from ormlambda.databases.my_sql.clauses.select import Select
+    from ormlambda.sql.clauses import _Select
     from .types import MySQLArgs
-
 
 
 class MySQLRepository(BaseRepository[MySQLConnectionPool]):
@@ -36,7 +35,15 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     #
 
-    def __init__(self, **kwargs: Unpack[MySQLArgs]):
+    def __init__(
+        self,
+        *,
+        user: str,
+        password: str,
+        host: str,
+        database: Optional[str] = None,
+        **kwargs: Unpack[MySQLArgs],
+    ):
         timeout = self.__add_connection_timeout(kwargs)
         name = self.__add_pool_name(kwargs)
         size = self.__add_pool_size(kwargs)
@@ -45,7 +52,14 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         attr["pool_name"] = name
         attr["pool_size"] = size
 
-        super().__init__(MySQLConnectionPool, **attr)
+        super().__init__(
+            user=user,
+            password=password,
+            host=host,
+            database=database,
+            pool=MySQLConnectionPool,
+            **attr,
+        )
 
     @staticmethod
     def __add_connection_timeout(kwargs: MySQLArgs) -> int:
@@ -92,7 +106,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
-        select: Select = kwargs.pop("select", None)
+        select: _Select = kwargs.pop("select", None)
 
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
@@ -194,9 +208,12 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
         config_without_db = temp_config.copy()
 
-        if "database" in config_without_db:
-            config_without_db.pop("database")
-        return CreateDatabase(type(self)(**config_without_db)).execute(name, if_exists)
+        new_repo = MySQLRepository(
+            user=config_without_db["user"],
+            password=config_without_db["password"],
+            host=config_without_db.get("host", None),
+        )
+        return CreateDatabase(new_repo).execute(name, if_exists)
 
     @property
     def database(self) -> Optional[str]:

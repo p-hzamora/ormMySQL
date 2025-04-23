@@ -29,15 +29,22 @@ class RepositoryTemplateDict[TRepo]:
             MySQLStatements,
         )
 
+        from ..databases.sqlite3 import (
+            SQLiteRepository,
+        )
+
         class MySQLTemplate[TCnx](Template[TCnx]):
             repository = MySQLRepository
             caster = MySQLCaster
             statement = MySQLStatements
 
+        class SQLiteTemplate[TCnx](Template[TCnx]):
+            repository = SQLiteRepository
+            caster = None  # SQLiteCaster
+            statement = None  # SQLiteStatements
+
         # FIXME [ ]: should return T instead of Template
-        cls._data: dict[IRepositoryBase, Template] = {
-            MySQLRepository: MySQLTemplate,
-        }
+        cls._data: dict[IRepositoryBase, Template] = {MySQLRepository: MySQLTemplate, SQLiteRepository: SQLiteTemplate}
 
         return cls._instance
 

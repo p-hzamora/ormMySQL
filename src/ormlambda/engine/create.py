@@ -6,6 +6,7 @@ from ormlambda import BaseRepository
 
 def create_engine(url: URL | str, **kwargs: Any) -> BaseRepository:
     from ormlambda.databases import MySQLRepository
+    from ormlambda.databases import SQLiteRepository
 
     # create url.URL object
     u = make_url(url)
@@ -13,6 +14,7 @@ def create_engine(url: URL | str, **kwargs: Any) -> BaseRepository:
 
     repo_selector = {
         "mysql": MySQLRepository,
+        "sqlite": SQLiteRepository,
     }
 
     if url.drivername not in repo_selector:
