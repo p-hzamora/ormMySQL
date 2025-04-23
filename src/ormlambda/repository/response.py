@@ -135,9 +135,3 @@ class Response[TFlavour, *Ts]:
             return False
 
         return clause_info.dtype is shp.Point
-
-    @staticmethod
-    def parser_data[T: Table, TProp](clause_info: ClauseInfo[T], data: TProp):
-        if clause_info.dtype is shp.Point:
-            return shp.from_wkt(data)
-        return data
