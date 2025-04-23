@@ -15,6 +15,5 @@ from .where import Where as Where
 from .having import Having as Having
 from .count import Count as Count
 from .group_by import GroupBy as GroupBy
-from .alias import Alias as Alias
 from .ST_AsText import ST_AsText as ST_AsText
 from .select import Select as Select

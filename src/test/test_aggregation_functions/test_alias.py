@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
-from ormlambda.databases.my_sql.clauses import Alias
+from ormlambda.sql.clauses.alias import Alias
 
 
 # from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext

@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 
 from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.clauses.alias import Alias
+
 from ormlambda.statements import BaseStatement
 from .clauses import DeleteQuery
 from .clauses import InsertQuery
@@ -35,7 +37,6 @@ from .clauses import Where
 from .clauses import Having
 from .clauses import Count
 from .clauses import GroupBy
-from .clauses import Alias
 
 
 from ormlambda import Table, Column
