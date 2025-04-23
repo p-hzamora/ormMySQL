@@ -116,8 +116,6 @@ class Response[TFlavour, *Ts]:
             set: _set,
             list: _list,
         }
-
-        selector.get(dict)()
         return selector.get(self._flavour, _default)(**kwargs)
 
     def _parser_response(self) -> TFlavour:
