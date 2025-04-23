@@ -10,15 +10,15 @@ from mysql.connector.pooling import MySQLConnectionPool  # noqa: F401
 from ormlambda.repository import BaseRepository
 
 # Custom libraries
-from ..clauses import CreateDatabase, TypeExists
-from ..clauses import DropDatabase
-from ..clauses import DropTable
+from .clauses import CreateDatabase, TypeExists
+from .clauses import DropDatabase
+from .clauses import DropTable
 from ormlambda.repository.response import Response
 
 
 if TYPE_CHECKING:
     from ormlambda.databases.my_sql.clauses.select import Select
-    from ..types import MySQLArgs
+    from .types import MySQLArgs
 
 
 
