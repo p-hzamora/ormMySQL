@@ -47,7 +47,7 @@ class Response[TFlavour, *Ts]:
     def is_many(self) -> bool:
         return self._response_values_index > 1
 
-    def response(self, _tuple: bool, **kwargs) -> TResponse[TFlavour, *Ts]:
+    def response(self, **kwargs) -> TResponse[TFlavour, *Ts]:
         if not self.is_there_response:
             return tuple([])
         cleaned_response = self._response_values
@@ -56,8 +56,6 @@ class Response[TFlavour, *Ts]:
             cleaned_response = self._parser_response()
 
         cast_flavour = self._cast_to_flavour(cleaned_response, **kwargs)
-        if _tuple is not True:
-            return cast_flavour
 
         return tuple(cast_flavour)
 

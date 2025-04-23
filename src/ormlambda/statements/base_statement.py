@@ -47,7 +47,7 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         return f"<Model: {self.__class__.__name__}>"
 
     def _return_flavour[TValue](self, query, flavour: Type[TValue], select, **kwargs) -> tuple[TValue]:
-        return self._repository.read_sql(query, flavour=flavour, model=self._model, select=select, **kwargs)
+        return self._repository.read_sql(query, flavour=flavour, select=select, **kwargs)
 
     def _return_model(self, select, query: str) -> tuple[tuple[T]]:
         response_sql = self._repository.read_sql(query, flavour=dict, model=self._model, select=select)  # store all columns of the SQL query

@@ -93,7 +93,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         """
 
         select: Select = kwargs.pop("select", None)
-        cast_to_tuple: bool = kwargs.pop("cast_to_tuple", True)
 
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
@@ -106,7 +105,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
                     columns=columns,
                     flavour=flavour,
                     select=select,
-                ).response(_tuple=cast_to_tuple, **kwargs)
+                ).response(**kwargs)
 
     # FIXME [ ]: this method does not comply with the implemented interface
     def create_tables_code_first(self, path: str | Path) -> None:
