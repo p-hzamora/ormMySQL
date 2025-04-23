@@ -1,18 +1,17 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda import Table
 from ormlambda.sql.clause_info import ClauseInfo
-from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
-from ormlambda.sql.types import TableType
 
 if tp.TYPE_CHECKING:
-    from ormlambda.sql.types import ColumnType
     from ormlambda import Table
+    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
+    from ormlambda.sql.types import TableType
+    from ormlambda.sql.types import ColumnType
     from ormlambda.sql.types import AliasType
 
 
-class Alias[T: Table](ClauseInfo[T]):
+class _Alias[T: Table](ClauseInfo[T]):
     def __init__[TProp](
         self,
         table: TableType[T],
@@ -26,3 +25,5 @@ class Alias[T: Table](ClauseInfo[T]):
         if not alias_clause:
             raise TypeError
         super().__init__(table, column, alias_table, alias_clause, context, keep_asterisk, preserve_context)
+
+__all__ = ["_Alias"]

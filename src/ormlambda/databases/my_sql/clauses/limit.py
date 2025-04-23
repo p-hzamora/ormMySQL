@@ -1,17 +1,6 @@
-from typing import override
-
-from ormlambda.common.interfaces.IQueryCommand import IQuery
+from ormlambda.sql.clauses import _Limit
 
 
-class Limit(IQuery):
-    LIMIT = "LIMIT"
-
-    def __init__(self, number: int) -> None:
-        if not isinstance(number, int):
-            raise ValueError
-        self._number: int = number
-
-    @override
-    @property
-    def query(self) -> str:
-        return f"{self.LIMIT} {self._number}"
+class Limit(_Limit):
+    def __init__(self, number):
+        super().__init__(number)

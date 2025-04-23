@@ -8,10 +8,8 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from ormlambda.sql.foreign_key import ForeignKey
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
-from ormlambda.databases.my_sql.clauses import (  # noqa: E402
-    JoinSelector,
-    JoinType,
-)
+from ormlambda import JoinType
+from ormlambda.sql.clauses import _JoinSelector
 from test.models import City, Country, Address  # noqa: E402
 # from test.models.address import Address
 
@@ -24,7 +22,7 @@ class TestJoinSelector(unittest.TestCase):
         return None
 
     def test_constructor(self):
-        join_selector = JoinSelector[Address, City](
+        join_selector = _JoinSelector[Address, City](
             where=Address.city_id == City.city_id,
             by=JoinType.INNER_JOIN,
         )
@@ -35,7 +33,7 @@ class TestJoinSelector(unittest.TestCase):
         )
 
     def test_inner_join(self):
-        join = JoinSelector[City, Country](
+        join = _JoinSelector[City, Country](
             where=City.country_id == Country.country_id,
             by=JoinType.INNER_JOIN,
         )
@@ -45,7 +43,7 @@ class TestJoinSelector(unittest.TestCase):
         self.assertEqual(query, query_parser)
 
     # def test_right_join(self):
-    #     join = JoinSelector[City, Country](
+    #     join = _JoinSelector[City, Country](
     #         table_left=City,
     #         table_right=Country,
     #         col_left="country_id",
@@ -59,7 +57,7 @@ class TestJoinSelector(unittest.TestCase):
     # self.assertEqual(query, query_parser)
 
     def test_left_join(self):
-        join = JoinSelector[City, Country](
+        join = _JoinSelector[City, Country](
             by=JoinType.LEFT_EXCLUSIVE,
             where=City.country_id == Country.country_id,
         )
@@ -71,27 +69,27 @@ class TestJoinSelector(unittest.TestCase):
     def test_join_selectors(self):
         ctx = ClauseInfoContext()
 
-        s1 = JoinSelector[Address, City](
+        s1 = _JoinSelector[Address, City](
             by=JoinType.LEFT_EXCLUSIVE,
             where=Address.city_id == City.city_id,
             context=ctx,
         )
 
-        s2 = JoinSelector[City, Country](
+        s2 = _JoinSelector[City, Country](
             by=JoinType.LEFT_EXCLUSIVE,
             where=City.country_id == Country.country_id,
             context=ctx,
         )
-        query_parser = JoinSelector.join_selectors(s1, s2)
+        query_parser = _JoinSelector.join_selectors(s1, s2)
         query = "LEFT JOIN city AS `city` ON address.city_id = `city`.city_id\nLEFT JOIN country AS `country` ON `city`.country_id = `country`.country_id"
         self.assertEqual(query, query_parser)
 
     def test__eq__method(self):
-        s1 = JoinSelector[Address, City](
+        s1 = _JoinSelector[Address, City](
             by=JoinType.LEFT_EXCLUSIVE,
             where=Address.city_id == City.city_id,
         )
-        s2 = JoinSelector[Address, City](
+        s2 = _JoinSelector[Address, City](
             by=JoinType.LEFT_EXCLUSIVE,
             where=Address.city_id == City.city_id,
         )

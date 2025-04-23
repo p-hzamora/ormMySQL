@@ -1,17 +1,6 @@
-from typing import override
-
-from ormlambda.common.interfaces.IQueryCommand import IQuery
+from ormlambda.sql.clauses import _Offset
 
 
-class Offset(IQuery):
-    OFFSET = "OFFSET"
-
-    def __init__(self, number: int) -> None:
-        if not isinstance(number, int):
-            raise ValueError
-        self._number: int = number
-
-    @override
-    @property
-    def query(self) -> str:
-        return f"{self.OFFSET} {self._number}"
+class Offset(_Offset):
+    def __init__(self, number):
+        super().__init__(number)

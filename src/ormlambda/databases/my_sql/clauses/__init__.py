@@ -5,7 +5,6 @@ from .drop_database import DropDatabase as DropDatabase
 from .drop_table import DropTable as DropTable
 from .insert import InsertQuery as InsertQuery
 from .joins import JoinSelector as JoinSelector
-from .joins import JoinType as JoinType
 from .limit import Limit as Limit
 from .offset import Offset as Offset
 from .order import Order as Order

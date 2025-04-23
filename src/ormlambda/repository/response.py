@@ -4,7 +4,7 @@ import shapely as shp
 
 # Custom libraries
 from ormlambda.caster import Caster
-from ormlambda.sql.clauses.alias import Alias
+from ormlambda.sql.clauses import _Alias
 
 if TYPE_CHECKING:
     from ormlambda import BaseRepository
@@ -88,7 +88,7 @@ class Response[TFlavour, *Ts]:
             replacer_dicc: dict[str, str] = {}
 
             for col in self._select.all_clauses:
-                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, Alias):
+                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, _Alias):
                     continue
                 replacer_dicc[col.alias_clause] = col.column
 

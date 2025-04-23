@@ -9,7 +9,7 @@ from ormlambda.sql.clause_info import ClauseInfo
 type ConcatResponse[TProp] = tuple[str | ColumnType[TProp]]
 
 
-class Concat[T](AggregateFunctionBase):
+class Concat[T](AggregateFunctionBase[T]):
     @staticmethod
     def FUNCTION_NAME() -> str:
         return "CONCAT"

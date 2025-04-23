@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 from ormlambda.sql.clause_info import ClauseInfo
-from ormlambda.sql.clauses.alias import Alias
+from ormlambda.sql.clauses.alias import _Alias
 
 from ormlambda.statements import BaseStatement
 from .clauses import DeleteQuery
@@ -42,7 +42,7 @@ from .clauses import GroupBy
 from ormlambda import Table, Column
 from ormlambda.common.enums import JoinType
 from . import functions as func
-from ormlambda.components.join import JoinContext, TupleJoinType
+from ormlambda.sql.clauses.join import JoinContext, TupleJoinType
 
 from ormlambda.common.global_checker import GlobalChecker
 from .query_builder import QueryBuilder
@@ -329,7 +329,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
     def alias[TProp](self, column: SelectCols[T, TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]:
         column = GlobalChecker.resolved_callback_object(column, self.models)
 
-        return Alias(
+        return _Alias(
             table=column.table,
             column=column,
             alias_clause=alias,

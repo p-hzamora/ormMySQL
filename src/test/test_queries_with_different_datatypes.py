@@ -62,7 +62,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         select = self.model.select_one(lambda x: x.points, flavour=tuple)
         self.assertEqual(select, shp.Point(5, 5))
 
-    def test_update_different_types(self):
+    def test_AAupdate_different_types(self):
         instance = TableType(
             pk=1,
             strings="strings",

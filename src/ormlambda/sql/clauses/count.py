@@ -1,19 +1,25 @@
 from __future__ import annotations
-from ormlambda.sql.clauses import _Count
+from ormlambda.sql.clause_info import AggregateFunctionBase
 from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 
 from ormlambda.sql.types import AliasType, ColumnType
 
 from ormlambda import Table
 
-from typing import TYPE_CHECKING
+import typing as tp
 
-if TYPE_CHECKING:
+from ormlambda.sql.types import ASTERISK
+
+if tp.TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import ColumnType, AliasType, TableType
 
 
-class Count[T: Table](_Count[T]):
+class _Count[T: Table](AggregateFunctionBase[T]):
+    @staticmethod
+    def FUNCTION_NAME() -> str:
+        return "COUNT"
+
     def __init__[TProp: Table](
         self,
         element: ColumnType[T] | TableType[TProp],
@@ -23,11 +29,17 @@ class Count[T: Table](_Count[T]):
         keep_asterisk: bool = True,
         preserve_context: bool = True,
     ) -> None:
+        table = self.extract_table(element)
+        column = element if self.is_column(element) else ASTERISK
+
         super().__init__(
-            element=element,
+            table=table if (alias_table or (context and table in context._table_context)) else None,
+            column=column,
             alias_table=alias_table,
             alias_clause=alias_clause,
             context=context,
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
         )
+
+__all__ = ["_Count"]

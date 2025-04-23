@@ -20,8 +20,8 @@ from test.models import (  # noqa: E402
 
 from ormlambda.common.errors import UnmatchedLambdaParameterError
 
+from ormlambda import JoinType  # noqa: E402
 from ormlambda.databases.my_sql.clauses.select import Select
-from ormlambda.databases.my_sql.clauses import JoinType  # noqa: E402
 from ormlambda.databases.my_sql import functions as func
 from ormlambda.databases.my_sql.clauses import Count
 

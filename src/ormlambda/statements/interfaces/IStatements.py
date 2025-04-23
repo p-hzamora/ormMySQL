@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.clause_info import IAggregate
     from ormlambda.sql.types import TupleJoinType, ColumnType
-    from ormlambda.components.join import JoinContext
+    from ormlambda.sql.clauses.join import JoinContext
     from ormlambda.common.enums import JoinType
     from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda.sql.types import AliasType
