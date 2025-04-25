@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ormlambda import BaseRepository
     from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
     from ormlambda import Table
-    from ormlambda.databases.my_sql.clauses.select import Select
+    from ormlambda.sql.clauses import _Select
 
 
 type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]
@@ -23,13 +23,13 @@ class Response[TFlavour, *Ts]:
         response_values: list[tuple[*Ts]],
         columns: tuple[str],
         flavour: Type[TFlavour],
-        select: Optional[Select] = None,
+        select: Optional[_Select] = None,
     ) -> None:
         self._repository: BaseRepository = repository
         self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
         self._flavour: Type[TFlavour] = flavour
-        self._select: Select = select
+        self._select: _Select = select
 
         self._response_values_index: int = len(self._response_values)
         # self.select_values()
@@ -50,10 +50,12 @@ class Response[TFlavour, *Ts]:
     def response(self, **kwargs) -> TResponse[TFlavour, *Ts]:
         if not self.is_there_response:
             return tuple([])
+        
+        # Cast data using caster
         cleaned_response = self._response_values
 
         if self._select is not None:
-            cleaned_response = self._parser_response()
+            cleaned_response = self._clean_response()
 
         cast_flavour = self._cast_to_flavour(cleaned_response, **kwargs)
 
@@ -109,19 +111,15 @@ class Response[TFlavour, *Ts]:
         }
         return selector.get(self._flavour, _default)(**kwargs)
 
-    def _parser_response(self) -> TFlavour:
+    def _clean_response(self) -> TFlavour:
         new_response: list[tuple] = []
         for row in self._response_values:
             new_row: list = []
             for i, data in enumerate(row):
                 alias = self._columns[i]
                 clause_info = self._select[alias]
-                if not self._is_parser_required(clause_info):
-                    new_row = row
-                    break
-                else:
-                    parse_data = self._caster.for_value(data, value_type=clause_info.dtype).from_database
-                    new_row.append(parse_data)
+                parse_data = self._caster.for_value(data, value_type=clause_info.dtype).from_database
+                new_row.append(parse_data)
             new_row = tuple(new_row)
             if not isinstance(new_row, tuple):
                 new_row = tuple(new_row)
