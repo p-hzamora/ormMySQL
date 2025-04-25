@@ -139,27 +139,8 @@ class Table(metaclass=TableMeta):
     def to_dict(self) -> dict[str, str | int]:
         dicc: dict[str, Any] = {}
         for x in self.__annotations__:
-            transform_data = self.__transform_data__(getattr(self, x))
-            dicc[x] = transform_data
+            dicc[x] = getattr(self, x)
         return dicc
-
-    @staticmethod
-    def __transform_data__[T](_value: T) -> T:
-        def byte_to_string(value: bytes):
-            return base64.b64encode(value).decode("utf-8")
-
-        transform_map: dict = {
-            datetime.datetime: datetime.datetime.isoformat,
-            datetime.date: datetime.date.isoformat,
-            Decimal: str,
-            bytes: byte_to_string,
-            set: list,
-            sph.Point: lambda x: sph.to_wkt(x, rounding_precision=-1),
-        }
-
-        if (dtype := type(_value)) in transform_map:
-            return transform_map[dtype](_value)
-        return _value
 
     @classmethod
     def get_pk(cls) -> Optional[Column]:
@@ -197,7 +178,7 @@ class Table(metaclass=TableMeta):
         annotations: dict[str, Column] = cls.__annotations__
         all_columns: list = []
         for col_obj in annotations.values():
-            all_columns.append(get_query_clausule(col_obj,statement))
+            all_columns.append(get_query_clausule(col_obj, statement))
         return all_columns
 
     @classmethod
