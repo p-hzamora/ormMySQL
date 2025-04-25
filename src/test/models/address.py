@@ -20,7 +20,7 @@ class Address(Table):
     city_id: Column[int]
     postal_code: Column[str]
     phone: Column[str]
-    location: Column[None | bytes]
+    location: Column[bytes]
     last_update: Column[datetime] = Column(datetime, is_auto_generated=True)
 
     City = ForeignKey["Address", City](City, lambda a, c: a.city_id == c.city_id)

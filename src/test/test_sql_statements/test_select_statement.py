@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import create_sakila_engine  # noqa: E402
+from test.config import create_env_engine, create_engine_for_db  # noqa: E402
 from ormlambda import Table, Column, BaseModel, ForeignKey  # noqa: E402
 
 DDBBNAME = "__test_ddbb__"
@@ -40,23 +40,23 @@ class AWithMultipleReferencesToB(Table):
     B_fk_b3 = ForeignKey["AWithMultipleReferencesToB", BSimple](BSimple, lambda self, b: self.fk_b3 == b.pk_b)
 
 
-engine = create_sakila_engine()
+engine = create_env_engine()
 
 
 class TestJoinQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         engine.create_database(DDBBNAME, "replace")
-        engine.database = DDBBNAME
+        cls.db_engine = create_engine_for_db(DDBBNAME)
 
-        cls.model = BaseModel(AWithMultipleReferencesToB, engine)
-        BaseModel(CSimple, engine).create_table()
-        BaseModel(BSimple, engine).create_table()
+        cls.model = BaseModel(AWithMultipleReferencesToB, cls.db_engine)
+        BaseModel(CSimple, cls.db_engine).create_table()
+        BaseModel(BSimple, cls.db_engine).create_table()
         cls.model.create_table()
 
     @classmethod
     def tearDownClass(cls) -> None:
-        engine.drop_database(DDBBNAME)
+        cls.db_engine.drop_database(DDBBNAME)
 
     def test_new_select(self):
         self.model.select(AWithMultipleReferencesToB)

@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import create_env_engine  # noqa: E402
+from test.config import create_env_engine, create_engine_for_db  # noqa: E402
 from ormlambda import OrderType, Table, ORM, Column
 
 DDBBNAME = "__test_ddbb__"
@@ -26,7 +26,7 @@ class TestSQLStatements(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.ddbb = create_env_engine()
         cls.ddbb.create_database(DDBBNAME, "replace")
-        cls.ddbb.database = DDBBNAME
+        cls.ddbb = create_engine_for_db(DDBBNAME)
 
         cls.tmodel = ORM(TestOrder, cls.ddbb)
         cls.tmodel.create_table()

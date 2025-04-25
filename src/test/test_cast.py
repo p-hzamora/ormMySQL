@@ -10,7 +10,7 @@ from typing import Any, NamedTuple, Type
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda.caster import Caster, PLACEHOLDER
+from ormlambda.caster import Caster
 from ormlambda import Column, Table
 from test.config import create_env_engine
 
@@ -50,9 +50,9 @@ class TestResultCast[TProp, TType](NamedTuple):
 
 
 RESULT_FOR_str = TestResultCast(
-    wildcard_to_select=PLACEHOLDER,
-    wildcard_to_where=PLACEHOLDER,
-    wildcard_to_insert=PLACEHOLDER,
+    wildcard_to_select=Caster.PLACEHOLDER,
+    wildcard_to_where=Caster.PLACEHOLDER,
+    wildcard_to_insert=Caster.PLACEHOLDER,
     to_database="value",
     from_database="value",
     value="value",
@@ -60,9 +60,9 @@ RESULT_FOR_str = TestResultCast(
     type_to_cast=str,
 )
 RESULT_FOR_int = TestResultCast(
-    wildcard_to_select=PLACEHOLDER,
-    wildcard_to_where=PLACEHOLDER,
-    wildcard_to_insert=PLACEHOLDER,
+    wildcard_to_select=Caster.PLACEHOLDER,
+    wildcard_to_where=Caster.PLACEHOLDER,
+    wildcard_to_insert=Caster.PLACEHOLDER,
     to_database=20,
     from_database=20,
     value=20,
@@ -70,9 +70,9 @@ RESULT_FOR_int = TestResultCast(
     type_to_cast=int,
 )
 RESULT_FOR_float = TestResultCast(
-    wildcard_to_select=PLACEHOLDER,
-    wildcard_to_where=PLACEHOLDER,
-    wildcard_to_insert=PLACEHOLDER,
+    wildcard_to_select=Caster.PLACEHOLDER,
+    wildcard_to_where=Caster.PLACEHOLDER,
+    wildcard_to_insert=Caster.PLACEHOLDER,
     to_database=20.001,
     from_database=20.001,
     value=20.001,
@@ -80,9 +80,9 @@ RESULT_FOR_float = TestResultCast(
     type_to_cast=float,
 )
 RESULT_FOR_Point = TestResultCast(
-    wildcard_to_select=f"ST_AsText({PLACEHOLDER})",
-    wildcard_to_where=f"ST_AsText({PLACEHOLDER})",
-    wildcard_to_insert=f"ST_GeomFromText({PLACEHOLDER})",
+    wildcard_to_select=f"ST_AsText({Caster.PLACEHOLDER})",
+    wildcard_to_where=f"ST_AsText({Caster.PLACEHOLDER})",
+    wildcard_to_insert=f"ST_GeomFromText({Caster.PLACEHOLDER})",
     to_database="POINT (5 -5)",
     from_database=Point(5, -5),
     value=Point(5, -5),
@@ -90,9 +90,9 @@ RESULT_FOR_Point = TestResultCast(
     type_to_cast=Point,
 )
 RESULT_FOR_NoneType = TestResultCast(
-    wildcard_to_select=PLACEHOLDER,
-    wildcard_to_where=PLACEHOLDER,
-    wildcard_to_insert=PLACEHOLDER,
+    wildcard_to_select=Caster.PLACEHOLDER,
+    wildcard_to_where=Caster.PLACEHOLDER,
+    wildcard_to_insert=Caster.PLACEHOLDER,
     to_database=None,
     from_database=None,
     value=None,
@@ -100,9 +100,9 @@ RESULT_FOR_NoneType = TestResultCast(
     type_to_cast=NoneType,
 )
 RESULT_FOR_datetime = TestResultCast(
-    wildcard_to_select=PLACEHOLDER,
-    wildcard_to_where=PLACEHOLDER,
-    wildcard_to_insert=PLACEHOLDER,
+    wildcard_to_select=Caster.PLACEHOLDER,
+    wildcard_to_where=Caster.PLACEHOLDER,
+    wildcard_to_insert=Caster.PLACEHOLDER,
     to_database=datetime(1998, 12, 16, 10, 50, 59),
     from_database=datetime(1998, 12, 16, 10, 50, 59),
     value=datetime(1998, 12, 16, 10, 50, 59),

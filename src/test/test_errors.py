@@ -27,7 +27,6 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
 
     def setUp(self) -> None:
         self.ddbb.create_database(DDBBNAME, "replace")
-        self.ddbb.database = DDBBNAME
         self.model = ORM(TableType, self.ddbb)
         self.model.create_table("replace")
 

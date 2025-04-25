@@ -1,39 +1,133 @@
+from __future__ import annotations
+from datetime import datetime
+from decimal import Decimal
 import sys
 from pathlib import Path
+from typing import Literal, Optional
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from test.env import DATABASE_URL
 
-from ormlambda import ORM, create_engine, Table, Column
+from ormlambda import ORM, create_engine, Table, Column, ForeignKey
 
-db = create_engine(DATABASE_URL)
+DATABASE_URL = "sqlite:///~/Downloads/tesela.db"
 
-class Address(Table):
-    __table_name__ = "address"
 
-    address_id: Column[int] = Column(int, is_primary_key=True)
-    address: Column[str]
-    address2: Column[str]
-    district: Column[str]
-    city_id: Column[int]
-    postal_code: Column[str]
-    phone: Column[str]
-    location: Column[None | bytes]
+class Proveedor(Table):
+    __table_name__ = "proveedor"
+    pk_proveedor: Column[int] = Column(int, is_primary_key=True)
+    name: Column[str]
+    surname_1: Column[str]
+    surname_2: Column[str]
 
-db.execute_with_values(
-    """
-        SELECT name 
-        FROM sqlite_master 
-        WHERE type='table' AND name=?;
-    """,('movie'))
-if not db.database_exists("movie"):
-    db.execute("CREATE TABLE movie(title, year, score)")
-db.execute("""
-INSERT INTO movie VALUES
-        ('Monty Python and the Holy Grail', 1975, 8.2),
-        ('And Now for Something Completely Different', 1971, 7.5)            
-""")
 
-result = db.read_sql("SELECT score,title FROM movie",flavour=dict)
-ORM(Address, db).create_table()
+class Projecto(Table):
+    __table_name__ = "projecto"
+    pk_projecto: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    codigo: Column[str]
+    direccion: Column[str]
+    status: Column[str]
+    created_at: Column[datetime]
+
+
+type Option = Literal[
+    "SI",
+    "NO",
+    "PTE",
+    "REVISADO",
+]
+
+
+class PrecioContradictorio(Table):
+    __table_name__ = "precio_contradictorio"
+    pk_contradictorio: Column[int] = Column(int, is_primary_key=True)
+    fk_projecto: Column[int] = Column(int)
+    codigo: Column[str]
+    contradictorios: Column[str]
+    fk_proveedor: Column[Optional[int]] = Column(int)
+
+    fecha_enviado: Column[str]
+    recibido: Column[str]
+    imp_total: Column[float]
+    revisado: Column[str]
+    enviado: Column[str]
+
+    medio_de_envio: Column[str]
+    fecha_envio: Column[datetime]
+    aprobado: Column[str]
+    firmado: Column[str]
+
+    Proveedor = ForeignKey["PrecioContradictorio", Proveedor](Proveedor, lambda self, out: self.fk_proveedor == out.pk_proveedor)
+    Projecto = ForeignKey["PrecioContradictorio", Projecto](Projecto, lambda self, out: self.fk_projecto == out.pk_projecto)
+
+
+engine = create_engine(DATABASE_URL)
+
+
+PrecioContradictorioModel = ORM(PrecioContradictorio, engine)
+ProveedorModel = ORM(Proveedor, engine)
+ProjectoModel = ORM(Projecto, engine)
+
+
+PrecioContradictorioModel.create_table("replace")
+ProveedorModel.create_table("replace")
+ProjectoModel.create_table("replace")
+
+
+project = Projecto(None, "CE24045", "Calle virgen de la oliva 1", "Activa", datetime.now())
+proveedor = Proveedor(None, "Rosman")
+contradictorios = [
+    PrecioContradictorio(
+        pk_contradictorio=None,
+        fk_projecto=1,
+        codigo="PC01",
+        contradictorios="DEMOLICIÓN DE DINTELES Y MOCHETAS",
+        fk_proveedor=None,
+        fecha_enviado=None,
+        recibido="SI",
+        imp_total=float(576.00),
+        revisado="SI",
+        enviado="SI",
+        medio_de_envio="email",
+        fecha_envio=datetime.now(),
+        aprobado="SI",
+        firmado="SI",
+    ),
+    PrecioContradictorio(
+        pk_contradictorio=None,
+        fk_projecto=1,
+        codigo="PC02",
+        contradictorios="PICADO DE RECRECIDO DE MORTERO",
+        fk_proveedor=1,
+        fecha_enviado=None,
+        recibido="SI",
+        imp_total=float(384.00),
+        revisado="SI",
+        enviado="SI",
+        medio_de_envio="email",
+        fecha_envio=datetime.now(),
+        aprobado="SI",
+        firmado="SI",
+    ),
+    PrecioContradictorio(
+        pk_contradictorio=None,
+        fk_projecto=1,
+        codigo="PC03",
+        contradictorios="SUSTITUCION DE BAJANTES DE URALITA",
+        fk_proveedor=1,
+        fecha_enviado=None,
+        recibido="SI",
+        imp_total=float(2237.29),
+        revisado="SI",
+        enviado="SI",
+        medio_de_envio="email",
+        fecha_envio=datetime.now(),
+        aprobado="SI",
+        firmado="SI",
+    ),
+]
+
+ProjectoModel.insert(project)
+ProveedorModel.insert(proveedor)
+PrecioContradictorioModel.insert(contradictorios)
+pass
