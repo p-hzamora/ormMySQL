@@ -27,6 +27,7 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
         context: ClauseContextType = None,
         keep_asterisk: bool = False,
         preserve_context: bool = False,
+        dtype:TProp=None,
     ):
         self._alias_aggregate = alias_clause
         super().__init__(
@@ -36,6 +37,7 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
             context=context,
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
+            dtype=dtype
         )
 
     @staticmethod
