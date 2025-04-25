@@ -112,22 +112,9 @@ class ClusterQuery[T]:
                 col = clause.column
 
                 if col is None or not hasattr(table, col):
-                    agg_methods = self.__get_all_aggregate_method(clause)
-                    raise ValueError(f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'.")
+                    raise AggregateFunctionError(clause)
 
                 table_attr_dict[table][i][col] = dicc_cols[clause.alias_clause]
-
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
         return dict(table_attr_dict)
 
-    def __get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
-        """
-        Get the class name of those classes that inherit from 'AggregateFunctionBase' class in order to create a better error message.
-        """
-        res: set[str] = set()
-        if not isinstance(clauses, Iterable):
-            return clauses.__class__.__name__
-        for clause in clauses:
-            if isinstance(clause, AggregateFunctionBase):
-                res.add(clause.__class__.__name__)
-        return ", ".join(res)
