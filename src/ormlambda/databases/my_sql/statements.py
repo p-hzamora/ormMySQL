@@ -87,7 +87,7 @@ class MySQLStatements[T: Table, *Ts](BaseStatement[T, MySQLConnection]):
                 name += char
                 self._model.__table_name__ = name
 
-        query = self._model.create_table_query()
+        query = self._model.create_table_query(self)
         self._repository.execute(query)
         return None
 

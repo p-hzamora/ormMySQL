@@ -24,7 +24,7 @@ class BaseRepository[TPool](IRepositoryBase):
                 "user": self._user,
                 "password": self._password,
                 "host": self._host,
-                "database": self.database,
+                "database": self._database,
                 **kwargs,
             }
             self._pool: TPool = pool(**attr)

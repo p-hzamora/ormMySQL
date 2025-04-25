@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 String Data Types
 Data type	Description
@@ -48,13 +50,15 @@ MySQL 8.0 does not support year in two-digit format.
 """
 
 from decimal import Decimal
-from typing import Any, Literal
+from typing import Any, Literal, TYPE_CHECKING, get_args, Optional
 import datetime
 
 from shapely import Point
 import numpy as np
-
 from .column import Column
+
+if TYPE_CHECKING:
+    from ormlambda.statements import BaseStatement
 
 
 STRING = Literal["CHAR(size)", "VARCHAR(size)", "BINARY(size)", "VARBINARY(size)", "TINYBLOB", "TINYTEXT", "TEXT(size)", "BLOB(size)", "MEDIUMTEXT", "MEDIUMBLOB", "LONGTEXT", "LONGBLOB", "ENUM(val1, val2, val3, ...)", "SET(val1, val2, val3, ...)"]
@@ -65,30 +69,70 @@ DATE = Literal["DATE", "DATETIME(fsp)", "TIMESTAMP(fsp)", "TIME(fsp)", "YEAR"]
 
 # FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
 @staticmethod
-def transform_py_dtype_into_query_dtype(dtype: Any) -> str:
+def transform_py_dtype_into_query_dtype(dtype: Any, statement: BaseStatement) -> str:
     # TODOL: must be found a better way to convert python data type into SQL clauses
     # float -> DECIMAL(5,2) is an error
-    dicc: dict[Any, str] = {int: "INTEGER", float: "FLOAT(5,2)", Decimal: "FLOAT", datetime.datetime: "DATETIME", datetime.date: "DATE", bytes: "BLOB", bytearray: "BLOB", str: "VARCHAR(255)", np.uint64: "BIGINT UNSIGNED", Point: "Point"}
+    mysql_dicc: dict[Any, str] = {
+        int: "INTEGER",
+        float: "FLOAT(5,2)",
+        Decimal: "FLOAT",
+        datetime.datetime: "DATETIME",
+        datetime.date: "DATE",
+        bytes: "BLOB",
+        bytearray: "BLOB",
+        str: "VARCHAR(255)",
+        np.uint64: "BIGINT UNSIGNED",
+        Point: "Point",
+    }
 
-    res = dicc.get(dtype, None)
+    sqlite_dicc: dict[Any, str] = {
+        int: "INTEGER",
+        float: "REAL",
+        Decimal: "REAL",  # or NUMERIC if you want to preserve exact decimal precision
+        datetime.datetime: "TEXT",  # or "NUMERIC", depending on your storage style
+        datetime.date: "TEXT",  # same here
+        bytes: "BLOB",
+        bytearray: "BLOB",
+        str: "TEXT",
+        np.uint64: "INTEGER",
+        Point: "TEXT",  # You'd store it serialized as WKT/GeoJSON/str
+    }
+
+    dicc = {
+        "MySQLStatements": mysql_dicc,
+        "SQLiteStatements": sqlite_dicc,
+    }
+
+    # dtype = set(get_args(dtype))-set([type(None)])
+    res = dicc[statement.__class__.__name__].get(dtype, None)
     if res is None:
         raise ValueError(f"datatype '{dtype}' is not expected.")
-    return dicc[dtype]
+    return dicc[statement.__class__.__name__][dtype]
 
 
 # FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
-def get_query_clausule(column_obj: Column) -> str:
-    dtype: str = transform_py_dtype_into_query_dtype(column_obj.dtype)
+def get_query_clausule(column_obj: Column, statement: BaseStatement) -> str:
+    dtype: str = transform_py_dtype_into_query_dtype(column_obj.dtype, statement)
     query: str = f"{column_obj.column_name} {dtype}"
 
-    # FIXME [ ]: that's horrible but i'm tired; change it in the future
-    if column_obj.is_primary_key:
-        query += " PRIMARY KEY"
-    if column_obj.is_auto_generated:
-        if column_obj.dtype is datetime.datetime:
-            query += " DEFAULT CURRENT_TIMESTAMP"
-    if column_obj.is_auto_increment:
-        query += " AUTO_INCREMENT"
-    if column_obj.is_unique:
-        query += " UNIQUE"
+    if statement.__class__.__name__ == "MySQLStatements":
+        # FIXME [ ]: that's horrible but i'm tired; change it in the future
+        if column_obj.is_primary_key:
+            query += " PRIMARY KEY"
+        if column_obj.is_auto_generated:
+            if column_obj.dtype is datetime.datetime:
+                query += " DEFAULT CURRENT_TIMESTAMP"
+        if column_obj.is_auto_increment:
+            query += " AUTO_INCREMENT"
+        if column_obj.is_unique:
+            query += " UNIQUE"
+    elif statement.__class__.__name__ == "SQLiteStatements":
+        # FIXME [ ]: that's horrible but i'm tired; change it in the future
+        if column_obj.is_primary_key:
+            query += " PRIMARY KEY"
+        if column_obj.is_auto_generated:
+            if column_obj.dtype is datetime.datetime:
+                query += " DEFAULT CURRENT_TIMESTAMP"
+        if column_obj.is_unique:
+            query += " UNIQUE"
     return query

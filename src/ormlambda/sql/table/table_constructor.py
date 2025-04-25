@@ -1,6 +1,6 @@
 from __future__ import annotations
 from decimal import Decimal
-from typing import Any, Optional, Type, dataclass_transform
+from typing import Any, Optional, Type, dataclass_transform, TYPE_CHECKING
 import base64
 import datetime
 import json
@@ -13,6 +13,9 @@ from ormlambda.sql import ForeignKey
 from ormlambda.sql.dtypes import get_query_clausule
 from .fields import get_fields
 from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
+
+if TYPE_CHECKING:
+    from ormlambda.statements import BaseStatement
 
 
 @dataclass_transform()
@@ -176,17 +179,17 @@ class Table(metaclass=TableMeta):
                 return value
 
     @classmethod
-    def create_table_query(cls) -> str:
+    def create_table_query(cls, statement: BaseStatement) -> str:
         """It's classmethod because of it does not matter the columns values to create the table"""
         all_clauses: list[str] = []
 
-        all_clauses.extend(cls._create_sql_column_query())
+        all_clauses.extend(cls._create_sql_column_query(statement))
         all_clauses.extend(ForeignKey.create_query(cls))
 
         return f"CREATE TABLE {cls.__table_name__} ({', '.join(all_clauses)});"
 
     @classmethod
-    def _create_sql_column_query(cls) -> list[str]:
+    def _create_sql_column_query(cls, statement: BaseStatement) -> list[str]:
         """
         It's imperative to instantiate cls() to initialize the 'Table' object and create private variables that will be Column objects.
         Otherwise, we only can access to property method
@@ -194,7 +197,7 @@ class Table(metaclass=TableMeta):
         annotations: dict[str, Column] = cls.__annotations__
         all_columns: list = []
         for col_obj in annotations.values():
-            all_columns.append(get_query_clausule(col_obj))
+            all_columns.append(get_query_clausule(col_obj,statement))
         return all_columns
 
     @classmethod

@@ -30,7 +30,10 @@ class RepositoryTemplateDict[TRepo]:
         )
 
         from ..databases.sqlite3 import (
+            SQLiteCaster,
             SQLiteRepository,
+            SQLiteStatements,
+
         )
 
         class MySQLTemplate[TCnx](Template[TCnx]):
@@ -40,8 +43,8 @@ class RepositoryTemplateDict[TRepo]:
 
         class SQLiteTemplate[TCnx](Template[TCnx]):
             repository = SQLiteRepository
-            caster = None  # SQLiteCaster
-            statement = None  # SQLiteStatements
+            caster = SQLiteCaster
+            statement = SQLiteStatements
 
         # FIXME [ ]: should return T instead of Template
         cls._data: dict[IRepositoryBase, Template] = {MySQLRepository: MySQLTemplate, SQLiteRepository: SQLiteTemplate}
