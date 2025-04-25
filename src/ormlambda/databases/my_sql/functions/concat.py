@@ -25,6 +25,7 @@ class Concat[T](AggregateFunctionBase[T]):
             column=values,
             alias_clause=alias_clause,
             context=context,
+            dtype=str,
         )
 
     @tp.override

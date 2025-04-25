@@ -45,6 +45,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def __init__(self, table: TableType[T], keep_asterisk: tp.Optional[bool] = ...): ...
     @tp.overload
     def __init__(self, table: TableType[T], preserve_context: tp.Optional[bool] = ...): ...
+    @tp.overload
+    def __init__[TProp](self, table: TableType[T], dtype: tp.Optional[TProp] = ...): ...
 
     def __init__[TProp](
         self,
@@ -55,6 +57,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         context: ClauseContextType = None,
         keep_asterisk: bool = False,
         preserve_context: bool = False,
+        dtype: tp.Optional[TProp] = None,
     ):
         if not self.is_table(table):
             column = table if not column else column
@@ -67,6 +70,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         self._context: ClauseContextType = context if context else ClauseInfoContext()
         self._keep_asterisk: bool = keep_asterisk
         self._preserve_context: bool = preserve_context
+        self._dtype = dtype
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": self.replace_column_placeholder,
@@ -140,6 +144,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
+        if self._dtype is not None:
+            return self._dtype
+
         if isinstance(self._column, Column):
             return self._column.dtype
 

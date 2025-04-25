@@ -40,6 +40,8 @@ class _Count[T: Table](AggregateFunctionBase[T]):
             context=context,
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
+            dtype=int,
         )
+
 
 __all__ = ["_Count"]
