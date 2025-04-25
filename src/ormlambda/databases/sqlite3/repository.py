@@ -5,7 +5,7 @@ import contextlib
 from typing import Generator, Iterable, Optional, Type, TYPE_CHECKING
 from ormlambda import BaseRepository
 from ormlambda.repository.response import Response
-
+from ormlambda.caster import Caster
 
 if TYPE_CHECKING:
     from ormlambda.sql.clauses import _Select
@@ -79,6 +79,7 @@ class SQLiteRepository(BaseRepository):
         return None
 
     def drop_table(self, name: str) -> None:
+        self.execute(f"DROP TABLE IF EXISTS {name};")
         return None
 
     def database_exists(self, name: str) -> bool:
@@ -94,7 +95,7 @@ class SQLiteRepository(BaseRepository):
     def table_exists(self, name: str) -> bool:
         with self.get_connection() as cnx:
             cursor = cnx.cursor()
-            cursor.execute("SHOW TABLES LIKE %s;", (name,))
+            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name={Caster.PLACEHOLDER};", (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
 
