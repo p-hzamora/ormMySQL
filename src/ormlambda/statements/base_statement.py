@@ -7,13 +7,11 @@ from ormlambda.repository import BaseRepository
 from ormlambda.statements.interfaces import IStatements_two_generic
 from ormlambda import Table
 
-from ormlambda.sql.clause_info import AggregateFunctionBase
 from ormlambda.caster.caster import Caster
 
-
+from ormlambda.common.errors import AggregateFunctionError
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
-    from ormlambda.sql.clause_info import ClauseInfo
+    from ormlambda.sql.clauses import _Select
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
@@ -50,10 +48,9 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         return self._repository.read_sql(query, flavour=flavour, select=select, **kwargs)
 
     def _return_model(self, select, query: str) -> tuple[tuple[T]]:
-        response_sql = self._repository.read_sql(query, flavour=dict, model=self._model, select=select)  # store all columns of the SQL query
-
+        response_sql = self._repository.read_sql(query, flavour=dict, select=select)  # store all columns of the SQL query
         if response_sql and isinstance(response_sql, Iterable):
-            return ClusterQuery(self.repository, select, response_sql).clean_response()
+            return ClusterResponse(self.repository, select, response_sql).cluster()
 
         return response_sql
 
@@ -75,15 +72,15 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         return self._repository
 
 
-class ClusterQuery[T]:
-    def __init__(self, repository: BaseRepository, select: DecompositionQueryBase[T], response_sql: tuple[dict[str, Any]]) -> None:
+class ClusterResponse[T]:
+    def __init__(self, repository: BaseRepository, select: _Select[T], response_sql: tuple[dict[str, Any]]) -> None:
         self._repository: BaseRepository = repository
-        self._select: DecompositionQueryBase[T] = select
+        self._select: _Select[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
         self._caster = Caster(repository)
 
-    def clean_response(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
-        tbl_dicc: dict[Type[Table], list[dict[str, Any]]] = self.__loop_foo()
+    def cluster(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
+        tbl_dicc: dict[Type[Table], list[dict[str, Any]]] = self._create_cluster()
 
         response = {}
         tuple_response = []
@@ -91,13 +88,12 @@ class ClusterQuery[T]:
         for table, attribute_list in tbl_dicc.items():
             new_instance = []
             for attrs in attribute_list:
-                casted_attr = {key: self._caster.for_value(value, table.get_column(key).dtype).from_database for key, value in attrs.items()}
-                new_instance.append(table(**casted_attr))
+                new_instance.append(table(**attrs))
             response[table] = tuple(new_instance)
             tuple_response.append(tuple(new_instance))
         return tuple(tuple_response)
 
-    def __loop_foo(self) -> dict[Type[Table], list[dict[str, Any]]]:
+    def _create_cluster(self) -> dict[Type[Table], list[dict[str, Any]]]:
         # We'll create a default list of dicts *once* we know how many rows are in _response_sql
         row_count = len(self._response_sql)
 
