@@ -14,6 +14,7 @@ from .clauses import CreateDatabase, TypeExists
 from .clauses import DropDatabase
 from .clauses import DropTable
 from ormlambda.repository.response import Response
+from ormlambda.caster import Caster
 
 
 if TYPE_CHECKING:
@@ -182,7 +183,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
-                cursor.execute("SHOW DATABASES LIKE %s;", (name,))
+                cursor.execute(f"SHOW DATABASES LIKE {Caster.PLACEHOLDER};", (name,))
                 res = cursor.fetchmany(1)
 
         self._pool.set_config(**temp_config)
@@ -198,7 +199,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             if not cnx.database:
                 raise Exception("No database selected")
             with cnx.cursor(buffered=True) as cursor:
-                cursor.execute("SHOW TABLES LIKE %s;", (name,))
+                cursor.execute(f"SHOW TABLES LIKE {Caster.PLACEHOLDER};", (name,))
             res = cursor.fetchmany(1)
         return len(res) > 0
 

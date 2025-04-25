@@ -12,10 +12,14 @@ if TYPE_CHECKING:
     from ormlambda.repository import IRepositoryBase
 
 
-PLACEHOLDER: str = "%s"
-
-
 class Caster:
+    PLACEHOLDER: str = "%s"
+
+    @classmethod
+    def set_placeholder(cls, char: str) -> None:
+        cls.PLACEHOLDER = char
+        return None
+
     def __init__(self, repository: IRepositoryBase):
         self._repository: IRepositoryBase = repository
         self._caster = RepositoryTemplateDict().get(repository).caster

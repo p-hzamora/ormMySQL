@@ -1,5 +1,5 @@
 from typing import Optional
-from ormlambda.caster import BaseCaster, PLACEHOLDER
+from ormlambda.caster import BaseCaster, Caster
 from shapely import Point
 import shapely.wkt as wkt
 from shapely import wkb
@@ -9,13 +9,13 @@ class PointCaster[TType](BaseCaster[Point, TType]):
     def __init__(self, value: bytes | str, type_value: TType):
         super().__init__(value, type_value)
 
-    def wildcard_to_select(self, value: str = PLACEHOLDER) -> str:
+    def wildcard_to_select(self, value: str = Caster.PLACEHOLDER) -> str:
         return f"ST_AsText({value})"
 
-    def wildcard_to_where(self, value: str = PLACEHOLDER) -> str:
+    def wildcard_to_where(self, value: str = Caster.PLACEHOLDER) -> str:
         return f"ST_AsText({value})"
 
-    def wildcard_to_insert(self, value: str = PLACEHOLDER) -> str:
+    def wildcard_to_insert(self, value: str = Caster.PLACEHOLDER) -> str:
         return f"ST_GeomFromText({value})"
 
     @property
