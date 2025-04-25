@@ -28,7 +28,7 @@ from urllib.parse import (
 
 from . import utils
 
-type DrivernameType = Literal["mysql"] | str
+type DrivernameType = Literal["mysql","sqlite"] | str
 
 
 class URL(NamedTuple):
