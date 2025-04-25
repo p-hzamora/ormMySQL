@@ -62,7 +62,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         select = self.model.select_one(lambda x: x.points, flavour=tuple)
         self.assertEqual(select, shp.Point(5, 5))
 
-    def test_AAupdate_different_types(self):
+    def test_update_different_types(self):
         instance = TableType(
             pk=1,
             strings="strings",
@@ -93,6 +93,38 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         )
 
         self.assertEqual(select, instance_after_update)
+
+    def test_that_all_flavours_returns_the_same_data[T](self, flavour: T = None):
+        """
+        This method ensures that all casters are working as expected using different flavours tags
+        - flavour=dict
+        - flavour=tuple
+        - flavour=list
+        - flavour=CustomClass
+
+        """
+        instance = TableType(
+            pk=1,
+            strings="strings",
+            integers=10,
+            floats=0.99,
+            points=shp.Point(5, 5),
+            datetimes=datetime(1998, 12, 16),
+        )
+
+        EXPECTED = tuple(instance.to_dict().values())
+        self.model.insert(instance)
+        select_None = tuple(self.model.first().to_dict().values())
+        select_dict = tuple(self.model.first(flavour=dict).values())
+        select_list = self.model.first(flavour=list)
+        select_tuple = self.model.first(flavour=tuple)
+        select_set = self.model.first(flavour=set)
+
+        self.assertTupleEqual(select_None, EXPECTED)
+        self.assertTupleEqual(select_dict, EXPECTED)
+        self.assertListEqual(select_list, list(EXPECTED))
+        self.assertTupleEqual(select_tuple, EXPECTED)
+        self.assertSetEqual(select_set, set(EXPECTED))
 
 
 if __name__ == "__main__":

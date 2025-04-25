@@ -11,7 +11,7 @@ from datetime import datetime
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda import BaseRepository  # noqa: E402
+from ormlambda.statements.base_statement import AggregateFunctionError
 from ormlambda import ORM, create_engine
 from test.models import (
     Address,
@@ -284,11 +284,11 @@ class TestSQLStatements(unittest.TestCase):
 
         model = ORM(Address, ddbb)
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(AggregateFunctionError) as e:
             model.select(lambda x: (model.max(x.address_id)))
 
         mssg: str = "You cannot use aggregation method like 'Max' to return model objects. Try specifying 'flavour' attribute as 'dict'."
-        self.assertEqual(e.exception.args[0], mssg)
+        self.assertEqual(str(e.exception), mssg)
 
     def test_where(self):
         instance = create_instance_of_TestTable(3)
@@ -558,6 +558,22 @@ class TestAggregateFunctions(unittest.TestCase):
         self.assertEqual(select.country, "Spain")
         self.assertEqual(select.city, "A Coruña (La Coruña)")
 
+    def test_return_all_results_beside_calling_columns_with_the_same_names(self):
+        res = ORM(Address, create_engine_for_db("sakila")).first(
+            lambda x: (
+                x.last_update,
+                x.City.last_update,
+                x.City.Country.last_update,
+            ),
+            flavour=dict,
+            alias=lambda x: "{table}~{column}" + f"[{x.dtype.__name__}]",
+        )
+        EXPECTED= {
+            "address~last_update[datetime]":datetime(2014, 9, 25, 22, 29, 59),
+            "city~last_update[datetime]":datetime(2006, 2, 15, 4, 45, 25),
+            "country~last_update[datetime]":datetime(2006, 2, 15, 4, 44),
+        }
+        self.assertDictEqual(res, EXPECTED)
 
 if __name__ == "__main__":
     unittest.main(failfast=False)
