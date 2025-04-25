@@ -11,60 +11,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from pydantic import BaseModel
 from test.config import create_env_engine  # noqa: E402
 from test.models import Address, City  # noqa: F401
-from ormlambda import ORM, Column, OrderType, JoinType, create_engine
-
-sqlite_engine = create_env_engine()
-mysql_engine = create_engine("mysql://root:1500@localhost:3306/sakila?pool_size=3")
-
-
-ORM(Address, sqlite_engine).create_table("replace")
-ORM(City, sqlite_engine).create_table("replace")
-
-addresses = ORM(Address, mysql_engine).select()
-cities = ORM(Address, mysql_engine).select(lambda x: x.City)[0]
-
-ORM(Address, sqlite_engine).insert(addresses)
-ORM(City, sqlite_engine).insert(cities)
-
-model = ORM(Address, sqlite_engine)
-
-res = model.select(
-    lambda x: (
-        x,
-        x.City,
-    )
-)
-
-res = (
-    model.where(Address.city_id >= 312)
-    .having(Column(column_name="count") > 1)
-    .groupby(Address.city_id)
-    .select(
-        (
-            model.alias(Address.city_id, "pkCity"),
-            model.count(alias="count"),
-        ),
-        flavour=dict,
-    )
-)
-
-res2 = (
-    model.order(Address.address_id, "DESC")
-    .where(
-        [
-            Address.address_id >= 10,
-            Address.address_id <= 30,
-        ]
-    )
-    .select(
-        (
-            Address,
-            Address.City,
-        ),
-        flavour=dict,
-        alias=lambda x: "{table}~{column}" + f"[{x.dtype.__name__}]",
-    )
-)
+from ormlambda import ORM, Column, OrderType, JoinType
 
 engine = create_env_engine()
 
