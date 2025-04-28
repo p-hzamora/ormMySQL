@@ -11,8 +11,8 @@ from ormlambda.sql.clauses.interfaces import IInsert
 from ormlambda.common.abstract_classes import NonQueryBase
 
 
-class _Insert[T: Table,TRepo](NonQueryBase[T, TRepo], IInsert[T]):
-    def __init__(self, model: T, repository: BaseRepository) -> None:
+class _Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T]):
+    def __init__(self, model: T, repository: BaseRepository[TRepo]) -> None:
         super().__init__(model, repository)
 
     @override
@@ -94,5 +94,6 @@ class _Insert[T: Table,TRepo](NonQueryBase[T, TRepo], IInsert[T]):
         else:
             raise Exception(f"Tipo de dato'{type(values)}' no esperado")
         return None
+
 
 __all__ = ["_Insert"]

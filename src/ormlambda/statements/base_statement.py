@@ -18,13 +18,13 @@ ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", 
 
 
 class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
-    def __init__(self, model: tuple[T], repository: BaseRepository) -> None:
+    def __init__(self, model: tuple[T,...], repository: BaseRepository[TRepo]) -> None:
         self.__valid_repository(repository)
 
         self._query: Optional[str] = None
         self._model: T = model[0] if isinstance(model, Iterable) else model
         self._models: tuple[T] = self._model if isinstance(model, Iterable) else (model,)
-        self._repository: BaseRepository = repository
+        self._repository: BaseRepository[TRepo] = repository
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
