@@ -10,15 +10,15 @@ from test.models import (  # noqa: E402
     Country,
 )
 
-from ormlambda.databases.my_sql import MySQLStatements  # noqa: E402
+from ormlambda import ORM
 
 engine = create_engine_for_db("sakila")
 
 
 class TestAbstractSQLStatements(unittest.TestCase):
     def test_constructor(self):
-        city = MySQLStatements[City](City, engine)
-        country = MySQLStatements[Country](Country, engine)
+        city = ORM(City, engine)
+        country = ORM(Country, engine)
 
         rusult_ci = city.select(flavour=set)
         result_co = country.select(flavour=set)

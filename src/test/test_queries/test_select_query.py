@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.databases.my_sql.statements import QueryBuilder
+from ormlambda.statements.query_builder import QueryBuilder
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from test.models import (  # noqa: E402
     City,
