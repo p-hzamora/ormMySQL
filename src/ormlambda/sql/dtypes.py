@@ -59,6 +59,8 @@ from .column import Column
 
 if TYPE_CHECKING:
     from ormlambda.statements import BaseStatement
+    from ormlambda.statements.statements import Statements
+
 
 
 STRING = Literal["CHAR(size)", "VARCHAR(size)", "BINARY(size)", "VARBINARY(size)", "TINYBLOB", "TINYTEXT", "TEXT(size)", "BLOB(size)", "MEDIUMTEXT", "MEDIUMBLOB", "LONGTEXT", "LONGBLOB", "ENUM(val1, val2, val3, ...)", "SET(val1, val2, val3, ...)"]
@@ -69,7 +71,7 @@ DATE = Literal["DATE", "DATETIME(fsp)", "TIMESTAMP(fsp)", "TIME(fsp)", "YEAR"]
 
 # FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
 @staticmethod
-def transform_py_dtype_into_query_dtype(dtype: Any, statement: BaseStatement) -> str:
+def transform_py_dtype_into_query_dtype(dtype: Any, statement: Statements) -> str:
     # TODOL: must be found a better way to convert python data type into SQL clauses
     # float -> DECIMAL(5,2) is an error
     mysql_dicc: dict[Any, str] = {
@@ -99,15 +101,15 @@ def transform_py_dtype_into_query_dtype(dtype: Any, statement: BaseStatement) ->
     }
 
     dicc = {
-        "MySQLStatements": mysql_dicc,
-        "SQLiteStatements": sqlite_dicc,
+        "MySQLRepository": mysql_dicc,
+        "SQLiteRepository": sqlite_dicc,
     }
 
     # dtype = set(get_args(dtype))-set([type(None)])
-    res = dicc[statement.__class__.__name__].get(dtype, None)
+    res = dicc[statement.repository.__class__.__name__].get(dtype, None)
     if res is None:
         raise ValueError(f"datatype '{dtype}' is not expected.")
-    return dicc[statement.__class__.__name__][dtype]
+    return dicc[statement.repository.__class__.__name__][dtype]
 
 
 # FIXME [ ]: this method does not comply with the implemented interface; we need to adjust it in the future to scale it to other databases
@@ -115,7 +117,7 @@ def get_query_clausule(column_obj: Column, statement: BaseStatement) -> str:
     dtype: str = transform_py_dtype_into_query_dtype(column_obj.dtype, statement)
     query: str = f"{column_obj.column_name} {dtype}"
 
-    if statement.__class__.__name__ == "MySQLStatements":
+    if statement.repository.__class__.__name__ == "MySQLRepository":
         # FIXME [ ]: that's horrible but i'm tired; change it in the future
         if column_obj.is_primary_key:
             query += " PRIMARY KEY"
@@ -126,7 +128,7 @@ def get_query_clausule(column_obj: Column, statement: BaseStatement) -> str:
             query += " AUTO_INCREMENT"
         if column_obj.is_unique:
             query += " UNIQUE"
-    elif statement.__class__.__name__ == "SQLiteStatements":
+    elif statement.repository.__class__.__name__ == "SQLiteRepository":
         # FIXME [ ]: that's horrible but i'm tired; change it in the future
         if column_obj.is_primary_key:
             query += " PRIMARY KEY"
