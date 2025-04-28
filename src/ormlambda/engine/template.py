@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Type
 
+
 if TYPE_CHECKING:
+    from ormlambda.sql.sql_methods import SQLMethods
     from ormlambda.repository import IRepositoryBase
-    from ormlambda.statements.interfaces import IStatements
     from ormlambda.caster import ICaster
 
 
 class Template[TCnx]:
     repository: Type[IRepositoryBase]
     caster: Type[ICaster]
-    statement: Type[IStatements]
+    methods: Type[SQLMethods]
 
 
 class RepositoryTemplateDict[TRepo]:
@@ -26,25 +27,25 @@ class RepositoryTemplateDict[TRepo]:
         from ..databases.my_sql import (
             MySQLCaster,
             MySQLRepository,
-            MySQLStatements,
+            MySQLMethods,
         )
 
         from ..databases.sqlite3 import (
             SQLiteCaster,
             SQLiteRepository,
-            SQLiteStatements,
+            SQLiteMethods,
 
         )
 
         class MySQLTemplate[TCnx](Template[TCnx]):
             repository = MySQLRepository
             caster = MySQLCaster
-            statement = MySQLStatements
+            methods= MySQLMethods
 
         class SQLiteTemplate[TCnx](Template[TCnx]):
             repository = SQLiteRepository
             caster = SQLiteCaster
-            statement = SQLiteStatements
+            methods= SQLiteMethods
 
         # FIXME [ ]: should return T instead of Template
         cls._data: dict[IRepositoryBase, Template] = {MySQLRepository: MySQLTemplate, SQLiteRepository: SQLiteTemplate}
