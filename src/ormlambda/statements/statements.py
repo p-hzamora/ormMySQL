@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Concatenate, Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
-from mysql.connector import errors, errorcode
 
 from ormlambda import ForeignKey
 
@@ -62,7 +61,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
                 self._repository.drop_table(name)
 
             elif if_exists == "fail":
-                raise errors.ProgrammingError(msg=f"Table '{self._model.__table_name__}' already exists", errno=errorcode.ER_TABLE_EXISTS_ERROR)
+                raise ValueError(f"Table '{self._model.__table_name__}' already exists")
 
             elif if_exists == "append":
                 counter: int = 0

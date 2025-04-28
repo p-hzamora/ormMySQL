@@ -77,7 +77,7 @@ class TestSQLStatements(unittest.TestCase):
 
     def test_create_table_already_exists_fail(self):
         self.tmodel.create_table("replace")
-        with self.assertRaises(errors.ProgrammingError):
+        with self.assertRaises(ValueError):
             self.tmodel.create_table()
 
     def test_insert(self):
