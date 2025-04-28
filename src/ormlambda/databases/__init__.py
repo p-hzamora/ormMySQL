@@ -1,7 +1,7 @@
 from .my_sql import (
     MySQLCaster as MySQLCaster,
     MySQLRepository as MySQLRepository,
-    MySQLStatements as MySQLStatements,
+    MySQLMethods as MySQLMethods,
 )
 
 from .sqlite3 import (
