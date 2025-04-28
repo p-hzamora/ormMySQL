@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, TypedDict, Optional
+from typing import Iterable, TypedDict, Optional, TYPE_CHECKING
 
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from ormlambda.databases.my_sql.clauses.joins import JoinSelector
@@ -9,16 +9,18 @@ from ormlambda.common.interfaces import IQuery
 
 
 from ormlambda.sql.clause_info import ClauseInfo
-from .clauses import Limit
-from .clauses import Offset
-from .clauses import Order
-from .clauses import Select
+if TYPE_CHECKING:
+        
+    from ..sql.clauses import _Limit as Limit
+    from ..sql.clauses import _Offset as Offset
+    from ..sql.clauses import _Order as Order
+    from ..sql.clauses import _Select as Select
 
-from .clauses import Where
-from .clauses import Having
-from .clauses import GroupBy
+    from ..sql.clauses import _GroupBy as GroupBy
 
 
+from ..sql.clauses import _Where as Where
+from ..sql.clauses import _Having as Having
 from ormlambda.common.enums import JoinType
 
 
