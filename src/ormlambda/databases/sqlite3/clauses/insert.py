@@ -6,7 +6,7 @@ from ormlambda.caster.caster import Caster
 from ormlambda.sql.column import Column
 
 
-class InsertQuery[T: Table](_Insert[T, None]):
+class Insert[T: Table](_Insert[T, None]):
     def __init__(self, model, repository):
         super().__init__(model, repository)
 

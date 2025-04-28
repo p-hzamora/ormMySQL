@@ -1,10 +1,8 @@
-import typing as tp
-from ormlambda import Table
 from ormlambda.sql.clause_info import AggregateFunctionBase, ClauseInfoContext
 from ormlambda.sql.types import ColumnType
 
 
-class _GroupBy[T: tp.Type[Table], *Ts, TProp](AggregateFunctionBase):
+class _GroupBy(AggregateFunctionBase):
     @classmethod
     def FUNCTION_NAME(self) -> str:
         return "GROUP BY"
@@ -28,5 +26,6 @@ class _GroupBy[T: tp.Type[Table], *Ts, TProp](AggregateFunctionBase):
     def query(self) -> str:
         column = self._create_query()
         return f"{self.FUNCTION_NAME()} {column}"
+
 
 __all__ = ["_GroupBy"]
