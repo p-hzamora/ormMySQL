@@ -1,7 +1,10 @@
-from typing import Any
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING, Type
 
 from ormlambda.engine.url import URL, make_url
-from ormlambda import BaseRepository
+
+if TYPE_CHECKING:
+    from ormlambda import BaseRepository
 
 
 def create_engine(url: URL | str, **kwargs: Any) -> BaseRepository:
@@ -12,7 +15,7 @@ def create_engine(url: URL | str, **kwargs: Any) -> BaseRepository:
     u = make_url(url)
     url, kwargs = u._instantiate_plugins(kwargs)
 
-    repo_selector = {
+    repo_selector:dict[str,Type[BaseRepository]] = {
         "mysql": MySQLRepository,
         "sqlite": SQLiteRepository,
     }
