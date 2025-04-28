@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Type
 
 from ormlambda.engine.template import RepositoryTemplateDict
+from ormlambda.statements import Statements
 
 if TYPE_CHECKING:
     from ormlambda.statements.interfaces import IStatements_two_generic
@@ -26,12 +27,12 @@ class BaseModel[T]:
         if repository is None:
             raise ValueError("`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class")
 
-        new_cls = RepositoryTemplateDict().get(repository).statement
+        methods_obj = RepositoryTemplateDict().get(repository)
 
-        if not new_cls:
+        if not methods_obj:
             raise Exception(f"The selected repository '{repository}' does not exist.")
 
-        return new_cls(model, repository)
+        return Statements(model, repository, methods_obj.methods)
 
 
 ORM = BaseModel
