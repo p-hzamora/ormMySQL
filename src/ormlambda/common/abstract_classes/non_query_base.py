@@ -9,12 +9,12 @@ if TYPE_CHECKING:
     from ormlambda import Table
 
 
-class NonQueryBase[T: Type[Table], TRepo: BaseRepository](INonQueryCommand):
+class NonQueryBase[T: Type[Table], TRepo](INonQueryCommand):
     __slots__: tuple[str, ...] = ("_model", "_repository", "_values", "_query")
 
     def __init__(self, model: T, repository: TRepo) -> None:
         self._model: T = model
-        self._repository: TRepo = repository
+        self._repository: BaseRepository[TRepo] = repository
         self._values: list[tuple[Any]] = []
         self._query: Optional[str] = None
 
