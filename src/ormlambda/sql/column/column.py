@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer, Regex, Like
 
-from ormlambda.sql import SQLType
+from ormlambda.types import SQLType
 
 from ormlambda.types import (
     Integer,
