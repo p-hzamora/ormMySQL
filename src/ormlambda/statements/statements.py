@@ -70,7 +70,10 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
                     counter += 1
                     char = f"_{counter}"
                 name += char
-                self._model.__table_name__ = name
+
+                new_model = self._model
+                new_model.__table_name__ = name
+                return type(self)(new_model, self.repository, self._methods).create_table()
 
         query = self._model.create_table_query(self)
         self._repository.execute(query)
