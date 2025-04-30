@@ -53,6 +53,7 @@ import test.test_mapped_table as test_mapped_table
 import test.test_queries_with_different_datatypes as test_queries_with_different_datatypes
 import test.test_table_class as test_table_class
 import test.test_type_hint as test_type_hint
+import test.test_sql_types as test_sql_types
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
@@ -104,6 +105,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_queries_with_different_datatypes),
         *loader.loadTestsFromModule(test_table_class),
         *loader.loadTestsFromModule(test_type_hint),
+        *loader.loadTestsFromModule(test_sql_types),
         # endregion
     )
 )
