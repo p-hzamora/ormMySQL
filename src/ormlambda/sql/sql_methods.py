@@ -19,6 +19,7 @@ from .clauses import (
 
 
 class SQLMethods[T, TRepo](Protocol):
+    """Protocol base class to create all necessary methods to use Statements class"""
     @staticmethod
     def count(*args, **kwargs) -> _Count[T]: ...
     @staticmethod
