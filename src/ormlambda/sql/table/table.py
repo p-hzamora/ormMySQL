@@ -4,13 +4,15 @@ import json
 
 from ormlambda.sql import Column
 from ormlambda.sql import ForeignKey
-from ormlambda.sql.dtypes import get_query_clausule
 from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
+
 
 if TYPE_CHECKING:
     from ormlambda.statements import BaseStatement
 
 from .table_constructor import __init_constructor__
+
+
 class TableMeta(type):
     def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         """
@@ -103,7 +105,7 @@ class Table(metaclass=TableMeta):
         return None
 
     @classmethod
-    def get_columns(cls) -> tuple[str, ...]:
+    def get_columns(cls) -> tuple[Column, ...]:
         return tuple([x for x in cls.__annotations__.values() if isinstance(x, Column)])
 
     @classmethod
@@ -115,24 +117,9 @@ class Table(metaclass=TableMeta):
     @classmethod
     def create_table_query(cls, statement: BaseStatement) -> str:
         """It's classmethod because of it does not matter the columns values to create the table"""
-        all_clauses: list[str] = []
+        from ormlambda.sql.schema_generator import SchemaGeneratorFactory
 
-        all_clauses.extend(cls._create_sql_column_query(statement))
-        all_clauses.extend(ForeignKey.create_query(cls))
-
-        return f"CREATE TABLE {cls.__table_name__} ({', '.join(all_clauses)});"
-
-    @classmethod
-    def _create_sql_column_query(cls, statement: BaseStatement) -> list[str]:
-        """
-        It's imperative to instantiate cls() to initialize the 'Table' object and create private variables that will be Column objects.
-        Otherwise, we only can access to property method
-        """
-        annotations: dict[str, Column] = cls.__annotations__
-        all_columns: list = []
-        for col_obj in annotations.values():
-            all_columns.append(get_query_clausule(col_obj, statement))
-        return all_columns
+        return SchemaGeneratorFactory.get_generator(statement._dialect).create_table(cls)
 
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:
