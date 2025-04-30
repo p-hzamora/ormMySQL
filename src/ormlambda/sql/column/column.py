@@ -4,6 +4,7 @@ from typing import Annotated, Iterable, Type, Optional, TYPE_CHECKING, get_type_
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
 from ormlambda.types import DatabaseType
+from ormlambda.types.factory.column_definition_factory import ColumnDefinitionFactory
 
 if TYPE_CHECKING:
     import re
@@ -235,4 +236,5 @@ class Column[TProp]:
 
     def get_column_definition(self, dialect: DatabaseType = None) -> str:
         """Generate full column definition SQL with constraints"""
-        parts = [f"{self.column_name} {self.get_sql_type(dialect)}"]
+        renderer = ColumnDefinitionFactory.get_renderer(dialect)
+        return renderer.render_definition(self, dialect)
