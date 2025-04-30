@@ -64,4 +64,5 @@ class _Order(AggregateFunctionBase):
 
         return f"{self.FUNCTION_NAME()} {', '.join(string_columns)}"
 
+
 __all__ = ["_Order"]

@@ -50,7 +50,7 @@ class Response[TFlavour, *Ts]:
     def response(self, **kwargs) -> TResponse[TFlavour, *Ts]:
         if not self.is_there_response:
             return tuple([])
-        
+
         # Cast data using caster
         cleaned_response = self._response_values
 

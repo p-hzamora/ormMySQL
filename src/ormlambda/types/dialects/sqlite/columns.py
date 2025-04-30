@@ -1,10 +1,10 @@
-
 from ormlambda.types.factory import ColumnDefinitionFactory
 from typing import Optional
 from ormlambda import Column
 from ormlambda.types import DatabaseType
 
 from ...renderers.column_renderer import ColumnDefinitionRenderer
+
 
 class SQLiteColumnDefinitionRenderer(ColumnDefinitionRenderer):
     """SQLite renderer for column definitions"""

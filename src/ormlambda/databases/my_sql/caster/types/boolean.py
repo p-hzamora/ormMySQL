@@ -6,6 +6,7 @@ class BooleanCaster[TType](BaseCaster[bool, TType]):
     """
     MySQL uses 0/1 for booleans stored in TINYINT
     """
+
     def __init__(self, value: bool, type_value: TType):
         super().__init__(value, type_value)
 
@@ -32,5 +33,3 @@ class BooleanCaster[TType](BaseCaster[bool, TType]):
     @BaseCaster.return_value_if_exists
     def string_data(self) -> Optional[str]:
         return str(bool(self.value))
-
-                

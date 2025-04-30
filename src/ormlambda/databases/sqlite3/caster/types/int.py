@@ -6,13 +6,13 @@ class IntegerCaster[TType](BaseCaster[int, TType]):
     def __init__(self, value: int, type_value: TType):
         super().__init__(value, type_value)
 
-    def wildcard_to_select(self, value:Optional[str]=None) -> str:
+    def wildcard_to_select(self, value: Optional[str] = None) -> str:
         return Caster.PLACEHOLDER if value is None else value
 
-    def wildcard_to_where(self, value:Optional[str]=None) -> str:
+    def wildcard_to_where(self, value: Optional[str] = None) -> str:
         return Caster.PLACEHOLDER if value is None else value
 
-    def wildcard_to_insert(self, value:Optional[str]=None) -> str:
+    def wildcard_to_insert(self, value: Optional[str] = None) -> str:
         return Caster.PLACEHOLDER if value is None else value
 
     @property

@@ -26,4 +26,5 @@ class _Alias[T: Table](ClauseInfo[T]):
             raise TypeError
         super().__init__(table, column, alias_table, alias_clause, context, keep_asterisk, preserve_context)
 
+
 __all__ = ["_Alias"]

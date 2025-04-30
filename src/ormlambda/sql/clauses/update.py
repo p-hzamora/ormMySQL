@@ -24,7 +24,7 @@ class UpdateKeyError(KeyError):
         return f"The column '{self._key}' does not belong to the table '{self._table.__table_name__}'. Please check the columns in the query."
 
 
-class _Update[T: Type[Table],TRepo](NonQueryBase[T, TRepo], IUpdate):
+class _Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate):
     def __init__(self, model: T, repository: Any, where: list[_Where]) -> None:
         super().__init__(model, repository)
         self._where: Optional[list[_Where]] = where
@@ -74,5 +74,6 @@ class _Update[T: Type[Table],TRepo](NonQueryBase[T, TRepo], IUpdate):
         if self._model is not col.table:
             raise UpdateKeyError(self._model, col)
         return not col.is_auto_generated
+
 
 __all__ = ["_Update"]

@@ -1,4 +1,5 @@
 import ormlambda.env  # noqa: F401 Necesary to load all variables inside ormalambda.env
+
 # region enums
 from .common.enums import (
     JoinType as JoinType,

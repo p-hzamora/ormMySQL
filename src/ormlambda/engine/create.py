@@ -15,7 +15,7 @@ def create_engine(url: URL | str, **kwargs: Any) -> BaseRepository:
     u = make_url(url)
     url, kwargs = u._instantiate_plugins(kwargs)
 
-    repo_selector:dict[str,Type[BaseRepository]] = {
+    repo_selector: dict[str, Type[BaseRepository]] = {
         "mysql": MySQLRepository,
         "sqlite": SQLiteRepository,
     }

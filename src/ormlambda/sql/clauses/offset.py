@@ -16,4 +16,5 @@ class _Offset(IQuery):
     def query(self) -> str:
         return f"{self.OFFSET} {self._number}"
 
+
 __all__ = ["_Offset"]

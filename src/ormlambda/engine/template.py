@@ -34,18 +34,17 @@ class RepositoryTemplateDict[TRepo]:
             SQLiteCaster,
             SQLiteRepository,
             SQLiteMethods,
-
         )
 
         class MySQLTemplate[TCnx](Template[TCnx]):
             repository = MySQLRepository
             caster = MySQLCaster
-            methods= MySQLMethods
+            methods = MySQLMethods
 
         class SQLiteTemplate[TCnx](Template[TCnx]):
             repository = SQLiteRepository
             caster = SQLiteCaster
-            methods= SQLiteMethods
+            methods = SQLiteMethods
 
         # FIXME [ ]: should return T instead of Template
         cls._data: dict[IRepositoryBase, Template] = {MySQLRepository: MySQLTemplate, SQLiteRepository: SQLiteTemplate}

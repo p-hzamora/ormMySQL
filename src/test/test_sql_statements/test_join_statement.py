@@ -9,7 +9,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from ormlambda import ORM
 from ormlambda import Table, Column, JoinType  # noqa: E402
-from test.config import create_env_engine, create_engine_for_db # noqa: E402
+from test.config import create_env_engine, create_engine_for_db  # noqa: E402
 from test.models import (  # noqa: E402
     TestTable,
 )

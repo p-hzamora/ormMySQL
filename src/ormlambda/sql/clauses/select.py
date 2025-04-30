@@ -52,4 +52,4 @@ class _Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ISelect):
         return f"{self.CLAUSE} {self.COLUMNS} FROM {FROM.query}"
 
 
-__all__=["_Select"]
+__all__ = ["_Select"]

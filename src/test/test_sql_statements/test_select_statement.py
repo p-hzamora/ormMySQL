@@ -64,7 +64,7 @@ class TestJoinQueries(unittest.TestCase):
         self.assertEqual(self.model.query, real_query)
 
     # # FIXME [ ]: Check why ForeignKey alias in 'a.B_fk_b1.CSimple' 'a.B_fk_b2.CSimple' it's not working as expected.
-    # def test_AAnew_select_context(self):
+    # def test_new_select_context(self):
     #     res = self.model.select(
     #         lambda a: (
     #             a.data_a,

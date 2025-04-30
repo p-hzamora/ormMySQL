@@ -10,4 +10,3 @@ class DateTime(SQLType):
 
     def __repr__(self):
         return "DATETIME"
-

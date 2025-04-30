@@ -19,7 +19,7 @@ except ImportError:
 
 GLOBAL_LOG_LEVEL = os.getenv("GLOBAL_LOG_LEVEL", "ERROR").upper()
 logging.basicConfig(
-    level=logging.getLevelNamesMapping().get(GLOBAL_LOG_LEVEL,logging.ERROR),
+    level=logging.getLevelNamesMapping().get(GLOBAL_LOG_LEVEL, logging.ERROR),
     handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler(str(BASE_DIR / "errors.log"), "w", encoding="utf-8"),

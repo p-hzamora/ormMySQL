@@ -38,8 +38,8 @@ class TestSQLite(unittest.TestCase):
 
         cls.amodel = ORM(Address, sqlite_engine)
         return None
-    
-    def test_sqlite_query(self)->None:
+
+    def test_sqlite_query(self) -> None:
         res = self.amodel.select(
             lambda x: (
                 x,

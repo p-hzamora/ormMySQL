@@ -40,6 +40,7 @@ class AggregateFunctionError[T](Exception):
         Get the class name of those classes that inherit from 'AggregateFunctionBase' class in order to create a better error message.
         """
         from ormlambda.sql.clause_info import AggregateFunctionBase
+
         res: set[str] = set()
         if not isinstance(clauses, tp.Iterable):
             return clauses.__class__.__name__

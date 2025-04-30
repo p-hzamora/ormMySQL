@@ -148,4 +148,5 @@ class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
             res.extend(tables)
         return res
 
+
 __all__ = ["_JoinSelector"]

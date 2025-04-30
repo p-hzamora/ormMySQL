@@ -9,8 +9,8 @@ from ormlambda.common.interfaces import IQuery
 
 
 from ormlambda.sql.clause_info import ClauseInfo
+
 if TYPE_CHECKING:
-        
     from ..sql.clauses import _Limit as Limit
     from ..sql.clauses import _Offset as Offset
     from ..sql.clauses import _Order as Order

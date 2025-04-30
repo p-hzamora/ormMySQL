@@ -92,7 +92,7 @@ class TestSQLStatements(unittest.TestCase):
         self.assertDictEqual(VERIFICATION.to_dict(), select_query.to_dict())
 
     # TODOM [x]: Add a test for update method once it has been created
-    def test_AAupdate_with_column_as_keys(self):
+    def test_update_with_column_as_keys(self):
         instance = create_instance_of_TestTable(5)
         self.tmodel.insert(instance)
 
@@ -568,12 +568,13 @@ class TestAggregateFunctions(unittest.TestCase):
             flavour=dict,
             alias=lambda x: "{table}~{column}" + f"[{x.dtype.__name__}]",
         )
-        EXPECTED= {
-            "address~last_update[datetime]":datetime(2014, 9, 25, 22, 29, 59),
-            "city~last_update[datetime]":datetime(2006, 2, 15, 4, 45, 25),
-            "country~last_update[datetime]":datetime(2006, 2, 15, 4, 44),
+        EXPECTED = {
+            "address~last_update[datetime]": datetime(2014, 9, 25, 22, 29, 59),
+            "city~last_update[datetime]": datetime(2006, 2, 15, 4, 45, 25),
+            "country~last_update[datetime]": datetime(2006, 2, 15, 4, 44),
         }
         self.assertDictEqual(res, EXPECTED)
+
 
 if __name__ == "__main__":
     unittest.main(failfast=False)

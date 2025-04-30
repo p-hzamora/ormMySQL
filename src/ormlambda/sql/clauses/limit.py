@@ -16,4 +16,5 @@ class _Limit(IQuery):
     def query(self) -> str:
         return f"{self.LIMIT} {self._number}"
 
+
 __all__ = ["_Limit"]
