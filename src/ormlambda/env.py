@@ -17,18 +17,14 @@ except ImportError:
     print("dotenv not installed, skipping...")
 
 
-GLOBAL_LOG_LEVEL = os.getenv("GLOBAL_LOG_LEVEL", "").upper()
+GLOBAL_LOG_LEVEL = os.getenv("GLOBAL_LOG_LEVEL", "ERROR").upper()
+logging.basicConfig(
+    level=logging.getLevelNamesMapping().get(GLOBAL_LOG_LEVEL,logging.ERROR),
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(str(BASE_DIR / "errors.log"), "w", encoding="utf-8"),
+    ],
+)
 
-if GLOBAL_LOG_LEVEL:
-    logging.basicConfig(
-        level=GLOBAL_LOG_LEVEL,
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler(str(BASE_DIR / "errors.log"), "w", encoding="utf-8"),
-        ],
-    )
-
-else:
-    GLOBAL_LOG_LEVEL = logging.ERROR
 log = logging.getLogger(__name__)
 log.info(f"GLOBAL_LOG_LEVEL: {GLOBAL_LOG_LEVEL}")
