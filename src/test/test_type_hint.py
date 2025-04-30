@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 import unittest
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
@@ -90,10 +90,12 @@ class TestTypeHint(unittest.TestCase):
         self.assertTrue(len(selection), 8)
 
     def test_SELECT_ONE_method_with_SET_as_flavour_and_avoid_raises_TypeError(self):
+        from ormlambda.types import Binary, CheckTypes, Integer, PrimaryKey
+
         class TableWithBytearray(Table):
             __table_name__ = "bytearray_table"
-            pk: int = Column(int, is_primary_key=True)
-            bytearray_data: Column[bytearray] = Column(bytearray, check_types=False)
+            pk: Annotated[int, Integer(True), PrimaryKey()]
+            bytearray_data: Annotated[Column[bytearray], Binary(), CheckTypes(False)]
 
         DDBB_NAME: str = "__TEST_DATABASE__"
 
