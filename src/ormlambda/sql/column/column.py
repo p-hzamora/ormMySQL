@@ -25,6 +25,7 @@ from ormlambda.types import (
     Unique,
     CheckTypes,
     Default,
+    NotNull,
 )
 
 
@@ -39,6 +40,7 @@ class Column[TProp]:
         "is_auto_generated",
         "is_auto_increment",
         "is_unique",
+        "is_not_null",
         "default_value",
         "sql_type",
         "__private_name",
@@ -57,6 +59,7 @@ class Column[TProp]:
         is_auto_generated: bool = False,
         is_auto_increment: bool = False,
         is_unique: bool = False,
+        is_not_null: bool = False,
         check_types: bool = True,
     ) -> None: ...
 
@@ -68,6 +71,7 @@ class Column[TProp]:
         is_auto_generated: bool = False,
         is_auto_increment: bool = False,
         is_unique: bool = False,
+        is_not_null: bool = False,
         check_types: bool = True,
         column_name: Optional[str] = None,
     ) -> None:
@@ -89,6 +93,7 @@ class Column[TProp]:
         self.is_auto_generated: bool = is_auto_generated
         self.is_auto_increment: bool = is_auto_increment
         self.is_unique: bool = is_unique
+        self.is_not_null: bool = is_not_null
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}[{self.dtype.__name__}] => {self.column_name}"
@@ -124,6 +129,7 @@ class Column[TProp]:
                 self.is_auto_generated,
                 self.is_auto_increment,
                 self.is_unique,
+                self.is_not_null,
             )
         )
 
@@ -135,7 +141,8 @@ class Column[TProp]:
             if get_origin(annotation) is Annotated:
                 dtype, *metadata = get_args(annotation)
 
-                self.dtype = dtype
+                if not self.dtype:
+                    self.dtype = dtype
 
                 for meta in metadata:
                     if isinstance(meta, SQLType):
@@ -151,7 +158,10 @@ class Column[TProp]:
                     elif isinstance(meta, CheckTypes):
                         self._check = True
                     elif isinstance(meta, Default):
-                        self.default_value = meta
+                        self.default_value = meta.value
+                        self.is_auto_generated = True
+                    elif isinstance(meta, NotNull):
+                        self.is_not_null = True
         return None
 
     @abc.abstractmethod
