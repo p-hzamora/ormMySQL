@@ -8,8 +8,9 @@ from ormlambda.statements.interfaces import IStatements_two_generic
 from ormlambda import Table
 
 from ormlambda.caster.caster import Caster
-
+from ormlambda.types import DatabaseType, cast_repository_to_database_type
 from ormlambda.common.errors import AggregateFunctionError
+
 if TYPE_CHECKING:
     from ormlambda.sql.clauses import _Select
 
@@ -18,13 +19,14 @@ ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", 
 
 
 class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
-    def __init__(self, model: tuple[T,...], repository: BaseRepository[TRepo]) -> None:
+    def __init__(self, model: tuple[T, ...], repository: BaseRepository[TRepo]) -> None:
         self.__valid_repository(repository)
 
         self._query: Optional[str] = None
         self._model: T = model[0] if isinstance(model, Iterable) else model
         self._models: tuple[T] = self._model if isinstance(model, Iterable) else (model,)
         self._repository: BaseRepository[TRepo] = repository
+        self._dialect: Optional[DatabaseType] = cast_repository_to_database_type(repository)
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
@@ -113,4 +115,3 @@ class ClusterResponse[T]:
                 table_attr_dict[table][i][col] = dicc_cols[clause.alias_clause]
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
         return dict(table_attr_dict)
-
