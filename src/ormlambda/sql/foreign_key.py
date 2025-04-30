@@ -116,8 +116,9 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     @property
     def query(self) -> str:
         compare = self.resolved_function()
+        left_col = compare.left_condition.column
         rcon = alias if (alias := compare.right_condition.alias_table) else compare.right_condition.table.__table_name__
-        return f"FOREIGN KEY ({self._tleft.__table_name__}) REFERENCES {rcon}({compare.right_condition._column.column_name})"
+        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition.column})"
 
     @property
     def alias(self) -> str:
@@ -130,7 +131,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     def create_query(cls, orig_table: Table) -> list[str]:
         clauses: list[str] = []
 
-        for attr in vars(orig_table):
+        for attr in orig_table.__dict__.values():
             if isinstance(attr, ForeignKey):
                 clauses.append(attr.query)
         return clauses
