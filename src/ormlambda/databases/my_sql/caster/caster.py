@@ -5,7 +5,17 @@ from ormlambda.caster import BaseCaster
 from ormlambda.caster import ICaster
 
 
-from .types import StringCaster, IntegerCaster, FloatCaster, PointCaster, NoneTypeCaster, DatetimeCaster, BytesCaster, IterableCaster
+from .types import (
+    StringCaster,
+    IntegerCaster,
+    FloatCaster,
+    PointCaster,
+    NoneTypeCaster,
+    DatetimeCaster,
+    BytesCaster,
+    IterableCaster,
+    BooleanCaster,
+)
 
 from shapely import Point
 from types import NoneType
@@ -26,6 +36,7 @@ class MySQLCaster(ICaster):
             bytearray: BytesCaster,
             tuple: IterableCaster,
             list: IterableCaster,
+            bool: BooleanCaster,
         }
 
     @classmethod
