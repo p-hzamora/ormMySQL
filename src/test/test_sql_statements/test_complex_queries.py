@@ -51,12 +51,12 @@ class TestComplexQueries(unittest.TestCase):
             count: int
 
         res = (
-            self.amodel.where(Address.city_id >= 312)
+            self.amodel.where(Address.City.city_id >= 312)
             .having(Column(column_name="count") > 1)
             .groupby(Address.city_id)
             .select(
                 (
-                    self.amodel.alias(Address.city_id, "pkCity"),
+                    self.amodel.alias(Address.City.city_id, "pkCity"),
                     self.amodel.count(Address.address_id, "count"),
                 ),
                 flavour=Response,
