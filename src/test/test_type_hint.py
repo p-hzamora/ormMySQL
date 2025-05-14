@@ -90,11 +90,11 @@ class TestTypeHint(unittest.TestCase):
         self.assertTrue(len(selection), 8)
 
     def test_SELECT_ONE_method_with_SET_as_flavour_and_avoid_raises_TypeError(self):
-        from ormlambda.types import Binary, CheckTypes, Integer, PrimaryKey
+        from ormlambda.types import Binary, CheckTypes, INTEGER, PrimaryKey
 
         class TableWithBytearray(Table):
             __table_name__ = "bytearray_table"
-            pk: Annotated[int, Integer(True), PrimaryKey()]
+            pk: Annotated[int, INTEGER(True), PrimaryKey()]
             bytearray_data: Annotated[Column[bytearray], Binary(), CheckTypes(False)]
 
         DDBB_NAME: str = "__TEST_DATABASE__"

@@ -2,7 +2,7 @@ from typing import Optional
 from ..sql_type import SQLType
 
 
-class String(SQLType):
+class STRING(SQLType):
     """VARCHAR SQL type"""
 
     def __init__(self, length: Optional[int] = None):

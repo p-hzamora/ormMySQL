@@ -13,6 +13,7 @@ import collections.abc as collections_abc
 from typing import (
     Any,
     Literal,
+    Type,
     cast,
     Iterable,
     Mapping,
@@ -31,6 +32,7 @@ from urllib.parse import (
 )
 
 from . import utils
+from ..dialects import Dialect, registry
 
 type DrivernameType = Literal["mysql", "sqlite"] | str
 
@@ -669,6 +671,19 @@ class URL(NamedTuple):
 
         return u, kwargs
 
+    def _get_entrypoint(self) -> Type[Dialect]:
+        """Return the dialect class for this URL.
+
+        This is the dialect class that corresponds to the database backend
+        in use, and is the portion of the :attr:`_engine.URL.drivername`
+        that is to the left of the plus sign.
+
+        """
+        if "+" not in self.drivername:
+            name = self.drivername
+        else:
+            name = self.drivername.replace("+", ".")
+        return registry.load(name)
 
 def make_url(name_or_url: str | URL) -> URL:
     """Given a string, produce a new URL instance.

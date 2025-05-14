@@ -1,10 +1,10 @@
 from ormlambda.types import DatabaseType
 from ...factory.sql_type_factory import SQLTypeRenderer, SQLTypeRendererFactory
 from ...sql_types import (
-    Integer,
-    String,
+    INTEGER,
+    STRING,
     Char,
-    Text,
+    TEXT,
     Timestamp,
     DateTime,
     Boolean,
@@ -14,7 +14,7 @@ from ...sql_types import (
 class SQLiteIntegerRenderer(SQLTypeRenderer):
     """SQLite renderer for Integer type"""
 
-    def render(self, sql_type: Integer) -> str:
+    def render(self, sql_type: INTEGER) -> str:
         # In SQLite, INTEGER PRIMARY KEY automatically becomes an alias for the ROWID
         # which is automatically assigned a unique integer value
         return "INTEGER"
@@ -23,7 +23,7 @@ class SQLiteIntegerRenderer(SQLTypeRenderer):
 class SQLiteStringRenderer(SQLTypeRenderer):
     """SQLite renderer for String type"""
 
-    def render(self, sql_type: String) -> str:
+    def render(self, sql_type: STRING) -> str:
         # SQLite's type system is dynamic - length constraints are not enforced
         # but we can include them for documentation purposes
         if sql_type.length:
@@ -43,7 +43,7 @@ class SQLiteCharRenderer(SQLTypeRenderer):
 class SQLiteTextRenderer(SQLTypeRenderer):
     """SQLite renderer for Text type"""
 
-    def render(self, sql_type: Text) -> str:
+    def render(self, sql_type: TEXT) -> str:
         # SQLite doesn't have text size variations
         return "TEXT"
 

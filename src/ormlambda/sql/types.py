@@ -23,3 +23,7 @@ type ComparerTypes = ComparerType | UnionType | ConditionEnum
 type TupleJoinType[T] = tuple[Comparer[T], JoinType]
 
 ASTERISK: AsteriskType = "*"
+
+
+
+from .compiler import *

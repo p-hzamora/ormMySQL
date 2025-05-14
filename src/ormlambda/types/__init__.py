@@ -6,10 +6,10 @@ from .sql_type import SQLType
 from .renderers.sql_type_renderer import SQLTypeRenderer
 from .factory.sql_type_factory import SQLTypeRendererFactory
 from .sql_types import (
-    Integer,
-    String,
+    INTEGER,
+    STRING,
     Char,
-    Text,
+    TEXT,
     Boolean,
     DateTime,
     Timestamp,
@@ -51,10 +51,10 @@ __all__ = [
     "SQLType",
     "SQLTypeRenderer",
     "SQLTypeRendererFactory",
-    "Integer",
-    "String",
+    "INTEGER",
+    "STRING",
     "Char",
-    "Text",
+    "TEXT",
     "Boolean",
     "DateTime",
     "Timestamp",

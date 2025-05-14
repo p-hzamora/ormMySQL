@@ -11,9 +11,9 @@ from test.models import Address, City, Country
 from ormlambda.types.sql_type import SQLType
 from ormlambda.types import DatabaseType
 from ormlambda.types import (
-    Integer,
-    String,
-    Text,
+    INTEGER,
+    STRING,
+    TEXT,
     Boolean,
     Timestamp,
     Char,
@@ -24,10 +24,10 @@ from ormlambda.sql.schema_generator import SchemaGeneratorFactory
 
 
 # Create some SQL types
-int_type = Integer(autoincrement=True)
-string_type = String(length=100)
+int_type = INTEGER(autoincrement=True)
+string_type = STRING(length=100)
 char_type = Char(length=10)
-text_type = Text(size="medium")
+text_type = TEXT(size="medium")
 datetime_type = DateTime(precision=3)
 timestamp_type = Timestamp(timezone=True, precision=6)
 bool_type = Boolean()

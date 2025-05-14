@@ -1,40 +1,17 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, Type
+from typing import Any
 
 from ormlambda.engine.url import URL, make_url
 
-if TYPE_CHECKING:
-    from ormlambda import BaseRepository
+from . import base
 
 
-def create_engine(url: URL | str, **kwargs: Any) -> BaseRepository:
-    from ormlambda.databases import MySQLRepository
-    from ormlambda.databases import SQLiteRepository
-
+def create_engine(url: URL | str, **kwargs: Any) -> base.Engine:
     # create url.URL object
     u = make_url(url)
     url, kwargs = u._instantiate_plugins(kwargs)
 
-    repo_selector: dict[str, Type[BaseRepository]] = {
-        "mysql": MySQLRepository,
-        "sqlite": SQLiteRepository,
-    }
-
-    if url.drivername not in repo_selector:
-        raise ValueError(f"drivername '{url.drivername}' not expected to load Repository class")
-
-    default_config = {
-        "user": url.username,
-        "password": url.password,
-        "host": url.host,
-        "database": url.database,
-        **kwargs,
-    }
-
-    if url.port:
-        try:
-            default_config["port"] = int(url.port)
-        except ValueError:
-            raise ValueError(f"The port must be an int. '{url.port}' passed.")
-
-    return repo_selector[url.drivername](**default_config)
+    entrypoint = u._get_entrypoint()
+    dialect_cls = entrypoint.get_dialect_cls()
+    dialect = dialect_cls()
+    return base.Engine(dialect, u)

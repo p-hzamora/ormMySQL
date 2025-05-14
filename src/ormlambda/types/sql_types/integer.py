@@ -1,7 +1,7 @@
 from ..sql_type import SQLType
 
 
-class Integer(SQLType):
+class INTEGER(SQLType):
     """INTEGER SQL type"""
 
     def __init__(self, autoincrement: bool = False):

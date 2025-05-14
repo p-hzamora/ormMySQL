@@ -50,10 +50,10 @@ MySQL 8.0 does not support year in two-digit format.
 from ormlambda.types import DatabaseType
 from ...factory.sql_type_factory import SQLTypeRenderer, SQLTypeRendererFactory
 from ...sql_types import (
-    Integer,
-    String,
+    INTEGER,
+    STRING,
     Char,
-    Text,
+    TEXT,
     Timestamp,
     DateTime,
     Boolean,
@@ -65,7 +65,7 @@ from ...sql_types import (
 class MySQLIntegerRenderer(SQLTypeRenderer):
     """MySQL renderer for Integer type"""
 
-    def render(self, sql_type: Integer) -> str:
+    def render(self, sql_type: INTEGER) -> str:
         # MySQL uses INT for standard integer type
         return f"INT{' AUTO_INCREMENT' if sql_type.autoincrement else ''}"
 
@@ -73,7 +73,7 @@ class MySQLIntegerRenderer(SQLTypeRenderer):
 class MySQLStringRenderer(SQLTypeRenderer):
     """MySQL renderer for String type"""
 
-    def render(self, sql_type: String) -> str:
+    def render(self, sql_type: STRING) -> str:
         # MySQL has performance implications for different VARCHAR sizes
         if sql_type.length is None:
             return "VARCHAR(255)"  # Default
@@ -96,7 +96,7 @@ class MySQLCharRenderer(SQLTypeRenderer):
 class MySQLTextRenderer(SQLTypeRenderer):
     """MySQL renderer for Text type"""
 
-    def render(self, sql_type: Text) -> str:
+    def render(self, sql_type: TEXT) -> str:
         # MySQL has different TEXT sizes
         if sql_type.size == "tiny":
             return "TINYTEXT"  # Up to 255 bytes

@@ -14,10 +14,10 @@ if TYPE_CHECKING:
 from ormlambda.types import SQLType
 
 from ormlambda.types import (
-    Integer,
+    INTEGER,
     Boolean,
     DateTime,
-    String,
+    STRING,
     Binary,
     # metadata
     PrimaryKey,
@@ -222,9 +222,9 @@ class Column[TProp]:
 
         # COMMENT: We should infer the SQL type from the Python type when the Annotated type hint isn't used
         if issubclass(self.dtype, int):
-            return Integer().get_sql(dialect)
+            return INTEGER().get_sql(dialect)
         elif issubclass(self.dtype, str):
-            return String().get_sql(dialect)
+            return STRING().get_sql(dialect)
         elif issubclass(self.dtype, bool):
             return Boolean().get_sql(dialect)
         elif issubclass(self.dtype, bytearray | bytes):
@@ -232,7 +232,7 @@ class Column[TProp]:
         elif self.dtype.__name__ == "datetime":
             return DateTime().get_sql(dialect)
         else:
-            return String().get_sql(dialect)  # Default fallback
+            return STRING().get_sql(dialect)  # Default fallback
 
     def get_column_definition(self, dialect: DatabaseType = None) -> str:
         """Generate full column definition SQL with constraints"""
