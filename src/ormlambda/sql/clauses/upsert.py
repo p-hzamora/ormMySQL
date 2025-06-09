@@ -1,16 +1,21 @@
 from __future__ import annotations
-from typing import override
+from typing import override, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ormlambda.engine import Engine
 
 from ormlambda import Table
 from ormlambda.repository import BaseRepository
 from ormlambda.sql.clauses.interfaces import IUpsert
 from ormlambda.common.abstract_classes import NonQueryBase
-from .insert import _Insert
+from .insert import Insert
+from ormlambda.sql.elements import ClauseElement
 
 
-class _Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T]):
-    def __init__(self, model: T, repository: BaseRepository[TRepo]) -> None:
-        super().__init__(model, repository)
+class Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T], ClauseElement):
+    __visit_name__ = "upsert"
+    def __init__(self, model: T, repository: BaseRepository[TRepo], engine:Engine) -> None:
+        super().__init__(model, repository, Engine)
 
     @override
     @property
@@ -19,7 +24,7 @@ class _Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T]):
 
     @override
     def execute(self) -> None:
-        return self._repository.executemany_with_values(self._query, self._values)
+        return self._dialect.executemany_with_values(self._query, self._values)
 
     @override
     def upsert(self, instances: T | list[T]) -> None:
@@ -50,7 +55,7 @@ class _Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T]):
         COL2 = _val.COL2;
 
         """
-        insert = _Insert(self._model, self._repository)
+        insert = Insert(self._model, self._dialect)
         insert.insert(instances)
 
         if isinstance(instances, Table):
@@ -68,4 +73,4 @@ class _Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T]):
         return None
 
 
-__all__ = ["_Upsert"]
+__all__ = ["Upsert"]

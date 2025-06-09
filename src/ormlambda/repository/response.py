@@ -1,16 +1,15 @@
 from __future__ import annotations
 from typing import Type, Any, TYPE_CHECKING, Optional
+from ormlambda.dialects.interface.dialect import Dialect
 import shapely as shp
 
 # Custom libraries
-from ormlambda.caster import Caster
-from ormlambda.sql.clauses import _Alias
+from ormlambda.sql.clauses import Alias
 
 if TYPE_CHECKING:
-    from ormlambda import BaseRepository
     from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
     from ormlambda import Table
-    from ormlambda.sql.clauses import _Select
+    from ormlambda.sql.clauses import Select
 
 
 type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[tuple[*Ts]] | tuple[TFlavour]
@@ -19,21 +18,21 @@ type TResponse[TFlavour, *Ts] = TFlavour | tuple[dict[str, tuple[*Ts]]] | tuple[
 class Response[TFlavour, *Ts]:
     def __init__(
         self,
-        repository: BaseRepository,
+        dialect: Dialect,
         response_values: list[tuple[*Ts]],
         columns: tuple[str],
         flavour: Type[TFlavour],
-        select: Optional[_Select] = None,
+        select: Optional[Select] = None,
     ) -> None:
-        self._repository: BaseRepository = repository
+        self._dialect: Dialect = dialect
         self._response_values: list[tuple[*Ts]] = response_values
         self._columns: tuple[str] = columns
         self._flavour: Type[TFlavour] = flavour
-        self._select: _Select = select
+        self._select: Select = select
 
         self._response_values_index: int = len(self._response_values)
-        # self.select_values()
-        self._caster = Caster(repository)
+
+        self._caster = dialect.caster()
 
     @property
     def is_one(self) -> bool:
@@ -90,7 +89,7 @@ class Response[TFlavour, *Ts]:
             replacer_dicc: dict[str, str] = {}
 
             for col in self._select.all_clauses:
-                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, _Alias):
+                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, Alias):
                     continue
                 replacer_dicc[col.alias_clause] = col.column
 

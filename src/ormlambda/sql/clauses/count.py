@@ -9,13 +9,18 @@ from ormlambda import Table
 import typing as tp
 
 from ormlambda.sql.types import ASTERISK
+from ormlambda.sql.elements import ClauseElement
+
 
 if tp.TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import ColumnType, AliasType, TableType
+    from ormlambda.dialects import Dialect
 
 
-class _Count[T: Table](AggregateFunctionBase[T]):
+class Count[T: Table](AggregateFunctionBase[T], ClauseElement):
+    __visit_name__ = "count"
+
     @staticmethod
     def FUNCTION_NAME() -> str:
         return "COUNT"
@@ -28,6 +33,9 @@ class _Count[T: Table](AggregateFunctionBase[T]):
         context: ClauseContextType = None,
         keep_asterisk: bool = True,
         preserve_context: bool = True,
+        *,
+        dialect: Dialect,
+        **kw,
     ) -> None:
         table = self.extract_table(element)
         column = element if self.is_column(element) else ASTERISK
@@ -41,7 +49,9 @@ class _Count[T: Table](AggregateFunctionBase[T]):
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
             dtype=int,
+            dialect=dialect,
+            **kw,
         )
 
 
-__all__ = ["_Count"]
+__all__ = ["Count"]

@@ -11,17 +11,19 @@ from ormlambda.common.interfaces import IQuery
 from ormlambda.sql.clause_info import ClauseInfo
 
 if TYPE_CHECKING:
-    from ..sql.clauses import _Limit as Limit
-    from ..sql.clauses import _Offset as Offset
-    from ..sql.clauses import _Order as Order
-    from ..sql.clauses import _Select as Select
+    from ..sql.clauses import Limit as Limit
+    from ..sql.clauses import Offset as Offset
+    from ..sql.clauses import Order as Order
+    from ..sql.clauses import Select as Select
 
-    from ..sql.clauses import _GroupBy as GroupBy
+    from ..sql.clauses import GroupBy as GroupBy
 
+    from ormlambda.dialects import Dialect
 
-from ..sql.clauses import _Where as Where
-from ..sql.clauses import _Having as Having
+from ..sql.clauses import Where as Where
+from ..sql.clauses import Having as Having
 from ormlambda.common.enums import JoinType
+from ormlambda.sql.elements import ClauseElement
 
 
 class OrderType(TypedDict):
@@ -38,7 +40,8 @@ class OrderType(TypedDict):
 class QueryBuilder(IQuery):
     __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "GroupBy", "Having", "Order", "Limit", "Offset")
 
-    def __init__(self, by: JoinType = JoinType.INNER_JOIN):
+    def __init__(self, dialect: Dialect, by: JoinType = JoinType.INNER_JOIN):
+        self.dialect = dialect
         self._context = ClauseInfoContext()
         self._query_list: OrderType = {}
         self._by = by
@@ -68,11 +71,11 @@ class QueryBuilder(IQuery):
         return self._joins
 
     @property
-    def SELECT(self) -> IQuery:
+    def SELECT(self) -> ClauseElement:
         return self._query_list.get("Select", None)
 
     @property
-    def WHERE(self) -> IQuery:
+    def WHERE(self) -> ClauseElement:
         where = self._query_list.get("Where", None)
         if not isinstance(where, Iterable):
             if not where:
@@ -81,15 +84,15 @@ class QueryBuilder(IQuery):
         return where
 
     @property
-    def ORDER(self) -> IQuery:
+    def ORDER(self) -> ClauseElement:
         return self._query_list.get("Order", None)
 
     @property
-    def GROUP_BY(self) -> IQuery:
+    def GROUP_BY(self) -> ClauseElement:
         return self._query_list.get("GroupBy", None)
 
     @property
-    def HAVING(self) -> IQuery:
+    def HAVING(self) -> ClauseElement:
         where = self._query_list.get("Having", None)
         if not isinstance(where, Iterable):
             if not where:
@@ -98,11 +101,11 @@ class QueryBuilder(IQuery):
         return where
 
     @property
-    def LIMIT(self) -> IQuery:
+    def LIMIT(self) -> ClauseElement:
         return self._query_list.get("Limit", None)
 
     @property
-    def OFFSET(self) -> IQuery:
+    def OFFSET(self) -> ClauseElement:
         return self._query_list.get("Offset", None)
 
     @property
@@ -114,14 +117,14 @@ class QueryBuilder(IQuery):
 
         JOINS = self.stringify_foreign_key(extract_joins, " ")
         query_list: tuple[str, ...] = (
-            self.SELECT.query,
+            self.SELECT.compile(self.dialect).string,
             JOINS,
-            Where.join_condition(self.WHERE, True, self._context) if self.WHERE else None,
-            self.GROUP_BY.query if self.GROUP_BY else None,
-            Having.join_condition(self.HAVING, True, self._context) if self.HAVING else None,
-            self.ORDER.query if self.ORDER else None,
-            self.LIMIT.query if self.LIMIT else None,
-            self.OFFSET.query if self.OFFSET else None,
+            Where.join_condition(self.WHERE, True, self._context, dialect=self.dialect) if self.WHERE else None,
+            self.GROUP_BY.compile(self.dialect).string if self.GROUP_BY else None,
+            Having.join_condition(self.HAVING, True, self._context, dialect=self.dialect) if self.HAVING else None,
+            self.ORDER.compile(self.dialect).string if self.ORDER else None,
+            self.LIMIT.compile(self.dialect).string if self.LIMIT else None,
+            self.OFFSET.compile(self.dialect).string if self.OFFSET else None,
         )
         return " ".join([x for x in query_list if x])
 
@@ -141,14 +144,15 @@ class QueryBuilder(IQuery):
         # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
         for fk in ForeignKey.stored_calls.copy():
             fk = ForeignKey.stored_calls.pop(fk)
-            self._context._add_table_alias(fk.tright, fk.alias)
-            join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk.alias)
+            fk_alias = fk.get_alias(self.dialect)
+            self._context._add_table_alias(fk.tright, fk_alias)
+            join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk_alias, dialect=self.dialect)
             joins.add(join)
 
         return joins
 
     def clear(self) -> None:
-        self.__init__()
+        self.__init__(self.dialect, self.by)
         return None
 
     def update_context(self, clause: ClauseInfo) -> None:

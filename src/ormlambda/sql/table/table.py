@@ -4,11 +4,12 @@ import json
 
 from ormlambda.sql import Column
 from ormlambda.sql import ForeignKey
-from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
-
+from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
+from ormlambda.sql.ddl import CreateTable
 
 if TYPE_CHECKING:
     from ormlambda.statements import BaseStatement
+    from ormlambda.dialects import Dialect
 
 from .table_constructor import __init_constructor__
 
@@ -120,6 +121,10 @@ class Table(metaclass=TableMeta):
         from ormlambda.sql.schema_generator import SchemaGeneratorFactory
 
         return SchemaGeneratorFactory.get_generator(statement._dialect).create_table(cls)
+
+    @classmethod
+    def create_table(cls, dialect:Dialect) -> str:
+        return CreateTable(cls).compile(dialect).string
 
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:

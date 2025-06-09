@@ -3,13 +3,16 @@ from typing import Type, override, Any, TYPE_CHECKING, Optional
 
 from ormlambda import Table, Column
 from ormlambda.caster.caster import Caster
-from .where import _Where
+from .where import Where
 from ormlambda.common.abstract_classes import NonQueryBase
 from .interfaces import IUpdate
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType
-    from .where import _Where
+    from .where import Where
+    from ormlambda.engine import Engine
+
+from ormlambda.sql.elements import ClauseElement
 
 
 class UpdateKeyError(KeyError):
@@ -24,10 +27,12 @@ class UpdateKeyError(KeyError):
         return f"The column '{self._key}' does not belong to the table '{self._table.__table_name__}'. Please check the columns in the query."
 
 
-class _Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate):
-    def __init__(self, model: T, repository: Any, where: list[_Where]) -> None:
-        super().__init__(model, repository)
-        self._where: Optional[list[_Where]] = where
+class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseElement):
+    __visit_name__ = "update"
+
+    def __init__(self, model: T, repository: Any, where: list[Where], engine: Engine) -> None:
+        super().__init__(model, repository, engine=engine)
+        self._where: Optional[list[Where]] = where
 
     @override
     @property
@@ -42,7 +47,7 @@ class _Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate):
                 for x in where._comparer:
                     # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
                     self._query += " " + query_with_table.replace(x.left_condition.table.__table_name__ + ".", "")
-        return self._repository.execute_with_values(self._query, self._values)
+        return self._dialect.execute_with_values(self._query, self._values)
 
     @override
     def update[TProp](self, dicc: dict[str | ColumnType[TProp], Any]) -> None:
@@ -50,7 +55,7 @@ class _Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate):
             raise TypeError
 
         col_names: list[Column] = []
-        CASTER = Caster(self._repository)
+        CASTER = Caster(self._dialect)
         for col, value in dicc.items():
             if isinstance(col, str):
                 if not hasattr(self._model, col):
@@ -76,4 +81,4 @@ class _Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate):
         return not col.is_auto_generated
 
 
-__all__ = ["_Update"]
+__all__ = ["Update"]

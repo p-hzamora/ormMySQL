@@ -3,20 +3,24 @@ from collections import defaultdict
 from typing import override, Optional, TYPE_CHECKING, Type
 
 
-from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal
+from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import JoinType
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.sql.comparer import Comparer
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.elements import ClauseElement
+
 
 # TODOL [x]: Try to import Table module without circular import Error
 if TYPE_CHECKING:
     from ormlambda import Table
+    from ormlambda.dialects import Dialect
 
 
-class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
+class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], ClauseElement):
+    __visit_name__ = "join"
     __slots__: tuple = (
         "_comparer",
         "_orig_table",
@@ -41,6 +45,9 @@ class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         by: JoinType,
         alias: Optional[str] = "{table}",
         context: ClauseContextType = None,
+        *,
+        dialect: Dialect,
+        **kw,
     ) -> None:
         self._comparer: Comparer[TLeft, LProp, TRight, RProp] = where
         self._orig_table: TLeft = where.left_condition.table
@@ -54,12 +61,12 @@ class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
         self._alias: Optional[str] = alias
 
-        self._from_clause = ClauseInfo(self.right_table, alias_table=alias, context=self._context)
-        self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, context=self._create_partial_context())
-        self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, context=self._create_partial_context())
+        self._from_clause = ClauseInfo(self.right_table, alias_table=alias, context=self._context, dialect=dialect, **kw)
+        self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, context=self._create_partial_context(), dialect=dialect, **kw)
+        self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, context=self._create_partial_context(), dialect=dialect, **kw)
 
-    def __eq__(self, __value: _JoinSelector) -> bool:
-        return isinstance(__value, _JoinSelector) and self.__hash__() == __value.__hash__()
+    def __eq__(self, __value: JoinSelector) -> bool:
+        return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
 
     def __hash__(self) -> int:
         return hash(
@@ -82,7 +89,7 @@ class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         return ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
 
     @classmethod
-    def join_selectors(cls, *args: _JoinSelector) -> str:
+    def join_selectors(cls, *args: JoinSelector) -> str:
         return "\n".join([x.query for x in args])
 
     @property
@@ -120,12 +127,12 @@ class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         return self._alias
 
     @classmethod
-    def sort_join_selectors(cls, joins: set[_JoinSelector]) -> tuple[_JoinSelector]:
+    def sort_join_selectors(cls, joins: set[JoinSelector]) -> tuple[JoinSelector]:
         # FIXME [x]: How to sort when needed because it's not necessary at this point. It is for testing purpouse
         if len(joins) == 1:
             return tuple(joins)
 
-        join_object_map: dict[str, list[_JoinSelector]] = defaultdict(list)
+        join_object_map: dict[str, list[JoinSelector]] = defaultdict(list)
 
         for obj in joins:
             join_object_map[obj.left_table].append(obj)
@@ -149,4 +156,4 @@ class _JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight]):
         return res
 
 
-__all__ = ["_JoinSelector"]
+__all__ = ["JoinSelector"]

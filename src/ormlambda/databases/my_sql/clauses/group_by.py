@@ -1,9 +1,9 @@
 from ormlambda.sql.clause_info import ClauseInfoContext
-from ormlambda.sql.clauses import _GroupBy
+from ormlambda.sql.clauses import GroupBy
 from ormlambda.sql.types import ColumnType
 
 
-class GroupBy(_GroupBy):
+class GroupBy(GroupBy):
     def __init__(
         self,
         column: ColumnType,

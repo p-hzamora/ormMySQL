@@ -1,28 +1,26 @@
 from __future__ import annotations
 
 
-from typing import Optional, Type, TYPE_CHECKING, Callable, overload
-
+from typing import ClassVar, Optional, Type, TYPE_CHECKING, Callable, overload, get_args
+from types import NoneType
+from ormlambda.caster.interfaces import ICaster
 from ormlambda.common.global_checker import GlobalChecker
 from ormlambda.sql.types import ColumnType
-from ormlambda.engine.template import RepositoryTemplateDict
+from ormlambda.caster import BaseCaster
+from ormlambda.sql.sqltypes import TypeEngine
+
 
 if TYPE_CHECKING:
     from ormlambda.caster import BaseCaster
-    from ormlambda.repository import IRepositoryBase
 
 
-class Caster:
-    PLACEHOLDER: str = "%s"
+class Caster(ICaster):
+    PLACEHOLDER: ClassVar[str] = "%s"
 
     @classmethod
     def set_placeholder(cls, char: str) -> None:
         cls.PLACEHOLDER = char
         return None
-
-    def __init__(self, repository: IRepositoryBase):
-        self._repository: IRepositoryBase = repository
-        self._caster = RepositoryTemplateDict().get(repository).caster
 
     @overload
     def for_column[T, TProp](self, column: Callable[[T], TProp], instance: T) -> BaseCaster[TProp, Type[TProp]]: ...
@@ -40,7 +38,7 @@ class Caster:
             column_type = column.dtype
             value = instance[column]
 
-        return self._caster.cast(value, column_type)
+        return self.cast(value, column_type)
 
     @overload
     def for_value[TProp](self, value: TProp) -> BaseCaster[TProp, Type[TProp]]: ...
@@ -49,4 +47,19 @@ class Caster:
 
     def for_value[TProp, TType](self, value: TProp, value_type: Optional[TType] = None) -> BaseCaster[TProp, TType]:
         column_type = value_type if value_type else type(value)
-        return self._caster.cast(value, column_type)
+        return self.cast(value, column_type)
+
+    @classmethod
+    def cast[TProp, TType](cls, value: TProp, type_value: Optional[TypeEngine[TType]] = None) -> BaseCaster[TProp, TType]:
+        if len(args := get_args(type_value)) > 1:
+            args = [x for x in args if x != NoneType]
+
+            type_value = args[0]
+
+        if isinstance(type_value, TypeEngine):
+            column_type = type_value.python_type
+        elif not type_value:
+            column_type = type(value)
+        else:
+            column_type = type_value
+        return cls.CASTER_SELECTOR()[column_type](value, column_type)

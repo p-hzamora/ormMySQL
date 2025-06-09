@@ -31,9 +31,9 @@ from ..types import (
     WhereTypes,
     SelectCols,
 )
+from ormlambda.sql.elements import Element
 
-
-class IStatements[T: Table](ABC):
+class IStatements[T: Table](Element):
     @abstractmethod
     def create_table(self, if_exists: TypeExists = "fail") -> None: ...
 

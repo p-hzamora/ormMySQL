@@ -27,6 +27,9 @@ type ValueType = tp.Union[
     tp.Type[ICustomAlias],
 ]
 
+if tp.TYPE_CHECKING:
+    from ormlambda.dialects import Dialect
+
 
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
@@ -36,10 +39,20 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
     def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str, context: ClauseContextType = ...) -> None: ...
 
-    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str = "{table}", *, context: ClauseContextType = ClauseInfoContext(), **kwargs) -> None:
+    def __init__(
+        self,
+        tables: tuple[TableType[T]],
+        columns: tuple[ColumnType],
+        alias_table: str = "{table}",
+        *,
+        context: ClauseContextType = ClauseInfoContext(),
+        dialect: Dialect,
+        **kwargs,
+    ) -> None:
         self.kwargs = kwargs
         self._tables: tuple[TableType[T]] = tables if isinstance(tables, tp.Iterable) else (tables,)
 
+        self._dialect = dialect
         self._columns: tp.Callable[[T], tuple] = columns
         self._all_clauses: list[ClauseInfo | AggregateFunctionBase] = []
         self._context: ClauseContextType = context if context else ClauseInfoContext()
@@ -88,7 +101,9 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
             Table: ConvertFromTable[T],
         }
         classConverter = next((converter for obj, converter in VALUE_TYPE_MAPPED.items() if validation(data, obj)), ConvertFromAnyType)
-
+        self.kwargs.setdefault("dialect", self._dialect)
+        if "dialect" not in self.kwargs:
+            raise ValueError("You must specified 'dialect' variable")
         return classConverter.convert(data, alias_table=self._alias_table, context=self._context, **self.kwargs)
 
     def __add_clause[TTable: TableType](self, clauses: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:

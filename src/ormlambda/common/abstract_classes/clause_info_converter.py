@@ -24,6 +24,7 @@ class ConvertFromAnyType(ClauseInfoConverter[None, None]):
                 alias_table=alias_table,
                 alias_clause=kwargs.get("alias", None),
                 context=context,
+                **kwargs
             )
         ]
 
@@ -31,7 +32,7 @@ class ConvertFromAnyType(ClauseInfoConverter[None, None]):
 class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None]):
     @classmethod
     def convert(cls, data: ForeignKey[LT, RT], alias_table=None, context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[RT]]:
-        return ConvertFromTable[RT].convert(data.tright, data.alias, context, **kwargs)
+        return ConvertFromTable[RT].convert(data.tright, data.get_alias(kwargs['dialect']), context, **kwargs)
 
 
 class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
@@ -46,7 +47,7 @@ class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
             "context": context,
             **kwargs,
         }
-        clause_info = ClauseInfo[None](**attributes)
+        clause_info = ClauseInfo(**attributes)
         return [clause_info]
 
 

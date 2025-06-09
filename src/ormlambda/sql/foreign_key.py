@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import Table
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
+    from ormlambda.dialects import Dialect
 
 
 class ForeignKeyContext(set["ForeignKey"]):
@@ -59,7 +60,9 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
         keep_alive: bool = False,
+        **kwargs: Any,
     ) -> None:
+        self.kwargs = kwargs
         self._keep_alive = keep_alive
         if comparer is not None and clause_name is not None:
             self.__init__with_comparer(comparer, clause_name)
@@ -116,27 +119,36 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     @property
     def query(self) -> str:
         compare = self.resolved_function()
+        compare._kwargs = self.kwargs.copy()
         left_col = compare.left_condition.column
         rcon = alias if (alias := compare.right_condition.alias_table) else compare.right_condition.table.__table_name__
         return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition.column})"
 
     @property
     def alias(self) -> str:
-        self._comparer = self.resolved_function()
+        self._comparer = self.resolved_function(self.dia)
+        lcol = self._comparer.left_condition._column.column_name
+        rcol = self._comparer.right_condition._column.column_name
+        return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
+
+    def get_alias(self, dialect: Dialect) -> str:
+        self._comparer = self.resolved_function(dialect)
+        self._comparer._dialect = dialect
         lcol = self._comparer.left_condition._column.column_name
         rcol = self._comparer.right_condition._column.column_name
         return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
 
     @classmethod
-    def create_query(cls, orig_table: Table) -> list[str]:
+    def create_query(cls, orig_table: Table, dialect: Dialect) -> list[str]:
         clauses: list[str] = []
 
         for attr in orig_table.__dict__.values():
             if isinstance(attr, ForeignKey):
+                attr.kwargs["dialect"] = dialect
                 clauses.append(attr.query)
         return clauses
 
-    def resolved_function[LProp: Any, RProp: Any](self, context: ClauseContextType = None) -> Comparer[LProp, RProp]:
+    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect, context: Optional[ClauseContextType] = None) -> Comparer[LProp, RProp]:
         """ """
         if self._comparer is not None:
             return self._comparer
@@ -145,4 +157,5 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         right = self._tright
         comparer = self._relationship(left, right)
         comparer.set_context(context)
+        comparer._dialect = dialect
         return comparer

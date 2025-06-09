@@ -1,6 +1,6 @@
-from ormlambda.sql.clauses import _Offset
+from ormlambda.sql.clauses import Offset
 
 
-class Offset(_Offset):
+class Offset(Offset):
     def __init__(self, number):
         super().__init__(number)

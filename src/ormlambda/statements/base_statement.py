@@ -7,31 +7,37 @@ from ormlambda.repository import BaseRepository
 from ormlambda.statements.interfaces import IStatements_two_generic
 from ormlambda import Table
 
-from ormlambda.caster.caster import Caster
-from ormlambda.types import DatabaseType, cast_repository_to_database_type
 from ormlambda.common.errors import AggregateFunctionError
 
 if TYPE_CHECKING:
-    from ormlambda.sql.clauses import _Select
+    from ormlambda.engine.base import Engine
+    from ormlambda.dialects.interface.dialect import Dialect
+    from ormlambda.sql.clauses import Select
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
 
 
 class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
-    def __init__(self, model: tuple[T, ...], repository: BaseRepository[TRepo]) -> None:
-        self.__valid_repository(repository)
-
+    def __init__(self, model: tuple[T, ...], engine: Engine) -> None:
+        self._engine = engine
+        self._dialect = engine.dialect
         self._query: Optional[str] = None
         self._model: T = model[0] if isinstance(model, Iterable) else model
         self._models: tuple[T] = self._model if isinstance(model, Iterable) else (model,)
+
+        repository = engine.repository
+        self.__valid_repository(repository)
         self._repository: BaseRepository[TRepo] = repository
-        self._dialect: Optional[DatabaseType] = cast_repository_to_database_type(repository)
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
             # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
             raise Exception(f"'{model}' class does not inherit from Table class")
+
+    @property
+    def dialect(self) -> Dialect:
+        return self._dialect
 
     @override
     def table_exists(self) -> bool:
@@ -52,7 +58,7 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     def _return_model(self, select, query: str) -> tuple[tuple[T]]:
         response_sql = self._repository.read_sql(query, flavour=dict, select=select)  # store all columns of the SQL query
         if response_sql and isinstance(response_sql, Iterable):
-            return ClusterResponse(self.repository, select, response_sql).cluster()
+            return ClusterResponse(self._dialect, select, response_sql).cluster()
 
         return response_sql
 
@@ -75,11 +81,11 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
 
 class ClusterResponse[T]:
-    def __init__(self, repository: BaseRepository, select: _Select[T], response_sql: tuple[dict[str, Any]]) -> None:
-        self._repository: BaseRepository = repository
-        self._select: _Select[T] = select
+    def __init__(self, dialect: Dialect, select: Select[T], response_sql: tuple[dict[str, Any]]) -> None:
+        self._dialect: Dialect = dialect
+        self._select: Select[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
-        self._caster = Caster(repository)
+        self._caster = dialect.caster
 
     def cluster(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
         tbl_dicc: dict[Type[Table], list[dict[str, Any]]] = self._create_cluster()

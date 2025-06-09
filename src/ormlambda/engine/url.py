@@ -4,24 +4,13 @@
 #
 # This module is part of SQLAlchemy and is released under
 # the MIT License: https://www.opensource.org/licenses/mit-license.php
-# 
+#
 
 from __future__ import annotations
 
 import re
 import collections.abc as collections_abc
-from typing import (
-    Any,
-    Literal,
-    cast,
-    Iterable,
-    Mapping,
-    NamedTuple,
-    Optional,
-    overload,
-    Sequence,
-    Union,
-)
+from typing import Any, Literal, Type, cast, Iterable, Mapping, NamedTuple, Optional, overload, Sequence, Union, TYPE_CHECKING
 
 from urllib.parse import (
     parse_qsl,
@@ -31,6 +20,11 @@ from urllib.parse import (
 )
 
 from . import utils
+
+from ..dialects import registry
+
+if TYPE_CHECKING:
+    from ..dialects import Dialect
 
 type DrivernameType = Literal["mysql", "sqlite"] | str
 
@@ -669,6 +663,20 @@ class URL(NamedTuple):
 
         return u, kwargs
 
+    def _get_entrypoint(self) -> Type[Dialect]:
+        """Return the dialect class for this URL.
+
+        This is the dialect class that corresponds to the database backend
+        in use, and is the portion of the :attr:`_engine.URL.drivername`
+        that is to the left of the plus sign.
+
+        """
+        if "+" not in self.drivername:
+            name = self.drivername
+        else:
+            name = self.drivername.replace("+", ".")
+        return registry.load(name)
+
 
 def make_url(name_or_url: str | URL) -> URL:
     """Given a string, produce a new URL instance.
@@ -688,10 +696,10 @@ def make_url(name_or_url: str | URL) -> URL:
 
     if isinstance(name_or_url, str):
         return _parse_url(name_or_url)
-    elif not isinstance(name_or_url, URL) and not hasattr(name_or_url, "_sqla_is_testing_if_this_is_a_mock_object"):
+    if not isinstance(name_or_url, URL) and not hasattr(name_or_url, "_sqla_is_testing_if_this_is_a_mock_object"):
         raise ValueError(f"Expected string or URL object, got {name_or_url!r}")
-    else:
-        return name_or_url
+
+    return name_or_url
 
 
 def _parse_url(name: str) -> URL:

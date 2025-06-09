@@ -12,10 +12,12 @@ from ormlambda.sql.types import (
 )
 from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
-from ormlambda.caster import Caster
 
 
 from .clause_info_context import ClauseInfoContext, ClauseContextType
+
+if tp.TYPE_CHECKING:
+    from ormlambda.dialects import Dialect
 
 
 class ReplacePlaceholderError(ValueError):
@@ -48,6 +50,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     @tp.overload
     def __init__[TProp](self, table: TableType[T], dtype: tp.Optional[TProp] = ...): ...
 
+    @tp.overload
+    def __init__(self, dialect: Dialect, *args, **kwargs): ...
+
     def __init__[TProp](
         self,
         table: TableType[T],
@@ -58,6 +63,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         keep_asterisk: bool = False,
         preserve_context: bool = False,
         dtype: tp.Optional[TProp] = None,
+        *,
+        dialect: Dialect,
+        **kw,
     ):
         if not self.is_table(table):
             column = table if not column else column
@@ -72,6 +80,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         self._preserve_context: bool = preserve_context
         self._dtype = dtype
 
+        self._dialect: Dialect = dialect
+
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": self.replace_column_placeholder,
             "table": self.replace_table_placeholder,
@@ -79,6 +89,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         if not self._preserve_context and (self._context and any([alias_table, alias_clause])):
             self._context.add_clause_to_context(self)
+
+        super().__init__(**kw)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}: query -> {self.query}"
@@ -180,10 +192,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._join_table_and_column(self._column)
 
     def _join_table_and_column[TProp](self, column: ColumnType[TProp]) -> str:
-        # FIXME [ ]: Study how to deacoplate from mysql database
-        from ormlambda.databases.my_sql.repository import MySQLRepository
+        # FIXME [x]: Study how to deacoplate from mysql database
 
-        caster = Caster(MySQLRepository)
+        caster = self._dialect.caster()
 
         if self.alias_table:
             table = self._wrapped_with_quotes(self.alias_table)
@@ -220,6 +231,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
                 alias_clause=self._alias_clause,
                 context=self._context,
                 keep_asterisk=self._keep_asterisk,
+                dialect=self._dialect,
             )
 
         if self._alias_table and self._alias_clause:  # We'll add an "*" when we are certain that we have included 'alias_clause' attr
@@ -229,11 +241,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         return ", ".join(columns)
 
-    # FIXME [ ]: Study how to deacoplate from mysql database
+    # FIXME [x]: Study how to deacoplate from mysql database
     def _column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
-        from ormlambda.databases.my_sql.repository import MySQLRepository
-
-        caster = Caster(MySQLRepository)
+        caster = self._dialect.caster()
         if isinstance(column, ClauseInfo):
             return column.query
 
@@ -299,11 +309,12 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._context.get_table_alias(self.table)
 
     @staticmethod
-    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",", context: tp.Optional[ClauseInfoContext] = None) -> str:
+    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",", context: tp.Optional[ClauseInfoContext] = None, *, dialect: Dialect) -> str:
         queries: list[str] = []
         for c in clauses:
             if context:
                 c.context = context
+                c._dialect = dialect
             queries.append(c.query)
 
         return f"{chr} ".join(queries)

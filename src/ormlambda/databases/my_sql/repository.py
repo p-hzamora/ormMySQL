@@ -10,16 +10,14 @@ from mysql.connector.pooling import MySQLConnectionPool  # noqa: F401
 from ormlambda.repository import BaseRepository
 
 # Custom libraries
-from .clauses import CreateDatabase, TypeExists
-from .clauses import DropDatabase
 from .clauses import DropTable
 from ormlambda.repository.response import Response
 from ormlambda.caster import Caster
 
-
 if TYPE_CHECKING:
-    from ormlambda.sql.clauses import _Select
-    from .types import MySQLArgs
+    from ormlambda import URL as _URL
+    from ormlambda.sql.clauses import Select
+    from .pool_types import MySQLArgs
 
 
 class MySQLRepository(BaseRepository[MySQLConnectionPool]):
@@ -38,10 +36,12 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
 
     def __init__(
         self,
+        /,
+        url: Optional[_URL] = None,
         *,
-        user: str,
-        password: str,
-        host: str,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        host: Optional[str] = None,
         database: Optional[str] = None,
         **kwargs: Unpack[MySQLArgs],
     ):
@@ -54,10 +54,10 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         attr["pool_size"] = size
 
         super().__init__(
-            user=user,
-            password=password,
-            host=host,
-            database=database,
+            user=user if not url else url.username,
+            password=password if not url else url.password,
+            host=host if not url else url.host,
+            database=database if not url else url.database,
             pool=MySQLConnectionPool,
             **attr,
         )
@@ -107,7 +107,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             - flavour: Type[TFlavour]: Useful to return tuple of any Iterable type as dict,set,list...
         """
 
-        select: _Select = kwargs.pop("select", None)
+        select: Select = kwargs.pop("select", None)
 
         with self.get_connection() as cnx:
             with cnx.cursor(buffered=True) as cursor:
@@ -115,7 +115,7 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
                 values: list[tuple] = cursor.fetchall()
                 columns: tuple[str] = cursor.column_names
                 return Response(
-                    repository=self,
+                    dialect=self._dialect,
                     response_values=values,
                     columns=columns,
                     flavour=flavour,
@@ -190,10 +190,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
         return len(res) > 0
 
     @override
-    def drop_database(self, name: str) -> None:
-        return DropDatabase(self).execute(name)
-
-    @override
     def table_exists(self, name: str) -> bool:
         with self.get_connection() as cnx:
             if not cnx.database:
@@ -203,18 +199,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             res = cursor.fetchmany(1)
         return len(res) > 0
 
-    @override
-    def create_database(self, name: str, if_exists: TypeExists = "fail") -> None:
-        temp_config = self._pool._cnx_config
-
-        config_without_db = temp_config.copy()
-
-        new_repo = MySQLRepository(
-            user=config_without_db["user"],
-            password=config_without_db["password"],
-            host=config_without_db.get("host", None),
-        )
-        return CreateDatabase(new_repo).execute(name, if_exists)
 
     @property
     def database(self) -> Optional[str]:

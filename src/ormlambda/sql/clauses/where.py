@@ -3,17 +3,26 @@ import typing as tp
 from ormlambda.sql.comparer import Comparer
 from ormlambda.sql.clause_info import AggregateFunctionBase
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.elements import ClauseElement
+
+if tp.TYPE_CHECKING:
+    from ormlambda.dialects import Dialect
 
 
-class _Where(AggregateFunctionBase):
+class Where(AggregateFunctionBase, ClauseElement):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.
     """
 
-    def __init__(self, *comparer: Comparer, restrictive: bool = True, context: ClauseContextType = None) -> None:
+    __visit_name__ = "where"
+
+    def __init__(self, *comparer: Comparer, restrictive: bool = True, context: ClauseContextType = None, **kwargs) -> None:
+        self._dialect: Dialect = kwargs.get("dialect", None)
         self._comparer: tuple[Comparer] = comparer
         self._restrictive: bool = restrictive
         self._context: ClauseContextType = context if context else ClauseInfoContext()
+
+        [x.set_dialect(self._dialect) for x in comparer]
 
     @staticmethod
     def FUNCTION_NAME() -> str:
@@ -23,7 +32,7 @@ class _Where(AggregateFunctionBase):
     def query(self) -> str:
         if isinstance(self._comparer, tp.Iterable):
             context = ClauseInfoContext(table_context=self._context._table_context)
-            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=context)
+            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=context, dialect=self._dialect)
         else:
             comparer = self._comparer
         return f"{self.FUNCTION_NAME()} {comparer}"
@@ -33,16 +42,20 @@ class _Where(AggregateFunctionBase):
         return None
 
     @classmethod
-    def join_condition(cls, wheres: tp.Iterable[_Where], restrictive: bool, context: ClauseInfoContext) -> str:
+    def join_condition(cls, wheres: tp.Iterable[Where], restrictive: bool, context: ClauseInfoContext, dialect: Dialect = None) -> str:
         if not isinstance(wheres, tp.Iterable):
             wheres = (wheres,)
 
         comparers: list[Comparer] = []
         for where in wheres:
             for c in where._comparer:
-                c.set_context(context)
+                if not c._context:
+                    c._context = context
+                if not c._dialect:
+                    c._dialect = dialect
+                c.query
                 comparers.append(c)
-        return cls(*comparers, restrictive=restrictive, context=context).query
+        return cls(*comparers, restrictive=restrictive, context=context, dialect=dialect).query
 
 
-__all__ = ["_Where"]
+__all__ = ["Where"]

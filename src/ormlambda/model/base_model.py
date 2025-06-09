@@ -3,12 +3,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 
-from ormlambda.engine.template import RepositoryTemplateDict
 from ormlambda.statements import Statements
+from ormlambda.engine import Engine
 
 if TYPE_CHECKING:
     from ormlambda.statements.interfaces import IStatements_two_generic
-    from ormlambda.repository import BaseRepository
 
 
 # endregion
@@ -23,16 +22,14 @@ class BaseModel[T]:
 
     # region Constructor
 
-    def __new__[TPool](cls, model: Type[T], repository: BaseRepository[TPool]) -> IStatements_two_generic[T, TPool]:
-        if repository is None:
+    def __new__[TPool](cls, model: Type[T], engine: Engine) -> IStatements_two_generic[T, TPool]:
+        if engine is None:
             raise ValueError("`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class")
 
-        methods_obj = RepositoryTemplateDict().get(repository)
+        if not isinstance(engine, Engine):
+            raise ValueError(f"`{engine}` is not a valid `Engine` instance")
 
-        if not methods_obj:
-            raise Exception(f"The selected repository '{repository}' does not exist.")
-
-        return Statements(model, repository, methods_obj.methods)
+        return Statements(model, engine)
 
 
 ORM = BaseModel

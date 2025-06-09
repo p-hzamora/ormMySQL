@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from ormlambda.sql.clauses import _Having
+from ormlambda.sql.clauses import Having
 
 
-class Having(_Having):
+class Having(Having):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.
     """

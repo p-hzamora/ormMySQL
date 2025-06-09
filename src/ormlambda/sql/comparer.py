@@ -12,6 +12,7 @@ from ormlambda import ConditionType as ConditionEnum
 if tp.TYPE_CHECKING:
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.sql import Table
+    from ormlambda.dialects import Dialect
 
 
 class ICleaner(abc.ABC):
@@ -59,39 +60,59 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = left_condition
         self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = right_condition
         self._flags = flags
+        self._dialect = None
+
 
     def set_context(self, context: ClauseContextType) -> None:
-        self._context = context
+        self._context= context
+        return None
+
+    def set_dialect(self, dialect: Dialect) -> None:
+        self._dialect= dialect
+        return None
 
     def __repr__(self) -> str:
         return f"{Comparer.__name__}: {self.query}"
 
-    def _create_clause_info[TTable](self, cond: ConditionType[LProp]) -> Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[TTable]:
+    def _create_clause_info[TTable](self, cond: ConditionType[LProp], dialect: Dialect, **kw) -> Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[TTable]:
         from ormlambda import Column
 
         if isinstance(cond, Comparer):
             return cond
         if isinstance(cond, Column):
-            return ClauseInfo(cond.table, cond, alias_clause=None, context=self._context)
+            return ClauseInfo(
+                cond.table,
+                cond,
+                alias_clause=None,
+                context=self._context,
+                dialect=dialect,
+                **kw,
+            )
         # it a value that's not depend of any Table
-        return ClauseInfo(None, cond, alias_clause=None, context=self._context)
+        return ClauseInfo(
+            None,
+            cond,
+            alias_clause=None,
+            context=self._context,
+            dialect=dialect,
+            **kw,
+        )
 
     @property
     def left_condition(self) -> Comparer | ClauseInfo[LTable]:
-        return self._create_clause_info(self._left_condition)
+        return self._create_clause_info(self._left_condition, dialect=self._dialect)
 
     @property
     def right_condition(self) -> Comparer | ClauseInfo[RTable]:
-        return self._create_clause_info(self._right_condition)
+        return self._create_clause_info(self._right_condition, dialect=self._dialect)
 
     @property
     def compare(self) -> ComparerTypes:
         return self._compare
 
-    @property
-    def query(self) -> str:
-        lcond = self.left_condition.query
-        rcond = self.right_condition.query
+    def query(self,dialect:Dialect, **kwargs) -> str:
+        lcond = self.left_condition.query(dialect,**kwargs)
+        rcond = self.right_condition.query(dialect,**kwargs)
 
         if self._flags:
             rcond = CleanValue(rcond, self._flags).clean()
@@ -107,13 +128,13 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         return Comparer(self, other, "OR", context=context)
 
     @classmethod
-    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None) -> str:
+    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None, dialect=None) -> str:
         if not isinstance(comparers, tp.Iterable):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
             comparer = comparers[0]
-            comparer.set_context(context)
-            return comparer.query
+            comparer._context= context
+            return comparer.query(dialect)
 
         join_method = cls.__or__ if not restrictive else cls.__and__
 
@@ -121,12 +142,12 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         for i in range(len(comparers) - 1):
             if ini_comparer is None:
                 ini_comparer = comparers[i]
-                ini_comparer.set_context(context)
+                ini_comparer._context= context
             right_comparer = comparers[i + 1]
-            right_comparer.set_context(context)
+            right_comparer._context= context
             new_comparer = join_method(ini_comparer, right_comparer, context=context)
             ini_comparer = new_comparer
-        return new_comparer.query
+        return new_comparer.query(dialect)
 
 
 class Regex[LProp, RProp](Comparer[None, LProp, None, RProp]):

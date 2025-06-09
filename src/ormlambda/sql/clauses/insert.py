@@ -1,19 +1,24 @@
 from __future__ import annotations
 
-from typing import override, Iterable
+from typing import override, Iterable, TYPE_CHECKING
 
 from ormlambda import Table
 from ormlambda import Column
-from ormlambda import BaseRepository
-from ormlambda.caster import Caster
 
 from ormlambda.sql.clauses.interfaces import IInsert
 from ormlambda.common.abstract_classes import NonQueryBase
+from ormlambda.sql.elements import ClauseElement
 
 
-class _Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T]):
-    def __init__(self, model: T, repository: BaseRepository[TRepo]) -> None:
-        super().__init__(model, repository)
+if TYPE_CHECKING:
+    from ormlambda.dialects import Dialect
+
+
+class Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T], ClauseElement):
+    __visit_name__ = "insert"
+
+    def __init__(self, model: T, repository: TRepo, dialect: Dialect) -> None:
+        super().__init__(model, repository, dialect=dialect)
 
     @override
     @property
@@ -38,7 +43,7 @@ class _Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T]):
         col_values: list[list[str]] = []
         for i, cols in enumerate(valid_cols):
             col_values.append([])
-            CASTER = Caster(self._repository)
+            CASTER = self._dialect.caster()
             for col in cols:
                 clean_data = CASTER.for_column(col, instances[i])  # .resolve(instances[i][col])
                 if i == 0:
@@ -96,4 +101,4 @@ class _Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T]):
         return None
 
 
-__all__ = ["_Insert"]
+__all__ = ["Insert"]

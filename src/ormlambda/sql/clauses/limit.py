@@ -1,12 +1,13 @@
 from typing import override
-
 from ormlambda.common.interfaces.IQueryCommand import IQuery
+from ormlambda.sql.elements import ClauseElement
 
 
-class _Limit(IQuery):
+class Limit(ClauseElement, IQuery):
+    __visit_name__ = "limit"
     LIMIT = "LIMIT"
 
-    def __init__(self, number: int) -> None:
+    def __init__(self, number: int, **kwargs) -> None:
         if not isinstance(number, int):
             raise ValueError
         self._number: int = number
@@ -17,4 +18,4 @@ class _Limit(IQuery):
         return f"{self.LIMIT} {self._number}"
 
 
-__all__ = ["_Limit"]
+__all__ = ["Limit"]

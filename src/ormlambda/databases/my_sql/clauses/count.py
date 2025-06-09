@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ormlambda.sql.clauses import _Count
+from ormlambda.sql.clauses import Count
 from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 
 from ormlambda.sql.types import AliasType, ColumnType
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType, AliasType, TableType
 
 
-class Count[T: Table](_Count[T]):
+class Count[T: Table](Count[T]):
     def __init__[TProp: Table](
         self,
         element: ColumnType[T] | TableType[TProp],
