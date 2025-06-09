@@ -6,14 +6,22 @@ import unittest
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.databases.my_sql import functions as func
+from ormlambda.sql import functions as func
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from test.models import D
+
+from ormlambda.dialects import mysql
+
+DIALECT = mysql.dialect
+
+
+def MaxMySQL(*args, **kwargs) -> func.Max:
+    return func.Max(*args, **kwargs, dialect=DIALECT)
 
 
 class TestMax(unittest.TestCase):
     def test_Concat(self) -> None:
-        concat = func.Max(
+        concat = MaxMySQL(
             alias_clause="concat-for-table",
             elements=(
                 D.data_d,
@@ -28,7 +36,7 @@ class TestMax(unittest.TestCase):
 
     def test_Concat_with_context(self) -> None:
         context = ClauseInfoContext(table_context={D: "new-d-table"})
-        concat = func.Max(
+        concat = MaxMySQL(
             alias_clause="concat-for-table",
             elements=(
                 D.data_d,

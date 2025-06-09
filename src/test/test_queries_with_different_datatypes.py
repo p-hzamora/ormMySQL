@@ -25,7 +25,7 @@ env_engine = create_env_engine()
 class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        env_engine.create_database(DDBBNAME, "replace")
+        env_engine.create_schema(DDBBNAME, "replace")
         cls.ddbb = create_engine_for_db(DDBBNAME)
 
         cls.model = ORM(TableType, cls.ddbb)
@@ -37,7 +37,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.ddbb.drop_database(DDBBNAME)
+        cls.ddbb.drop_schema(DDBBNAME)
 
     def test_create_model_with_wrong_types(self):
         with self.assertRaises(ValueError):

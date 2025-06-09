@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.utils.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
+from ormlambda.util.module_tree.dfs_traversal import DFSTraversal  # noqa: E402
 from test.models import Address, City, Country  # noqa: E402ry
 
 

@@ -8,13 +8,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from ormlambda.engine import create_engine
 from ormlambda import ORM
-
-from test.env import (
-    DB_USERNAME,
-    DB_PASSWORD,
-    DB_HOST,
-    DB_DATABASE,
-)
+from ormlambda.dialects import mysql
 
 
 from test.models import Address
@@ -22,10 +16,10 @@ from test.models import Address
 
 class TestEngine(unittest.TestCase):
     def test_create_engine(self) -> None:
-        url_connection = f"mysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}/{DB_DATABASE}"
+        url_connection = "mysql://root:1500@localhost:3306/sakila?pool_size=3"
         db = create_engine(url_connection)
 
-        ORM(Address, db).select(Address.City.Country.country)
+        Address.create_table(mysql.dialect())
 
         # ORM(Address, db).select(
         #     lambda x: (

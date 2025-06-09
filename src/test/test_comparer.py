@@ -12,6 +12,9 @@ sys.path.insert(0, new_file := [str(x.parent) for x in Path(__file__).parents if
 from ormlambda.sql.comparer import Comparer  # noqa: E402
 from test.models import Address, City, TableType, A  # noqa: E402
 from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains  # noqa: E402
+from ormlambda.dialects import mysql
+
+DIALECT = mysql.dialect
 
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)
 
@@ -31,27 +34,27 @@ class TestComparer(unittest.TestCase):
     def test_simple_condition(self):
         comparer = City.last_update >= datetime(2024, 1, 16)
         mssg: str = "city.last_update >= '2024-01-16 00:00:00'"
-        self.assertEqual(comparer.query, mssg)
+        self.assertEqual(comparer.query(DIALECT), mssg)
 
     def test_condition_with_and_and_or(self):
         comparer = (City.last_update >= datetime(2024, 1, 16)) & (City.city_id <= 100) | (City.Country.country == "asdf")  # noqa: F821
         mssg: str = "city.last_update >= '2024-01-16 00:00:00' AND city.city_id <= 100 OR country.country = 'asdf'"
-        self.assertEqual(comparer.query, mssg)
+        self.assertEqual(comparer.query(DIALECT), mssg)
 
     def test_condition_with_ST_Contains(self):
-        comparer = ST_Contains(TableType.points, Point(5, -5))
+        comparer = ST_Contains(TableType.points, Point(5, -5), dialect=DIALECT)
         mssg: str = "ST_Contains(ST_AsText(table_type.points), ST_AsText(%s))"
         self.assertEqual(comparer.query, mssg)
 
     # def test_retrieve_string_from_class_property(self):
     #     comparer = (1, 2, 3, 4, 5, 6, 7) in Address.city_id
     #     mssg: str = "address.city_id in (1, 2, 3, 4, 5, 6, 7)"
-    #     self.assertEqual(comparer.query, mssg)
+    #     self.assertEqual(comparer.query(DIALECT), mssg)
 
     def test_retrieve_string_from_class_property_using_variable(self):
         VAR = 10
         compare = Address.city_id == VAR
-        self.assertEqual(compare.query, "address.city_id = 10")
+        self.assertEqual(compare.query(DIALECT), "address.city_id = 10")
 
     @parameterized.expand(
         [
@@ -73,7 +76,7 @@ class TestComparer(unittest.TestCase):
     def test_get_dot_chain(self):
         compare = Address.City.Country.country == "morning"
         mssg: str = "country.country = 'morning'"
-        self.assertEqual(compare.query, mssg)
+        self.assertEqual(compare.query(DIALECT), mssg)
 
     def test_join_some_Comparer_object(self) -> None:
         VAR = "Madrid"

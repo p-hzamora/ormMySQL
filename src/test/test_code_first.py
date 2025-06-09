@@ -19,13 +19,13 @@ class Test_my_sql(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ddbb = create_env_engine()
-        cls.ddbb.create_database(DB_NAME, "replace")
+        cls.ddbb.create_schema(DB_NAME, "replace")
 
         cls.engine = create_engine_for_db(DB_NAME)
         cls.country_model = ORM(Country, cls.engine)
 
     def tearDown(self) -> None:
-        self.ddbb.drop_database(DB_NAME)
+        self.ddbb.drop_schema(DB_NAME)
 
     # FIXME [ ]: refactor to fix and include this method
     def test_create_table_code_first_passing_folder(self):

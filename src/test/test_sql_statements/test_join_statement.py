@@ -45,7 +45,7 @@ class TestJoinStatements(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.ddbb = create_env_engine()
 
-        cls.ddbb.create_database(DDBBNAME, "replace")
+        cls.ddbb.create_schema(DDBBNAME, "replace")
         cls.ddbb = create_engine_for_db(DDBBNAME)
 
         cls.model_a = ORM(JoinA, cls.ddbb)
@@ -77,7 +77,7 @@ class TestJoinStatements(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.ddbb.drop_database(DDBBNAME)
+        cls.ddbb.drop_schema(DDBBNAME)
 
     # FIXME [x]: Review this method in the future
     def test_pass_multiple_joins(self):

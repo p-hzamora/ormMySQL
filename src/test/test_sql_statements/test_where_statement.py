@@ -40,8 +40,8 @@ class TestWhereStatement(unittest.TestCase):
         )
 
         res = (
-            ("Ourense (Orense)"),
-            ("Santiago de Compostela"),
+            ("A Coruña (La Coruña)"),
+            ("Donostia-San Sebastián"),
         )
         self.assertTupleEqual(select, res)
 
@@ -68,7 +68,7 @@ class TestWhereStatement(unittest.TestCase):
             },
         )
 
-    def test_multiple_wheres_using_lambda(self) -> None:
+    def test_AAmultiple_wheres_using_lambda(self) -> None:
         city = "Ourense (Orense)"
         country = r"[sS]pain"
 

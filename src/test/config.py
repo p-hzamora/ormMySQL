@@ -1,4 +1,5 @@
 from typing import Optional, Sequence
+from ormlambda.engine import Engine
 from ormlambda.repository.base_repository import BaseRepository
 from test.env import DATABASE_URL
 
@@ -25,9 +26,9 @@ def create_engine_for_db(database: str, query: Optional[dict[str, str | Sequence
     return create_engine(url)
 
 
-def create_sakila_engine():
+def create_sakila_engine()->Engine:
     return create_engine_for_db("sakila")
 
 
-def create_env_engine():
+def create_env_engine()->Engine:
     return create_engine(DATABASE_URL)

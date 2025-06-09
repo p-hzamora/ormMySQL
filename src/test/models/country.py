@@ -6,14 +6,15 @@ from ormlambda import (
 
 from datetime import datetime
 from ormlambda.repository import IRepositoryBase
+from ormlambda.sql.sqltypes import VARCHAR, INT, DATETIME
 
 
 class Country(Table):
     __table_name__ = "country"
 
-    country_id: Column[int] = Column(int, is_primary_key=True)
-    country: Column[str]
-    last_update: Column[datetime]
+    country_id: Column[int] = Column(INT(), is_primary_key=True,check_types=False)
+    country: Column[str] = Column(VARCHAR(50),check_types=False)
+    last_update: Column[datetime] = Column(DATETIME(),check_types=False)
 
 
 class CountryModel(BaseModel[Country]):

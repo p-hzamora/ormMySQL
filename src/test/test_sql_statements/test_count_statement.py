@@ -30,7 +30,7 @@ class CountTest(unittest.TestCase):
     def setUp(self) -> None:
         self.ddbb = create_env_engine()
 
-        self.ddbb.create_database(DATABASE_NAME, "replace")
+        self.ddbb.create_schema(DATABASE_NAME, "replace")
         self.ddbb.database = DATABASE_NAME
 
         self.model = TableCountModel(self.ddbb)
@@ -38,7 +38,7 @@ class CountTest(unittest.TestCase):
         TableCountModel(self.ddbb).create_table()
 
     def tearDown(self) -> None:
-        self.ddbb.drop_database(DATABASE_NAME)
+        self.ddbb.drop_schema(DATABASE_NAME)
 
     def TableCount_generator(self, n: int) -> list[TableCount]:
         if not n > 0:

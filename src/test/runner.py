@@ -158,5 +158,5 @@ class CustomTestResult(unittest.TextTestResult):
 
 
 if __name__ == "__main__":
-    runner = CustomTextTestRunner()
+    runner = CustomTextTestRunner(failfast=False)
     result = runner.run(suite)

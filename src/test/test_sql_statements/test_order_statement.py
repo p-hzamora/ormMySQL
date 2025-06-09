@@ -25,7 +25,7 @@ class TestSQLStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.ddbb = create_env_engine()
-        cls.ddbb.create_database(DDBBNAME, "replace")
+        cls.ddbb.create_schema(DDBBNAME, "replace")
         cls.ddbb = create_engine_for_db(DDBBNAME)
 
         cls.tmodel = ORM(TestOrder, cls.ddbb)
@@ -47,7 +47,7 @@ class TestSQLStatements(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.ddbb.drop_database(DDBBNAME)
+        cls.ddbb.drop_schema(DDBBNAME)
 
     def test_order(self):
         query = self.tmodel.order(lambda x: (x.a, x.b, x.c), [OrderType.ASC, OrderType.DESC, OrderType.ASC]).select(

@@ -90,16 +90,16 @@ class TestTypeHint(unittest.TestCase):
         self.assertTrue(len(selection), 8)
 
     def test_SELECT_ONE_method_with_SET_as_flavour_and_avoid_raises_TypeError(self):
-        from ormlambda.types import Binary, CheckTypes, Integer, PrimaryKey
+        from ormlambda.types import Binary, CheckTypes, INTEGER, PrimaryKey
 
         class TableWithBytearray(Table):
             __table_name__ = "bytearray_table"
-            pk: Annotated[int, Integer(True), PrimaryKey()]
+            pk: Annotated[int, INTEGER(True), PrimaryKey()]
             bytearray_data: Annotated[Column[bytearray], Binary(), CheckTypes(False)]
 
         DDBB_NAME: str = "__TEST_DATABASE__"
 
-        engine.create_database(DDBB_NAME, "replace")
+        engine.create_schema(DDBB_NAME, "replace")
 
         new_engine = create_engine_for_db(DDBB_NAME)
 
@@ -109,7 +109,7 @@ class TestTypeHint(unittest.TestCase):
         # COMMENT: if we used 'mysql-connector', the BLOB data will be returned as a 'bytearray' (an unhashable data type). However, if you use the newer 'mysql-connector-python' you'll retrieve 'bytes' which are hashable
         byte_model.insert(TableWithBytearray(1, bytearray(b"bytearray data")))
         byte_model.select(flavour=set)
-        new_engine.drop_database(DDBB_NAME)
+        new_engine.drop_schema(DDBB_NAME)
 
 
 if __name__ == "__main__":

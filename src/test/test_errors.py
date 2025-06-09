@@ -26,13 +26,13 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         cls.ddbb = create_env_engine()
 
     def setUp(self) -> None:
-        self.ddbb.create_database(DDBBNAME, "replace")
+        self.ddbb.create_schema(DDBBNAME, "replace")
         self.model = ORM(TableType, self.ddbb)
         self.model.create_table("replace")
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.ddbb.drop_database(DDBBNAME)
+        cls.ddbb.drop_schema(DDBBNAME)
 
     def test_UnmatchedLambdaParameterError_in_where(self):
         with self.assertRaises(UnmatchedLambdaParameterError) as err:

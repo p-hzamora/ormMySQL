@@ -46,7 +46,7 @@ engine = create_env_engine()
 class TestJoinQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        engine.create_database(DDBBNAME, "replace")
+        engine.create_schema(DDBBNAME, "replace")
         cls.db_engine = create_engine_for_db(DDBBNAME)
 
         cls.model = BaseModel(AWithMultipleReferencesToB, cls.db_engine)
@@ -56,7 +56,7 @@ class TestJoinQueries(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.db_engine.drop_database(DDBBNAME)
+        cls.db_engine.drop_schema(DDBBNAME)
 
     def test_new_select(self):
         self.model.select(AWithMultipleReferencesToB)
