@@ -116,8 +116,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     def clause_name(self) -> str:
         return self._clause_name
 
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         compare = self.resolved_function()
         compare._kwargs = self.kwargs.copy()
         left_col = compare.left_condition.column

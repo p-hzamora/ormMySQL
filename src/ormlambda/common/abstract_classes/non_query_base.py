@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
-from typing import Any, Optional, Type, override, TYPE_CHECKING
+from typing import Any, Optional, Type, TYPE_CHECKING
 
 from ormlambda.common.interfaces.INonQueryCommand import INonQueryCommand
 
@@ -29,9 +29,7 @@ class NonQueryBase[T: Type[Table], TRepo](INonQueryCommand):
     @abstractmethod
     def execute(self) -> None: ...
 
-    @property
-    @override
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         return self._query
 
     @property

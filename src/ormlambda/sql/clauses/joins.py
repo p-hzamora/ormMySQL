@@ -92,9 +92,7 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
     def join_selectors(cls, *args: JoinSelector) -> str:
         return "\n".join([x.query for x in args])
 
-    @property
-    @override
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         self._context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
         list_ = [
             self._by.value,  # inner join

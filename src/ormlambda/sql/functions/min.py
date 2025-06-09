@@ -26,8 +26,7 @@ class Min(AggregateFunctionBase):
         super().__init__(table=None, column=elements, alias_table=None, alias_clause=alias_clause, context=context, keep_asterisk=False, preserve_context=False, dialect=dialect)
 
     @tp.override
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         columns: list[str] = []
 
         context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None

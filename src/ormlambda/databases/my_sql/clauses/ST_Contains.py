@@ -28,8 +28,7 @@ class ST_Contains(IAggregate):
 
         self._alias_clause: AliasType[ColumnType[TProp]] = alias_clause
 
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         return f"{self.FUNCTION_NAME}({self.attr1.query}, {self.attr2.query})"
 
     @property

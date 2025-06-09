@@ -60,9 +60,9 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
             Column: lambda column: ClauseInfo(column.table, column, context=context, dialect=dialect),
             ClauseInfo: lambda column: column,
-            ForeignKey: lambda tbl: ClauseInfo(tbl.tright, tbl.tright, context=context,dialect=dialect),
-            TableMeta: lambda tbl: ClauseInfo(tbl, tbl, context=context,dialect=dialect),
-            "default": lambda column: ClauseInfo(table=None, column=column, context=context,dialect=dialect),
+            ForeignKey: lambda tbl: ClauseInfo(tbl.tright, tbl.tright, context=context, dialect=dialect),
+            TableMeta: lambda tbl: ClauseInfo(tbl, tbl, context=context, dialect=dialect),
+            "default": lambda column: ClauseInfo(table=None, column=column, context=context, dialect=dialect),
         }
         all_clauses: list[ClauseInfo] = []
         if isinstance(columns, str) or not isinstance(columns, tp.Iterable):
@@ -73,8 +73,7 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
         return all_clauses
 
     @tp.override
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         wrapped_ci = self.wrapped_clause_info(self)
         if not self._alias_aggregate:
             return wrapped_ci

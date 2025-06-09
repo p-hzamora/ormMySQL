@@ -35,8 +35,7 @@ class Max(AggregateFunctionBase[None]):
         )
 
     @tp.override
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         columns: list[str] = []
 
         context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None

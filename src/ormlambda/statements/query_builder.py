@@ -108,8 +108,7 @@ class QueryBuilder(IQuery):
     def OFFSET(self) -> ClauseElement:
         return self._query_list.get("Offset", None)
 
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
         # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
 

@@ -166,8 +166,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._column
         return type(self._column)
 
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         return self._create_query()
 
     def _create_query(self) -> str:

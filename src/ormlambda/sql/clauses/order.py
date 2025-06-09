@@ -11,6 +11,7 @@ from ormlambda.sql.elements import ClauseElement
 if tp.TYPE_CHECKING:
     from ormlambda.dialects import Dialect
 
+
 class Order(AggregateFunctionBase, ClauseElement):
     __visit_name__ = "order"
 
@@ -24,7 +25,7 @@ class Order(AggregateFunctionBase, ClauseElement):
         order_type: tp.Iterable[OrderType],
         context: ClauseContextType = None,
         *,
-        dialect:Dialect,
+        dialect: Dialect,
         **kw,
     ):
         super().__init__(
@@ -52,8 +53,7 @@ class Order(AggregateFunctionBase, ClauseElement):
         raise Exception(f"order_type param only can be 'ASC' or 'DESC' string or '{OrderType.__name__}' enum")
 
     @tp.override
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         string_columns: list[str] = []
         columns = self.unresolved_column
 
@@ -68,7 +68,7 @@ class Order(AggregateFunctionBase, ClauseElement):
         assert len(columns) == len(self._order_type)
 
         context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None
-        for index, clause in enumerate(self._convert_into_clauseInfo(columns, context,dialect=self._dialect)):
+        for index, clause in enumerate(self._convert_into_clauseInfo(columns, context, dialect=self._dialect)):
             clause.alias_clause = None
             string_columns.append(f"{clause.query} {str(self._order_type[index])}")
 

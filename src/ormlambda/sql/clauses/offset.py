@@ -1,7 +1,11 @@
-from typing import override
-
+from __future__ import annotations
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.sql.elements import ClauseElement
+
+from typing import TYPE_CHECKING, override
+
+if TYPE_CHECKING:
+    from ormlambda.dialects import Dialect
 
 
 class Offset(IQuery, ClauseElement):
@@ -13,10 +17,8 @@ class Offset(IQuery, ClauseElement):
             raise ValueError
         self._number: int = number
 
-
     @override
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         return f"{self.OFFSET} {self._number}"
 
 

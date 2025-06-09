@@ -28,8 +28,7 @@ class Where(AggregateFunctionBase, ClauseElement):
     def FUNCTION_NAME() -> str:
         return "WHERE"
 
-    @property
-    def query(self) -> str:
+    def query(self, dialect: Dialect, **kwargs) -> str:
         if isinstance(self._comparer, tp.Iterable):
             context = ClauseInfoContext(table_context=self._context._table_context)
             comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=context, dialect=self._dialect)

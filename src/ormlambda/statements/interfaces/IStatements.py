@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Callable, Optional, Type, overload, TYPE_CHECKING
 from enum import Enum
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 
 
 if TYPE_CHECKING:
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ormlambda.common.enums import JoinType
     from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda.sql.types import AliasType
-
+    from ormlambda.dialects import Dialect
 
 from ..types import (
     OrderTypes,
@@ -32,6 +32,7 @@ from ..types import (
     SelectCols,
 )
 from ormlambda.sql.elements import Element
+
 
 class IStatements[T: Table](Element):
     @abstractmethod
@@ -333,8 +334,7 @@ class IStatements_two_generic[T, TPool](IStatements[T]):
     @abstractmethod
     def repository(self) -> BaseRepository[TPool]: ...
 
-    @property
-    def query(self) -> str: ...
+    def query(self, dialect: Dialect, **kwargs) -> str: ...
 
     @property
     def model(self) -> Type[T]: ...
