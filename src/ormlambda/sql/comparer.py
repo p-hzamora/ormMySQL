@@ -57,14 +57,14 @@ class Comparer(Element, IQuery):
         compare: ComparerTypes,
         context: ClauseContextType = None,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
+        dialect: tp.Optional[Dialect] = None,
     ) -> None:
         self._context: ClauseContextType = context
         self._compare: ComparerTypes = compare
         self._left_condition: Comparer | ClauseInfo = left_condition
         self._right_condition: Comparer | ClauseInfo = right_condition
         self._flags = flags
-        self._dialect = None
-
+        self._dialect = dialect
 
     def set_context(self, context: ClauseContextType) -> None:
         self._context= context
