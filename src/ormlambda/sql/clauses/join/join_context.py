@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.common.enums.join_type import JoinType
+    from ormlambda.dialects import Dialect
 
 
 type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[Comparer]
