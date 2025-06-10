@@ -16,13 +16,15 @@ class Where(AggregateFunctionBase, ClauseElement):
 
     __visit_name__ = "where"
 
-    def __init__(self, *comparer: Comparer, restrictive: bool = True, context: ClauseContextType = None, **kwargs) -> None:
-        self._dialect: Dialect = kwargs.get("dialect", None)
+    def __init__(
+        self,
+        *comparer: Comparer,
+        restrictive: bool = True,
+        context: ClauseContextType = None,
+    ) -> None:
         self._comparer: tuple[Comparer] = comparer
         self._restrictive: bool = restrictive
         self._context: ClauseContextType = context if context else ClauseInfoContext()
-
-        [x.set_dialect(self._dialect) for x in comparer]
 
     @staticmethod
     def FUNCTION_NAME() -> str:
@@ -56,9 +58,6 @@ class Where(AggregateFunctionBase, ClauseElement):
             for c in where._comparer:
                 if not c._context:
                     c._context = context
-                if not c._dialect:
-                    c._dialect = dialect
-                c.query
                 comparers.append(c)
         return cls(*comparers, restrictive=restrictive, context=context).query(dialect=dialect)
 
