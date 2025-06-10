@@ -165,39 +165,39 @@ class Column[TProp]:
         return None
 
     @abc.abstractmethod
-    def __comparer_creator[LTable: Table, OTherTable: Table, OTherType](self, other: ColumnType[OTherType], compare: ComparerType, *args) -> Comparer:
+    def __comparer_creator(self, other: ColumnType, compare: ComparerType) -> Comparer:
         from ormlambda.sql.comparer import Comparer
 
-        return Comparer[LTable, TProp, OTherTable, OTherType](self, other, compare, *args)
+        return Comparer(self, other, compare)
 
-    def __eq__[LTable, OTherTable, OTherProp](self, other: ColumnType[OTherProp], *args) -> Comparer[LTable, TProp, OTherTable, OTherProp]:
-        return self.__comparer_creator(other, ConditionType.EQUAL.value, *args)
+    def __eq__(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.EQUAL.value)
 
-    def __ne__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ConditionType.NOT_EQUAL.value, *args)
+    def __ne__(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.NOT_EQUAL.value)
 
-    def __lt__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ConditionType.LESS_THAN.value, *args)
+    def __lt__(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.LESS_THAN.value)
 
-    def __le__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ConditionType.LESS_THAN_OR_EQUAL.value, *args)
+    def __le__(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.LESS_THAN_OR_EQUAL.value)
 
-    def __gt__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ConditionType.GREATER_THAN.value, *args)
+    def __gt__(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.GREATER_THAN.value)
 
-    def __ge__[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value, *args)
+    def __ge__(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value)
 
-    def contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
+    def contains(self, other: ColumnType) -> Comparer:
         if not isinstance(other, tuple) and isinstance(other, Iterable):
             other = tuple(other)
 
-        return self.__comparer_creator(other, ConditionType.IN.value, *args)
+        return self.__comparer_creator(other, ConditionType.IN.value)
 
-    def not_contains[LTable, OTherTable, OtherProp](self, other: ColumnType[OtherProp], *args) -> Comparer[LTable, TProp, OTherTable, OtherProp]:
-        return self.__comparer_creator(other, ConditionType.NOT_IN.value, *args)
+    def not_contains(self, other: ColumnType) -> Comparer:
+        return self.__comparer_creator(other, ConditionType.NOT_IN.value)
 
-    def regex[LProp, RProp](self, pattern: str, flags: Optional[re.RegexFlag | Iterable[re.RegexFlag]] = None) -> Regex[LProp, RProp]:
+    def regex(self, pattern: str, flags: Optional[re.RegexFlag | Iterable[re.RegexFlag]] = None) -> Regex:
         from ormlambda.sql.comparer import Regex
 
         if not isinstance(flags, Iterable):
@@ -209,7 +209,7 @@ class Column[TProp]:
             flags=flags,
         )
 
-    def like[LProp, RProp](self, pattern: str) -> Like[LProp, RProp]:
+    def like(self, pattern: str) -> Like:
         from ormlambda.sql.comparer import Like
 
         return Like(self, pattern)
