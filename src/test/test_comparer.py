@@ -20,13 +20,13 @@ ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026
 
 
 class TestComparer(unittest.TestCase):
-    def test_comparer(self) -> None:
+    def test_AAcomparer(self) -> None:
         cond = A.pk_a == 100
         self.assertIsInstance(cond, Comparer)  # noqa: F821
 
     def test_raise_ValueError(self):
         with self.assertRaises(ValueError) as err:
-            Comparer.join_comparers(A.pk_a == 20)
+            Comparer.join_comparers(A.pk_a == 20, dialect=DIALECT)
 
         mssg: str = "Excepted 'Comparer' iterable not Comparer"
         self.assertEqual(err.exception.args[0], mssg)
@@ -44,7 +44,7 @@ class TestComparer(unittest.TestCase):
     def test_condition_with_ST_Contains(self):
         comparer = ST_Contains(TableType.points, Point(5, -5), dialect=DIALECT)
         mssg: str = "ST_Contains(ST_AsText(table_type.points), ST_AsText(%s))"
-        self.assertEqual(comparer.query, mssg)
+        self.assertEqual(comparer.query(DIALECT), mssg)
 
     # def test_retrieve_string_from_class_property(self):
     #     comparer = (1, 2, 3, 4, 5, 6, 7) in Address.city_id
@@ -84,7 +84,7 @@ class TestComparer(unittest.TestCase):
         compare2 = Address.City.city == VAR
         compare3 = Address.City.Country.country == "Spain"
 
-        comparer = type(compare1).join_comparers([compare1, compare2, compare3], True)
+        comparer = type(compare1).join_comparers([compare1, compare2, compare3], True,dialect=DIALECT)
         self.assertEqual(comparer, "address.address = 'Tetuan' AND city.city = 'Madrid' AND country.country = 'Spain'")
 
 
