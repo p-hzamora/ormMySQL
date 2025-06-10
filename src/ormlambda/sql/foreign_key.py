@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Optional, Any, Type, cast, overload
+from typing import Callable, TYPE_CHECKING, Optional, Any, Type, cast, overload, ClassVar
 
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.sql.elements import Element
@@ -35,6 +35,8 @@ class ForeignKeyContext(set["ForeignKey"]):
 
 class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     __visit_name__ = "foreign_key"
+
+    stored_calls: ClassVar[ForeignKeyContext] = ForeignKeyContext()
 
     @overload
     def __new__(self, comparer: Comparer, clause_name: str) -> None: ...
