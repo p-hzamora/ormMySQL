@@ -15,8 +15,9 @@ from ormlambda.dialects import mysql
 DIALECT = mysql.dialect
 
 
-def ConcatMySQL(*args,**kwargs):
-    return func.Concat(*args,**kwargs,dialect=DIALECT)
+def ConcatMySQL(*args, **kwargs):
+    return func.Concat(*args, **kwargs, dialect=DIALECT)
+
 
 class TestConcat(unittest.TestCase):
     def test_Concat(self) -> None:

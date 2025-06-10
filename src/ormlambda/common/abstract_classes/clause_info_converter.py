@@ -17,22 +17,13 @@ class ClauseInfoConverter[T, TProp](tp.Protocol):
 class ConvertFromAnyType(ClauseInfoConverter[None, None]):
     @classmethod
     def convert(cls, data: tp.Any, alias_table: AliasType = "{table}", context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[None]]:
-        return [
-            ClauseInfo[None](
-                table=None,
-                column=data,
-                alias_table=alias_table,
-                alias_clause=kwargs.get("alias", None),
-                context=context,
-                **kwargs
-            )
-        ]
+        return [ClauseInfo[None](table=None, column=data, alias_table=alias_table, alias_clause=kwargs.get("alias", None), context=context, **kwargs)]
 
 
 class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None]):
     @classmethod
     def convert(cls, data: ForeignKey[LT, RT], alias_table=None, context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[RT]]:
-        return ConvertFromTable[RT].convert(data.tright, data.get_alias(kwargs['dialect']), context, **kwargs)
+        return ConvertFromTable[RT].convert(data.tright, data.get_alias(kwargs["dialect"]), context, **kwargs)
 
 
 class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):

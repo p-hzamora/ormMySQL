@@ -26,9 +26,9 @@ def create_engine_for_db(database: str, query: Optional[dict[str, str | Sequence
     return create_engine(url)
 
 
-def create_sakila_engine()->Engine:
+def create_sakila_engine() -> Engine:
     return create_engine_for_db("sakila")
 
 
-def create_env_engine()->Engine:
+def create_env_engine() -> Engine:
     return create_engine(DATABASE_URL)

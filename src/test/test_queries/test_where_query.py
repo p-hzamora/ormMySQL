@@ -23,7 +23,6 @@ from ormlambda.dialects import mysql  # noqa: E402
 DIALECT = mysql.dialect
 
 
-
 ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026", "617128992", None, None)
 
 

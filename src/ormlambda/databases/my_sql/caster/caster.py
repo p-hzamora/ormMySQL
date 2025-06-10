@@ -18,6 +18,7 @@ from shapely import Point
 from types import NoneType
 from datetime import datetime
 
+
 class MySQLCaster(Caster):
     PLACEHOLDER = "%s"
 
@@ -36,4 +37,3 @@ class MySQLCaster(Caster):
             list: IterableCaster,
             bool: BooleanCaster,
         }
-

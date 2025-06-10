@@ -140,7 +140,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def column(self) -> str:
-        return self._column_resolver(self._column,self._dialect)
+        return self._column_resolver(self._column, self._dialect)
 
     @property
     def unresolved_column(self) -> ColumnType:
@@ -190,7 +190,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._get_all_columns()
         return self._join_table_and_column(self._column, dialect, **kwargs)
 
-    def _join_table_and_column[TProp](self, column: ColumnType[TProp],dialect:Dialect, **kwargs) -> str:
+    def _join_table_and_column[TProp](self, column: ColumnType[TProp], dialect: Dialect, **kwargs) -> str:
         # FIXME [x]: Study how to deacoplate from mysql database
 
         caster = dialect.caster()
@@ -200,7 +200,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         else:
             table = self.table.__table_name__
 
-        column: str = self._column_resolver(column,dialect)
+        column: str = self._column_resolver(column, dialect)
 
         table_column = f"{table}.{column}"
 
@@ -241,7 +241,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return ", ".join(columns)
 
     # FIXME [x]: Study how to deacoplate from mysql database
-    def _column_resolver[TProp](self, column: ColumnType[TProp], dialect:Dialect) -> str:
+    def _column_resolver[TProp](self, column: ColumnType[TProp], dialect: Dialect) -> str:
         if isinstance(column, ClauseInfo):
             return column.query(self._dialect)
 

@@ -32,12 +32,12 @@ class Alias[T: Table](ClauseInfo[T], ClauseElement):
         super().__init__(
             table,
             column,
-            alias_table= alias_table,
-            alias_clause= alias_clause,
-            context= context,
-            keep_asterisk= keep_asterisk,
-            preserve_context= preserve_context,
-            dtype= None,
+            alias_table=alias_table,
+            alias_clause=alias_clause,
+            context=context,
+            keep_asterisk=keep_asterisk,
+            preserve_context=preserve_context,
+            dtype=None,
             **kw,
         )
 

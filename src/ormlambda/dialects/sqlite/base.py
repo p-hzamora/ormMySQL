@@ -2,14 +2,13 @@ from ormlambda.sql import compiler
 from .. import default
 
 
-
 class SQLiteCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
 
 
-class SQLiteDDLCompiler(compiler.DDLCompiler):
-    ...
+class SQLiteDDLCompiler(compiler.DDLCompiler): ...
+
 
 class SQLiteTypeCompiler(compiler.GenericTypeCompiler):
     def visit_INTEGER(self, type_, **kw):

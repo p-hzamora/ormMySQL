@@ -49,8 +49,8 @@ class CreateSchema(BaseDDLElement):
     __visit_name__ = "create_schema"
 
     def __init__(self, schema: str, if_not_exists: bool = True):
-        self.schema:str = schema
-        self.if_not_exists:bool = if_not_exists
+        self.schema: str = schema
+        self.if_not_exists: bool = if_not_exists
 
 
 class DropSchema(BaseDDLElement):

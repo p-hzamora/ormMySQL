@@ -123,7 +123,7 @@ class Table(metaclass=TableMeta):
         return SchemaGeneratorFactory.get_generator(statement._dialect).create_table(cls)
 
     @classmethod
-    def create_table(cls, dialect:Dialect) -> str:
+    def create_table(cls, dialect: Dialect) -> str:
         return CreateTable(cls).compile(dialect).string
 
     @classmethod

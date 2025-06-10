@@ -84,7 +84,7 @@ class TestComparer(unittest.TestCase):
         compare2 = Address.City.city == VAR
         compare3 = Address.City.Country.country == "Spain"
 
-        comparer = type(compare1).join_comparers([compare1, compare2, compare3], True,dialect=DIALECT)
+        comparer = type(compare1).join_comparers([compare1, compare2, compare3], True, dialect=DIALECT)
         self.assertEqual(comparer, "address.address = 'Tetuan' AND city.city = 'Madrid' AND country.country = 'Spain'")
 
 

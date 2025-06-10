@@ -2,14 +2,15 @@ from types import ModuleType
 from ..default import DefaultDialect
 from ormlambda.sql import compiler
 
-class SQLiteCompiler(compiler.SQLCompiler):
-    ...
 
-class SQLiteDDLCompiler(compiler.DDLCompiler):
-    ...
+class SQLiteCompiler(compiler.SQLCompiler): ...
 
-class SQLiteTypeCompiler(compiler.TypeCompiler):
-    ...
+
+class SQLiteDDLCompiler(compiler.DDLCompiler): ...
+
+
+class SQLiteTypeCompiler(compiler.TypeCompiler): ...
+
 
 class SQLiteDialect_pysqlite(DefaultDialect):
     name = "sqlite"
@@ -24,6 +25,7 @@ class SQLiteDialect_pysqlite(DefaultDialect):
     @classmethod
     def import_dbapi(cls) -> ModuleType:
         from sqlite3 import dbapi2 as sqlite
+
         return sqlite
 
 

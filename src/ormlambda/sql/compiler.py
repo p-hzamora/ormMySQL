@@ -141,35 +141,63 @@ class TypeCompiler(Visitor):
 class SQLCompiler(Compiled, abc.ABC):
     is_sql = True
 
-   # @abc.abstractmethod
-    def visit_insert(self, insert: Insert, **kw) -> Insert: ...
-   # @abc.abstractmethod
-    def visit_delete(self, delete: Delete, **kw) -> Delete: ...
-   # @abc.abstractmethod
-    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert: ...
-   # @abc.abstractmethod
-    def visit_update(self, update: Update, **kw) -> Update: ...
-   # @abc.abstractmethod
-    def visit_limit(self, limit: Limit, **kw) -> Limit: ...
-   # @abc.abstractmethod
-    def visit_offset(self, offset: Offset, **kw) -> Offset: ...
-   # @abc.abstractmethod
-    def visit_count(self, count: Count, **kw) -> Count: ...
-   # @abc.abstractmethod
-    def visit_where(self, where: Where, **kw) -> Where: ...
-   # @abc.abstractmethod
-    def visit_having(self, having: Having, **kw) -> Having: ...
-   # @abc.abstractmethod
-    def visit_order(self, order: Order, **kw) -> Order: ...
-   # @abc.abstractmethod
-    def visit_concat(self, concat: Concat, **kw) -> Concat: ...
-   # @abc.abstractmethod
-    def visit_max(self, max: Max, **kw) -> Max: ...
-   # @abc.abstractmethod
-    def visit_min(self, min: Min, **kw) -> Min: ...
-   # @abc.abstractmethod
-    def visit_sum(self, sum: Sum, **kw) -> Sum: ...
-   # @abc.abstractmethod
+    # @abc.abstractmethod
+    def visit_insert(self, insert: Insert, **kw) -> Insert:
+        ...
+        # @abc.abstractmethod
+
+    def visit_delete(self, delete: Delete, **kw) -> Delete:
+        ...
+        # @abc.abstractmethod
+
+    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert:
+        ...
+        # @abc.abstractmethod
+
+    def visit_update(self, update: Update, **kw) -> Update:
+        ...
+        # @abc.abstractmethod
+
+    def visit_limit(self, limit: Limit, **kw) -> Limit:
+        ...
+        # @abc.abstractmethod
+
+    def visit_offset(self, offset: Offset, **kw) -> Offset:
+        ...
+        # @abc.abstractmethod
+
+    def visit_count(self, count: Count, **kw) -> Count:
+        ...
+        # @abc.abstractmethod
+
+    def visit_where(self, where: Where, **kw) -> Where:
+        ...
+        # @abc.abstractmethod
+
+    def visit_having(self, having: Having, **kw) -> Having:
+        ...
+        # @abc.abstractmethod
+
+    def visit_order(self, order: Order, **kw) -> Order:
+        ...
+        # @abc.abstractmethod
+
+    def visit_concat(self, concat: Concat, **kw) -> Concat:
+        ...
+        # @abc.abstractmethod
+
+    def visit_max(self, max: Max, **kw) -> Max:
+        ...
+        # @abc.abstractmethod
+
+    def visit_min(self, min: Min, **kw) -> Min:
+        ...
+        # @abc.abstractmethod
+
+    def visit_sum(self, sum: Sum, **kw) -> Sum:
+        ...
+        # @abc.abstractmethod
+
     def visit_groupby(self, groupby: Groupby, **kw) -> Groupby: ...
 
 
@@ -227,7 +255,7 @@ class DDLCompiler(Compiled):
             except Exception:
                 raise
 
-        foreign_keys = ForeignKey.create_query(tablecls,self.dialect)
+        foreign_keys = ForeignKey.create_query(tablecls, self.dialect)
         table_options = " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 
         sql = f"CREATE TABLE {tablecls.__table_name__} (\n\t"
@@ -345,8 +373,9 @@ class GenericTypeCompiler(TypeCompiler):
     def visit_ENUM(self, type_: ENUM, **kw):
         return "ENUM"
 
-    def visit_BLOB(self,type_,**kw):
+    def visit_BLOB(self, type_, **kw):
         return "BLOB"
+
     def visit_uuid(self, type_, **kw):
         if not type_.native_uuid or not self.dialect.supports_native_uuid:
             return self._render_string_type(type_, "CHAR", length_override=32)

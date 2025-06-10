@@ -123,7 +123,6 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         left_col = compare.left_condition(dialect).column
         rcon = alias if (alias := compare.right_condition(dialect).alias_table) else compare.right_condition(dialect).table.__table_name__
         return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition(dialect).column})"
-    
 
     def get_alias(self, dialect: Dialect) -> str:
         self._comparer = self.resolved_function(dialect)

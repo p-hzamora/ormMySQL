@@ -7,6 +7,7 @@ from ormlambda.sql.elements import ClauseElement
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
 
+
 class Limit(ClauseElement, IQuery):
     __visit_name__ = "limit"
     LIMIT = "LIMIT"

@@ -216,7 +216,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
-        return JoinContext(self, joins, self._query_builder._context,self._dialect)
+        return JoinContext(self, joins, self._query_builder._context, self._dialect)
 
     @override
     @clear_list

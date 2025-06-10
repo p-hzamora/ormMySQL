@@ -12,7 +12,6 @@ from ormlambda.sql.elements import Element
 
 if tp.TYPE_CHECKING:
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
-    from ormlambda.sql import Table
     from ormlambda.dialects import Dialect
 
 
@@ -67,11 +66,11 @@ class Comparer(Element, IQuery):
         self._dialect = dialect
 
     def set_context(self, context: ClauseContextType) -> None:
-        self._context= context
+        self._context = context
         return None
 
     def set_dialect(self, dialect: Dialect) -> None:
-        self._dialect= dialect
+        self._dialect = dialect
         return None
 
     def __repr__(self) -> str:
@@ -127,7 +126,7 @@ class Comparer(Element, IQuery):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
             comparer = comparers[0]
-            comparer._context= context
+            comparer._context = context
             return comparer.query(dialect)
 
         join_method = cls.__or__ if not restrictive else cls.__and__
@@ -136,10 +135,10 @@ class Comparer(Element, IQuery):
         for i in range(len(comparers) - 1):
             if ini_comparer is None:
                 ini_comparer = comparers[i]
-                ini_comparer._context= context
+                ini_comparer._context = context
             right_comparer = comparers[i + 1]
             right_comparer._context = context
-            new_comparer = join_method(ini_comparer, right_comparer, context=context,dialect=dialect)
+            new_comparer = join_method(ini_comparer, right_comparer, context=context, dialect=dialect)
             ini_comparer = new_comparer
         return new_comparer.query(dialect)
 

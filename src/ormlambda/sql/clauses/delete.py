@@ -35,7 +35,7 @@ class Delete[T: Table, TRepo](NonQueryBase[T, TRepo], IDelete[T], ClauseElement)
 
             if not pk_value:
                 raise ValueError(f"primary key value '{pk_value}' must not be empty.")
-            
+
             value = str(pk_value)
 
         elif isinstance(instances, Iterable):

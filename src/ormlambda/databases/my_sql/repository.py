@@ -199,7 +199,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             res = cursor.fetchmany(1)
         return len(res) > 0
 
-
     @property
     def database(self) -> Optional[str]:
         return self._pool._cnx_config.get("database", None)

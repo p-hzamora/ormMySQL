@@ -271,31 +271,31 @@ class TestSelect(unittest.TestCase):
 
     def test_one_col_from_RIGHT_INCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
-        qb = QueryBuilder(by=JoinType.RIGHT_INCLUSIVE,dialect=DIALECT)
+        qb = QueryBuilder(by=JoinType.RIGHT_INCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
         self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_LEFT_INCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
-        qb = QueryBuilder(by=JoinType.LEFT_INCLUSIVE,dialect=DIALECT)
+        qb = QueryBuilder(by=JoinType.LEFT_INCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
         self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_RIGHT_EXCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
-        qb = QueryBuilder(by=JoinType.RIGHT_EXCLUSIVE,dialect=DIALECT)
+        qb = QueryBuilder(by=JoinType.RIGHT_EXCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
         self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_LEFT_EXCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
-        qb = QueryBuilder(by=JoinType.LEFT_EXCLUSIVE,dialect=DIALECT)
+        qb = QueryBuilder(by=JoinType.LEFT_EXCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
         self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_FULL_OUTER_INCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
-        qb = QueryBuilder(by=JoinType.FULL_OUTER_INCLUSIVE,dialect=DIALECT)
+        qb = QueryBuilder(by=JoinType.FULL_OUTER_INCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
         self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
@@ -362,7 +362,7 @@ class TestSelect(unittest.TestCase):
                 d.C.B.A.data_a,
                 d.C,
                 func.Concat[D]((D.pk_d, "-", D.C.pk_c, "-", D.C.B.pk_b, "-", D.C.B.A, "-", D.C.B.data), alias_clause="concat_pks", context=context, dialect=DIALECT),
-                Count(D.C.B.A.name_a, context=context,dialect=DIALECT),
+                Count(D.C.B.A.name_a, context=context, dialect=DIALECT),
                 func.Max(D.C.B.A.data_a, context=context, dialect=DIALECT),
             ),
             context=context,

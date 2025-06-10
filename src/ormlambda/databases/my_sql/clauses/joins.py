@@ -10,12 +10,5 @@ if TYPE_CHECKING:
 
 
 class JoinSelector[TLeft: Table, TRight: Table](JoinSelector[TLeft, TRight]):
-    def __init__(
-        self,
-        where,
-        by,
-        alias="{table}",
-        context=None,
-        **kw
-    ):
-        super().__init__(where, by, alias, context,**kw)
+    def __init__(self, where, by, alias="{table}", context=None, **kw):
+        super().__init__(where, by, alias, context, **kw)
