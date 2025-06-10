@@ -17,18 +17,25 @@ type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[Comparer]
 
 
 class JoinContext[TParent: Table, TRepo]:
-    def __init__(self, statements: IStatements_two_generic[TParent, TRepo], joins: tuple, context: ClauseContextType) -> None:
+    def __init__(
+        self,
+        statements: IStatements_two_generic[TParent, TRepo],
+        joins: tuple,
+        context: ClauseContextType,
+        dialect: Dialect,
+    ) -> None:
         self._statements = statements
         self._parent: TParent = statements.model
         self._joins: Iterable[tuple[Comparer, JoinType]] = joins
         self._context: ClauseContextType = context
+        self._dialect: Dialect = dialect
 
     def __enter__(self) -> IStatements_two_generic[TParent, TRepo]:
         for comparer, by in self._joins:
             fk_clause, alias = self.get_fk_clause(comparer)
 
             foreign_key: ForeignKey = ForeignKey(comparer=comparer, clause_name=alias, keep_alive=True)
-            fk_clause.alias_table = foreign_key.alias
+            fk_clause.alias_table = foreign_key.get_alias(self._dialect)
             self._context.add_clause_to_context(fk_clause)
             setattr(self._parent, alias, foreign_key)
 
@@ -64,10 +71,10 @@ class JoinContext[TParent: Table, TRepo]:
         >>> (A.fk_b == B.pk_b) & (B.fk_c == C.pk_c) # Incorrect
         """
         clause_dicc: dict[Table, ClauseInfo] = {
-            comparer.left_condition.table: comparer.left_condition,
-            comparer.right_condition.table: comparer.right_condition,
+            comparer.left_condition(self._dialect).table: comparer.left_condition(self._dialect),
+            comparer.right_condition(self._dialect).table: comparer.right_condition(self._dialect),
         }
-        conditions = set([comparer.left_condition.table, comparer.right_condition.table])
+        conditions = set([comparer.left_condition(self._dialect).table, comparer.right_condition(self._dialect).table])
         model = set([self._statements.model])
 
         parent_table = conditions.difference(model).pop()

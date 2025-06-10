@@ -86,11 +86,11 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
             keep_asterisk=self._keep_asterisk,
             preserve_context=self._preserve_context,
             dialect=self._dialect,
-        ).query
+        ).query(dialect, **kwargs)
 
     def wrapped_clause_info(self, ci: ClauseInfo[T]) -> str:
         # avoid use placeholder when using IAggregate because no make sense.
         if self._alias_aggregate and (found := self._keyRegex.findall(self._alias_aggregate)):
             raise NotKeysInIAggregateError(found)
 
-        return f"{self.FUNCTION_NAME()}({ci._create_query()})"
+        return f"{self.FUNCTION_NAME()}({ci._create_query(self._dialect)})"

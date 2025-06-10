@@ -31,7 +31,13 @@ class Where(AggregateFunctionBase, ClauseElement):
     def query(self, dialect: Dialect, **kwargs) -> str:
         if isinstance(self._comparer, tp.Iterable):
             context = ClauseInfoContext(table_context=self._context._table_context)
-            comparer = Comparer.join_comparers(self._comparer, restrictive=self._restrictive, context=context, dialect=self._dialect)
+            comparer = Comparer.join_comparers(
+                self._comparer,
+                restrictive=self._restrictive,
+                context=context,
+                dialect=dialect,
+                **kwargs,
+            )
         else:
             comparer = self._comparer
         return f"{self.FUNCTION_NAME()} {comparer}"
@@ -54,7 +60,7 @@ class Where(AggregateFunctionBase, ClauseElement):
                     c._dialect = dialect
                 c.query
                 comparers.append(c)
-        return cls(*comparers, restrictive=restrictive, context=context, dialect=dialect).query
+        return cls(*comparers, restrictive=restrictive, context=context).query(dialect=dialect)
 
 
 __all__ = ["Where"]

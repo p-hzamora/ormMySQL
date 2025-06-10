@@ -56,7 +56,7 @@ if TYPE_CHECKING:
         GroupBy,
     )
 
-    from ormlambda.sql.functions import    (
+    from ormlambda.sql.functions import (
         Concat,
         Max,
         Min,
@@ -64,24 +64,22 @@ if TYPE_CHECKING:
     )
 
 
-
 class MySQLCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
 
     def visit_select(self, select: Select, **kw):
-        return f"{select.CLAUSE} {select.COLUMNS} FROM {select.FROM.query}"
+        return f"{select.CLAUSE} {select.COLUMNS} FROM {select.FROM.query(self.dialect,**kw)}"
 
     def visit_groupby(self, groupby: GroupBy, **kw):
-        column = groupby._create_query()
+        column = groupby._create_query(self.dialect, **kw)
         return f"{groupby.FUNCTION_NAME()} {column}"
 
     def visit_limit(self, limit: Limit, **kw):
         return f"{limit.LIMIT} {limit._number}"
 
 
-class MySQLDDLCompiler(compiler.DDLCompiler):
-    ...
+class MySQLDDLCompiler(compiler.DDLCompiler): ...
 
 
 class MySQLTypeCompiler(compiler.GenericTypeCompiler):

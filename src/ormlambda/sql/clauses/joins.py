@@ -41,7 +41,7 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
 
     def __init__[LProp, RProp](
         self,
-        where: Comparer[TLeft, LProp, TRight, RProp],
+        where: Comparer,
         by: JoinType,
         alias: Optional[str] = "{table}",
         context: ClauseContextType = None,
@@ -49,12 +49,14 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         dialect: Dialect,
         **kw,
     ) -> None:
-        self._comparer: Comparer[TLeft, LProp, TRight, RProp] = where
-        self._orig_table: TLeft = where.left_condition.table
-        self._right_table: TRight = where.right_condition.table
+        lcon = where.left_condition(dialect)
+        rcon = where.right_condition(dialect)
+        self._comparer: Comparer = where
+        self._orig_table: TLeft = lcon.table
+        self._right_table: TRight = rcon.table
         self._by: JoinType = by
-        self._left_col: str = where.left_condition._column.column_name
-        self._right_col: str = where.right_condition._column.column_name
+        self._left_col: str = lcon._column.column_name
+        self._right_col: str = rcon._column.column_name
         self._compareop = where._compare
         self._context: ClauseContextType = context if context else ClauseInfoContext()
 
@@ -89,18 +91,18 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         return ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
 
     @classmethod
-    def join_selectors(cls, *args: JoinSelector) -> str:
-        return "\n".join([x.query for x in args])
+    def join_selectors(cls, dialect: Dialect, *args: JoinSelector) -> str:
+        return "\n".join([x.query(dialect) for x in args])
 
     def query(self, dialect: Dialect, **kwargs) -> str:
         self._context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
         list_ = [
             self._by.value,  # inner join
-            self._from_clause.query,
+            self._from_clause.query(dialect, **kwargs),
             "ON",
-            self._left_table_clause.query,
+            self._left_table_clause.query(dialect, **kwargs),
             self._compareop,  # =
-            self._right_table_clause.query,
+            self._right_table_clause.query(dialect, **kwargs),
         ]
         return " ".join([x for x in list_ if x is not None])
 

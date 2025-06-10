@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 class IQuery(ABC):
     """Interface to queries that retrieve any element such as select, limit, offset, where, group by, etc..."""
 
-    @property
     @abstractmethod
     def query(self, dialect: Dialect, **kwargs) -> str: ...
 

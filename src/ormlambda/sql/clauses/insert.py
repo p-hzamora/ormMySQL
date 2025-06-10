@@ -29,7 +29,7 @@ class Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T], ClauseElement)
     def execute(self) -> None:
         if not self._query:
             raise ValueError
-        return self._repository.executemany_with_values(self.query, self._values)
+        return self._repository.executemany_with_values(self.query(self._dialect), self._values)
 
     @override
     def insert[TProp](self, instances: T | list[T]) -> None:

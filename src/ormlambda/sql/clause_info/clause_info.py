@@ -93,7 +93,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         super().__init__(**kw)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}: query -> {self.query}"
+        return f"{type(self).__name__}: query -> {self.query(self._dialect)}"
 
     def replace_column_placeholder[TProp](self, column: ColumnType[TProp]) -> str:
         if not column:
@@ -140,7 +140,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def column(self) -> str:
-        return self._column_resolver(self._column)
+        return self._column_resolver(self._column,self._dialect)
 
     @property
     def unresolved_column(self) -> ColumnType:
@@ -167,9 +167,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return type(self._column)
 
     def query(self, dialect: Dialect, **kwargs) -> str:
-        return self._create_query()
+        return self._create_query(dialect, **kwargs)
 
-    def _create_query(self) -> str:
+    def _create_query(self, dialect: Dialect, **kwargs) -> str:
         # when passing some value that is not a column name
         if not self.table and not self._alias_clause:
             return self.column
@@ -188,19 +188,19 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         if self._return_all_columns():
             return self._get_all_columns()
-        return self._join_table_and_column(self._column)
+        return self._join_table_and_column(self._column, dialect, **kwargs)
 
-    def _join_table_and_column[TProp](self, column: ColumnType[TProp]) -> str:
+    def _join_table_and_column[TProp](self, column: ColumnType[TProp],dialect:Dialect, **kwargs) -> str:
         # FIXME [x]: Study how to deacoplate from mysql database
 
-        caster = self._dialect.caster()
+        caster = dialect.caster()
 
         if self.alias_table:
             table = self._wrapped_with_quotes(self.alias_table)
         else:
             table = self.table.__table_name__
 
-        column: str = self._column_resolver(column)
+        column: str = self._column_resolver(column,dialect)
 
         table_column = f"{table}.{column}"
 
@@ -236,15 +236,14 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if self._alias_table and self._alias_clause:  # We'll add an "*" when we are certain that we have included 'alias_clause' attr
             return self._join_table_and_column(ASTERISK)
 
-        columns: list[ClauseInfo] = [ClauseCreator(column).query for column in self.table.get_columns()]
+        columns: list[ClauseInfo] = [ClauseCreator(column).query(self._dialect) for column in self.table.get_columns()]
 
         return ", ".join(columns)
 
     # FIXME [x]: Study how to deacoplate from mysql database
-    def _column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
-        caster = self._dialect.caster()
+    def _column_resolver[TProp](self, column: ColumnType[TProp], dialect:Dialect) -> str:
         if isinstance(column, ClauseInfo):
-            return column.query
+            return column.query(self._dialect)
 
         if isinstance(column, tp.Iterable) and isinstance(column[0], ClauseInfo):
             return self.join_clauses(column)
@@ -265,6 +264,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if self.is_foreign_key(self._column):
             return self._column.tright.__table_name__
 
+        caster = dialect.caster()
         casted_value = caster.for_value(column, self.dtype)
         if not self._table:
             # if we haven't some table atrribute, we assume that the user want to retrieve the string_data from caster.
@@ -314,7 +314,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             if context:
                 c.context = context
                 c._dialect = dialect
-            queries.append(c.query)
+            queries.append(c.query(dialect))
 
         return f"{chr} ".join(queries)
 

@@ -71,8 +71,8 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
 
     def __init__with_comparer(self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
         self._relationship = None
-        self._tleft: TLeft = comparer.left_condition.table
-        self._tright: TRight = comparer.right_condition.table
+        self._tleft: TLeft = comparer.left_condition(self.dialect).table
+        self._tright: TRight = comparer.right_condition(self.dialect).table
         self._clause_name: str = clause_name
         self._comparer: Comparer[LProp, RProp] = comparer
 
@@ -117,24 +117,17 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         return self._clause_name
 
     def query(self, dialect: Dialect, **kwargs) -> str:
-        compare = self.resolved_function()
-        compare._kwargs = self.kwargs.copy()
-        left_col = compare.left_condition.column
-        rcon = alias if (alias := compare.right_condition.alias_table) else compare.right_condition.table.__table_name__
-        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition.column})"
-
-    @property
-    def alias(self) -> str:
-        self._comparer = self.resolved_function(self.dia)
-        lcol = self._comparer.left_condition._column.column_name
-        rcol = self._comparer.right_condition._column.column_name
-        return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
+        compare = self.resolved_function(dialect)
+        left_col = compare.left_condition(dialect).column
+        rcon = alias if (alias := compare.right_condition(dialect).alias_table) else compare.right_condition(dialect).table.__table_name__
+        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition(dialect).column})"
+    
 
     def get_alias(self, dialect: Dialect) -> str:
         self._comparer = self.resolved_function(dialect)
         self._comparer._dialect = dialect
-        lcol = self._comparer.left_condition._column.column_name
-        rcol = self._comparer.right_condition._column.column_name
+        lcol = self._comparer.left_condition(dialect)._column.column_name
+        rcol = self._comparer.right_condition(dialect)._column.column_name
         return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
 
     @classmethod
@@ -143,8 +136,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
 
         for attr in orig_table.__dict__.values():
             if isinstance(attr, ForeignKey):
-                attr.kwargs["dialect"] = dialect
-                clauses.append(attr.query)
+                clauses.append(attr.query(dialect))
         return clauses
 
     def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect, context: Optional[ClauseContextType] = None) -> Comparer:

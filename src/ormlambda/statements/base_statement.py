@@ -62,7 +62,7 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
         return response_sql
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
+    def query(self) -> str:
         return self._query
 
     @property

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Iterable, TypedDict, Optional, TYPE_CHECKING
 
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
-from ormlambda.databases.my_sql.clauses.joins import JoinSelector
+from ormlambda.sql.clauses import JoinSelector
 from ormlambda import ForeignKey
 
 from ormlambda.common.interfaces import IQuery
@@ -131,7 +131,7 @@ class QueryBuilder(IQuery):
         if not joins:
             return None
         sorted_joins = JoinSelector.sort_join_selectors(joins)
-        return f"{sep}".join([join.query for join in sorted_joins])
+        return f"{sep}".join([join.query(self.dialect) for join in sorted_joins])
 
     def pop_tables_and_create_joins_from_ForeignKey(self, by: JoinType = JoinType.INNER_JOIN) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.

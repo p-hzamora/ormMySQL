@@ -101,21 +101,19 @@ class Comparer(Element, IQuery):
             **kw,
         )
 
-    @property
-    def left_condition(self) -> Comparer | ClauseInfo[LTable]:
-        return self._create_clause_info(self._left_condition, dialect=self._dialect)
+    def left_condition(self, dialect: Dialect) -> Comparer | ClauseInfo:
+        return self._create_clause_info(self._left_condition, dialect=dialect)
 
-    @property
-    def right_condition(self) -> Comparer | ClauseInfo[RTable]:
-        return self._create_clause_info(self._right_condition, dialect=self._dialect)
+    def right_condition(self, dialect: Dialect) -> Comparer | ClauseInfo:
+        return self._create_clause_info(self._right_condition, dialect=dialect)
 
     @property
     def compare(self) -> ComparerTypes:
         return self._compare
 
-    def query(self,dialect:Dialect, **kwargs) -> str:
-        lcond = self.left_condition.query(dialect,**kwargs)
-        rcond = self.right_condition.query(dialect,**kwargs)
+    def query(self, dialect: Dialect, **kwargs) -> str:
+        lcond = self.left_condition(dialect).query(dialect, **kwargs)
+        rcond = self.right_condition(dialect).query(dialect, **kwargs)
 
         if self._flags:
             rcond = CleanValue(rcond, self._flags).clean()
@@ -131,7 +129,7 @@ class Comparer(Element, IQuery):
         return Comparer(self, other, "OR", context=context)
 
     @classmethod
-    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None, dialect=None) -> str:
+    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None, *, dialect) -> str:
         if not isinstance(comparers, tp.Iterable):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
@@ -147,8 +145,8 @@ class Comparer(Element, IQuery):
                 ini_comparer = comparers[i]
                 ini_comparer._context= context
             right_comparer = comparers[i + 1]
-            right_comparer._context= context
-            new_comparer = join_method(ini_comparer, right_comparer, context=context)
+            right_comparer._context = context
+            new_comparer = join_method(ini_comparer, right_comparer, context=context,dialect=dialect)
             ini_comparer = new_comparer
         return new_comparer.query(dialect)
 
