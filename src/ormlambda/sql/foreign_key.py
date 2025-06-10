@@ -39,12 +39,12 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
     @overload
-    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]], keep_alive: bool = ...) -> TRight: ...
+    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer], keep_alive: bool = ...) -> TRight: ...
 
     def __new__[LProp, TRight, RProp](
         cls,
         tright: Optional[TRight] = None,
-        relationship: Optional[Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]]] = None,
+        relationship: Optional[Callable[[TLeft, TRight], Any | Comparer]] = None,
         *,
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
@@ -55,7 +55,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
     def __init__[LProp, RProp](
         self,
         tright: Optional[TRight] = None,
-        relationship: Optional[Callable[[TLeft, TRight], Any | Comparer[TLeft, LProp, TRight, RProp]]] = None,
+        relationship: Optional[Callable[[TLeft, TRight], Any | Comparer]] = None,
         *,
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
@@ -69,15 +69,15 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
         else:
             self.__init_with_callable(tright, relationship)
 
-    def __init__with_comparer[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
+    def __init__with_comparer(self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
         self._relationship = None
         self._tleft: TLeft = comparer.left_condition.table
         self._tright: TRight = comparer.right_condition.table
         self._clause_name: str = clause_name
         self._comparer: Comparer[LProp, RProp] = comparer
 
-    def __init_with_callable[LProp, RProp](self, tright: Optional[TRight], relationship: Optional[Callable[[TLeft, TRight], Comparer[LProp, RProp]]]) -> None:
-        self._relationship: Callable[[TLeft, TRight], Comparer[LProp, RProp]] = relationship
+    def __init_with_callable(self, tright: Optional[TRight], relationship: Optional[Callable[[TLeft, TRight], Comparer]]) -> None:
+        self._relationship: Callable[[TLeft, TRight], Comparer] = relationship
         self._tleft: TLeft = None
         self._tright: TRight = tright
         self._clause_name: str = None
@@ -147,7 +147,7 @@ class ForeignKey[TLeft: Table, TRight: Table](IQuery):
                 clauses.append(attr.query)
         return clauses
 
-    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect, context: Optional[ClauseContextType] = None) -> Comparer[LProp, RProp]:
+    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect, context: Optional[ClauseContextType] = None) -> Comparer:
         """ """
         if self._comparer is not None:
             return self._comparer

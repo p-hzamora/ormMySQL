@@ -48,8 +48,8 @@ type TypeExists = Literal["fail", "replace", "append"]
 
 type WhereTypes[LTable, LProp, RTable, RProp] = Union[
     bool,
-    Comparer[LTable, LProp, RTable, RProp],
-    tuple[Comparer[LTable, LProp, RTable, RProp], ...],
+    Comparer,
+    tuple[Comparer],
     Callable[[LTable], WhereTypes[LTable, LProp, RTable, RProp]],
 ]
 

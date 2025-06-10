@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ormlambda.common.enums.join_type import JoinType
 
 
-type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[Comparer[LTable, LProp, RTable, RProp], JoinType]
+type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[Comparer]
 
 
 class JoinContext[TParent: Table, TRepo]:

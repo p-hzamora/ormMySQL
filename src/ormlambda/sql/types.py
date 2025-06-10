@@ -20,7 +20,7 @@ type UnionType = tp.Literal["AND", "OR", ""]
 type ComparerTypes = ComparerType | UnionType | ConditionEnum
 # endregion
 
-type TupleJoinType[T] = tuple[Comparer[T], JoinType]
+type TupleJoinType[T] = tuple[Comparer]
 
 ASTERISK: AsteriskType = "*"
 

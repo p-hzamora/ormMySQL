@@ -8,6 +8,7 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.sql.types import ConditionType, ComparerTypes
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda import ConditionType as ConditionEnum
+from ormlambda.sql.elements import Element
 
 if tp.TYPE_CHECKING:
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
@@ -46,19 +47,21 @@ class CleanValue:
         return temp_name
 
 
-class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
+class Comparer(Element, IQuery):
+    __visit_name__ = "comparer"
+
     def __init__(
         self,
-        left_condition: ConditionType[LProp],
-        right_condition: ConditionType[RProp],
+        left_condition: ConditionType,
+        right_condition: ConditionType,
         compare: ComparerTypes,
         context: ClauseContextType = None,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ) -> None:
         self._context: ClauseContextType = context
         self._compare: ComparerTypes = compare
-        self._left_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[LTable] = left_condition
-        self._right_condition: Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[RTable] = right_condition
+        self._left_condition: Comparer | ClauseInfo = left_condition
+        self._right_condition: Comparer | ClauseInfo = right_condition
         self._flags = flags
         self._dialect = None
 
@@ -74,7 +77,7 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
     def __repr__(self) -> str:
         return f"{Comparer.__name__}: {self.query}"
 
-    def _create_clause_info[TTable](self, cond: ConditionType[LProp], dialect: Dialect, **kw) -> Comparer[LTable, LProp, RTable, RProp] | ClauseInfo[TTable]:
+    def _create_clause_info(self, cond: ConditionType, dialect: Dialect, **kw) -> Comparer | ClauseInfo:
         from ormlambda import Column
 
         if isinstance(cond, Comparer):
@@ -150,11 +153,11 @@ class Comparer[LTable: Table, LProp, RTable: Table, RProp](IQuery):
         return new_comparer.query(dialect)
 
 
-class Regex[LProp, RProp](Comparer[None, LProp, None, RProp]):
+class Regex(Comparer):
     def __init__(
         self,
-        left_condition: ConditionType[LProp],
-        right_condition: ConditionType[RProp],
+        left_condition: ConditionType,
+        right_condition: ConditionType,
         context: ClauseContextType = None,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ):
@@ -167,11 +170,11 @@ class Regex[LProp, RProp](Comparer[None, LProp, None, RProp]):
         )
 
 
-class Like[LProp, RProp](Comparer[None, LProp, None, RProp]):
+class Like(Comparer):
     def __init__(
         self,
-        left_condition: ConditionType[LProp],
-        right_condition: ConditionType[RProp],
+        left_condition: ConditionType,
+        right_condition: ConditionType,
         context: ClauseContextType = None,
     ):
         super().__init__(left_condition, right_condition, ConditionEnum.LIKE.value, context)
