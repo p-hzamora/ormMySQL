@@ -33,7 +33,7 @@ def ClauseInfoMySQL[T](*args, **kwargs) -> ClauseInfo[T]:
 class TestClauseInfo(unittest.TestCase):
     def test_passing_only_table(self):
         ci = ClauseInfoMySQL(A)
-        self.assertEqual(ci.query, "a")
+        self.assertEqual(ci.query(DIALECT), "a")
 
     @parameterized.expand(
         (
@@ -47,12 +47,12 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_only_table_with_alias_table(self):
         ci = ClauseInfoMySQL(A, alias_table=lambda x: "custom_table_name")
-        self.assertEqual(ci.query, "a AS `custom_table_name`")
+        self.assertEqual(ci.query(DIALECT), "a AS `custom_table_name`")
 
     def test_passing_only_table_with_alias_table_placeholder_of_column(self):
         with self.assertRaises(ValueError) as err:
             try:
-                ClauseInfoMySQL(A, alias_table=lambda x: "{column}").query
+                ClauseInfoMySQL(A, alias_table=lambda x: "{column}").query(DIALECT)
             except ValueError as err:
                 mssg = "You cannot use {column} placeholder without using 'column' attribute"
                 self.assertEqual(str(err), mssg)
@@ -61,7 +61,7 @@ class TestClauseInfo(unittest.TestCase):
     def test_passing_only_column_with_alias_table_placeholder_of_table(self):
         with self.assertRaises(ValueError) as err:
             try:
-                ClauseInfoMySQL(None, "random_value", alias_clause=lambda x: "{table}").query
+                ClauseInfoMySQL(None, "random_value", alias_clause=lambda x: "{table}").query(DIALECT)
             except ValueError as err:
                 mssg = "You cannot use {table} placeholder without using 'table' attribute"
                 self.assertEqual(str(err), mssg)
@@ -69,23 +69,23 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_passing_only_table_with_alias_table_placeholder_of_table(self):
         ci = ClauseInfoMySQL(A, alias_table=lambda x: "{table}")
-        self.assertEqual(ci.query, "a AS `a`")
+        self.assertEqual(ci.query(DIALECT), "a AS `a`")
 
     def test_constructor(self):
         ci = ClauseInfoMySQL(A, A.pk_a)
-        self.assertEqual(ci.query, "a.pk_a")
+        self.assertEqual(ci.query(DIALECT), "a.pk_a")
 
     def test_passing_callable_alias_clause(self):
         ci = ClauseInfoMySQL(A, A.name_a, alias_clause=lambda x: "resolver_with_lambda_{column}")
-        self.assertEqual(ci.query, "a.name_a AS `resolver_with_lambda_name_a`")
+        self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
 
     def test_passing_string_with_placeholder_alias_clause(self):
         ci = ClauseInfoMySQL(A, A.name_a, alias_clause="resolver_with_lambda_{column}")
-        self.assertEqual(ci.query, "a.name_a AS `resolver_with_lambda_name_a`")
+        self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
 
     def test_passing_callable_alias_clause_with_placeholder(self):
         ci = ClauseInfoMySQL(A, A.name_a, alias_clause=lambda x: "resolver_with_lambda_{table}")
-        self.assertEqual(ci.query, "a.name_a AS `resolver_with_lambda_a`")
+        self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_a`")
 
     @parameterized.expand(
         (
@@ -101,67 +101,67 @@ class TestClauseInfo(unittest.TestCase):
             return ci.dtype.__name__
 
         ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
-        self.assertEqual(ci.query, f"a.{string_col} AS `{result.__name__}`")
+        self.assertEqual(ci.query(DIALECT), f"a.{string_col} AS `{result.__name__}`")
 
     def test_passing_callable_alias_table(self):
         ci = ClauseInfoMySQL(A, A.date_a, alias_table=lambda x: "custom_alias_for_{table}_table")
-        self.assertEqual(ci.query, "`custom_alias_for_a_table`.date_a")
+        self.assertEqual(ci.query(DIALECT), "`custom_alias_for_a_table`.date_a")
 
     def test_passing_placeholder_as_alias(self):
         ci = ClauseInfoMySQL(A, A.date_a, alias_table="{table}")
-        self.assertEqual(ci.query, "`a`.date_a")
+        self.assertEqual(ci.query(DIALECT), "`a`.date_a")
 
     def test_call_A_withou_alias(self):
         ci = ClauseInfoMySQL(A, A.date_a)
-        self.assertEqual(ci.query, "a.date_a")
+        self.assertEqual(ci.query(DIALECT), "a.date_a")
 
     def test_passing_callable_alias_table_with_placeholder(self):
         ci = ClauseInfoMySQL(A, A.date_a, alias_table=lambda x: "custom_alias_for_{column}_column")
-        self.assertEqual(ci.query, "`custom_alias_for_date_a_column`.date_a")
+        self.assertEqual(ci.query(DIALECT), "`custom_alias_for_date_a_column`.date_a")
 
     def test_passing_asterisk(self):
         ci = ClauseInfoMySQL(A, "*")
-        self.assertEqual(ci.query, "a.pk_a, a.name_a, a.data_a, a.date_a, a.value")
+        self.assertEqual(ci.query(DIALECT), "a.pk_a, a.name_a, a.data_a, a.date_a, a.value")
 
     def test_hardcoding_asterisk(self):
         ci = ClauseInfoMySQL(A, "*", keep_asterisk=True)
-        self.assertEqual(ci.query, "a.*")
+        self.assertEqual(ci.query(DIALECT), "a.*")
 
     def test_hardcoding_asterisk_with_alias_table(self):
         ci = ClauseInfoMySQL(A, "*", alias_table="new_name", keep_asterisk=True)
-        self.assertEqual(ci.query, "`new_name`.*")
+        self.assertEqual(ci.query(DIALECT), "`new_name`.*")
 
     def test_passing_table(self):
         ci = ClauseInfoMySQL(A, A)
-        self.assertEqual(ci.query, "a.pk_a, a.name_a, a.data_a, a.date_a, a.value")
+        self.assertEqual(ci.query(DIALECT), "a.pk_a, a.name_a, a.data_a, a.date_a, a.value")
 
     def test_passing_alias_table(self):
         ci = ClauseInfoMySQL(A, A.data_a, "ALIAS_TABLE")
-        self.assertEqual(ci.query, "`ALIAS_TABLE`.data_a")
+        self.assertEqual(ci.query(DIALECT), "`ALIAS_TABLE`.data_a")
 
     def test_passing_alias_clause(self):
         ci = ClauseInfoMySQL(A, A.data_a, None, "ALIAS_FOR_ALL_CLAUSE")
-        self.assertEqual(ci.query, "a.data_a AS `ALIAS_FOR_ALL_CLAUSE`")
+        self.assertEqual(ci.query(DIALECT), "a.data_a AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_Clause_with_alias_table_and_alias_clause(self):
         ci = ClauseInfoMySQL(A, A.pk_a, "ALIAS_TABLE", "ALIAS_FOR_ALL_CLAUSE")
-        self.assertEqual(ci.query, "`ALIAS_TABLE`.pk_a AS `ALIAS_FOR_ALL_CLAUSE`")
+        self.assertEqual(ci.query(DIALECT), "`ALIAS_TABLE`.pk_a AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_Clause_for_all_columns_with_alias_table_and_alias_clause(self):
         ci = ClauseInfoMySQL(A, A, "ALIAS_TABLE", "ALIAS_FOR_ALL_CLAUSE")
-        self.assertEqual(ci.query, "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
+        self.assertEqual(ci.query(DIALECT), "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_Clause_for_all_columns_with_asterisk_with_alias_table_and_alias_clause(self):
         ci = ClauseInfoMySQL(A, "*", "ALIAS_TABLE", "ALIAS_FOR_ALL_CLAUSE")
-        self.assertEqual(ci.query, "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
+        self.assertEqual(ci.query(DIALECT), "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_passing_aggregation_method(self):
         ci = ST_AsText(A.data_a, alias_clause="cast_point", dialect=DIALECT)
-        self.assertEqual(ci.query, "ST_AsText(a.data_a) AS `cast_point`")
+        self.assertEqual(ci.query(DIALECT), "ST_AsText(a.data_a) AS `cast_point`")
 
     def test_passing_aggregation_method_with_alias_inside_of_the_method(self):
         ci = ST_AsText(A.data_a, alias_table="new_table", dialect=DIALECT)
-        self.assertEqual(ci.query, "ST_AsText(`new_table`.data_a) AS `data_a`")
+        self.assertEqual(ci.query(DIALECT), "ST_AsText(`new_table`.data_a) AS `data_a`")
 
     @parameterized.expand(
         (
@@ -172,16 +172,16 @@ class TestClauseInfo(unittest.TestCase):
     )
     def test_max_function(self, fn: Type[AggregateFunctionBase], result: str, dialect: Dialect):
         ci = fn(A.data_a, context=ClauseInfoContext(table_context={A: "new_table"}), dialect=dialect)
-        self.assertEqual(ci.query, f"{result.upper()}(`new_table`.data_a) AS `{result}`")
+        self.assertEqual(ci.query(DIALECT), f"{result.upper()}(`new_table`.data_a) AS `{result}`")
 
     def test_max_function_with_clause_alias(self):
         ci = func.Max(A.data_a, alias_clause="alias-clause", dialect=DIALECT)
-        self.assertEqual(ci.query, "MAX(a.data_a) AS `alias-clause`")
+        self.assertEqual(ci.query(DIALECT), "MAX(a.data_a) AS `alias-clause`")
 
     def test_passing_aggregation_method_ST_Contains(self):
         comparer = ST_Contains(TableType.points, Point(5, -5), dialect=DIALECT)
         mssg: str = "ST_Contains(ST_AsText(table_type.points), ST_AsText(%s))"
-        self.assertEqual(comparer.query, mssg)
+        self.assertEqual(comparer.query(DIALECT), mssg)
 
     def test_alias_table_property(self):
         ci = ClauseInfoMySQL(A, A.name_a, alias_table="{table}~{column}")
@@ -212,38 +212,38 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_random_value(self):
         ci = ClauseInfoMySQL(None, "random_value")
-        self.assertEqual(ci.query, "'random_value'")
+        self.assertEqual(ci.query(DIALECT), "'random_value'")
 
     def test_pass_None(self):
         ci = ClauseInfoMySQL(None, None)
-        self.assertEqual(ci.query, "NULL")
+        self.assertEqual(ci.query(DIALECT), "NULL")
 
     def test_pass_float(self):
         ci = ClauseInfoMySQL(None, 3.1415)
-        self.assertEqual(ci.query, "3.1415")
+        self.assertEqual(ci.query(DIALECT), "3.1415")
 
     def test_integer_in_column(self):
         ci = ClauseInfoMySQL(None, 20)
-        self.assertEqual(ci.query, "20")
+        self.assertEqual(ci.query(DIALECT), "20")
 
     def test_all_None(self):
-        self.assertEqual(ClauseInfoMySQL(None, None).query, "NULL")
+        self.assertEqual(ClauseInfoMySQL(None, None).query(DIALECT), "NULL")
 
     def test_raise_NotKeysInIAggregateError(self) -> None:
         with self.assertRaises(NotKeysInIAggregateError) as err:
-            ST_AsText(A.data_a, alias_clause="{table}~{column}", dialect=DIALECT).query
+            ST_AsText(A.data_a, alias_clause="{table}~{column}", dialect=DIALECT).query(DIALECT)
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table', 'column']"
         self.assertEqual(mssg, err.exception.__str__())
 
     def test_raise_NotKeysInIAggregateError_with_one_placeholder(self) -> None:
         with self.assertRaises(NotKeysInIAggregateError) as err:
-            ST_AsText(A.data_a, alias_clause="{table}", dialect=DIALECT).query
+            ST_AsText(A.data_a, alias_clause="{table}", dialect=DIALECT).query(DIALECT)
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table']"
         self.assertEqual(mssg, err.exception.__str__())
 
     def test_pass_fk(self) -> None:
         ci = ClauseInfoMySQL(C.B, C.B)
-        self.assertEqual(ci.query, "b.pk_b, b.data_b, b.fk_a, b.data")
+        self.assertEqual(ci.query(DIALECT), "b.pk_b, b.data_b, b.fk_a, b.data")
 
 
 class TestContextClauseInfo(unittest.TestCase):

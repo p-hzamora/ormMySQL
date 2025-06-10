@@ -31,7 +31,7 @@ class TestJoinSelector(unittest.TestCase):
         )
 
         self.assertEqual(
-            join_selector.query,
+            join_selector.query(DIALECT),
             "INNER JOIN city AS `city` ON address.city_id = `city`.city_id",
         )
 
@@ -42,7 +42,7 @@ class TestJoinSelector(unittest.TestCase):
             dialect=DIALECT,
         )
 
-        query_parser = join.query
+        query_parser = join.query(DIALECT)
         query = "INNER JOIN country AS `country` ON city.country_id = `country`.country_id"
         self.assertEqual(query, query_parser)
 
@@ -55,7 +55,7 @@ class TestJoinSelector(unittest.TestCase):
     #         by=JoinType.RIGHT_EXCLUSIVE,
     #     )
 
-    # query_parser = join.query
+    # query_parser = join.query(DIALECT)
     # query = "RIGHT JOIN country ON `city`.country_id = `country`.country_id"
 
     # self.assertEqual(query, query_parser)
@@ -67,7 +67,7 @@ class TestJoinSelector(unittest.TestCase):
             dialect=DIALECT,
         )
 
-        query_parser = join.query
+        query_parser = join.query(DIALECT)
         query = "LEFT JOIN country AS `country` ON city.country_id = `country`.country_id"
         self.assertEqual(query, query_parser)
 
@@ -87,7 +87,7 @@ class TestJoinSelector(unittest.TestCase):
             dialect=DIALECT,
             context=ctx,
         )
-        query_parser = JoinSelector.join_selectors(s1, s2)
+        query_parser = JoinSelector.join_selectors(DIALECT, s1, s2)
         query = "LEFT JOIN city AS `city` ON address.city_id = `city`.city_id\nLEFT JOIN country AS `country` ON `city`.country_id = `country`.country_id"
         self.assertEqual(query, query_parser)
 
