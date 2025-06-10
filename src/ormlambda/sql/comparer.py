@@ -82,18 +82,11 @@ class Comparer(Element, IQuery):
 
         if isinstance(cond, Comparer):
             return cond
-        if isinstance(cond, Column):
-            return ClauseInfo(
-                cond.table,
-                cond,
-                alias_clause=None,
-                context=self._context,
-                dialect=dialect,
-                **kw,
-            )
+        table = None if not isinstance(cond, Column) else cond.table
+
         # it a value that's not depend of any Table
         return ClauseInfo(
-            None,
+            table,
             cond,
             alias_clause=None,
             context=self._context,
