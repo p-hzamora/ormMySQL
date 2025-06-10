@@ -113,13 +113,13 @@ class Comparer(Element, IQuery):
 
         return f"{lcond} {self._compare} {rcond}"
 
-    def __and__(self, other: Comparer, context: ClauseContextType = None) -> Comparer:
+    def __and__(self, other: Comparer, **kwargs) -> Comparer:
         # Customize the behavior of '&'
-        return Comparer(self, other, "AND", context=context)
+        return Comparer(self, other, "AND", **kwargs)
 
-    def __or__(self, other: Comparer, context: ClauseContextType = None) -> Comparer:
+    def __or__(self, other: Comparer, **kwargs) -> Comparer:
         # Customize the behavior of '|'
-        return Comparer(self, other, "OR", context=context)
+        return Comparer(self, other, "OR", **kwargs)
 
     @classmethod
     def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None, *, dialect) -> str:
