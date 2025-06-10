@@ -82,11 +82,6 @@ class MySQLCompiler(compiler.SQLCompiler):
 
 class MySQLDDLCompiler(compiler.DDLCompiler):
     ...
-    # def get_column_specification(self, column: Column, **kw) -> str:
-    #     """Builds column DDL."""
-    #     self.dialect.type_compiler_instance.process(column.dtype, **kw)
-
-    #     return column.get_column_definition(self.dialect)
 
 
 class MySQLTypeCompiler(compiler.GenericTypeCompiler):

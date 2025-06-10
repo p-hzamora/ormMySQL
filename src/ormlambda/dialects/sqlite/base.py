@@ -1,5 +1,4 @@
 from ormlambda.sql import compiler
-from ormlambda import Column
 from .. import default
 
 
@@ -10,11 +9,7 @@ class SQLiteCompiler(compiler.SQLCompiler):
 
 
 class SQLiteDDLCompiler(compiler.DDLCompiler):
-    def get_column_specification(self, column: Column, **kw) -> str:
-        """Builds column DDL."""
-
-        return column.get_column_definition(self.dialect)
-
+    ...
 
 class SQLiteTypeCompiler(compiler.GenericTypeCompiler):
     def visit_INTEGER(self, type_, **kw):

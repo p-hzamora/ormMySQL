@@ -213,9 +213,3 @@ class Column[TProp]:
         from ormlambda.sql.comparer import Like
 
         return Like(self, pattern)
-
-    def get_column_definition(self, dialect: Dialect) -> str:
-        """Generate full column definition SQL with constraints"""
-
-        renderer = ""  # ColumnDefinitionFactory.get_renderer(dialect)
-        return renderer.render_definition(self, dialect)
