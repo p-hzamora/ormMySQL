@@ -15,7 +15,7 @@ from ormlambda.sql.elements import ClauseElement
 class Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T], ClauseElement):
     __visit_name__ = "upsert"
     def __init__(self, model: T, repository: BaseRepository[TRepo], engine:Engine) -> None:
-        super().__init__(model, repository, Engine)
+        super().__init__(model, repository, engine)
 
     @override
     @property
@@ -24,7 +24,7 @@ class Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T], ClauseElement)
 
     @override
     def execute(self) -> None:
-        return self._dialect.executemany_with_values(self._query, self._values)
+        return self._engine.repository.executemany_with_values(self._query, self._values)
 
     @override
     def upsert(self, instances: T | list[T]) -> None:
