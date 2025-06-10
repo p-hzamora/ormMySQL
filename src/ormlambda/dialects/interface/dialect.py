@@ -2,11 +2,9 @@ from __future__ import annotations
 import abc
 from typing import ClassVar, Optional, Type, TYPE_CHECKING
 
-from types import ModuleType
-
-from ormlambda.caster.caster import Caster
 
 if TYPE_CHECKING:
+    from ormlambda.caster.caster import Caster
     from ormlambda.repository.interfaces.IRepositoryBase import DBAPIConnection
     from ormlambda.sql.types import DDLCompiler, SQLCompiler, TypeCompiler
     from ormlambda import BaseRepository
