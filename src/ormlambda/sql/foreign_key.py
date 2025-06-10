@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Callable, TYPE_CHECKING, Optional, Any, Type, cast, overload
 
 from ormlambda.common.interfaces.IQueryCommand import IQuery
-
+from ormlambda.sql.elements import Element
 
 if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
@@ -33,8 +33,8 @@ class ForeignKeyContext(set["ForeignKey"]):
         return super().add(element)
 
 
-class ForeignKey[TLeft: Table, TRight: Table](IQuery):
-    stored_calls: ForeignKeyContext = ForeignKeyContext()
+class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
+    __visit_name__ = "foreign_key"
 
     @overload
     def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
