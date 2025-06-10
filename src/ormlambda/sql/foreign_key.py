@@ -37,11 +37,11 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     __visit_name__ = "foreign_key"
 
     @overload
-    def __new__[LProp, RProp](self, comparer: Comparer[LProp, RProp], clause_name: str) -> None: ...
+    def __new__(self, comparer: Comparer, clause_name: str) -> None: ...
     @overload
-    def __new__[LProp, TRight, RProp](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer], keep_alive: bool = ...) -> TRight: ...
+    def __new__[TRight](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer], keep_alive: bool = ...) -> TRight: ...
 
-    def __new__[LProp, TRight, RProp](
+    def __new__[TRight](
         cls,
         tright: Optional[TRight] = None,
         relationship: Optional[Callable[[TLeft, TRight], Any | Comparer]] = None,
@@ -52,7 +52,7 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     ) -> TRight:
         return super().__new__(cls)
 
-    def __init__[LProp, RProp](
+    def __init__(
         self,
         tright: Optional[TRight] = None,
         relationship: Optional[Callable[[TLeft, TRight], Any | Comparer]] = None,
@@ -69,12 +69,12 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         else:
             self.__init_with_callable(tright, relationship)
 
-    def __init__with_comparer(self, comparer: Comparer[LProp, RProp], clause_name: str) -> None:
+    def __init__with_comparer(self, comparer: Comparer, clause_name: str) -> None:
         self._relationship = None
         self._tleft: TLeft = comparer.left_condition(self.dialect).table
         self._tright: TRight = comparer.right_condition(self.dialect).table
         self._clause_name: str = clause_name
-        self._comparer: Comparer[LProp, RProp] = comparer
+        self._comparer: Comparer = comparer
 
     def __init_with_callable(self, tright: Optional[TRight], relationship: Optional[Callable[[TLeft, TRight], Comparer]]) -> None:
         self._relationship: Callable[[TLeft, TRight], Comparer] = relationship
