@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 from ormlambda.sql.types import ColumnType
 from ormlambda.sql.clause_info import AggregateFunctionBase
 
@@ -51,28 +51,5 @@ class Order(AggregateFunctionBase, ClauseElement):
             except Exception:
                 pass
         raise Exception(f"order_type param only can be 'ASC' or 'DESC' string or '{OrderType.__name__}' enum")
-
-    @tp.override
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        string_columns: list[str] = []
-        columns = self.unresolved_column
-
-        # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
-        if isinstance(columns, str):
-            string_columns = f"{columns} {str(self._order_type[0])}"
-            return f"{self.FUNCTION_NAME()} {string_columns}"
-
-        if not isinstance(columns, tp.Iterable):
-            columns = (columns,)
-
-        assert len(columns) == len(self._order_type)
-
-        context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None
-        for index, clause in enumerate(self._convert_into_clauseInfo(columns, context, dialect=self._dialect)):
-            clause.alias_clause = None
-            string_columns.append(f"{clause.query(dialect,**kwargs)} {str(self._order_type[index])}")
-
-        return f"{self.FUNCTION_NAME()} {', '.join(string_columns)}"
-
 
 __all__ = ["Order"]
