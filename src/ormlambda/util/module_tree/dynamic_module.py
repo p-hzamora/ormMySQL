@@ -236,7 +236,7 @@ class ModuleTree:
             # we need to ensure that the object we going to add in table_list is the same
             for name, obj in table_class:
                 if name == node.class_name:
-                    table_list.append(obj.create_table_query())
+                    table_list.append(obj.create_table())
         return tuple(table_list)
 
     @staticmethod

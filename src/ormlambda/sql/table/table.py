@@ -8,7 +8,6 @@ from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.sql.ddl import CreateTable, DropTable
 
 if TYPE_CHECKING:
-    from ormlambda.statements import BaseStatement
     from ormlambda.dialects import Dialect
 
 from .table_constructor import __init_constructor__
@@ -114,13 +113,6 @@ class Table(metaclass=TableMeta):
         for key, value in cls.__annotations__.items():
             if name == key:
                 return value
-
-    @classmethod
-    def create_table_query(cls, statement: BaseStatement) -> str:
-        """It's classmethod because of it does not matter the columns values to create the table"""
-        from ormlambda.sql.schema_generator import SchemaGeneratorFactory
-
-        return SchemaGeneratorFactory.get_generator(statement._dialect).create_table(cls)
 
     @classmethod
     def create_table(cls, dialect: Dialect) -> str:
