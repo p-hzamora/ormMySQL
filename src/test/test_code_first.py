@@ -41,7 +41,8 @@ class Test_my_sql(unittest.TestCase):
 
     def test_create_table(self):
         if self.country_model.table_exists():
-            self.ddbb.drop_table(Country.__table_name__)
+            self.country_model.drop_table()
+
         self.country_model.create_table()
 
 

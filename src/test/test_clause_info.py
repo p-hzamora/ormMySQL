@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     from ormlambda.sql.clause_info import AggregateFunctionBase
     from ormlambda.dialects import Dialect
 from ormlambda.common.errors import NotKeysInIAggregateError
-from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
-from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
+from ormlambda.dialects.mysql.clauses.ST_AsText import ST_AsText
+from ormlambda.dialects.mysql.clauses.ST_Contains import ST_Contains
 from ormlambda.sql.clause_info import ClauseInfo, ClauseInfoContext
 
 from ormlambda.sql import functions as func

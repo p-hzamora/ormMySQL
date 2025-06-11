@@ -11,7 +11,7 @@ sys.path.insert(0, new_file := [str(x.parent) for x in Path(__file__).parents if
 
 from ormlambda.sql.comparer import Comparer  # noqa: E402
 from test.models import Address, City, TableType, A  # noqa: E402
-from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains  # noqa: E402
+from ormlambda.dialects.mysql.clauses.ST_Contains import ST_Contains  # noqa: E402
 from ormlambda.dialects import mysql
 
 DIALECT = mysql.dialect
