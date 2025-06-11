@@ -5,7 +5,7 @@ import json
 from ormlambda.sql import Column
 from ormlambda.sql import ForeignKey
 from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
-from ormlambda.sql.ddl import CreateTable
+from ormlambda.sql.ddl import CreateTable, DropTable
 
 if TYPE_CHECKING:
     from ormlambda.statements import BaseStatement
@@ -126,6 +126,10 @@ class Table(metaclass=TableMeta):
     def create_table(cls, dialect: Dialect) -> str:
         return CreateTable(cls).compile(dialect).string
 
+    @classmethod
+    def drop_table(cls, dialect:Dialect)->str:
+        return DropTable(cls).compile(dialect).string
+    
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:
         """Work in progress"""

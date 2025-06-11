@@ -37,6 +37,9 @@ class IStatements[T: Table](Element):
     @abstractmethod
     def create_table(self, if_exists: TypeExists = "fail") -> None: ...
 
+    @abstractmethod
+    def drop_table(self) -> None: ...
+
     # #TODOL [ ]: We must to implement this mehtod
     # @abstractmethod
     # def drop_table(self)->None: ...

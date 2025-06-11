@@ -1,5 +1,4 @@
 from .delete import DeleteQuery as Delete
-from .drop_table import DropTable as DropTable
 from .insert import InsertQuery as Insert
 from .joins import JoinSelector as JoinSelector
 from .limit import Limit as Limit

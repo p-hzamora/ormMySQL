@@ -38,7 +38,8 @@ from .types import (
 )
 from ormlambda.sql.sqltypes import BLOB
 
-from ormlambda.databases.my_sql import MySQLRepository, MySQLCaster
+from .caster import MySQLCaster
+from .repository import MySQLRepository
 
 
 if TYPE_CHECKING:

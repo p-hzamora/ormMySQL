@@ -22,16 +22,22 @@ class BaseDDLElement(ClauseElement):
         return dialect.ddl_compiler(dialect, self, **kw)
 
 
-class CreateTable(BaseDDLElement):
+class CreateDropTable:
+    def __init__(self, element: Table):
+        self.element = element
+        self.columns = [CreateColumn(c) for c in element.get_columns()]
+
+
+class CreateTable(CreateDropTable, BaseDDLElement):
     """
     Class representing a CREATE TABLE statement.
     """
 
     __visit_name__ = "create_table"
 
-    def __init__(self, element: Table):
-        self.element = element
-        self.columns = [CreateColumn(c) for c in element.get_columns()]
+
+class DropTable(CreateDropTable, BaseDDLElement):
+    __visit_name__ = "drop_table"
 
 
 class CreateColumn[T](BaseDDLElement):

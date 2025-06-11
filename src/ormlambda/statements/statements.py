@@ -56,7 +56,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         name: str = self._model.__table_name__
         if self._repository.table_exists(name):
             if if_exists == "replace":
-                self._repository.drop_table(name)
+                self.drop_table()
 
             elif if_exists == "fail":
                 raise ValueError(f"Table '{self._model.__table_name__}' already exists")
@@ -75,6 +75,12 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
         query = self.model.create_table(self.dialect)
         self._repository.execute(query)
+        return None
+
+    @override
+    def drop_table(self)->None:
+        q = self.model.drop_table(self.dialect)
+        self._repository.execute(q)
         return None
 
     @override

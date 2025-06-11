@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .visitors import Element
     from .elements import ClauseElement
     from ormlambda.dialects import Dialect
-    from ormlambda.sql.ddl import CreateTable, CreateSchema, DropSchema
+    from ormlambda.sql.ddl import CreateTable, CreateSchema, DropSchema, DropTable
     from .sqltypes import (
         INTEGER,
         SMALLINTEGER,
@@ -248,6 +248,9 @@ class DDLCompiler(Compiled):
         sql += ",\n\t".join(foreign_keys)
         sql += f"\n){table_options};"
         return sql
+
+    def visit_drop_table(self, drop: DropTable, **kw) -> str:
+        return "DROP TABLE " + drop.element.__table_name__
 
     def visit_create_column(self, create: CreateColumn, first_pk=False, **kw):  # noqa: F821
         column = create.element
