@@ -4,12 +4,13 @@ from typing import Any, ClassVar, Optional, TYPE_CHECKING
 
 from ormlambda.sql.ddl import CreateColumn
 from ormlambda.sql.foreign_key import ForeignKey
+from ormlambda.sql.sqltypes import resolve_primitive_types
 
 from .visitors import Visitor
 from ormlambda import util
+from ormlambda.sql.type_api import TypeEngine
 
 if TYPE_CHECKING:
-    from ormlambda.sql.type_api import TypeEngine
     from ormlambda import Column
     from .visitors import Element
     from .elements import ClauseElement
@@ -135,7 +136,8 @@ class TypeCompiler(Visitor):
         :param kw: Additional keyword arguments.
         :return: The string representation of the type object.
         """
-        type_ = type_.coerce_compared_value(type_)
+        if not isinstance(type_, TypeEngine):
+            type_ = resolve_primitive_types(type_)
         return type_._compiler_dispatch(self, **kw)
 
 
