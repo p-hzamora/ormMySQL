@@ -1,6 +1,5 @@
 from __future__ import annotations
 from datetime import datetime
-from decimal import Decimal
 import sys
 from pathlib import Path
 from typing import Literal, Optional
@@ -15,13 +14,13 @@ DATABASE_URL = "sqlite:///~/Downloads/tesela.db"
 
 class Proveedor(Table):
     __table_name__ = "proveedor"
-    pk_proveedor: Column[int] = Column(int, is_primary_key=True)
+    pk_proveedor: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
     name: Column[str]
     surname_1: Column[str]
     surname_2: Column[str]
 
 
-class Projecto(Table):
+class Proyecto(Table):
     __table_name__ = "projecto"
     pk_projecto: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
     codigo: Column[str]
@@ -40,7 +39,7 @@ type Option = Literal[
 
 class PrecioContradictorio(Table):
     __table_name__ = "precio_contradictorio"
-    pk_contradictorio: Column[int] = Column(int, is_primary_key=True)
+    pk_contradictorio: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
     fk_projecto: Column[int] = Column(int)
     codigo: Column[str]
     contradictorios: Column[str]
@@ -58,23 +57,22 @@ class PrecioContradictorio(Table):
     firmado: Column[str]
 
     Proveedor = ForeignKey["PrecioContradictorio", Proveedor](Proveedor, lambda self, out: self.fk_proveedor == out.pk_proveedor)
-    Projecto = ForeignKey["PrecioContradictorio", Projecto](Projecto, lambda self, out: self.fk_projecto == out.pk_projecto)
+    Projecto = ForeignKey["PrecioContradictorio", Proyecto](Proyecto, lambda self, out: self.fk_projecto == out.pk_projecto)
 
 
 engine = create_engine(DATABASE_URL)
 
 
-PrecioContradictorioModel = ORM(PrecioContradictorio, engine)
 ProveedorModel = ORM(Proveedor, engine)
-ProjectoModel = ORM(Projecto, engine)
+ProjectoModel = ORM(Proyecto, engine)
+PrecioContradictorioModel = ORM(PrecioContradictorio, engine)
 
 
-PrecioContradictorioModel.create_table("replace")
 ProveedorModel.create_table("replace")
 ProjectoModel.create_table("replace")
+PrecioContradictorioModel.create_table("replace")
 
-
-project = Projecto(None, "CE24045", "Calle virgen de la oliva 1", "Activa", datetime.now())
+project = Proyecto(None, "CE24045", "Calle virgen de la oliva 1", "Activa", datetime.now())
 proveedor = Proveedor(None, "Rosman")
 contradictorios = [
     PrecioContradictorio(
@@ -131,3 +129,7 @@ ProjectoModel.insert(project)
 ProveedorModel.insert(proveedor)
 PrecioContradictorioModel.insert(contradictorios)
 pass
+
+PrecioContradictorioModel.drop_table()
+ProjectoModel.drop_table()
+ProveedorModel.drop_table()
