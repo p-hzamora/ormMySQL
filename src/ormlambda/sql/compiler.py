@@ -221,10 +221,10 @@ class DDLCompiler(Compiled):
 
     def visit_drop_schema(self, drop: DropSchema, **kw):
         if_exists_clause = "IF EXISTS " if drop.if_exists else ""
-        return f"DROP SCHEMA {if_exists_clause}{self.dialect.caster.PLACEHOLDER};"
+        return f"DROP SCHEMA {if_exists_clause}{drop.schema};"
 
     def visit_schema_exists(self, schema: str) -> bool:
-        return f"SHOW DATABASES LIKE {self.dialect.caster.PLACEHOLDER};"
+        return f"SHOW DATABASES LIKE {schema};"
         # return f"SHOW DATABASES LIKE {self.dialect.caster.PLACEHOLDER};", (schema,)
 
     def visit_create_table(self, create: CreateTable, **kw) -> str:
