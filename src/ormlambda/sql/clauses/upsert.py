@@ -16,7 +16,7 @@ class Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T], ClauseElement)
     __visit_name__ = "upsert"
 
     def __init__(self, model: T, repository: BaseRepository[TRepo], engine: Engine) -> None:
-        super().__init__(model, repository, engine)
+        super().__init__(model, repository, engine=engine)
 
     @override
     @property
@@ -56,7 +56,7 @@ class Upsert[T: Table, TRepo](NonQueryBase[T, TRepo], IUpsert[T], ClauseElement)
         COL2 = _val.COL2;
 
         """
-        insert = Insert(self._model, self._dialect)
+        insert = Insert(self._model, self._engine.repository, self._engine.dialect)
         insert.insert(instances)
 
         if isinstance(instances, Table):
