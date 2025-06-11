@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from ormlambda.common.enums import JoinType
     from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda.sql.types import AliasType
-    from ormlambda.dialects import Dialect
 
 from ..types import (
     OrderTypes,
@@ -334,7 +333,9 @@ class IStatements_two_generic[T, TPool](IStatements[T]):
     @abstractmethod
     def repository(self) -> BaseRepository[TPool]: ...
 
-    def query(self, dialect: Dialect, **kwargs) -> str: ...
+    @property
+    @abstractmethod
+    def query(self) -> str: ...
 
     @property
     def model(self) -> Type[T]: ...
