@@ -156,7 +156,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
-        self._query_builder.add_statement(clauses.Where(*conditions, dialect=self._dialect))
+        self._query_builder.add_statement(clauses.Where(*conditions))
         return self
 
     @override
@@ -164,7 +164,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
         if not isinstance(conditions, Iterable):
             conditions = (conditions,)
-        self._query_builder.add_statement(clauses.Having(*conditions, dialect=self._dialect))
+        self._query_builder.add_statement(clauses.Having(*conditions))
         return self
 
     @override
