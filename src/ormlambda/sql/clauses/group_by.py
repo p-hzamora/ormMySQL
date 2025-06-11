@@ -26,9 +26,5 @@ class GroupBy(AggregateFunctionBase, ClauseElement):
             **kwargs,
         )
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        column = self._create_query()
-        return f"{self.FUNCTION_NAME()} {column}"
-
 
 __all__ = ["GroupBy"]
