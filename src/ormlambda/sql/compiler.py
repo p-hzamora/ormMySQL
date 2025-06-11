@@ -1,6 +1,13 @@
 from __future__ import annotations
 import abc
-from typing import Any, ClassVar, Optional, TYPE_CHECKING
+import datetime
+import io
+import logging
+import os
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any, BinaryIO, ClassVar, Optional, TYPE_CHECKING, TextIO, Union
 
 from ormlambda.sql.ddl import CreateColumn
 from ormlambda.sql.foreign_key import ForeignKey
@@ -15,7 +22,13 @@ if TYPE_CHECKING:
     from .visitors import Element
     from .elements import ClauseElement
     from ormlambda.dialects import Dialect
-    from ormlambda.sql.ddl import CreateTable, CreateSchema, DropSchema, DropTable
+    from ormlambda.sql.ddl import (
+        CreateTable,
+        CreateSchema,
+        DropSchema,
+        DropTable,
+        CreateBackup,
+    )
     from .sqltypes import (
         INTEGER,
         SMALLINTEGER,
@@ -60,6 +73,12 @@ if TYPE_CHECKING:
         Sum,
         Groupby,
     )
+
+
+type customString = Union[str | Path]
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class Compiled:
@@ -275,6 +294,225 @@ class DDLCompiler(Compiled):
         if not column.default_value:
             return None
         return None
+
+    #TODOH []: refactor in order to improve clarity
+    def visit_create_backup(
+        self,
+        backup: CreateBackup,
+        output: Optional[Union[Path | str, BinaryIO, TextIO]] = None,
+        compress: bool = False,
+        backup_dir: customString = ".",
+        **kw,
+    ) -> Optional[str | BinaryIO | Path]:
+        """
+        Create MySQL backup with flexible output options
+
+        Args:
+            backup: An object containing database connection details (host, user, password, database, port).
+            output: Output destination:
+                - None: Auto-generate file path
+                - str: Custom file path (treated as a path-like object)
+                - Stream object: Write to stream (io.StringIO, io.BytesIO, sys.stdout, etc.)
+            compress: Whether to compress the output using gzip.
+            backup_dir: Directory for auto-generated files if 'output' is None.
+
+        Returns:
+            - File path (str) if output to file.
+            - Backup data as bytes (if output to binary stream) or string (if output to text stream).
+            - None if an error occurs.
+        """
+
+        host = backup.url.host
+        user = backup.url.username
+        password = backup.url.password
+        database = backup.url.database
+        port = backup.url.port
+
+        if not database:
+            log.error("Error: Database name is required for backup.")
+            return None
+
+        # Build mysqldump command
+        command = [
+            "mysqldump",
+            f"--host={host}",
+            f"--port={port}",
+            f"--user={user}",
+            f"--password={password}",
+            "--single-transaction",
+            "--routines",
+            "--triggers",
+            "--events",
+            "--lock-tables=false",  # Often used to avoid locking during backup
+            "--add-drop-table",
+            "--extended-insert",
+            database,
+        ]
+
+        def export_to_stream_internal() -> Optional[io.BytesIO]:
+            nonlocal command, compress, database
+            # If streaming, execute mysqldump and capture stdout
+            log.info(f"Backing up database '{database}' to BytesIO...")
+
+            try:
+                if compress:
+                    # Start mysqldump process
+                    mysqldump_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                    # Start gzip process, taking input from mysqldump
+                    gzip_process = subprocess.Popen(["gzip", "-c"], stdin=mysqldump_process.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                    # Close mysqldump stdout in parent process - gzip will handle it
+                    mysqldump_process.stdout.close()
+
+                    # Wait for gzip to complete (which will also wait for mysqldump)
+                    gzip_stdout, gzip_stderr = gzip_process.communicate()
+
+                    # Wait for mysqldump to finish and get its stderr
+                    mysqldump_stderr = mysqldump_process.communicate()[1]
+
+                    if mysqldump_process.returncode != 0:
+                        log.error(f"mysqldump error: {mysqldump_stderr.decode().strip()}")
+                        return None
+                    if gzip_process.returncode != 0:
+                        log.error(f"gzip error: {gzip_stderr.decode().strip()}")
+                        return None
+
+                    log.info("Backup successful and compressed to BytesIO.")
+                    return io.BytesIO(gzip_stdout)
+                else:
+                    # Directly capture mysqldump output
+                    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = process.communicate()
+
+                    if process.returncode != 0:
+                        log.error(f"mysqldump error: {stderr.decode().strip()}")
+                        return None
+
+                    log.info("Backup successful to BytesIO.")
+                    return io.BytesIO(stdout)
+
+            except FileNotFoundError as e:
+                log.error(f"Error: '{e.filename}' command not found. Please ensure mysqldump (and gzip if compressing) is installed and in your system's PATH.")
+                return None
+            except Exception as e:
+                log.error(f"An unexpected error occurred during streaming backup: {e}")
+                return None
+
+        def export_to_file_internal(file_path: customString) -> Optional[Path]:
+            nonlocal command, compress, database
+
+            if isinstance(file_path, str):
+                file_path = Path(file_path)
+
+            if not file_path.exists():
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                file_path.touch()
+
+            try:
+                if compress:
+                    # Pipe mysqldump output through gzip to file
+                    with open(file_path, "wb") as output_file:
+                        # Start mysqldump process
+                        mysqldump_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                        # Start gzip process, taking input from mysqldump and writing to file
+                        gzip_process = subprocess.Popen(["gzip", "-c"], stdin=mysqldump_process.stdout, stdout=output_file, stderr=subprocess.PIPE)
+
+                        # Close mysqldump stdout in parent process - gzip will handle it
+                        mysqldump_process.stdout.close()
+
+                        # Wait for gzip to complete (which will also wait for mysqldump)
+                        gzip_stdout, gzip_stderr = gzip_process.communicate()
+
+                        # Wait for mysqldump to finish and get its stderr
+                        mysqldump_stderr = mysqldump_process.communicate()[1]
+
+                        if mysqldump_process.returncode != 0:
+                            log.error(f"mysqldump error: {mysqldump_stderr.decode().strip()}")
+                            return None
+                        if gzip_process.returncode != 0:
+                            log.error(f"gzip error: {gzip_stderr.decode().strip()}")
+                            return None
+                else:
+                    # Directly redirect mysqldump output to file
+                    with open(file_path, "wb") as output_file:
+                        process = subprocess.Popen(command, stdout=output_file, stderr=subprocess.PIPE)
+                        stdout, stderr = process.communicate()
+
+                        if process.returncode != 0:
+                            log.error(f"mysqldump error: {stderr.decode().strip()}")
+                            return None
+
+                log.info(f"Backup completed successfully: {file_path}")
+                return file_path
+
+            except FileNotFoundError as e:
+                log.error(f"Error: '{e.filename}' command not found. Please ensure mysqldump (and gzip if compressing) is installed and in your system's PATH.")
+                return None
+            except Exception as e:
+                log.error(f"An unexpected error occurred during file backup: {e}")
+                return None
+
+        try:
+            if output is None:
+                # Auto-generate file path
+
+                backup_dir = Path(backup_dir)
+                backup_dir.mkdir(exist_ok=True)
+
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_extension = "sql.gz" if compress else "sql"
+                output_filename = f"{database}_backup_{timestamp}.{file_extension}"
+                output_filepath = os.path.join(backup_dir, output_filename)
+                return export_to_file_internal(output_filepath)
+
+            elif isinstance(output, (io.BytesIO, io.StringIO)):
+                # Output to a stream object
+                stream_result = export_to_stream_internal()
+                if stream_result:
+                    # Write the content from the internal BytesIO to the provided output stream
+                    if isinstance(output, io.BytesIO):
+                        output.write(stream_result.getvalue())
+                        return stream_result.getvalue()  # Return bytes if it was a BytesIO internally
+                    elif isinstance(output, io.StringIO):
+                        # Attempt to decode bytes to string if target is StringIO
+                        try:
+                            decoded_content = stream_result.getvalue().decode("utf-8")
+                            output.write(decoded_content)
+                            return decoded_content
+                        except UnicodeDecodeError:
+                            log.error("Error: Cannot decode byte stream to UTF-8 for StringIO output. Consider setting compress=False or ensuring database encoding is compatible.")
+                            return None
+                return None
+
+            elif isinstance(output, str | Path):
+                # Output to a custom file path
+                return export_to_file_internal(output)
+
+            elif isinstance(output, (BinaryIO, TextIO)):  # Handles sys.stdout, open file objects
+                stream_result = export_to_stream_internal()
+                if stream_result:
+                    if "b" in getattr(output, "mode", "") or isinstance(output, BinaryIO):  # Check if it's a binary stream
+                        output.write(stream_result.getvalue())
+                        return stream_result.getvalue()
+                    else:  # Assume text stream
+                        try:
+                            decoded_content = stream_result.getvalue().decode("utf-8")
+                            output.write(decoded_content)
+                            return decoded_content
+                        except UnicodeDecodeError:
+                            log.error("Error: Cannot decode byte stream to UTF-8 for text stream output. Consider setting compress=False or ensuring database encoding is compatible.")
+                            return None
+                return None
+
+            else:
+                log.error(f"Unsupported output type: {type(output)}")
+                return None
+
+        except Exception as e:
+            log.error(f"An unexpected error occurred: {e}")
+            return None
 
 
 class GenericTypeCompiler(TypeCompiler):
