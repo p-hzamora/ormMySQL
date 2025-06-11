@@ -62,6 +62,7 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
         return response_sql
 
+    @property
     def query(self) -> str:
         return self._query
 
