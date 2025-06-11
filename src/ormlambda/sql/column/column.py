@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     import re
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer, Regex, Like
-    from ormlambda.dialects.interface.dialect import Dialect
     from ormlambda.sql.type_api import TypeEngine
 
 
