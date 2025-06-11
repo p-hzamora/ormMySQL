@@ -2,9 +2,10 @@ from __future__ import annotations
 from types import ModuleType
 from ormlambda.sql import compiler
 from .. import default
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
+    from ormlambda.sql.column.column import Column
     from mysql import connector
 
 from .types import (
@@ -64,6 +65,9 @@ if TYPE_CHECKING:
     )
 
 
+from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
+
+
 class MySQLCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
@@ -71,15 +75,67 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_select(self, select: Select, **kw):
         return f"{select.CLAUSE} {select.COLUMNS} FROM {select.FROM.query(self.dialect,**kw)}"
 
-    def visit_groupby(self, groupby: GroupBy, **kw):
+    def visit_group_by(self, groupby: GroupBy, **kw):
         column = groupby._create_query(self.dialect, **kw)
         return f"{groupby.FUNCTION_NAME()} {column}"
 
     def visit_limit(self, limit: Limit, **kw):
         return f"{limit.LIMIT} {limit._number}"
 
+    # TODOH []: include the rest of visit methods
+    def visit_insert(self, insert: Insert, **kw) -> Insert: ...
+    def visit_delete(self, delete: Delete, **kw) -> Delete: ...
+    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert: ...
+    def visit_update(self, update: Update, **kw) -> Update: ...
+    def visit_offset(self, offset: Offset, **kw) -> Offset:
+        return f"{offset.OFFSET} {offset._number}"
 
-class MySQLDDLCompiler(compiler.DDLCompiler): ...
+    def visit_count(self, count: Count, **kw) -> Count: ...
+    def visit_where(self, where: Where, **kw) -> Where: ...
+    def visit_having(self, having: Having, **kw) -> Having: ...
+    def visit_order(self, order: Order, **kw) -> Order:
+        string_columns: list[str] = []
+        columns = order.unresolved_column
+
+        # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
+        if isinstance(columns, str):
+            string_columns = f"{columns} {str(order._order_type[0])}"
+            return f"{order.FUNCTION_NAME()} {string_columns}"
+
+        if not isinstance(columns, Iterable):
+            columns = (columns,)
+
+        assert len(columns) == len(order._order_type)
+
+        context = ClauseInfoContext(table_context=order._context._table_context, clause_context=None) if order._context else None
+        for index, clause in enumerate(order._convert_into_clauseInfo(columns, context, dialect=self.dialect)):
+            clause.alias_clause = None
+            string_columns.append(f"{clause.query(self.dialect,**kw)} {str(order._order_type[index])}")
+
+        return f"{order.FUNCTION_NAME()} {', '.join(string_columns)}"
+
+    def visit_concat(self, concat: Concat, **kw) -> Concat: ...
+    def visit_max(self, max: Max, **kw) -> Max: ...
+    def visit_min(self, min: Min, **kw) -> Min: ...
+    def visit_sum(self, sum: Sum, **kw) -> Sum: ...
+
+
+class MySQLDDLCompiler(compiler.DDLCompiler):
+    def get_column_specification(self, column: Column, **kwargs):
+        colspec = column.column_name + " " + self.dialect.type_compiler_instance.process(column.dtype)
+        default = self.get_column_default_string(column)
+        if default is not None:
+            colspec += " DEFAULT " + default
+
+        if column.is_not_null:
+            colspec += " NOT NULL"
+
+        if column.is_primary_key:
+            colspec += " PRIMARY KEY"
+
+        colspec += " AUTO_INCREMENT" if column.is_auto_increment else ""
+
+        return colspec
 
 
 class MySQLTypeCompiler(compiler.GenericTypeCompiler):
