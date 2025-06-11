@@ -373,8 +373,14 @@ class GenericTypeCompiler(TypeCompiler):
     def visit_ENUM(self, type_: ENUM, **kw):
         return "ENUM"
 
-    def visit_BLOB(self, type_, **kw):
+    def visit_BLOB(self, type_: LARGEBINARY, **kw):
         return "BLOB"
+
+    def visit_null(self, type_: POINT, **kw):
+        return "NULL"
+
+    def visit_POINT(self, _type: POINT, **kw):
+        return "POINT"
 
     def visit_uuid(self, type_, **kw):
         if not type_.native_uuid or not self.dialect.supports_native_uuid:
@@ -432,3 +438,6 @@ class GenericTypeCompiler(TypeCompiler):
 
     def visit_enum(self, type_, **kw):
         return self.visit_VARCHAR(type_, **kw)
+
+    def visit_point(self, type_: POINT, **kw):
+        return self.visit_POINT(type_, **kw)
