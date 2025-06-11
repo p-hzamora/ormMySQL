@@ -251,7 +251,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         self._query_builder.add_statement(select)
 
         self._query_builder.by = by
-        self._query: str = self._query_builder.query
+        self._query: str = self._query_builder.query(self._dialect)
 
         if flavour:
             result = self._return_flavour(self.query, flavour, select, **kwargs)

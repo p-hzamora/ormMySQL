@@ -35,7 +35,7 @@ class JoinContext[TParent: Table, TRepo]:
         for comparer, by in self._joins:
             fk_clause, alias = self.get_fk_clause(comparer)
 
-            foreign_key: ForeignKey = ForeignKey(comparer=comparer, clause_name=alias, keep_alive=True)
+            foreign_key: ForeignKey = ForeignKey(comparer=comparer, clause_name=alias, keep_alive=True, dialect=self._dialect)
             fk_clause.alias_table = foreign_key.get_alias(self._dialect)
             self._context.add_clause_to_context(fk_clause)
             setattr(self._parent, alias, foreign_key)

@@ -116,14 +116,14 @@ class QueryBuilder(IQuery):
 
         JOINS = self.stringify_foreign_key(extract_joins, " ")
         query_list: tuple[str, ...] = (
-            self.SELECT.compile(self.dialect).string,
+            self.SELECT.compile(dialect).string,
             JOINS,
-            Where.join_condition(self.WHERE, True, self._context, dialect=self.dialect) if self.WHERE else None,
-            self.GROUP_BY.compile(self.dialect).string if self.GROUP_BY else None,
-            Having.join_condition(self.HAVING, True, self._context, dialect=self.dialect) if self.HAVING else None,
-            self.ORDER.compile(self.dialect).string if self.ORDER else None,
-            self.LIMIT.compile(self.dialect).string if self.LIMIT else None,
-            self.OFFSET.compile(self.dialect).string if self.OFFSET else None,
+            Where.join_condition(self.WHERE, True, self._context, dialect=dialect) if self.WHERE else None,
+            self.GROUP_BY.compile(dialect).string if self.GROUP_BY else None,
+            Having.join_condition(self.HAVING, True, self._context, dialect=dialect) if self.HAVING else None,
+            self.ORDER.compile(dialect).string if self.ORDER else None,
+            self.LIMIT.compile(dialect).string if self.LIMIT else None,
+            self.OFFSET.compile(dialect).string if self.OFFSET else None,
         )
         return " ".join([x for x in query_list if x])
 
