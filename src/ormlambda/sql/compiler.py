@@ -179,6 +179,15 @@ class SQLCompiler(Compiled, abc.ABC):
 class DDLCompiler(Compiled):
     is_ddl = True
 
+    if TYPE_CHECKING:
+
+        def __init__(
+            self,
+            dialect: Dialect,
+            statement: Optional[ClauseElement] = None,
+            **kw: Any,
+        ) -> None: ...
+
     @property
     def sql_compiler(self):
         """Return a SQL compiler that is capable of processing SQL expressions.
