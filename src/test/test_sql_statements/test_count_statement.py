@@ -7,8 +7,9 @@ import random
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import create_env_engine
-from ormlambda import Table, BaseModel, BaseRepository, Column
+from test.config import create_env_engine, create_engine
+from test.config import DB_PASSWORD, DB_USERNAME
+from ormlambda import Table, Column, ORM
 
 DATABASE_NAME = "__ddbb_test__"
 
@@ -21,24 +22,22 @@ class TableCount(Table):
     c: int
 
 
-class TableCountModel(BaseModel[TableCount]):
-    def __new__[TRepo](cls, repository: BaseRepository[TRepo]):
-        return super().__new__(cls, TableCount, repository)
-
 
 class CountTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.ddbb = create_env_engine()
+        self.engine = create_env_engine()
 
-        self.ddbb.create_schema(DATABASE_NAME, "replace")
-        self.ddbb.database = DATABASE_NAME
+        self.engine.create_schema(DATABASE_NAME, "replace")
 
-        self.model = TableCountModel(self.ddbb)
+        new_engine = create_engine(f'mysql://{DB_USERNAME}:{DB_PASSWORD}@localhost:3306/{DATABASE_NAME}?pool_size=3')
+        self.engine= new_engine
+        self.model = ORM(TableCount,self.engine)
 
-        TableCountModel(self.ddbb).create_table()
+
+        self.model.create_table()
 
     def tearDown(self) -> None:
-        self.ddbb.drop_schema(DATABASE_NAME)
+        self.engine.drop_schema(DATABASE_NAME)
 
     def TableCount_generator(self, n: int) -> list[TableCount]:
         if not n > 0:

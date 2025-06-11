@@ -171,7 +171,7 @@ class TestCondition(unittest.TestCase):
         cond = Where(City.city > variable_)
         self.assertEqual(cond.query(DIALECT), "WHERE city.city > 'var_string'")
 
-    def test_AApass_multiples_comparers(self):
+    def test_pass_multiples_comparers(self):
         ctx = ClauseInfoContext(
             table_context={
                 Address: "address",

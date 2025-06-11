@@ -13,9 +13,11 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from ormlambda.caster import Caster
 from ormlambda import Column, Table
 from test.config import create_env_engine
+from ormlambda.dialects import mysql
 
 
-repository = create_env_engine()
+DIALECT = mysql.dialect
+engine = create_env_engine()
 
 
 class TestValues(Table):
@@ -123,7 +125,7 @@ class TestResolverType(unittest.TestCase):
         ]
     )
     def test_for_column_with_column_obj[TProp](self, column: Column[TProp], table_obj: TestValues, result: TestResultCast) -> None:
-        caster = Caster(repository)
+        caster = DIALECT().caster()
         casted_data = caster.for_column(column, table_obj)
         self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
         self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)
@@ -145,7 +147,7 @@ class TestResolverType(unittest.TestCase):
         ]
     )
     def test_for_value[TProp](self, value: TProp, result: TestResultCast) -> None:
-        caster = Caster(repository)
+        caster = DIALECT().caster()
         casted_data = caster.for_value(value)
         self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
         self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)

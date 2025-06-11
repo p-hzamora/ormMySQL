@@ -5,9 +5,11 @@ import unittest
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.databases.my_sql import functions as func
+from ormlambda.sql import functions as func
 from test.models import D
+from ormlambda.dialects import mysql
 
+DIALECT = mysql.dialect
 
 class TestGroupBy(unittest.TestCase):
     def test_Concat(self) -> None:
@@ -22,7 +24,7 @@ class TestGroupBy(unittest.TestCase):
 
         query = "CONCAT(d.data_d, '-', d.data_d, CONCAT('main', d.data_d) AS `main_data`) AS `concat`"
 
-        self.assertEqual(concat.query, query)
+        self.assertEqual(concat.query(DIALECT), query)
 
 
 if __name__ == "__main__":

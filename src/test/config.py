@@ -1,6 +1,5 @@
 from typing import Optional, Sequence
 from ormlambda.engine import Engine
-from ormlambda.repository.base_repository import BaseRepository
 from test.env import DATABASE_URL
 
 from ormlambda import create_engine, URL, make_url
@@ -21,7 +20,7 @@ config_dict = {
 }
 
 
-def create_engine_for_db(database: str, query: Optional[dict[str, str | Sequence[str]]] = None) -> BaseRepository:
+def create_engine_for_db(database: str, query: Optional[dict[str, str | Sequence[str]]] = None) -> Engine:
     url = URL.create(_URL.drivername, username=DB_USERNAME, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT, database=database, query=query)
     return create_engine(url)
 

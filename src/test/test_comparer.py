@@ -20,7 +20,7 @@ ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026
 
 
 class TestComparer(unittest.TestCase):
-    def test_AAcomparer(self) -> None:
+    def test_comparer(self) -> None:
         cond = A.pk_a == 100
         self.assertIsInstance(cond, Comparer)  # noqa: F821
 

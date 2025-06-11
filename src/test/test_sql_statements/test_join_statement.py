@@ -14,6 +14,10 @@ from test.models import (  # noqa: E402
     TestTable,
 )
 
+from ormlambda.dialects import mysql
+
+DIALECT = mysql.dialect
+
 
 DDBBNAME = "__test_ddbb__"
 TABLETEST = TestTable.__table_name__
@@ -43,9 +47,9 @@ class JoinC(Table):
 class TestJoinStatements(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.ddbb = create_env_engine()
+        ddbb = create_env_engine()
+        ddbb.create_schema(DDBBNAME, "replace")
 
-        cls.ddbb.create_schema(DDBBNAME, "replace")
         cls.ddbb = create_engine_for_db(DDBBNAME)
 
         cls.model_a = ORM(JoinA, cls.ddbb)

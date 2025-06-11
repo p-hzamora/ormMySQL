@@ -32,7 +32,7 @@ class TestMax(unittest.TestCase):
 
         query = "MAX(d.data_d, d.fk_c, d.pk_d) AS `concat-for-table`"
 
-        self.assertEqual(concat.query, query)
+        self.assertEqual(concat.query(DIALECT), query)
 
     def test_Concat_with_context(self) -> None:
         context = ClauseInfoContext(table_context={D: "new-d-table"})
@@ -48,7 +48,7 @@ class TestMax(unittest.TestCase):
 
         query = "MAX(`new-d-table`.data_d, `new-d-table`.fk_c, `new-d-table`.pk_d) AS `concat-for-table`"
 
-        self.assertEqual(concat.query, query)
+        self.assertEqual(concat.query(DIALECT), query)
 
 
 if __name__ == "__main__":

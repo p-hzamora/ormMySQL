@@ -7,12 +7,13 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from test.config import config_dict
 from test.config import create_sakila_engine  # noqa: E402
 from test.models import CountryModel  # noqa: E402
-from ormlambda.databases.my_sql import MySQLRepository  # noqa: E402
 
 
 class TestTypeHint(unittest.TestCase):
     def test_initialize_MySQLRepository_with_kwargs(self) -> None:
-        ddbb: MySQLRepository = create_sakila_engine()
+        engine = create_sakila_engine()
+
+        ddbb = engine.repository
 
         self.assertEqual(ddbb.database, config_dict["database"])
         self.assertEqual(ddbb.database, config_dict["database"])

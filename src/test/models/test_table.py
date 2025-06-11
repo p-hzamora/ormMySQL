@@ -37,5 +37,5 @@ class TestTable(Table):
 
 
 class TestTableModel(BaseModel[TestTable]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
+    def __new__(cls, repository: IRepositoryBase)->IRepositoryBase:
         return super().__new__(cls, TestTable, repository)

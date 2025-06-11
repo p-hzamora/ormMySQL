@@ -32,23 +32,23 @@ class TestConcat(unittest.TestCase):
 
         query = "CONCAT(d.data_d, '-', d.data_d) AS `concat-for-table`"
 
-        self.assertEqual(concat.query, query)
+        self.assertEqual(concat.query(DIALECT), query)
 
     def test_concat_passing_table(self):
         concat = ConcatMySQL(values=(D))
         mssg: str = "CONCAT(d.pk_d, d.data_d, d.fk_c, d.fk_extra_c) AS `concat`"
-        self.assertEqual(concat.query, mssg)
+        self.assertEqual(concat.query(DIALECT), mssg)
 
     def test_concat_passing_ForeignKey(self):
         concat = ConcatMySQL(values=(D.C))
         mssg: str = "CONCAT(c.pk_c, c.data_c, c.fk_b) AS `concat`"
-        self.assertEqual(concat.query, mssg)
+        self.assertEqual(concat.query(DIALECT), mssg)
 
     def test_concat_passing_ForeignKey_with_context(self):
         ctx = ClauseInfoContext(table_context={C: "alias-for-c"})
         concat = ConcatMySQL(values=(D.C), context=ctx)
         mssg: str = "CONCAT(`alias-for-c`.pk_c, `alias-for-c`.data_c, `alias-for-c`.fk_b) AS `concat`"
-        self.assertEqual(concat.query, mssg)
+        self.assertEqual(concat.query(DIALECT), mssg)
 
 
 if __name__ == "__main__":

@@ -39,32 +39,32 @@ class TestSelect(unittest.TestCase):
         mssg: str = "SELECT `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update` FROM city AS `city`"
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, mssg)
+        self.assertEqual(qb.query(DIALECT),mssg)
 
     def test_all_col_with_select_list_attr(self):
         q = SelectMySQL(City, columns=lambda x: "*")
         mssg: str = "SELECT `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update` FROM city AS `city`"
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, mssg)
+        self.assertEqual(qb.query(DIALECT),mssg)
 
     def test_one_col(self):
         q = SelectMySQL(City, columns=lambda c: c.city)
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `city`.city AS `city_city` FROM city AS `city`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `city`.city AS `city_city` FROM city AS `city`")
 
     def test_two_col(self):
         q = SelectMySQL(City, columns=lambda c: (c.city, c.city_id))
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `city`.city AS `city_city`, `city`.city_id AS `city_city_id` FROM city AS `city`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `city`.city AS `city_city`, `city`.city_id AS `city_city_id` FROM city AS `city`")
 
     def test_three_col(self):
         q = SelectMySQL(City, columns=lambda c: (c.city, c.last_update, c.country_id))
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `city`.city AS `city_city`, `city`.last_update AS `city_last_update`, `city`.country_id AS `city_country_id` FROM city AS `city`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `city`.city AS `city_city`, `city`.last_update AS `city_last_update`, `city`.country_id AS `city_country_id` FROM city AS `city`")
 
     def test_cols_from_foreign_keys(self):
         # this response must not be the real one,
@@ -126,7 +126,7 @@ class TestSelect(unittest.TestCase):
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
         self.assertEqual(
-            qb.query,
+            qb.query(DIALECT),
             "SELECT `address`.address_id AS `address_address_id`, `address`.address AS `address_address`, `address`.address2 AS `address_address2`, `address`.district AS `address_district`, `address`.city_id AS `address_city_id`, `address`.postal_code AS `address_postal_code`, `address`.phone AS `address_phone`, `address`.location AS `address_location`, `address`.last_update AS `address_last_update`, `city`.city_id AS `city_city_id`, `city`.city AS `city_city`, `city`.country_id AS `city_country_id`, `city`.last_update AS `city_last_update`, `country`.country_id AS `country_country_id`, `country`.country AS `country_country`, `country`.last_update AS `country_last_update` FROM address AS `address`",
         )
 
@@ -188,25 +188,25 @@ class TestSelect(unittest.TestCase):
         q = SelectMySQL(A)
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `a`.pk_a AS `a_pk_a`, `a`.name_a AS `a_name_a`, `a`.data_a AS `a_data_a`, `a`.date_a AS `a_date_a`, `a`.value AS `a_value` FROM a AS `a`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `a`.pk_a AS `a_pk_a`, `a`.name_a AS `a_name_a`, `a`.data_a AS `a_data_a`, `a`.date_a AS `a_date_a`, `a`.value AS `a_value` FROM a AS `a`")
 
     def test_all_b(self):
         q = SelectMySQL(B)
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `b`.pk_b AS `b_pk_b`, `b`.data_b AS `b_data_b`, `b`.fk_a AS `b_fk_a`, `b`.data AS `b_data` FROM b AS `b`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `b`.pk_b AS `b_pk_b`, `b`.data_b AS `b_data_b`, `b`.fk_a AS `b_fk_a`, `b`.data AS `b_data` FROM b AS `b`")
 
     def test_all_c(self):
         q = SelectMySQL(C)
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `c`.pk_c AS `c_pk_c`, `c`.data_c AS `c_data_c`, `c`.fk_b AS `c_fk_b` FROM c AS `c`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `c`.pk_c AS `c_pk_c`, `c`.data_c AS `c_data_c`, `c`.fk_b AS `c_fk_b` FROM c AS `c`")
 
     def test_all_d(self):
         q = SelectMySQL(D)
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
 
     def test_a_b_c_d_e(self):
         q = SelectMySQL(
@@ -232,7 +232,7 @@ class TestSelect(unittest.TestCase):
         self.select_joins_testing(qb, select, joins)
 
     def select_joins_testing(self, query_builder: QueryBuilder, select_result: str, join_result: set[str]):
-        extract_joins = set([x.query for x in query_builder.pop_tables_and_create_joins_from_ForeignKey(query_builder.by)])
+        extract_joins = set([x.query(DIALECT)for x in query_builder.pop_tables_and_create_joins_from_ForeignKey(query_builder.by)])
 
         self.assertEqual(query_builder.SELECT.compile(DIALECT).string, select_result)
         self.assertSetEqual(extract_joins, join_result)
@@ -273,37 +273,37 @@ class TestSelect(unittest.TestCase):
         q = SelectMySQL(D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.RIGHT_INCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_LEFT_INCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.LEFT_INCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_RIGHT_EXCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.RIGHT_EXCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_LEFT_EXCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.LEFT_EXCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` LEFT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_FULL_OUTER_INCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.FULL_OUTER_INCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_FULL_OUTER_EXCLUSIVE_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
         qb = QueryBuilder(by=JoinType.FULL_OUTER_EXCLUSIVE, dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_c_pk_c`.data_c AS `c_data_c` FROM d AS `d` RIGHT JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c")
 
     def test_one_col_from_INNER_JOIN_table(self):
         q = SelectMySQL(D, lambda d: d.C.data_c)
@@ -317,13 +317,13 @@ class TestSelect(unittest.TestCase):
         q = SelectMySQL(D, lambda d: (d.pk_d))
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d`.pk_d AS `d_pk_d` FROM d AS `d`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d`.pk_d AS `d_pk_d` FROM d AS `d`")
 
     def test_all_column_without_fk(self):
         q = SelectMySQL(D, lambda d: (d))
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c` FROM d AS `d`")
 
     def test_two_column_with_one_fk(self):
         q = SelectMySQL(D, lambda d: (d.pk_d, d.C.data_c))
@@ -338,20 +338,20 @@ class TestSelect(unittest.TestCase):
         mssg: str = "SELECT `d`.pk_d AS `d_pk_d`, `d`.data_d AS `d_data_d`, `d`.fk_c AS `d_fk_c`, `d`.fk_extra_c AS `d_fk_extra_c`, `d_fk_c_pk_c`.pk_c AS `c_pk_c`, `d_fk_c_pk_c`.data_c AS `c_data_c`, `d_fk_c_pk_c`.fk_b AS `c_fk_b` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, mssg)
+        self.assertEqual(qb.query(DIALECT),mssg)
 
     def test_one_column_with_two_fk_in_one_table(self):
         q = SelectMySQL(D, lambda d: (d.ExtraC.data_extra_c))
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, "SELECT `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c")
+        self.assertEqual(qb.query(DIALECT),"SELECT `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c")
 
     def test_all_column_with_two_fk_in_one_table(self):
         q = SelectMySQL(D, lambda d: (d.ExtraC))
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
         mssg: str = "SELECT `d_fk_extra_c_pk_extra_c`.pk_extra_c AS `extra_c_pk_extra_c`, `d_fk_extra_c_pk_extra_c`.data_extra_c AS `extra_c_data_extra_c` FROM d AS `d` INNER JOIN extra_c AS `d_fk_extra_c_pk_extra_c` ON `d`.fk_extra_c = `d_fk_extra_c_pk_extra_c`.pk_extra_c"
-        self.assertEqual(qb.query, mssg)
+        self.assertEqual(qb.query(DIALECT),mssg)
 
     def test_select_with_concat(self):
         context = ClauseInfoContext()
@@ -386,7 +386,7 @@ class TestSelect(unittest.TestCase):
         mssg: str = "SELECT COUNT(*) AS `count` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(selected)
-        self.assertEqual(qb.query, mssg)
+        self.assertEqual(qb.query(DIALECT),mssg)
 
     # TODOM []: Check how to deal with aliases
     def test_select_with_multiples_count(self):
@@ -402,7 +402,7 @@ class TestSelect(unittest.TestCase):
         mssg: str = "SELECT COUNT(`d_fk_c_pk_c`.*) AS `COUNT~fk`, COUNT(`d`.*) AS `COUNT~pk` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(selected)
-        self.assertEqual(qb.query, mssg)
+        self.assertEqual(qb.query(DIALECT),mssg)
 
     def test_select_with_select_inside(self) -> None:
         context = ClauseInfoContext()
@@ -420,7 +420,7 @@ class TestSelect(unittest.TestCase):
 
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(qb.query, query)
+        self.assertEqual(qb.query(DIALECT),query)
 
     def test_select_with_context(self):
         context = ClauseInfoContext()
