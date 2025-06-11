@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from .elements import ClauseElement
 
 if TYPE_CHECKING:
+    from ormlambda import URL
     from ormlambda.dialects.interface.dialect import Dialect
     from ormlambda import Column
     from ormlambda import Table
@@ -72,3 +73,10 @@ class SchemaExists(BaseDDLElement):
 
     def __init__(self, schema: str):
         self.schema = schema
+
+
+class CreateBackup(BaseDDLElement):
+    __visit_name__ = "create_backup"
+
+    def __init__(self, url: URL):
+        self.url = url
