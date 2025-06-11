@@ -41,17 +41,15 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     @overload
     def __new__(self, comparer: Comparer, clause_name: str) -> None: ...
     @overload
-    def __new__[TRight](cls, tright: Type[TRight], relationship: Callable[[TLeft, TRight], Any | Comparer], keep_alive: bool = ...) -> TRight: ...
-
     def __new__[TRight](
         cls,
-        tright: Optional[TRight] = None,
-        relationship: Optional[Callable[[TLeft, TRight], Any | Comparer]] = None,
-        *,
-        comparer: Optional[Comparer] = None,
-        clause_name: Optional[str] = None,
-        keep_alive: bool = False,
-    ) -> TRight:
+        tright: Type[TRight],
+        relationship: Callable[[TLeft, TRight], Any | Comparer],
+        keep_alive: bool = ...,
+        dialect: Dialect = ...,
+    ) -> TRight: ...
+
+    def __new__[TRight](cls, *args, **kwargs) -> TRight:
         return super().__new__(cls)
 
     def __init__(
@@ -67,14 +65,14 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         self.kwargs = kwargs
         self._keep_alive = keep_alive
         if comparer is not None and clause_name is not None:
-            self.__init__with_comparer(comparer, clause_name)
+            self.__init__with_comparer(comparer, clause_name, **kwargs)
         else:
             self.__init_with_callable(tright, relationship)
 
-    def __init__with_comparer(self, comparer: Comparer, clause_name: str) -> None:
+    def __init__with_comparer(self, comparer: Comparer, clause_name: str, **kwargs) -> None:
         self._relationship = None
-        self._tleft: TLeft = comparer.left_condition(self.dialect).table
-        self._tright: TRight = comparer.right_condition(self.dialect).table
+        self._tleft: TLeft = comparer.left_condition(**kwargs).table
+        self._tright: TRight = comparer.right_condition(**kwargs).table
         self._clause_name: str = clause_name
         self._comparer: Comparer = comparer
 
