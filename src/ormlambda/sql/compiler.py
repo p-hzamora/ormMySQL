@@ -39,6 +39,7 @@ if TYPE_CHECKING:
         LARGEBINARY,
         VARBINARY,
         ENUM,
+        POINT,
     )
 
     from ormlambda.sql.clauses import (
