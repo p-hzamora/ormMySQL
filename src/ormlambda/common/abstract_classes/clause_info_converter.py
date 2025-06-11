@@ -36,8 +36,8 @@ class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
             "alias_table": alias_table,
             "alias_clause": "{table}_{column}",
             "context": context,
-            **kwargs,
         }
+        attributes.update(**kwargs)
         clause_info = ClauseInfo(**attributes)
         return [clause_info]
 
