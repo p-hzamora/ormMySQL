@@ -45,7 +45,7 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ClauseElement)
     @property
     def COLUMNS(self) -> str:
         dialect = self.kwargs.pop("dialect", self._dialect)
-        return ClauseInfo.join_clauses(self._all_clauses, ",", self.context, dialect=dialect, **self.kwargs)
+        return ClauseInfo.join_clauses(self._all_clauses, ",", self.context, dialect=dialect)
 
 
 __all__ = ["Select"]
