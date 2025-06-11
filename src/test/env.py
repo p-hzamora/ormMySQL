@@ -1,8 +1,7 @@
 from pathlib import Path
 import os
 
-APP_DIR = Path(__file__).parent
-TEST_DIR = APP_DIR.parent
+TEST_DIR = Path(__file__).parent
 SRC_DIR = TEST_DIR.parent
 BASE_DIR = SRC_DIR.parent
 
