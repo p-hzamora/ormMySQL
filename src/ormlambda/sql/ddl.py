@@ -4,7 +4,7 @@ from .elements import ClauseElement
 
 if TYPE_CHECKING:
     from ormlambda import URL
-    from ormlambda.dialects.interface.dialect import Dialect
+    from ormlambda.dialects import Dialect
     from ormlambda import Column
     from ormlambda import Table
 

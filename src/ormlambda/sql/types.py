@@ -5,7 +5,7 @@ if tp.TYPE_CHECKING:
     from ormlambda import Table, Column, ForeignKey
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
-    from ormlambda.common.enums.join_type import JoinType
+    from ormlambda.common.enums.join_type import JoinType as JoinType
 
 
 type AsteriskType = str

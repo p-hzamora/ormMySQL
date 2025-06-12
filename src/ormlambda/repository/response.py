@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Type, Any, TYPE_CHECKING, Optional
-from ormlambda.dialects.interface.dialect import Dialect
+from ormlambda.dialects import Dialect
 import shapely as shp
 
 # Custom libraries

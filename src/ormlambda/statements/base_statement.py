@@ -11,7 +11,7 @@ from ormlambda.common.errors import AggregateFunctionError
 
 if TYPE_CHECKING:
     from ormlambda.engine.base import Engine
-    from ormlambda.dialects.interface.dialect import Dialect
+    from ormlambda.dialects import Dialect
     from ormlambda.sql.clauses import Select
 
 
