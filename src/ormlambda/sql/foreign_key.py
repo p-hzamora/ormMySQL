@@ -36,6 +36,14 @@ class ForeignKeyContext(set["ForeignKey"]):
 class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     __visit_name__ = "foreign_key"
 
+    __slots__ = (
+        "_tright",
+        "_relationship",
+        "_comparer",
+        "_clause_name",
+        "_keep_alive",
+    )
+
     stored_calls: ClassVar[ForeignKeyContext] = ForeignKeyContext()
 
     @overload
@@ -149,3 +157,13 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         comparer.set_context(context)
         comparer._dialect = dialect
         return comparer
+
+    def __hash__(self):
+        return hash((
+            self._tleft,
+            self._tright,
+            self._clause_name,
+        ))
+
+    def __eq__(self, other: ForeignKey):
+        return hash(other) == hash(self)
