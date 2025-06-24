@@ -41,6 +41,8 @@ class Column[TProp]:
         "_check",
     )
 
+    table: Type[Table]
+
     @overload
     def __init__(self, *, column_name: str): ...
 

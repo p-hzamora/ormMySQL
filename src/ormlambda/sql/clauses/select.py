@@ -4,14 +4,15 @@ from typing import Optional, Type, Callable, TYPE_CHECKING
 
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
-from ormlambda.sql.types import AliasType
 from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
 
 if TYPE_CHECKING:
+    from ormlambda.sql.types import AliasType, ColumnType
+    from ormlambda.sql.table import TableProxy
     from ormlambda import Table
     from ormlambda.dialects import Dialect
 
-
+type Selectable = ColumnType| TableProxy
 class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ClauseElement):
     __visit_name__ = "select"
 
@@ -20,7 +21,7 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ClauseElement)
     def __init__(
         self,
         tables: tuple[T, *Ts],
-        columns: Callable[[T], tuple] = lambda x: x,
+        columns: Callable[[T], tuple[Selectable]] = lambda x: x,
         *,
         alias_table: AliasType[ClauseInfo] = "{table}",
         context: Optional[ClauseInfoContext] = None,

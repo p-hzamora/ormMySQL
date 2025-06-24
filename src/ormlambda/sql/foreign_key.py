@@ -1,36 +1,19 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Optional, Any, Type, cast, overload, ClassVar
+import logging
+from typing import Callable, TYPE_CHECKING, Optional, Any, Type, overload, ClassVar
 
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.sql.elements import Element
+from ormlambda.sql.context import PATH_CONTEXT
 
 if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import Table
     from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.dialects import Dialect
+    from ormlambda.sql.context import FKChain
 
-
-class ForeignKeyContext(set["ForeignKey"]):
-    def clear(self):
-        to_remove = {x for x in self if not cast(ForeignKey, x)._keep_alive}
-        for el in to_remove:
-            self.remove(el)
-
-    def remove(self, element):
-        return super().remove(element)
-
-    def pop(self, item):
-        for el in self:
-            if el != item:
-                continue
-
-            if not cast(ForeignKey, el)._keep_alive:
-                super().remove(el)
-            return el
-
-    def add(self, element):
-        return super().add(element)
+log = logging.getLogger(__name__)
 
 
 class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
@@ -43,8 +26,6 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         "_clause_name",
         "_keep_alive",
     )
-
-    stored_calls: ClassVar[ForeignKeyContext] = ForeignKeyContext()
 
     @overload
     def __new__(self, comparer: Comparer, clause_name: str) -> None: ...
@@ -77,6 +58,8 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         else:
             self.__init_with_callable(tright, relationship)
 
+        self._path: Optional[FKChain] = None
+
     def __init__with_comparer(self, comparer: Comparer, clause_name: str, **kwargs) -> None:
         self._relationship = None
         self._tleft: TLeft = comparer.left_condition(**kwargs).table
@@ -96,10 +79,29 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         self._clause_name: str = name
 
     def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey[TLeft, TRight] | TRight:
-        if not obj:
-            ForeignKey.stored_calls.add(self)
+        if obj:
+            return self.tright
+
+        current_path = PATH_CONTEXT.get_current_path()
+
+        # Reset CONTEXT when we detect that base table is the same at left table in ForeignKey class and .steps is filled
+        if not current_path.base or (current_path.base == self.tleft and len(current_path.steps) > 0):
+            PATH_CONTEXT.reset_current_path(self.tleft)
+
+            # update PATH_CONTEXT with a new initialization like we'll do on PATH_CONTEXT.query_context(self.tleft) in with statement
+            current_path = PATH_CONTEXT.get_current_path()
+        if not current_path:
+            log.critical(f"{ForeignKey.__name__} '{self._clause_name}' accessed outside of path context. Must be used within a query context.")
             return self
-        return self._tright
+
+        new_path = current_path.copy()
+        new_path.add_step(self)
+
+        PATH_CONTEXT.add_foreign_key_access(self, new_path)
+        PATH_CONTEXT.set_current_path(new_path)
+        
+        self._path = new_path
+        return self
 
     def __set__(self, obj, value):
         raise AttributeError(f"The {ForeignKey.__name__} '{self._clause_name}' in the '{self._tleft.__table_name__}' table cannot be overwritten.")
@@ -110,14 +112,14 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         return getattr(self._tright, name)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" f"left={self._tleft.__name__ if self._tleft else 'None'}, " f"right={self._tright.__name__ if self._tright else 'None'}, " f"name={self._clause_name})"
+        return f"{self.__class__.__name__}(left={self._tleft.__name__ if self._tleft else 'None'}, right={self._tright.__name__ if self._tright else 'None'}, name={self._clause_name})"
 
     @property
     def tleft(self) -> TLeft:
         return self._tleft
 
     @property
-    def tright(self) -> TRight:
+    def tright(self) -> Table:
         return self._tright
 
     @property
@@ -134,8 +136,7 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         self._comparer = self.resolved_function(dialect)
         self._comparer._dialect = dialect
         lcol = self._comparer.left_condition(dialect)._column.column_name
-        rcol = self._comparer.right_condition(dialect)._column.column_name
-        return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
+        return f"{self.tleft.__table_name__}_{lcol}_{self.clause_name}"
 
     @classmethod
     def create_query(cls, orig_table: Table, dialect: Dialect) -> list[str]:
@@ -159,11 +160,13 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         return comparer
 
     def __hash__(self):
-        return hash((
-            self._tleft,
-            self._tright,
-            self._clause_name,
-        ))
+        return hash(
+            (
+                self._tleft,
+                self._tright,
+                self._clause_name,
+            )
+        )
 
     def __eq__(self, other: ForeignKey):
         return hash(other) == hash(self)

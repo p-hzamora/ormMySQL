@@ -6,11 +6,12 @@ if tp.TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
     from ormlambda.common.enums.join_type import JoinType as JoinType
+    from ormlambda.sql.column import ColumnProxy
 
 
 type AsteriskType = str
 type TableType[T: Table] = tp.Type[T] | ForeignKey[T]
-type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType | tuple[Column]
+type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType | tuple[Column] | ColumnProxy
 type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
 
 # region Comparer Types

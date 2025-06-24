@@ -1,163 +1,308 @@
+"""
+CLEAN MODERN QUERY BUILDER - NO LEGACY CODE
+===========================================
+
+Complete rewrite without any backward compatibility.
+Clean, modern implementation using PATH_CONTEXT exclusively.
+"""
+
 from __future__ import annotations
-from typing import Iterable, TypedDict, Optional, TYPE_CHECKING
-
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
-from ormlambda.sql.clauses import JoinSelector
-from ormlambda import ForeignKey
-
-from ormlambda.common.interfaces import IQuery
-
-
-from ormlambda.sql.clause_info import ClauseInfo
+from typing import Callable, Optional, Any, TYPE_CHECKING, cast
+from abc import ABC, abstractmethod
+from ormlambda.sql.clauses import Select, Where, Having, Order, GroupBy, Limit, Offset, JoinSelector
 
 if TYPE_CHECKING:
-    from ..sql.clauses import Limit as Limit
-    from ..sql.clauses import Offset as Offset
-    from ..sql.clauses import Order as Order
-    from ..sql.clauses import Select as Select
-
-    from ..sql.clauses import GroupBy as GroupBy
-
     from ormlambda.dialects import Dialect
+    from ormlambda.sql.context import PathContext
 
-from ..sql.clauses import Where as Where
-from ..sql.clauses import Having as Having
+from ormlambda import ColumnProxy
+
 from ormlambda.common.enums import JoinType
 from ormlambda.sql.elements import ClauseElement
+from ormlambda.common.interfaces import IQuery
+
+# =============================================================================
+# CLEAN QUERY COMPONENTS
+# =============================================================================
 
 
-class OrderType(TypedDict):
-    Select: Select
-    JoinSelector: JoinSelector
-    Where: Where
-    Order: Order
-    GroupBy: GroupBy
-    Having: Having
-    Limit: Limit
-    Offset: Offset
+class QueryComponents:
+    """Clean storage for all query components"""
+
+    __slots__ = (
+        "select",
+        "where",
+        "having",
+        "order",
+        "group_by",
+        "limit",
+        "offset",
+        "joins",
+    )
+
+    def __init__(
+        self,
+        select: Optional[Select] = None,
+        where: Optional[Where] = None,
+        having: Optional[Having] = None,
+        order: Optional[Order] = None,
+        group_by: Optional[GroupBy] = None,
+        limit: Optional[Limit] = None,
+        offset: Optional[Offset] = None,
+        joins: Optional[set[JoinSelector]] = None,
+    ):
+        self.select = select
+        self.where = where
+        self.having = having
+        self.order = order
+        self.group_by = group_by
+        self.limit = limit
+        self.offset = offset
+        self.joins = joins or set()
+
+    def clear(self) -> None:
+        """Reset all components"""
+
+        for att_name in self.__slots__:
+            default = None if att_name != "joins" else set()
+            setattr(self, att_name, default)
+
+
+# =============================================================================
+# QUERY COMPILER INTERFACE
+# =============================================================================
+
+
+class IQueryCompiler(ABC):
+    """Interface for query compilation strategies"""
+
+    @abstractmethod
+    def compile(self, components: QueryComponents, joins: set[JoinSelector]) -> str:
+        """Compile query components into SQL string"""
+        pass
+
+
+class StandardSQLCompiler(IQueryCompiler):
+    """Standard SQL compiler"""
+
+    def __init__(self, dialect: Dialect):
+        self.dialect = dialect
+
+    def compile(self, components: QueryComponents, joins: set[JoinSelector]) -> str:
+        """Compile all components into final SQL"""
+        query_parts = []
+
+        # SELECT
+        if components.select:
+            query_parts.append(components.select.compile(self.dialect).string)
+
+        # JOINs
+        joins_sql = self._compile_joins(joins)
+        if joins_sql:
+            query_parts.append(joins_sql)
+
+        # WHERE
+        if components.where:
+            where_sql = self._compile_where(components.where)
+            if where_sql:
+                query_parts.append(where_sql)
+
+        # GROUP BY
+        if components.group_by:
+            query_parts.append(components.group_by.compile(self.dialect).string)
+
+        # HAVING
+        if components.having:
+            having_sql = self._compile_having(components.having)
+            if having_sql:
+                query_parts.append(having_sql)
+
+        # ORDER BY
+        if components.order:
+            query_parts.append(components.order.compile(self.dialect).string)
+
+        # LIMIT
+        if components.limit:
+            query_parts.append(components.limit.compile(self.dialect).string)
+
+        # OFFSET
+        if components.offset:
+            query_parts.append(components.offset.compile(self.dialect).string)
+
+        return " ".join(query_parts)
+
+    def _compile_joins(self, joins: set[JoinSelector]) -> Optional[str]:
+        """Compile JOIN clauses"""
+        if not joins:
+            return None
+
+        from ormlambda.sql.clauses import JoinSelector
+
+        sorted_joins = JoinSelector.sort_join_selectors(joins)
+        return " ".join(join.query(self.dialect) for join in sorted_joins)
+
+    def _compile_where(self, where: Where) -> Optional[str]:
+        """Compile WHERE clause"""
+
+        # Note: No more context parameter needed - PATH_CONTEXT handles it
+        return where.compile(self.dialect)
+
+    def _compile_having(self, having: Having) -> Optional[str]:
+        """Compile HAVING clause"""
+
+        # Note: No more context parameter needed - PATH_CONTEXT handles it
+        return having.compile(self.dialect)
+
+
+# =============================================================================
+# MODERN QUERY BUILDER
+# =============================================================================
 
 
 class QueryBuilder(IQuery):
-    __order__: tuple[str, ...] = ("Select", "JoinSelector", "Where", "GroupBy", "Having", "Order", "Limit", "Offset")
+    dialect: Dialect
+    path_contex: PathContext
+    compiler: StandardSQLCompiler
+    components: QueryComponents
+    join_type: JoinType
 
-    def __init__(self, dialect: Dialect, by: JoinType = JoinType.INNER_JOIN):
+    def __init__(self, dialect: Dialect):
         self.dialect = dialect
-        self._context = ClauseInfoContext()
-        self._query_list: OrderType = {}
-        self._by = by
+        self.path_context = self._get_global_context()
 
-        self._joins: Optional[IQuery] = None
-        self._select: Optional[IQuery] = None
-        self._where: Optional[IQuery] = None
-        self._order: Optional[IQuery] = None
-        self._group_by: Optional[IQuery] = None
-        self._limit: Optional[IQuery] = None
-        self._offset: Optional[IQuery] = None
+        # Strategy pattern for join detection and compilation
+        self.compiler = StandardSQLCompiler(dialect)
 
-    def add_statement[T](self, clause: ClauseInfo[T]):
-        self.update_context(clause)
-        self._query_list[type(clause).__name__] = clause
+        # Clean component storage
+        self.components = QueryComponents()
+        self.join_type = JoinType.INNER_JOIN
 
-    @property
-    def by(self) -> JoinType:
-        return self._by
+    @staticmethod
+    def _get_global_context() -> PathContext:
+        from ormlambda.sql.context import PATH_CONTEXT
 
-    @by.setter
-    def by(self, value: JoinType) -> None:
-        self._by = value
+        return PATH_CONTEXT
 
-    @property
-    def JOINS(self) -> Optional[set[JoinSelector]]:
-        return self._joins
+    # =============================================================================
+    # CLEAN CLAUSE MANAGEMENT
+    # =============================================================================
 
-    @property
-    def SELECT(self) -> ClauseElement:
-        return self._query_list.get("Select", None)
+    def add_select(self, select: Select) -> QueryBuilder:
+        """Add SELECT clause"""
+        self.components.select = select
+        return self
 
-    @property
-    def WHERE(self) -> ClauseElement:
-        where = self._query_list.get("Where", None)
-        if not isinstance(where, Iterable):
-            if not where:
-                return ()
-            return (where,)
-        return where
+    def add_where(self, where: Where) -> QueryBuilder:
+        """Add WHERE clause"""
+        self.components.where = where
+        return self
 
-    @property
-    def ORDER(self) -> ClauseElement:
-        return self._query_list.get("Order", None)
+    def add_having(self, having: Having) -> QueryBuilder:
+        """Add HAVING clause"""
+        self.components.having = having
+        return self
 
-    @property
-    def GROUP_BY(self) -> ClauseElement:
-        return self._query_list.get("GroupBy", None)
+    def add_order(self, order: Order) -> QueryBuilder:
+        """Add ORDER BY clause"""
+        self.components.order = order
+        return self
 
-    @property
-    def HAVING(self) -> ClauseElement:
-        where = self._query_list.get("Having", None)
-        if not isinstance(where, Iterable):
-            if not where:
-                return ()
-            return (where,)
-        return where
+    def add_group_by(self, group_by: GroupBy) -> QueryBuilder:
+        """Add GROUP BY clause"""
+        self.components.group_by = group_by
+        return self
 
-    @property
-    def LIMIT(self) -> ClauseElement:
-        return self._query_list.get("Limit", None)
+    def add_limit(self, limit: Limit) -> QueryBuilder:
+        """Add LIMIT clause"""
+        self.components.limit = limit
+        return self
 
-    @property
-    def OFFSET(self) -> ClauseElement:
-        return self._query_list.get("Offset", None)
+    def add_offset(self, offset: Offset) -> QueryBuilder:
+        """Add OFFSET clause"""
+        self.components.offset = offset
+        return self
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        # COMMENT: (select.query, query)We must first create an alias for 'FROM' and then define all the remaining clauses.
-        # This order is mandatory because it adds the clause name to the context when accessing the .query property of 'FROM'
+    def add_join(self, join: JoinSelector) -> QueryBuilder:
+        """Add explicit JOIN"""
+        self.components.joins.add(join)
+        return self
 
-        extract_joins = self.pop_tables_and_create_joins_from_ForeignKey(self._by)
+    def set_join_type(self, join_type: JoinType) -> QueryBuilder:
+        """set default join type"""
+        self.join_type = join_type
+        return self
 
-        JOINS = self.stringify_foreign_key(extract_joins, " ")
-        query_list: tuple[str, ...] = (
-            self.SELECT.compile(dialect).string,
-            JOINS,
-            Where.join_condition(self.WHERE, True, self._context, dialect=dialect) if self.WHERE else None,
-            self.GROUP_BY.compile(dialect).string if self.GROUP_BY else None,
-            Having.join_condition(self.HAVING, True, self._context, dialect=dialect) if self.HAVING else None,
-            self.ORDER.compile(dialect).string if self.ORDER else None,
-            self.LIMIT.compile(dialect).string if self.LIMIT else None,
-            self.OFFSET.compile(dialect).string if self.OFFSET else None,
-        )
-        return " ".join([x for x in query_list if x])
+    # =============================================================================
+    # GENERIC CLAUSE ADDITION (for existing code compatibility)
+    # =============================================================================
 
-    def stringify_foreign_key(self, joins: set[JoinSelector], sep: str = "\n") -> Optional[str]:
-        if not joins:
-            return None
-        sorted_joins = JoinSelector.sort_join_selectors(joins)
-        return f"{sep}".join([join.query(self.dialect) for join in sorted_joins])
+    def add_statement(self, clause: ClauseElement) -> QueryBuilder:
+        """
+        Add any clause element - determines type automatically
+
+        This provides a single entry point for all clause types
+        while maintaining clean type-specific methods above
+        """
+        clause_type = type(clause).__name__
+
+        clause_selector: dict[str, Callable[[ClauseElement], QueryBuilder]] = {
+            "Select": self.add_select,
+            "Where": self.add_where,
+            "Having": self.add_having,
+            "Order": self.add_order,
+            "GroupBy": self.add_group_by,
+            "Limit": self.add_limit,
+            "Offset": self.add_offset,
+            "JoinSelector": self.add_join,
+        }
+
+        method = clause_selector.get(clause_type,None)
+        if not method:
+            raise ValueError(f"Unknown clause type: {clause_type}")
+
+        return method(clause)
+
+    # =============================================================================
+    # QUERY GENERATION
+    # =============================================================================
+
+    def query(self, dialect: Optional[Dialect]=None) -> str:
+        target_dialect = dialect or self.dialect
+
+        # Detect required joins
+
+        detected_joins = self.pop_tables_and_create_joins_from_ForeignKey(self.by)
+        all_joins = self.components.joins | detected_joins
+
+        # Compile to SQL
+        return self.compiler.compile(self.components, all_joins)
 
     def pop_tables_and_create_joins_from_ForeignKey(self, by: JoinType = JoinType.INNER_JOIN) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
-        if not ForeignKey.stored_calls:
-            return None
 
         joins = set()
         # Always it's gonna be a set of two
         # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-        for fk in ForeignKey.stored_calls.copy():
-            fk = ForeignKey.stored_calls.pop(fk)
-            fk_alias = fk.get_alias(self.dialect)
-            self._context._add_table_alias(fk.tright, fk_alias)
-            join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk_alias, dialect=self.dialect)
-            joins.add(join)
+        for column in self.components.select.columns:
+            fks = cast(ColumnProxy, column)._path.get_foreign_keys()
+            for fk in fks:
+                fk_alias = fk.get_alias(self.dialect)
+                join = JoinSelector(fk.resolved_function(self.dialect), by, alias=fk_alias, dialect=self.dialect)
+                # self._context._add_table_alias(fk.tright, fk_alias)
+                # join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk_alias, dialect=self.dialect)
+                joins.add(join)
 
         return joins
 
-    def clear(self) -> None:
-        self.__init__(self.dialect, self.by)
-        return None
+    def clear(self) -> QueryBuilder:
+        """Clear all components"""
+        self.components.clear()
+        return self
 
-    def update_context(self, clause: ClauseInfo) -> None:
-        if not hasattr(clause, "context"):
-            return None
+    @property
+    def by(self) -> Optional[JoinType]:
+        return self.join_type
 
-        if clause.context is not None:
-            self._context.update(clause.context)
-        clause.context = self._context
+    @by.setter
+    def by(self, value: JoinType) -> None:
+        self.join_type = value

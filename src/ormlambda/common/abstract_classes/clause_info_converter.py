@@ -8,6 +8,9 @@ from ormlambda import ForeignKey
 
 from ormlambda.sql.types import AliasType, TableType, ColumnType
 
+if tp.TYPE_CHECKING:
+    from ormlambda.sql import ColumnProxy, TableProxy
+
 
 class ClauseInfoConverter[T, TProp](tp.Protocol):
     @classmethod
@@ -28,18 +31,26 @@ class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None])
 
 class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
     @classmethod
-    def convert(cls, data: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = "{table}", context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[None]]:
+    def convert(cls, data: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = "{table}", alias_clause:str="{table}_{column}",context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[None]]:
         # COMMENT: if the property belongs to the main class, the columnn name in not prefixed. This only done if the property comes from any join.
         attributes = {
             "table": data.table,
             "column": data,
             "alias_table": alias_table,
-            "alias_clause": "{table}_{column}",
+            "alias_clause": alias_clause,
             "context": context,
         }
         attributes.update(**kwargs)
         clause_info = ClauseInfo(**attributes)
         return [clause_info]
+
+
+class ConvertFromColumnProxy[TProp](ClauseInfoConverter[None, TProp]):
+    @classmethod
+    def convert(cls, data: ColumnProxy, alias_table: AliasType[ColumnType[TProp]] = "{table}", context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[None]]:
+        alias_table = data.get_alias()
+        alias_clause = f"{alias_table}_{data._column.column_name}"
+        return ConvertFromColumn.convert(data._column, alias_table,alias_clause, context, **kwargs)
 
 
 class ConvertFromIAggregate(ClauseInfoConverter[None, None]):
@@ -63,3 +74,9 @@ class ConvertFromTable[T: Table](ClauseInfoConverter[T, None]):
         for column in table.get_columns():
             column_clauses.extend(ConvertFromColumn.convert(column, alias_table=alias_table, context=context, **kwargs))
         return column_clauses
+
+
+class ConvertFromTableProxy[T: Table](ClauseInfoConverter[T, None]):
+    @classmethod
+    def convert(cls, data: TableProxy, alias_table: AliasType[ColumnType] = "{table}", context: ClauseContextType = None, **kwargs) -> list[ClauseInfo[T]]:
+        return ConvertFromTable.convert(data._table_class, alias_table, context, **kwargs)

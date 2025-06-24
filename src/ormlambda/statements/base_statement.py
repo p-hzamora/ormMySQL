@@ -24,7 +24,6 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
         self._dialect = engine.dialect
         self._query: Optional[str] = None
         self._model: T = model[0] if isinstance(model, Iterable) else model
-        self._models: tuple[T] = self._model if isinstance(model, Iterable) else (model,)
 
         repository = engine.repository
         self.__valid_repository(repository)
@@ -69,11 +68,6 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     @property
     def model(self) -> Type[T]:
         return self._model
-
-    # TODOL: add *Ts when wil be possible
-    @property
-    def models(self) -> tuple:
-        return self._models
 
     @property
     def repository(self) -> BaseRepository:

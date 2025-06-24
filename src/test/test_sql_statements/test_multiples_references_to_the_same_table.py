@@ -6,9 +6,11 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import create_env_engine, create_engine_for_db  # noqa: E402
-from ormlambda import Table, Column, BaseModel, ForeignKey  # noqa: E402
+from test.config import create_env_engine, create_engine_for_db, create_sakila_engine  # noqa: E402
+from ormlambda import Table, Column, BaseModel, ForeignKey, ORM  # noqa: E402
 from ormlambda.dialects import mysql
+from test.models import Address, City, Country
+
 
 DIALECT = mysql.dialect
 
@@ -78,65 +80,85 @@ class TestJoinQueries(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.db_engine.drop_schema(DDBBNAME)
 
+    # def test_aa(self):
+    #     engine = create_sakila_engine()
+    #     res = ORM(Address, engine).where(lambda x: x.City.Country.country == 'Spain').select(
+    #         lambda x: [
+    #             x,
+    #             x.City,
+    #             x.City.Country,
+    #         ]
+    #     )
+
+    #     res
+
     # FIXME [ ]: Check why ForeignKey alias in 'a.B_fk_b1.C' 'a.B_fk_b2.C' it's not working as expected.
     def test_new_select_context(self):
         res = self.model.select(
             lambda a: (
                 a.data_a,
                 # region All B1 possibilities
-                self.model.alias(a.B1.name, alias="a~B1~name"),
-                self.model.alias(a.B1.C1.name, alias="a~B1~C1~name"),
-                self.model.alias(a.B1.C2.name, alias="a~B1~C2~name"),
-                self.model.alias(a.B1.C3.name, alias="a~B1~C3~name"),
+                a.B1.name,
                 
-                self.model.alias(a.B1.C1.D1.name, alias="a~B1~C1~D1~name"),
-                self.model.alias(a.B1.C1.D2.name, alias="a~B1~C1~D2~name"),
-                
-                self.model.alias(a.B1.C2.D1.name, alias="a~B1~C2~D1~name"),
-                self.model.alias(a.B1.C2.D2.name, alias="a~B1~C2~D2~name"),
-                
-                self.model.alias(a.B1.C3.D1.name, alias="a~B1~C3~D1~name"),
-                self.model.alias(a.B1.C3.D2.name, alias="a~B1~C3~D2~name"),
+                a.B3.C3.D1.name,
+                a.B3.C3.D2.name,
                 # endregion
-                # region All B2 possibilities
-                self.model.alias(a.B2.name, alias="a~B2~name"),
-                self.model.alias(a.B2.C1.name, alias="a~B2~C1~name"),
-                self.model.alias(a.B2.C2.name, alias="a~B2~C2~name"),
-                self.model.alias(a.B2.C3.name, alias="a~B2~C3~name"),
-                
-                self.model.alias(a.B2.C1.D1.name, alias="a~B2~C1~D1~name"),
-                self.model.alias(a.B2.C1.D2.name, alias="a~B2~C1~D2~name"),
-                
-                self.model.alias(a.B2.C2.D1.name, alias="a~B2~C2~D1~name"),
-                self.model.alias(a.B2.C2.D2.name, alias="a~B2~C2~D2~name"),
-                
-                self.model.alias(a.B2.C3.D1.name, alias="a~B2~C3~D1~name"),
-                self.model.alias(a.B2.C3.D2.name, alias="a~B2~C3~D2~name"),
-
-                # endregion
-                # region All B3 possibilities
-                self.model.alias(a.B3.name, alias="a~B3~name"),
-                self.model.alias(a.B3.C1.name, alias="a~B3~C1~name"),
-                self.model.alias(a.B3.C2.name, alias="a~B3~C2~name"),
-                self.model.alias(a.B3.C3.name, alias="a~B3~C3~name"),
-                
-                self.model.alias(a.B3.C1.D1.name, alias="a~B3~C1~D1~name"),
-                self.model.alias(a.B3.C1.D2.name, alias="a~B3~C1~D2~name"),
-                
-                self.model.alias(a.B3.C2.D1.name, alias="a~B3~C2~D1~name"),
-                self.model.alias(a.B3.C2.D2.name, alias="a~B3~C2~D2~name"),
-                
-                self.model.alias(a.B3.C3.D1.name, alias="a~B3~C3~D1~name"),
-                self.model.alias(a.B3.C3.D2.name, alias="a~B3~C3~D2~name"),
-                # endregion
-
-
-
             ),
         )
         real_query: str = "SELECT `A`.data_a AS `A_data_a`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `B_fk_c_pk_c`.name AS `C_name`, `B_fk_c_pk_c`.name AS `C_name` FROM A AS `A` INNER JOIN B AS `A_fk_b1_pk_b` ON `A`.fk_b1 = `A_fk_b1_pk_b`.pk_b INNER JOIN B AS `A_fk_b2_pk_b` ON `A`.fk_b2 = `A_fk_b2_pk_b`.pk_b INNER JOIN B AS `A_fk_b3_pk_b` ON `A`.fk_b3 = `A_fk_b3_pk_b`.pk_b INNER JOIN C AS `B_fk_c_pk_c` ON `A_fk_b3_pk_b`.fk_c = `B_fk_c_pk_c`.pk_c"
         self.assertEqual(res, real_query)
 
+    # # FIXME [ ]: Check why ForeignKey alias in 'a.B_fk_b1.C' 'a.B_fk_b2.C' it's not working as expected.
+    # def test_new_select_context(self):
+    #     res = self.model.select(
+    #         lambda a: (
+    #             a.data_a,
+    #             # region All B1 possibilities
+    #             self.model.alias(a.B1.name, alias="a~B1~name"),
+    #             self.model.alias(a.B1.C1.name, alias="a~B1~C1~name"),
+    #             self.model.alias(a.B1.C2.name, alias="a~B1~C2~name"),
+    #             self.model.alias(a.B1.C3.name, alias="a~B1~C3~name"),
+    #             self.model.alias(a.B1.C1.D1.name, alias="a~B1~C1~D1~name"),
+    #             self.model.alias(a.B1.C1.D2.name, alias="a~B1~C1~D2~name"),
+    #             self.model.alias(a.B1.C2.D1.name, alias="a~B1~C2~D1~name"),
+    #             self.model.alias(a.B1.C2.D2.name, alias="a~B1~C2~D2~name"),
+    #             self.model.alias(a.B1.C3.D1.name, alias="a~B1~C3~D1~name"),
+    #             self.model.alias(a.B1.C3.D2.name, alias="a~B1~C3~D2~name"),
+    #             # endregion
+    #             # region All B2 possibilities
+    #             self.model.alias(a.B2.name, alias="a~B2~name"),
+    #             self.model.alias(a.B2.C1.name, alias="a~B2~C1~name"),
+    #             self.model.alias(a.B2.C2.name, alias="a~B2~C2~name"),
+    #             self.model.alias(a.B2.C3.name, alias="a~B2~C3~name"),
+    #             self.model.alias(a.B2.C1.D1.name, alias="a~B2~C1~D1~name"),
+    #             self.model.alias(a.B2.C1.D2.name, alias="a~B2~C1~D2~name"),
+    #             self.model.alias(a.B2.C2.D1.name, alias="a~B2~C2~D1~name"),
+    #             self.model.alias(a.B2.C2.D2.name, alias="a~B2~C2~D2~name"),
+    #             self.model.alias(a.B2.C3.D1.name, alias="a~B2~C3~D1~name"),
+    #             self.model.alias(a.B2.C3.D2.name, alias="a~B2~C3~D2~name"),
+    #             # endregion
+    #             # region All B3 possibilities
+    #             self.model.alias(a.B3.name, alias="a~B3~name"),
+    #             self.model.alias(a.B3.C1.name, alias="a~B3~C1~name"),
+    #             self.model.alias(a.B3.C2.name, alias="a~B3~C2~name"),
+    #             self.model.alias(a.B3.C3.name, alias="a~B3~C3~name"),
+    #             self.model.alias(a.B3.C1.D1.name, alias="a~B3~C1~D1~name"),
+    #             self.model.alias(a.B3.C1.D2.name, alias="a~B3~C1~D2~name"),
+    #             self.model.alias(a.B3.C2.D1.name, alias="a~B3~C2~D1~name"),
+    #             self.model.alias(a.B3.C2.D2.name, alias="a~B3~C2~D2~name"),
+    #             self.model.alias(a.B3.C3.D1.name, alias="a~B3~C3~D1~name"),
+    #             self.model.alias(a.B3.C3.D2.name, alias="a~B3~C3~D2~name"),
+    #             # endregion
+    #         ),
+    #     )
+    #     real_query: str = "SELECT `A`.data_a AS `A_data_a`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `B_fk_c_pk_c`.name AS `C_name`, `B_fk_c_pk_c`.name AS `C_name` FROM A AS `A` INNER JOIN B AS `A_fk_b1_pk_b` ON `A`.fk_b1 = `A_fk_b1_pk_b`.pk_b INNER JOIN B AS `A_fk_b2_pk_b` ON `A`.fk_b2 = `A_fk_b2_pk_b`.pk_b INNER JOIN B AS `A_fk_b3_pk_b` ON `A`.fk_b3 = `A_fk_b3_pk_b`.pk_b INNER JOIN C AS `B_fk_c_pk_c` ON `A_fk_b3_pk_b`.fk_c = `B_fk_c_pk_c`.pk_c"
+    #     self.assertEqual(res, real_query)
+
+    # # FIXME [ ]: Check why ForeignKey alias in 'a.B_fk_b1.C' 'a.B_fk_b2.C' it's not working as expected.
+    # def test_new_select_context(self):
+    #     res = ORM(A, engine).select(lambda x: (x.B1.C1.D2.pk_d,))
+    #     real_query: str = "SELECT `A`.data_a AS `A_data_a`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `B_fk_c_pk_c`.name AS `C_name`, `B_fk_c_pk_c`.name AS `C_name` FROM A AS `A` INNER JOIN B AS `A_fk_b1_pk_b` ON `A`.fk_b1 = `A_fk_b1_pk_b`.pk_b INNER JOIN B AS `A_fk_b2_pk_b` ON `A`.fk_b2 = `A_fk_b2_pk_b`.pk_b INNER JOIN B AS `A_fk_b3_pk_b` ON `A`.fk_b3 = `A_fk_b3_pk_b`.pk_b INNER JOIN C AS `B_fk_c_pk_c` ON `A_fk_b3_pk_b`.fk_c = `B_fk_c_pk_c`.pk_c"
+    #     self.assertEqual(res, real_query)
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ class Where(AggregateFunctionBase, ClauseElement):
     def FUNCTION_NAME() -> str:
         return "WHERE"
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
+    def compile(self, dialect: Dialect, **kwargs) -> str:
         if isinstance(self._comparer, tp.Iterable):
             context = ClauseInfoContext(table_context=self._context._table_context)
             comparer = Comparer.join_comparers(

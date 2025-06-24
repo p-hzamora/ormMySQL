@@ -9,10 +9,13 @@ from .common.enums import (
 
 # region sql
 from .sql import (
-    Table as Table,
     Column as Column,
+    ColumnProxy as ColumnProxy,
+    Table as Table,
+    TableProxy as TableProxy,
     ForeignKey as ForeignKey,
 )
+
 # endregion
 
 from .repository import BaseRepository as BaseRepository

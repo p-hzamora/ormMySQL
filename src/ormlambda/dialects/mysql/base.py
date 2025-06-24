@@ -74,7 +74,7 @@ class MySQLCompiler(compiler.SQLCompiler):
     """Overridden from base SQLCompiler value"""
 
     def visit_select(self, select: Select, **kw):
-        return f"{select.CLAUSE} {select.COLUMNS} FROM {select.FROM.query(self.dialect,**kw)}"
+        return f"{select.CLAUSE} {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
 
     def visit_group_by(self, groupby: GroupBy, **kw):
         column = groupby._create_query(self.dialect, **kw)
@@ -111,11 +111,22 @@ class MySQLCompiler(compiler.SQLCompiler):
         context = ClauseInfoContext(table_context=order._context._table_context, clause_context=None) if order._context else None
         for index, clause in enumerate(order._convert_into_clauseInfo(columns, context, dialect=self.dialect)):
             clause.alias_clause = None
-            string_columns.append(f"{clause.query(self.dialect,**kw)} {str(order._order_type[index])}")
+            string_columns.append(f"{clause.query(self.dialect, **kw)} {str(order._order_type[index])}")
 
         return f"{order.FUNCTION_NAME()} {', '.join(string_columns)}"
 
-    def visit_concat(self, concat: Concat, **kw) -> Concat: ...
+    def visit_concat(self, concat: Concat, **kw) -> Concat:
+        from ormlambda.sql.clause_info import ClauseInfo
+
+        columns: list[str] = []
+
+        context = ClauseInfoContext(table_context=concat._context._table_context, clause_context=None) if concat._context else None
+
+        for clause in concat._convert_into_clauseInfo(concat.unresolved_column, context=context, dialect=self.dialect):
+            clause.alias_clause = concat.alias_clause
+            columns.append(clause)
+        return concat._concat_alias_and_column(f"CONCAT({ClauseInfo.join_clauses(columns, dialect=self.dialect)})", concat._alias_aggregate)
+
     def visit_max(self, max: Max, **kw) -> Max: ...
     def visit_min(self, min: Min, **kw) -> Min: ...
     def visit_sum(self, sum: Sum, **kw) -> Sum: ...
@@ -165,7 +176,7 @@ class MySQLTypeCompiler(compiler.GenericTypeCompiler):
             return getattr(type_, name, defaults.get(name))
 
         if attr("charset"):
-            charset = f"CHARACTER SET {attr("charset")}"
+            charset = f"CHARACTER SET {attr('charset')}"
         elif attr("ascii"):
             charset = "ASCII"
         elif attr("unicode"):

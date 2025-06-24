@@ -1,6 +1,6 @@
 from __future__ import annotations
 import typing as tp
-from ormlambda import Table, Column
+from ormlambda import Table, Column, ColumnProxy, TableProxy
 
 from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
 from ormlambda.sql.clause_info import IAggregate
@@ -15,8 +15,10 @@ from .clause_info_converter import (
     ConvertFromAnyType,
     ConvertFromForeignKey,
     ConvertFromColumn,
+    ConvertFromColumnProxy,
     ConvertFromIAggregate,
     ConvertFromTable,
+    ConvertFromTableProxy,
 )
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
@@ -42,7 +44,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     def __init__(
         self,
         tables: tuple[TableType[T]],
-        columns: tuple[ColumnType],
+        columns: tuple[ColumnType,...],
         alias_table: str = "{table}",
         *,
         context: ClauseContextType = ClauseInfoContext(),
@@ -70,7 +72,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         # Clean self._all_clauses if we update the context
         self._all_clauses.clear() if self._all_clauses else None
 
-        resolved_function = GlobalChecker.resolved_callback_object(self._columns, self.tables)
+        resolved_function = GlobalChecker.resolved_callback_object(self._columns, self.table)
 
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
@@ -97,8 +99,10 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         VALUE_TYPE_MAPPED: dict[tp.Type[ValueType], ClauseInfoConverter[T, TProp]] = {
             ForeignKey: ConvertFromForeignKey[T, Table],
             Column: ConvertFromColumn[TProp],
+            ColumnProxy: ConvertFromColumnProxy[TProp],
             IAggregate: ConvertFromIAggregate,
             Table: ConvertFromTable[T],
+            TableProxy: ConvertFromTableProxy[T],
         }
         classConverter = next((converter for obj, converter in VALUE_TYPE_MAPPED.items() if validation(data, obj)), ConvertFromAnyType)
         self.kwargs.setdefault("dialect", self._dialect)

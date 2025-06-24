@@ -10,8 +10,6 @@ if TYPE_CHECKING:
     from ormlambda.statements.interfaces import IStatements_two_generic
 
 
-# endregion
-
 
 class BaseModel[T]:
     """
@@ -19,8 +17,6 @@ class BaseModel[T]:
 
     Contiene los metodos necesarios para hacer consultas a una tabla
     """
-
-    # region Constructor
 
     def __new__[TPool](cls, model: Type[T], engine: Engine) -> IStatements_two_generic[T, TPool]:
         if engine is None:

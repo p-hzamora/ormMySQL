@@ -343,6 +343,3 @@ class IStatements_two_generic[T, TPool](IStatements[T]):
     @property
     def model(self) -> Type[T]: ...
 
-    # TODOL: add P when wil be possible
-    @property
-    def models(self) -> tuple: ...

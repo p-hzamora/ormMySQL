@@ -2,8 +2,7 @@ from __future__ import annotations
 from typing import Any, Optional, Type, dataclass_transform, TYPE_CHECKING
 import json
 
-from ormlambda.sql import Column
-from ormlambda.sql import ForeignKey
+from ormlambda.sql import Column, ForeignKey
 from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.sql.ddl import CreateTable, DropTable
 
@@ -21,6 +20,7 @@ class TableMeta(type):
         We simply call '__init_constructor__' to create all the necessary variables and the method.
         """
         cls_object: Table = super().__new__(cls, name, bases, dct)
+        
 
         if name == "Table":
             return cls_object
@@ -32,6 +32,7 @@ class TableMeta(type):
             raise Exception(f"class variable '__table_name__' of '{cls_object.__name__}' class must be 'str'")
 
         self = __init_constructor__(cls_object)
+
         return self
 
     def __repr__(cls: "Table") -> str:

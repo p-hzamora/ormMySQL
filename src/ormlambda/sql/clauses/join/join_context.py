@@ -44,7 +44,7 @@ class JoinContext[TParent: Table, TRepo]:
             # Keep in mind that 'ForeignKey.stored_calls' is cleared every time we call methods like
             # .select(), .select_one(), .insert(), .update(), or .count(). This means we only retain
             # the context from the first call of any of these methods.
-            ForeignKey.stored_calls.add(foreign_key)
+            # FIXME [ ]: See how to deal with context when using JoinContext class and PATH_CONTEXT
 
         return self
 
@@ -57,7 +57,6 @@ class JoinContext[TParent: Table, TRepo]:
             fk: ForeignKey = getattr(self._parent, attribute)
             delattr(self._parent, attribute)
             del self._context._table_context[fk.tright]
-            ForeignKey.stored_calls.remove(fk)
         return None
 
     def __getattr__(self, name: str) -> TParent:
