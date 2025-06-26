@@ -7,3 +7,5 @@ from .datetime import DatetimeCaster as DatetimeCaster
 from .bytes import BytesCaster as BytesCaster
 from .iterable import IterableCaster as IterableCaster
 from .boolean import BooleanCaster as BooleanCaster
+from .date import DateCaster as DateCaster
+from .decimal import DecimalCaster as DecimalCaster

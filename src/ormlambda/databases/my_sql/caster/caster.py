@@ -12,11 +12,13 @@ from .types import (
     BytesCaster,
     IterableCaster,
     BooleanCaster,
+    DecimalCaster,
 )
 
 from shapely import Point
 from types import NoneType
-from datetime import datetime
+from datetime import datetime, date
+from decimal import Decimal
 
 
 class MySQLCaster(Caster):
@@ -31,9 +33,11 @@ class MySQLCaster(Caster):
             Point: PointCaster,
             NoneType: NoneTypeCaster,
             datetime: DatetimeCaster,
+            date: DatetimeCaster,
             bytes: BytesCaster,
             bytearray: BytesCaster,
             tuple: IterableCaster,
             list: IterableCaster,
             bool: BooleanCaster,
+            Decimal: DecimalCaster,
         }
