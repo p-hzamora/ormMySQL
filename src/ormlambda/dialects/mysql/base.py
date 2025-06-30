@@ -208,7 +208,15 @@ class MySQLTypeCompiler(compiler.GenericTypeCompiler):
         return "NUMERIC"
 
     def visit_DECIMAL(self, type_: DECIMAL, **kw):
-        return "DECIMAL"
+        if type_.precision is None:
+            return self._extend_numeric(type_, "DECIMAL")
+        elif type_.scale is None:
+            return self._extend_numeric(
+                type_,
+                f"DECIMAL({type_.precision})",
+            )
+        else:
+            return self._extend_numeric(type_, f"DECIMAL({type_.precision}, {type_.scale})")
 
     def visit_DOUBLE(self, type_: DOUBLE, **kw):
         return "DOUBLE"
