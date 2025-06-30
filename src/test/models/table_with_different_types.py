@@ -1,15 +1,16 @@
-from shapely import Point
-from ormlambda import Column, Table
 
-from datetime import datetime
+from ormlambda import Column, Table
+from ormlambda import DECIMAL, DATE, DATETIME, POINT, INT, VARCHAR, FLOAT
 
 
 class TableType(Table):
     __table_name__ = "table_type"
 
-    pk: int = Column(int, is_primary_key=True, is_auto_increment=False)
-    strings: str
-    integers: int
-    floats: float
-    points: Point
-    datetimes: datetime
+    pk: Column[INT] = Column(INT(), is_primary_key=True, is_auto_increment=False)
+    strings: Column[VARCHAR] = Column(VARCHAR(255))
+    integers: Column[INT] = Column(INT())
+    floats: Column[FLOAT] = Column(FLOAT())
+    points: Column[POINT] = Column(POINT())
+    datetimes: Column[DATETIME] = Column(DATETIME())
+    dates: Column[DATE] = Column(DATE())
+    decimals: Column[DECIMAL] = Column(DECIMAL(precision=5,scale=2))

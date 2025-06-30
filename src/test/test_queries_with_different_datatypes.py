@@ -2,7 +2,8 @@ from __future__ import annotations
 import unittest
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
+import decimal
 
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
@@ -56,11 +57,20 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
             floats=0.99,
             points=shp.Point(5, 5),
             datetimes=datetime(1998, 12, 16),
+            dates=date(1998, 12, 16),
+            decimals=decimal.Decimal("26.67"),
         )
 
         self.model.insert(instance)
-        select = self.model.select_one(lambda x: x.points, flavour=tuple)
-        self.assertEqual(select, shp.Point(5, 5))
+        select = self.model.select_one()
+        self.assertEqual(select.pk, 1)
+        self.assertEqual(select.strings, "strings")
+        self.assertEqual(select.integers, 10)
+        self.assertEqual(select.floats, 0.99)
+        self.assertEqual(select.points, shp.Point(5, 5))
+        self.assertEqual(select.datetimes, datetime(1998, 12, 16))
+        self.assertEqual(select.dates, date(1998, 12, 16))
+        self.assertEqual(select.decimals, decimal.Decimal("26.67"))
 
     def test_update_different_types(self):
         instance = TableType(
