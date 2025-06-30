@@ -3,12 +3,12 @@ import abc
 from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
+from ormlambda.sql.type_api import TypeEngine
 
 if TYPE_CHECKING:
     import re
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer, Regex, Like
-    from ormlambda.sql.type_api import TypeEngine
 
 
 from ormlambda.types import (
@@ -111,7 +111,8 @@ class Column[TProp]:
 
     def __set__(self, obj, value):
         if self._check and value is not None:
-            if not isinstance(value, self.dtype):
+            type_ = self.dtype if not isinstance(self.dtype, TypeEngine) else self.dtype.python_type
+            if not isinstance(value, type_):
                 raise ValueError(f"The '{self.column_name}' Column from '{self.table.__table_name__}' table expected '{str(self.dtype)}' type. You passed '{type(value).__name__}' type")
         setattr(obj, self.__private_name, value)
 
@@ -131,8 +132,6 @@ class Column[TProp]:
 
     def _fill_from_annotations[T: Table](self, obj: Type[T], name: str) -> None:
         """Read the metada when using Annotated typing class, and set the attributes accordingly"""
-
-        from ormlambda.sql.type_api import TypeEngine
 
         annotations = get_type_hints(obj, include_extras=True)
         if name in annotations:
