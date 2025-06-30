@@ -9,7 +9,7 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import JoinType
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.sql.comparer import Comparer
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda.sql.elements import ClauseElement
 
 
@@ -44,7 +44,6 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         where: Comparer,
         by: JoinType,
         alias: Optional[str] = "{table}",
-        context: ClauseContextType = None,
         *,
         dialect: Dialect,
         **kw,
@@ -58,14 +57,13 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         self._left_col: str = lcon._column.column_name
         self._right_col: str = rcon._column.column_name
         self._compareop = where._compare
-        self._context: ClauseContextType = context if context else ClauseInfoContext()
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
         self._alias: Optional[str] = alias
 
-        self._from_clause = ClauseInfo(self.right_table, alias_table=alias, context=self._context, dialect=dialect, **kw)
-        self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, context=self._create_partial_context(), dialect=dialect, **kw)
-        self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, context=self._create_partial_context(), dialect=dialect, **kw)
+        self._from_clause = ClauseInfo(self.right_table, alias_table=alias, dialect=dialect, **kw)
+        self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, dialect=dialect, **kw)
+        self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, dialect=dialect, **kw)
 
     def __eq__(self, __value: JoinSelector) -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
@@ -82,20 +80,12 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
             )
         )
 
-    def _create_partial_context(self) -> ClauseInfoContext:
-        """
-        Only use table_context from global context
-        """
-        if not self._context:
-            return ClauseInfoContext()
-        return ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
 
     @classmethod
     def join_selectors(cls, dialect: Dialect, *args: JoinSelector) -> str:
         return "\n".join([x.query(dialect) for x in args])
 
     def query(self, dialect: Dialect, **kwargs) -> str:
-        self._context = ClauseInfoContext(clause_context=None, table_context=self._context._table_context)
         list_ = [
             self._by.value,  # inner join
             self._from_clause.query(dialect, **kwargs),

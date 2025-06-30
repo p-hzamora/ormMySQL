@@ -62,4 +62,9 @@ class Caster(ICaster):
             column_type = type(value)
         else:
             column_type = type_value
-        return cls.CASTER_SELECTOR()[column_type](value, column_type)
+        
+        caster_class = cls.CASTER_SELECTOR().get(column_type,None)
+        if not caster_class:
+            raise ValueError(f"'{column_type}' type has not a Caster class created.")
+
+        return caster_class(value, column_type)

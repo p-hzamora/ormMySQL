@@ -78,7 +78,10 @@ class TestWhereStatement(unittest.TestCase):
                 x.City.city == city,
             )
         ).select(
-            lambda x: (x.City.city, x.City.Country.country),
+            lambda x: (
+                x.City.city,
+                x.City.Country.country,
+            ),
             flavour=dict,
         )
 

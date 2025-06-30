@@ -50,8 +50,10 @@ class TestComplexQueries(unittest.TestCase):
             pkCity: int
             count: int
 
+        PK = 312
         res = (
-            self.amodel.where(Address.City.city_id >= 312)
+            self.amodel
+            .where(Address.City.city_id >= PK)
             .having(Column(column_name="count") > 1)
             .groupby(Address.city_id)
             .select(
@@ -92,7 +94,8 @@ class TestComplexQueries(unittest.TestCase):
             contar: int
 
         res = (
-            self.amodel.order("contar", OrderType.DESC)
+            self.amodel
+            .order("contar", OrderType.DESC)
             .groupby(Address.City.Country.country)
             .first(
                 (

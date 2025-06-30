@@ -1,6 +1,5 @@
 from __future__ import annotations
 from ormlambda.sql.clause_info import AggregateFunctionBase
-from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 
 from ormlambda.sql.types import AliasType, ColumnType
 
@@ -30,7 +29,6 @@ class Count[T: Table](AggregateFunctionBase[T], ClauseElement):
         element: ColumnType[T] | TableType[TProp],
         alias_table: AliasType[ColumnType[TProp]] = None,
         alias_clause: AliasType[ColumnType[TProp]] = "count",
-        context: ClauseContextType = None,
         keep_asterisk: bool = True,
         preserve_context: bool = True,
         *,
@@ -41,11 +39,10 @@ class Count[T: Table](AggregateFunctionBase[T], ClauseElement):
         column = element if self.is_column(element) else ASTERISK
 
         super().__init__(
-            table=table if (alias_table or (context and table in context._table_context)) else None,
+            table=table if alias_table else None,
             column=column,
             alias_table=alias_table,
             alias_clause=alias_clause,
-            context=context,
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
             dtype=int,

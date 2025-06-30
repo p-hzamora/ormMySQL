@@ -14,7 +14,6 @@ from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.sql import ForeignKey
 from ormlambda.sql.table import TableMeta
 from .clause_info import ClauseInfo
-from .clause_info_context import ClauseContextType
 
 if tp.TYPE_CHECKING:
     from ormlambda.dialects import Dialect
@@ -27,12 +26,11 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
-        context: ClauseContextType = None,
         keep_asterisk: bool = False,
         preserve_context: bool = False,
         dtype: TProp = None,
         *,
-        dialect: Dialect,
+        dialect: Dialect = None,
         **kw,
     ):
         self._alias_aggregate = alias_clause
@@ -40,7 +38,6 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
             table=table,
             column=column,
             alias_table=alias_table,
-            context=context,
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
             dtype=dtype,
@@ -48,21 +45,24 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
             **kw,
         )
 
+    def __repr__(self):
+        return f"{AggregateFunctionBase.__name__}: {type(self).__name__}"
+
     @staticmethod
     @abc.abstractmethod
     def FUNCTION_NAME() -> str: ...
 
     @classmethod
-    def _convert_into_clauseInfo[TypeColumns, TProp](cls, columns: ClauseInfo | ColumnType[TProp], context: ClauseContextType, dialect: Dialect) -> list[ClauseInfo]:
+    def _convert_into_clauseInfo[TypeColumns, TProp](cls, columns: ClauseInfo | ColumnType[TProp], dialect: Dialect) -> list[ClauseInfo]:
         type DEFAULT = tp.Literal["default"]
         type ClusterType = ColumnType | ForeignKey | DEFAULT
 
         dicc_type: dict[ClusterType, tp.Callable[[ClusterType], ClauseInfo]] = {
-            Column: lambda column: ClauseInfo(column.table, column, context=context, dialect=dialect),
+            Column: lambda column: ClauseInfo(column.table, column, dialect=dialect),
             ClauseInfo: lambda column: column,
-            ForeignKey: lambda tbl: ClauseInfo(tbl.tright, tbl.tright, context=context, dialect=dialect),
-            TableMeta: lambda tbl: ClauseInfo(tbl, tbl, context=context, dialect=dialect),
-            "default": lambda column: ClauseInfo(table=None, column=column, context=context, dialect=dialect),
+            ForeignKey: lambda tbl: ClauseInfo(tbl.tright, tbl.tright, dialect=dialect),
+            TableMeta: lambda tbl: ClauseInfo(tbl, tbl, dialect=dialect),
+            "default": lambda column: ClauseInfo(table=None, column=column, dialect=dialect),
         }
         all_clauses: list[ClauseInfo] = []
         if isinstance(columns, str) or not isinstance(columns, tp.Iterable):
@@ -82,7 +82,6 @@ class AggregateFunctionBase[T: Table](ClauseInfo[T], IAggregate):
             table=None,
             column=wrapped_ci,
             alias_clause=self._alias_aggregate,
-            context=self._context,
             keep_asterisk=self._keep_asterisk,
             preserve_context=self._preserve_context,
             dialect=self._dialect,

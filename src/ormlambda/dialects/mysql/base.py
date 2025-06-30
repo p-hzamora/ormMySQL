@@ -66,7 +66,6 @@ if TYPE_CHECKING:
     )
 
 
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 
 
 class MySQLCompiler(compiler.SQLCompiler):
@@ -74,7 +73,7 @@ class MySQLCompiler(compiler.SQLCompiler):
     """Overridden from base SQLCompiler value"""
 
     def visit_select(self, select: Select, **kw):
-        return f"{select.CLAUSE} {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
+        return f"SELECT {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
 
     def visit_group_by(self, groupby: GroupBy, **kw):
         column = groupby._create_query(self.dialect, **kw)
@@ -108,8 +107,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         assert len(columns) == len(order._order_type)
 
-        context = ClauseInfoContext(table_context=order._context._table_context, clause_context=None) if order._context else None
-        for index, clause in enumerate(order._convert_into_clauseInfo(columns, context, dialect=self.dialect)):
+        for index, clause in enumerate(order._convert_into_clauseInfo(columns, dialect=self.dialect)):
             clause.alias_clause = None
             string_columns.append(f"{clause.query(self.dialect, **kw)} {str(order._order_type[index])}")
 
@@ -120,9 +118,8 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         columns: list[str] = []
 
-        context = ClauseInfoContext(table_context=concat._context._table_context, clause_context=None) if concat._context else None
-
-        for clause in concat._convert_into_clauseInfo(concat.unresolved_column, context=context, dialect=self.dialect):
+        new_cols = concat.join_elements()
+        for clause in concat._convert_into_clauseInfo(new_cols, dialect=self.dialect):
             clause.alias_clause = concat.alias_clause
             columns.append(clause)
         return concat._concat_alias_and_column(f"CONCAT({ClauseInfo.join_clauses(columns, dialect=self.dialect)})", concat._alias_aggregate)
@@ -291,88 +288,6 @@ class MySQLTypeCompiler(compiler.GenericTypeCompiler):
 
     def visit_LONGBLOB(self, type_: LONGBLOB, **kw):
         return "LONGBLOB"
-
-    # region visit lowercase
-
-    def visit_integer(self, type_: INTEGER, **kw):
-        return self.visit_INTEGER(type_, **kw)
-
-    def visit_varchar(self, type_, **kw):
-        return self.visit_VARCHAR(type_, **kw)
-
-    def visit_char(self, type_, **kw):
-        return self.visit_CHAR(type_, **kw)
-
-    def visit_numeric(self, type_: NUMERIC, **kw):
-        return self.visit_NUMERIC(type_, **kw)
-
-    def visit_decimal(self, type_: DECIMAL, **kw):
-        return self.visit_DECIMAL(type_, **kw)
-
-    def visit_double(self, type_: DOUBLE, **kw):
-        return self.visit_DOUBLE(type_, **kw)
-
-    def visit_real(self, type_: REAL, **kw):
-        return self.visit_REAL(type_, **kw)
-
-    def visit_float(self, type_: FLOAT, **kw):
-        return self.visit_FLOAT(type_, **kw)
-
-    def visit_bigint(self, type_: BIGINT, **kw):
-        return self.visit_BIGINT(type_, **kw)
-
-    def visit_mediumint(self, type_: MEDIUMINT, **kw):
-        return self.visit_MEDIUMINT(type_, **kw)
-
-    def visit_tinyint(self, type_: TINYINT, **kw):
-        return self.visit_TINYINT(type_, **kw)
-
-    def visit_smallint(self, type_: SMALLINT, **kw):
-        return self.visit_SMALLINT(type_, **kw)
-
-    def visit_bit(self, type_: BIT, **kw):
-        return self.visit_BIT(type_, **kw)
-
-    def visit_time(self, type_: TIME, **kw):
-        return self.visit_TIME(type_, **kw)
-
-    def visit_timestamp(self, type_: TIMESTAMP, **kw):
-        return self.visit_TIMESTAMP(type_, **kw)
-
-    def visit_datetime(self, type_: DATETIME, **kw):
-        return self.visit_DATETIME(type_, **kw)
-
-    def visit_year(self, type_: YEAR, **kw):
-        return self.visit_YEAR(type_, **kw)
-
-    def visit_text(self, type_: TEXT, **kw):
-        return self.visit_TEXT(type_, **kw)
-
-    def visit_tinytext(self, type_: TINYTEXT, **kw):
-        return self.visit_TINYTEXT(type_, **kw)
-
-    def visit_mediumtext(self, type_: MEDIUMTEXT, **kw):
-        return self.visit_MEDIUMTEXT(type_, **kw)
-
-    def visit_longtext(self, type_: LONGTEXT, **kw):
-        return self.visit_LONGTEXT(type_, **kw)
-
-    def visit_nvarchar(self, type_: NVARCHAR, **kw):
-        return self.visit_NVARCHAR(type_, **kw)
-
-    def visit_nchar(self, type_: NCHAR, **kw):
-        return self.visit_NCHAR(type_, **kw)
-
-    def visit_tinyblob(self, type_: TINYBLOB, **kw):
-        return self.visit_TINYBLOB(type_, **kw)
-
-    def visit_mediumblob(self, type_: MEDIUMBLOB, **kw):
-        return self.visit_MEDIUMBLOB(type_, **kw)
-
-    def visit_longblob(self, type_: LONGBLOB, **kw):
-        return self.visit_LONGBLOB(type_, **kw)
-
-    # endregion
 
 
 class MySQLDialect(default.DefaultDialect):

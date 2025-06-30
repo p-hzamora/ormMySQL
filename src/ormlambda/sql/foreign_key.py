@@ -9,7 +9,6 @@ from ormlambda.sql.context import PATH_CONTEXT
 if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import Table
-    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.dialects import Dialect
     from ormlambda.sql.context import FKChain
 
@@ -115,7 +114,7 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         return f"{self.__class__.__name__}(left={self._tleft.__name__ if self._tleft else 'None'}, right={self._tright.__name__ if self._tright else 'None'}, name={self._clause_name})"
 
     @property
-    def tleft(self) -> TLeft:
+    def tleft(self) -> Table:
         return self._tleft
 
     @property
@@ -147,7 +146,7 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
                 clauses.append(attr.query(dialect))
         return clauses
 
-    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect, context: Optional[ClauseContextType] = None) -> Comparer:
+    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect) -> Comparer:
         """ """
         if self._comparer is not None:
             return self._comparer
@@ -155,7 +154,6 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         left = self._tleft
         right = self._tright
         comparer = self._relationship(left, right)
-        comparer.set_context(context)
         comparer._dialect = dialect
         return comparer
 

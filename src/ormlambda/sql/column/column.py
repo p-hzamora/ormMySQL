@@ -206,7 +206,6 @@ class Column[TProp]:
         return Regex(
             left_condition=self,
             right_condition=pattern,
-            context=None,
             flags=flags,
         )
 

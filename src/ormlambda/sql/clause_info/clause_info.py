@@ -3,20 +3,17 @@ import typing as tp
 import re
 
 from ormlambda import Table
-from ormlambda import Column
-from ormlambda.sql.types import (
-    ASTERISK,
-    TableType,
-    ColumnType,
-    AliasType,
-)
+from ormlambda import Column, ColumnProxy
+from ormlambda.sql.elements import ClauseElement
+from ormlambda.sql.types import ASTERISK
 from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
 
 
-from .clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.context import PATH_CONTEXT
 
 if tp.TYPE_CHECKING:
+    from ormlambda.sql.types import TableType, ColumnType, AliasType
     from ormlambda.dialects import Dialect
 
 
@@ -42,8 +39,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     @tp.overload
     def __init__(self, table: TableType[T], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
     @tp.overload
-    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], context: ClauseContextType): ...
-    @tp.overload
     def __init__(self, table: TableType[T], keep_asterisk: tp.Optional[bool] = ...): ...
     @tp.overload
     def __init__(self, table: TableType[T], preserve_context: tp.Optional[bool] = ...): ...
@@ -59,7 +54,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
-        context: ClauseContextType = None,
         keep_asterisk: bool = False,
         preserve_context: bool = False,
         dtype: tp.Optional[TProp] = None,
@@ -75,7 +69,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         self._column: TableType[T] | ColumnType[TProp] = column
         self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
-        self._context: ClauseContextType = context if context else ClauseInfoContext()
         self._keep_asterisk: bool = keep_asterisk
         self._preserve_context: bool = preserve_context
         self._dtype = dtype
@@ -87,8 +80,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             "table": self.replace_table_placeholder,
         }
 
-        if not self._preserve_context and (self._context and any([alias_table, alias_clause])):
-            self._context.add_clause_to_context(self)
+        if not self._preserve_context and any([alias_table, alias_clause]):
+            PATH_CONTEXT.add_clause_to_context(self)
 
         super().__init__(**kw)
 
@@ -147,19 +140,11 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._column
 
     @property
-    def context(self) -> ClauseContextType:
-        return self._context
-
-    @context.setter
-    def context(self, value: ClauseInfoContext) -> None:
-        self._context = value
-
-    @property
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]:
         if self._dtype is not None:
             return self._dtype
 
-        if isinstance(self._column, Column):
+        if isinstance(self._column, Column | ColumnProxy):
             return self._column.dtype
 
         if isinstance(self._column, type):
@@ -187,13 +172,13 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._concat_alias_and_column(self.table.__table_name__, alias_table)
 
         if self._return_all_columns():
-            return self._get_all_columns()
-        return self._join_table_and_column(self._column)
+            return self._get_all_columns(dialect)
+        return self._join_table_and_column(self._column, dialect)
 
-    def _join_table_and_column[TProp](self, column: ColumnType[TProp]) -> str:
+    def _join_table_and_column[TProp](self, column: ColumnType[TProp], dialect: Dialect) -> str:
         # FIXME [x]: Study how to deacoplate from mysql database
 
-        caster = self._dialect.caster()
+        caster = dialect.caster()
 
         if self.alias_table:
             table = self._wrapped_with_quotes(self.alias_table)
@@ -221,22 +206,21 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def is_asterisk(value: tp.Optional[str]) -> bool:
         return isinstance(value, str) and value == ASTERISK
 
-    def _get_all_columns(self) -> str:
+    def _get_all_columns(self, dialect: Dialect) -> str:
         def ClauseCreator(column: str) -> ClauseInfo:
             return ClauseInfo(
                 table=self.table,
                 column=column,
                 alias_table=self._alias_table,
                 alias_clause=self._alias_clause,
-                context=self._context,
                 keep_asterisk=self._keep_asterisk,
-                dialect=self._dialect,
+                dialect=dialect,
             )
 
         if self._alias_table and self._alias_clause:  # We'll add an "*" when we are certain that we have included 'alias_clause' attr
-            return self._join_table_and_column(ASTERISK)
+            return self._join_table_and_column(ASTERISK, dialect)
 
-        columns: list[ClauseInfo] = [ClauseCreator(column).query(self._dialect) for column in self.table.get_columns()]
+        columns: list[ClauseInfo] = [ClauseCreator(column).query(dialect) for column in self.table.get_columns()]
 
         return ", ".join(columns)
 
@@ -248,7 +232,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if isinstance(column, tp.Iterable) and isinstance(column[0], ClauseInfo):
             return self.join_clauses(column)
 
-        if isinstance(column, Column):
+        if isinstance(column, Column | ColumnProxy):
             return column.column_name
 
         # if we want to pass the name of a column as a string, the 'table' var must not be None
@@ -298,22 +282,23 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._replace_placeholder(alias)
 
     def get_clause_alias(self) -> tp.Optional[str]:
-        if not self._context:
-            return None
-        return self._context.get_clause_alias(self)
+        if self._column and self.table:
+            return PATH_CONTEXT.get_clause_alias(self.table, self._column, type(self))
+        return None
 
     def get_table_alias(self) -> tp.Optional[str]:
-        if not self._context:
-            return None
-        return self._context.get_table_alias(self.table)
+        if self.table:
+            return PATH_CONTEXT.get_table_alias(self.table)
+        return None
 
     @staticmethod
-    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",", context: tp.Optional[ClauseInfoContext] = None, *, dialect: Dialect) -> str:
+    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",", *, dialect: Dialect) -> str:
         queries: list[str] = []
         for c in clauses:
-            if context:
-                c.context = context
-                c._dialect = dialect
+            if isinstance(c, ClauseElement):
+                queries.append(c.compile(dialect).string)
+                continue
+            c._dialect = dialect
             queries.append(c.query(dialect))
 
         return f"{chr} ".join(queries)
@@ -333,7 +318,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if cls.is_foreign_key(element):
             return element.tright
 
-        if isinstance(element, Column):
+        if isinstance(element, Column | ColumnProxy):
             return element.table
         return None
 
@@ -349,6 +334,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def is_column(cls, data: tp.Any) -> bool:
         if cls.is_table(data) or cls.is_foreign_key(data) or cls.is_asterisk(data):
             return False
-        if isinstance(data, Column):
+        if isinstance(data, Column | ColumnProxy):
             return True
         return False

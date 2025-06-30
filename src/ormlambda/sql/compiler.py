@@ -67,13 +67,15 @@ if TYPE_CHECKING:
         Where,
         Having,
         Order,
-        Concat,
-        Max,
-        Min,
-        Sum,
-        Groupby,
+        GroupBy,
     )
 
+    from ormlambda.sql.functions import (
+        Concat,
+        Max,
+        Min,        
+        Sum,
+    )
 
 type customString = Union[str | Path]
 
@@ -192,7 +194,7 @@ class SQLCompiler(Compiled, abc.ABC):
     @abc.abstractmethod
     def visit_sum(self, sum: Sum, **kw) -> Sum: ...
     @abc.abstractmethod
-    def visit_group_by(self, groupby: Groupby, **kw) -> Groupby: ...
+    def visit_group_by(self, groupby: GroupBy, **kw) -> GroupBy: ...
 
 
 class DDLCompiler(Compiled):

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Optional, Type, dataclass_transform, TYPE_CHECKING
 import json
 
-from ormlambda.sql import Column, ForeignKey
+from ormlambda.sql import Column, ForeignKey, ColumnProxy
 from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.sql.ddl import CreateTable, DropTable
 
@@ -20,7 +20,6 @@ class TableMeta(type):
         We simply call '__init_constructor__' to create all the necessary variables and the method.
         """
         cls_object: Table = super().__new__(cls, name, bases, dct)
-        
 
         if name == "Table":
             return cls_object
@@ -84,7 +83,7 @@ class Table(metaclass=TableMeta):
 
         dicc: dict[str, str] = {x: str(getattr(self, x)) for x in self.__annotations__}
         equal_loop = ["=".join((x, __cast_long_variables(y))) for x, y in dicc.items()]
-        return f'{self.__class__.__name__}({", ".join(equal_loop)})'
+        return f"{self.__class__.__name__}({', '.join(equal_loop)})"
 
     def __getitem__[TProp](self, value: str | Column[TProp]) -> Optional[TProp]:
         name = value if isinstance(value, str) else value.column_name
@@ -101,7 +100,7 @@ class Table(metaclass=TableMeta):
     @classmethod
     def get_pk(cls) -> Optional[Column]:
         for obj in cls.__dict__.values():
-            if isinstance(obj, Column) and obj.is_primary_key:
+            if isinstance(obj, Column | ColumnProxy) and obj.is_primary_key:
                 return obj
         return None
 
@@ -120,9 +119,9 @@ class Table(metaclass=TableMeta):
         return CreateTable(cls).compile(dialect).string
 
     @classmethod
-    def drop_table(cls, dialect:Dialect)->str:
+    def drop_table(cls, dialect: Dialect) -> str:
         return DropTable(cls).compile(dialect).string
-    
+
     @classmethod
     def find_dependent_tables(cls) -> tuple["Table", ...]:
         """Work in progress"""

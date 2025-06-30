@@ -16,11 +16,11 @@ class GlobalChecker:
         return callable(obj) and not isinstance(obj, type)
 
     @classmethod
-    def resolved_callback_object(cls, obj: Any, table: Type[Table|TableProxy]) -> tuple[ColumnProxy | TableProxy, ...]:
+    def resolved_callback_object(cls, obj: Any, table: Type[Table | TableProxy]) -> tuple[ColumnProxy | TableProxy, ...]:
         from ormlambda.sql.context import PATH_CONTEXT
         from ormlambda.sql.table import TableProxy
 
-        if isinstance(table,TableProxy):
+        if isinstance(table, TableProxy):
             table = table._table_class
 
         if not cls.is_lambda_function(obj):

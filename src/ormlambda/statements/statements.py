@@ -1,6 +1,4 @@
 from __future__ import annotations
-from contextlib import contextmanager
-from dataclasses import dataclass, field
 from typing import Concatenate, Iterable, cast, override, Type, TYPE_CHECKING, Any, Callable, Optional
 
 # from ormlambda import ForeignKey
@@ -82,7 +80,7 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
 class Statements[T: Table, TRepo](BaseStatement[T, None]):
     def __init__(self, model: T, engine: Engine) -> None:
         super().__init__(model, engine)
-        self._query_builder = QueryBuilder(self.dialect)
+        self._query_builder = QueryBuilder()
 
         self._deferred_operations: list[DeferredOperation] = []
         self._immediate_operations: list[Any] = []
@@ -187,7 +185,6 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return clauses.Count(
             element=selection,
             alias_clause=alias,
-            context=self._query_builder._context,
             dialect=self._dialect,
         )
 
@@ -222,7 +219,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
     @override
     def concat(self, selector: SelectCols[T, str], alias: str = "concat") -> IAggregate:
-        return func.Concat(values=selector, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        return func.Concat(values=selector, alias_clause=alias, dialect=self._dialect)
 
     @override
     def max[TProp](
@@ -234,7 +231,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column = GlobalChecker.resolved_callback_object(column, self.model)
         if execute is True:
             return self.select_one(self.max(column, alias, execute=False), flavour=dict)[alias]
-        return func.Max(elements=column, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        return func.Max(elements=column, alias_clause=alias, dialect=self._dialect)
 
     @override
     def min[TProp](
@@ -246,7 +243,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column = GlobalChecker.resolved_callback_object(column, self.model)
         if execute is True:
             return self.select_one(self.min(column, alias, execute=False), flavour=dict)[alias]
-        return func.Min(elements=column, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        return func.Min(elements=column, alias_clause=alias, dialect=self._dialect)
 
     @override
     def sum[TProp](
@@ -258,7 +255,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column = GlobalChecker.resolved_callback_object(column, self.model)
         if execute is True:
             return self.select_one(self.sum(column, alias, execute=False), flavour=dict)[alias]
-        return func.Sum(elements=column, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        return func.Sum(elements=column, alias_clause=alias, dialect=self._dialect)
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
@@ -310,7 +307,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
             if flavour:
                 result = self._return_flavour(self.query, flavour, select, **kwargs)
-                if issubclass(flavour, tuple) and isinstance(select_clause, Column | ClauseInfo):
+                if issubclass(flavour, tuple) and isinstance(select_clause, Column | ClauseInfo | ColumnProxy):
                     return tuple([x[0] for x in result])
                 return result
             return self._return_model(select, self.query)
@@ -371,7 +368,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements_two_generic[T]:
         column = GlobalChecker.resolved_callback_object(column, self.model)
 
-        groupby = clauses.GroupBy(column=column, context=self._query_builder._context, dialect=self.dialect)
+        groupby = clauses.GroupBy(column=column, dialect=self.dialect)
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         self._query_builder.add_statement(groupby)
         return self

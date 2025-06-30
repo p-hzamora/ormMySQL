@@ -7,7 +7,7 @@ Clean, modern implementation using PATH_CONTEXT exclusively.
 """
 
 from __future__ import annotations
-from typing import Callable, Optional, Any, TYPE_CHECKING, cast
+from typing import Callable, Optional, TYPE_CHECKING, cast
 from abc import ABC, abstractmethod
 from ormlambda.sql.clauses import Select, Where, Having, Order, GroupBy, Limit, Offset, JoinSelector
 
@@ -20,6 +20,7 @@ from ormlambda import ColumnProxy
 from ormlambda.common.enums import JoinType
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.common.interfaces import IQuery
+from ormlambda.sql.context import PATH_CONTEXT
 
 # =============================================================================
 # CLEAN QUERY COMPONENTS
@@ -160,18 +161,13 @@ class StandardSQLCompiler(IQueryCompiler):
 
 
 class QueryBuilder(IQuery):
-    dialect: Dialect
     path_contex: PathContext
     compiler: StandardSQLCompiler
     components: QueryComponents
     join_type: JoinType
 
-    def __init__(self, dialect: Dialect):
-        self.dialect = dialect
+    def __init__(self):
         self.path_context = self._get_global_context()
-
-        # Strategy pattern for join detection and compilation
-        self.compiler = StandardSQLCompiler(dialect)
 
         # Clean component storage
         self.components = QueryComponents()
@@ -256,7 +252,7 @@ class QueryBuilder(IQuery):
             "JoinSelector": self.add_join,
         }
 
-        method = clause_selector.get(clause_type,None)
+        method = clause_selector.get(clause_type, None)
         if not method:
             raise ValueError(f"Unknown clause type: {clause_type}")
 
@@ -266,30 +262,27 @@ class QueryBuilder(IQuery):
     # QUERY GENERATION
     # =============================================================================
 
-    def query(self, dialect: Optional[Dialect]=None) -> str:
-        target_dialect = dialect or self.dialect
-
+    def query(self, dialect: Optional[Dialect] = None) -> str:
         # Detect required joins
-
-        detected_joins = self.pop_tables_and_create_joins_from_ForeignKey(self.by)
+        detected_joins = self.pop_tables_and_create_joins_from_ForeignKey(dialect)
         all_joins = self.components.joins | detected_joins
 
         # Compile to SQL
-        return self.compiler.compile(self.components, all_joins)
+        return StandardSQLCompiler(dialect).compile(self.components, all_joins)
 
-    def pop_tables_and_create_joins_from_ForeignKey(self, by: JoinType = JoinType.INNER_JOIN) -> set[JoinSelector]:
+    def pop_tables_and_create_joins_from_ForeignKey(self, dialect) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
 
         joins = set()
-        # Always it's gonna be a set of two
-        # FIXME [x]: Resolved when we get Compare object instead ClauseInfo. For instance, when we have multiples condition using '&' or '|'
-        for column in self.components.select.columns:
-            fks = cast(ColumnProxy, column)._path.get_foreign_keys()
-            for fk in fks:
-                fk_alias = fk.get_alias(self.dialect)
-                join = JoinSelector(fk.resolved_function(self.dialect), by, alias=fk_alias, dialect=self.dialect)
-                # self._context._add_table_alias(fk.tright, fk_alias)
-                # join = JoinSelector(fk.resolved_function(self._context), by, context=self._context, alias=fk_alias, dialect=self.dialect)
+        # Get all foreign key accesses from PATH_CONTEXT
+        for key, fk in PATH_CONTEXT.get_all_foreign_key_accesses().items():
+            # Each value in the registry should be a ForeignKey object
+            if hasattr(fk, 'get_alias') and hasattr(fk, 'resolved_function'):
+                fk_alias = fk.get_alias(dialect)
+                # Use LEFT JOIN as default for detected foreign key relationships
+                # This prevents data loss when the foreign key relationship might be null
+                join_type = self.by if self.by != JoinType.INNER_JOIN else JoinType.LEFT_INCLUSIVE
+                join = JoinSelector(fk.resolved_function(dialect), join_type, alias=fk_alias, dialect=dialect)
                 joins.add(join)
 
         return joins

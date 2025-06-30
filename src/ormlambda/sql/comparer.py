@@ -11,7 +11,6 @@ from ormlambda import ConditionType as ConditionEnum
 from ormlambda.sql.elements import Element
 
 if tp.TYPE_CHECKING:
-    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.dialects import Dialect
 
 
@@ -54,20 +53,14 @@ class Comparer(Element, IQuery):
         left_condition: ConditionType,
         right_condition: ConditionType,
         compare: ComparerTypes,
-        context: ClauseContextType = None,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
         dialect: tp.Optional[Dialect] = None,
     ) -> None:
-        self._context: ClauseContextType = context
         self._compare: ComparerTypes = compare
         self._left_condition: Comparer | ClauseInfo = left_condition
         self._right_condition: Comparer | ClauseInfo = right_condition
         self._flags = flags
         self._dialect = dialect
-
-    def set_context(self, context: ClauseContextType) -> None:
-        self._context = context
-        return None
 
     def set_dialect(self, dialect: Dialect) -> None:
         self._dialect = dialect
@@ -77,18 +70,17 @@ class Comparer(Element, IQuery):
         return f"{Comparer.__name__}: {self.query}"
 
     def _create_clause_info(self, cond: ConditionType, dialect: Dialect, **kw) -> Comparer | ClauseInfo:
-        from ormlambda import Column
+        from ormlambda import Column, ColumnProxy
 
         if isinstance(cond, Comparer):
             return cond
-        table = None if not isinstance(cond, Column) else cond.table
+        table = None if not isinstance(cond, Column | ColumnProxy) else cond.table
 
         # it a value that's not depend of any Table
         return ClauseInfo(
             table,
             cond,
             alias_clause=None,
-            context=self._context,
             dialect=dialect,
             **kw,
         )
@@ -121,12 +113,11 @@ class Comparer(Element, IQuery):
         return Comparer(self, other, "OR", **kwargs)
 
     @classmethod
-    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, context: ClauseContextType = None, *, dialect) -> str:
+    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, *, dialect) -> str:
         if not isinstance(comparers, tp.Iterable):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
         if len(comparers) == 1:
             comparer = comparers[0]
-            comparer._context = context
             return comparer.query(dialect)
 
         join_method = cls.__or__ if not restrictive else cls.__and__
@@ -135,10 +126,8 @@ class Comparer(Element, IQuery):
         for i in range(len(comparers) - 1):
             if ini_comparer is None:
                 ini_comparer = comparers[i]
-                ini_comparer._context = context
             right_comparer = comparers[i + 1]
-            right_comparer._context = context
-            new_comparer = join_method(ini_comparer, right_comparer, context=context, dialect=dialect)
+            new_comparer = join_method(ini_comparer, right_comparer, dialect=dialect)
             ini_comparer = new_comparer
         return new_comparer.query(dialect)
 
@@ -148,14 +137,12 @@ class Regex(Comparer):
         self,
         left_condition: ConditionType,
         right_condition: ConditionType,
-        context: ClauseContextType = None,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ):
         super().__init__(
             left_condition=left_condition,
             right_condition=right_condition,
             compare=ConditionEnum.REGEXP.value,
-            context=context,
             flags=flags,  # Pass as a named parameter instead
         )
 
@@ -165,6 +152,5 @@ class Like(Comparer):
         self,
         left_condition: ConditionType,
         right_condition: ConditionType,
-        context: ClauseContextType = None,
     ):
-        super().__init__(left_condition, right_condition, ConditionEnum.LIKE.value, context)
+        super().__init__(left_condition, right_condition, ConditionEnum.LIKE.value)

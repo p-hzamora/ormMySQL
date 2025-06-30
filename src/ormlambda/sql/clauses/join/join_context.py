@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from ormlambda.statements.interfaces.IStatements import IStatements_two_generic
     from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
-    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.common.enums.join_type import JoinType
     from ormlambda.dialects import Dialect
 
@@ -22,13 +21,11 @@ class JoinContext[TParent: Table, TRepo]:
         self,
         statements: IStatements_two_generic[TParent, TRepo],
         joins: tuple,
-        context: ClauseContextType,
         dialect: Dialect,
     ) -> None:
         self._statements = statements
         self._parent: TParent = statements.model
         self._joins: Iterable[tuple[Comparer, JoinType]] = joins
-        self._context: ClauseContextType = context
         self._dialect: Dialect = dialect
 
     def __enter__(self) -> IStatements_two_generic[TParent, TRepo]:
@@ -37,7 +34,6 @@ class JoinContext[TParent: Table, TRepo]:
 
             foreign_key: ForeignKey = ForeignKey(comparer=comparer, clause_name=alias, keep_alive=True, dialect=self._dialect)
             fk_clause.alias_table = foreign_key.get_alias(self._dialect)
-            self._context.add_clause_to_context(fk_clause)
             setattr(self._parent, alias, foreign_key)
 
             # TODOH [x]: We need to preserve the 'foreign_key' variable while inside the 'with' clause.
@@ -56,7 +52,6 @@ class JoinContext[TParent: Table, TRepo]:
             _, attribute = self.get_fk_clause(comparer)
             fk: ForeignKey = getattr(self._parent, attribute)
             delattr(self._parent, attribute)
-            del self._context._table_context[fk.tright]
         return None
 
     def __getattr__(self, name: str) -> TParent:

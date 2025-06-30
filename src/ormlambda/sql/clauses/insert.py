@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import override, Iterable, TYPE_CHECKING
 
 from ormlambda import Table
-from ormlambda import Column
+from ormlambda import Column, ColumnProxy
 
 from ormlambda.sql.clauses.interfaces import IInsert
 from ormlambda.common.abstract_classes import NonQueryBase
@@ -53,7 +53,7 @@ class Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T], ClauseElement)
                 col_values[-1].append(clean_data.to_database)
 
         join_cols = ", ".join(col_names)
-        unknown_rows = f'({", ".join(wildcards)})'  # The number of "%s" must match the dict 'dicc_0' length
+        unknown_rows = f"({', '.join(wildcards)})"  # The number of "%s" must match the dict 'dicc_0' length
 
         self._values = [tuple(x) for x in col_values]
         self._query = f"{self.CLAUSE} {self._model.__table_name__} {f'({join_cols})'} VALUES {unknown_rows}"
@@ -88,7 +88,7 @@ class Insert[T: Table, TRepo](NonQueryBase[T, TRepo], IInsert[T], ClauseElement)
         elif issubclass(values.__class__, Table):
             new_list = []
             for prop in type(values).__dict__.values():
-                if not isinstance(prop, Column):
+                if not isinstance(prop, Column | ColumnProxy):
                     continue
 
                 value = getattr(values, prop.column_name)

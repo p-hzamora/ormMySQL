@@ -5,7 +5,7 @@ from ormlambda import Table, Column, ColumnProxy, TableProxy
 from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
 from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.clause_info import ClauseInfo, AggregateFunctionBase
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda import ForeignKey
 from ormlambda.common.global_checker import GlobalChecker
 
@@ -36,10 +36,6 @@ if tp.TYPE_CHECKING:
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     @tp.overload
     def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType]) -> None: ...
-    @tp.overload
-    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], context: ClauseContextType = ...) -> None: ...
-    @tp.overload
-    def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType], alias_table: str, context: ClauseContextType = ...) -> None: ...
 
     def __init__(
         self,
@@ -47,7 +43,6 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         columns: tuple[ColumnType,...],
         alias_table: str = "{table}",
         *,
-        context: ClauseContextType = ClauseInfoContext(),
         dialect: Dialect,
         **kwargs,
     ) -> None:
@@ -57,7 +52,6 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self._dialect = dialect
         self._columns: tp.Callable[[T], tuple] = columns
         self._all_clauses: list[ClauseInfo | AggregateFunctionBase] = []
-        self._context: ClauseContextType = context if context else ClauseInfoContext()
         self._alias_table: str = alias_table
         self.__clauses_list_generetor()
 
@@ -108,7 +102,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self.kwargs.setdefault("dialect", self._dialect)
         if "dialect" not in self.kwargs:
             raise ValueError("You must specified 'dialect' variable")
-        return classConverter.convert(data, alias_table=self._alias_table, context=self._context, **self.kwargs)
+        return classConverter.convert(data, alias_table=self._alias_table, **self.kwargs)
 
     def __add_clause[TTable: TableType](self, clauses: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:
         if not isinstance(clauses, tp.Iterable):
@@ -134,12 +128,3 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     def all_clauses(self) -> list[ClauseInfo[T]]:
         return self._all_clauses
 
-    @property
-    def context(self) -> tp.Optional[ClauseInfoContext]:
-        return self._context
-
-    @context.setter
-    def context(self, value: ClauseInfoContext) -> None:
-        self._context = value
-        self.__clauses_list_generetor()
-        return None

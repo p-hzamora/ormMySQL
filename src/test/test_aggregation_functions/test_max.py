@@ -7,7 +7,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 
 from ormlambda.sql import functions as func
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
+from ormlambda.sql.context import PATH_CONTEXT
 from test.models import D
 
 from ormlambda.dialects import mysql
@@ -35,7 +35,7 @@ class TestMax(unittest.TestCase):
         self.assertEqual(concat.query(DIALECT), query)
 
     def test_Concat_with_context(self) -> None:
-        context = ClauseInfoContext(table_context={D: "new-d-table"})
+        context = PATH_CONTEXT.add_table_alias(D, "new-d-table")
         concat = MaxMySQL(
             alias_clause="concat-for-table",
             elements=(

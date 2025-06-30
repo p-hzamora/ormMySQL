@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import Type, override, Any, TYPE_CHECKING, Optional
 
-from ormlambda import Table, Column
-from ormlambda.caster.caster import Caster
+from ormlambda import Table, Column, ColumnProxy
 from .where import Where
 from ormlambda.common.abstract_classes import NonQueryBase
 from .interfaces import IUpdate
@@ -61,7 +60,7 @@ class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseEleme
                 if not hasattr(self._model, col):
                     raise UpdateKeyError(self._model, col)
                 col = getattr(self._model, col)
-            if not isinstance(col, Column):
+            if not isinstance(col, Column | ColumnProxy):
                 raise ValueError
 
             if self.__is_valid__(col):

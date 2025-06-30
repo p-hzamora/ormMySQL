@@ -5,22 +5,31 @@ from typing import TYPE_CHECKING, Generator, Literal, Optional, Any, TypedDict, 
 
 
 if TYPE_CHECKING:
+    from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.sql import ForeignKey
     from ormlambda.sql.context import FKChain
+    from ormlambda.sql.column import Column
 
 
 type CurrentPathType = FKChain
 type ForeignKeyRegistryType = dict[str, ForeignKey]
 type QueryMetadataType = dict[str, Any]
+type TableAliasType = dict[str, str]  # table_name -> alias
+type ClauseAliasType = dict[str, str]  # clause_key -> alias
 
-type ContextDictKeys = Literal["current_path", "foreign_key_registry", "query_metadata"]
+# Separate persistent and transient data types
+type PersistentDataKeys = Literal["foreign_key_registry"]
+type TransientDataKeys = Literal["current_path", "query_metadata", "table_aliases", "clause_aliases"]
+type ContextDictKeys = Literal["current_path", "foreign_key_registry", "query_metadata", "table_aliases", "clause_aliases"]
 
 
 class ContextDict(TypedDict):
     current_path: CurrentPathType
-    foreign_key_registry: ForeignKeyRegistryType
-    query_metadata: QueryMetadataType
+    foreign_key_registry: ForeignKeyRegistryType  # PERSISTENT: Survives across queries
+    query_metadata: QueryMetadataType  # TRANSIENT: Reset per query
+    table_aliases: TableAliasType  # TRANSIENT: Reset per query
+    clause_aliases: ClauseAliasType  # TRANSIENT: Reset per query
 
 
 class LocalContext(Protocol):
@@ -33,12 +42,17 @@ class PathContext:
     def __init__(self):
         self._local = threading.local()
 
+    def __repr__(self):
+        return f"{PathContext.__name__}"
+
     @staticmethod
     def _initialize_context() -> ContextDict:
         return {
             "current_path": NO_CURRENT_PATH,
             "foreign_key_registry": {},
             "query_metadata": {},
+            "table_aliases": {},
+            "clause_aliases": {},
         }
 
     def _get_context(self, key: Optional[ContextDictKeys] = None) -> ContextDict:
@@ -68,18 +82,65 @@ class PathContext:
 
         # Store in registry
         if fk not in context["foreign_key_registry"]:
-            context["foreign_key_registry"][f"{fk.tleft}.{fk.tright}"] = fk
+            context["foreign_key_registry"][f"{fk.tleft.__table_name__}.{fk.clause_name}"] = fk
 
         return None
 
     def get_all_foreign_key_accesses(self) -> ForeignKeyRegistryType:
         return self._get_context("foreign_key_registry").copy()
 
+    def get_foreign_key_from_registry(self, key: str) -> Optional[ForeignKey]:
+        """Get a specific ForeignKey from the registry by key"""
+        return self._get_context("foreign_key_registry").get(key, None)
+
+    def remove_foreign_key_from_registry(self, key: str) -> bool:
+        """Remove a ForeignKey from the registry. Returns True if removed, False if not found"""
+        context = self._get_context()
+        if key in context["foreign_key_registry"]:
+            del context["foreign_key_registry"][key]
+            return True
+        return False
+
+    def clear_foreign_key_registry(self) -> None:
+        """Clear only the ForeignKey registry while preserving other context"""
+        context = self._get_context()
+        context["foreign_key_registry"].clear()
+        return None
+
+    def get_foreign_key_registry_size(self) -> int:
+        """Get the number of ForeignKeys in the registry"""
+        return len(self._get_context("foreign_key_registry"))
 
     def clear_context(self):
-        """Clear the current path"""
+        """Clear all context data (legacy method - use clear_all_context for clarity)"""
+        self.clear_all_context()
+
+    def clear_all_context(self) -> None:
+        """Clear all context data including persistent ForeignKey registry"""
         if self.has_context():
             delattr(self._local, "context")
+
+    def clear_transient_context(self) -> None:
+        """Clear only transient context data, preserving ForeignKey registry"""
+        if not self.has_context():
+            return None
+
+        context = self._get_context()
+        # Preserve foreign_key_registry, clear everything else
+        preserved_registry = context["foreign_key_registry"].copy()
+
+        context["current_path"] = NO_CURRENT_PATH
+        context["query_metadata"].clear()
+        context["table_aliases"].clear()
+        context["clause_aliases"].clear()
+        # Restore preserved registry
+        context["foreign_key_registry"] = preserved_registry
+
+        return None
+
+    def reset_query_context(self) -> None:
+        """Reset context for new query while preserving persistent data"""
+        self.clear_transient_context()
 
     def has_context(self) -> bool:
         return hasattr(self._local, "context")
@@ -97,14 +158,25 @@ class PathContext:
             yield self
 
         finally:
-            # Restore old context or clear if none existed
+            # Restore old context or use selective clearing to preserve FK registry
             if old_context is not None:
                 self._set_context(old_context)
             else:
-                self.clear_context()
+                # Use selective clearing to preserve foreign_key_registry
+                self.reset_query_context()
 
     def initialize_context_with_table(self, table: Optional[Table] = None) -> None:
+        # Preserve foreign_key_registry if context already exists
+        preserved_registry = {}
+        if self.has_context():
+            preserved_registry = self._get_context("foreign_key_registry").copy()
+
         self._set_context(self._initialize_context())
+
+        # Restore preserved registry
+        if preserved_registry:
+            context = self._get_context()
+            context["foreign_key_registry"] = preserved_registry
 
         if not table:
             return None
@@ -116,6 +188,83 @@ class PathContext:
     def reset_current_path(self, table):
         initial_path = FKChain(table, [])
         self.set_current_path(initial_path)
+        return None
+
+    #  FIXME [x]: Alias Management Methods (replacing ClauseInfoContext functionality)
+    def add_table_alias(self, table: Table, alias: str) -> None:
+        """Add a table alias to the context"""
+        if not table or not alias:
+            return None
+
+        context = self._get_context()
+        table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
+        context["table_aliases"][table_key] = alias
+        return None
+
+    def get_table_alias(self, table: Table) -> Optional[str]:
+        """Get a table alias from the context"""
+        if not table:
+            return None
+
+        context = self._get_context()
+        table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
+        return context["table_aliases"].get(table_key, None)
+
+    def add_clause_alias(self, table: Table, column: Column, clause_type: type, alias: str) -> None:
+        """Add a clause alias to the context"""
+        if not all([table, column, clause_type, alias]):
+            return None
+
+        context = self._get_context()
+        table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
+        column_key = column.column_name if hasattr(column, "column_name") else str(column)
+        clause_key = f"{table_key}.{column_key}.{clause_type.__name__}"
+        context["clause_aliases"][clause_key] = alias
+        return None
+
+    def get_clause_alias(self, table: Table, column: Column, clause_type: type) -> Optional[str]:
+        """Get a clause alias from the context"""
+        if not all([table, column, clause_type]):
+            return None
+
+        context = self._get_context()
+        table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
+        column_key = column.column_name if hasattr(column, "column_name") else str(column)
+        clause_key = f"{table_key}.{column_key}.{clause_type.__name__}"
+        return context["clause_aliases"].get(clause_key, None)
+
+    def add_clause_to_context(self, clause_info: ClauseInfo) -> None:
+        """Add a ClauseInfo object's aliases to the context - compatibility method"""
+        if not clause_info:
+            return None
+
+        # Add table alias if available
+        if hasattr(clause_info, "table") and hasattr(clause_info, "_alias_table"):
+            table = clause_info.table
+            alias_table = clause_info._alias_table
+            if table and alias_table:
+                self.add_table_alias(table, alias_table)
+
+        # Add clause alias if available
+        if hasattr(clause_info, "table") and hasattr(clause_info, "column") and hasattr(clause_info, "_alias_clause"):
+            table = clause_info.table
+            column = clause_info.column
+            alias_clause = clause_info._alias_clause
+            if table and column and alias_clause:
+                self.add_clause_alias(table, column, type(clause_info), alias_clause)
+
+        return None
+
+    def update_aliases(self, table_aliases: Optional[dict] = None, clause_aliases: Optional[dict] = None) -> None:
+        """Update context with alias dictionaries - compatibility method"""
+        context = self._get_context()
+
+        if table_aliases:
+            context["table_aliases"].update(table_aliases)
+
+        if clause_aliases:
+            context["clause_aliases"].update(clause_aliases)
+
         return None
 
 

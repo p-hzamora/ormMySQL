@@ -10,8 +10,8 @@ class Having(Where):
 
     __visit_name__ = "having"
 
-    def __init__(self, *comparer, restrictive=True, context=None, **kw):
-        super().__init__(*comparer, restrictive=restrictive, context=context, **kw)
+    def __init__(self, *comparer, restrictive=True, **kw):
+        super().__init__(*comparer, restrictive=restrictive, **kw)
 
     @staticmethod
     def FUNCTION_NAME() -> str:

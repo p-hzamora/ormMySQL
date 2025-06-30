@@ -11,13 +11,16 @@ from shapely import Point
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
+from ormlambda.common.global_checker import GlobalChecker
+
 if TYPE_CHECKING:
     from ormlambda.sql.clause_info import AggregateFunctionBase
     from ormlambda.dialects import Dialect
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.dialects.mysql.clauses.ST_AsText import ST_AsText
 from ormlambda.dialects.mysql.clauses.ST_Contains import ST_Contains
-from ormlambda.sql.clause_info import ClauseInfo, ClauseInfoContext
+from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.context import PATH_CONTEXT
 
 from ormlambda.sql import functions as func
 from test.models import A, C, TableType
@@ -31,6 +34,10 @@ def ClauseInfoMySQL[T](*args, **kwargs) -> ClauseInfo[T]:
 
 
 class TestClauseInfo(unittest.TestCase):
+    def setUp(self):
+        """Clear PATH_CONTEXT before each test to ensure clean state"""
+        PATH_CONTEXT.clear_all_context()
+
     def test_passing_only_table(self):
         ci = ClauseInfoMySQL(A)
         self.assertEqual(ci.query(DIALECT), "a")
@@ -171,8 +178,8 @@ class TestClauseInfo(unittest.TestCase):
         )
     )
     def test_max_function(self, fn: Type[AggregateFunctionBase], result: str, dialect: Dialect):
-        ci = fn(A.data_a, context=ClauseInfoContext(table_context={A: "new_table"}), dialect=dialect)
-        self.assertEqual(ci.query(DIALECT), f"{result.upper()}(`new_table`.data_a) AS `{result}`")
+        ci = fn(A.data_a, dialect=dialect)
+        self.assertEqual(ci.query(DIALECT), f"{result.upper()}(a.data_a) AS `{result}`")
 
     def test_max_function_with_clause_alias(self):
         ci = func.Max(A.data_a, alias_clause="alias-clause", dialect=DIALECT)
@@ -246,49 +253,29 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query(DIALECT), "b.pk_b, b.data_b, b.fk_a, b.data")
 
 
-class TestContextClauseInfo(unittest.TestCase):
-    def test_context(self):
-        context = ClauseInfoContext()
-        ci_parent_dataC = ClauseInfoMySQL(
-            table=C,
-            column=C.data_c,
-            alias_table="alias-for-{table}",
-            alias_clause="{column}~alias",
-            context=context,
-        )
-        ci_column_dataC = ClauseInfoMySQL(C, C.data_c, context=context)
-        ci_table = ClauseInfoMySQL(C, C, context=context)
+# NOTE: Context-related tests have been removed because ClauseInfoContext no longer exists.
+# Context management is now handled automatically by the global PATH_CONTEXT.
+# ClauseInfo instances automatically register their aliases with PATH_CONTEXT when created.
 
-        ci_column_fkB_with_alias_clause = ClauseInfoMySQL(C, C.fk_b, alias_clause="{column}-random", context=context)
 
-        self.assertEqual(ci_column_fkB_with_alias_clause.alias_clause, "fk_b-random")
-        self.assertEqual(ci_parent_dataC.alias_table, "alias-for-c")
-        self.assertEqual(ci_parent_dataC.alias_table, ci_table.alias_table)
+class TestPathContextIntegration(unittest.TestCase):
+    def setUp(self):
+        """Clear PATH_CONTEXT before each test to ensure clean state"""
+        PATH_CONTEXT.clear_all_context()
 
-        self.assertEqual(ci_parent_dataC.alias_clause, "data_c~alias")
-        self.assertEqual(ci_parent_dataC.alias_clause, ci_column_dataC.alias_clause)
-
-    def test_table_context(self) -> None:
-        context = ClauseInfoContext()
-        parent = ClauseInfoMySQL(C, None, alias_table="my-custom-{table}-table", context=context)
-        child = ClauseInfoMySQL(C, C.data_c, alias_clause="{table}", context=context)
-        child_with_his_own_alias = ClauseInfoMySQL(C, alias_table="other-alias", context=context)
-
-        self.assertEqual(child.alias_clause, "c")
-        self.assertEqual(child.alias_table, parent.alias_table)
-        self.assertEqual(child_with_his_own_alias.alias_table, parent.alias_table)
-
-    def test_use_context_even_if_clause_is_not_specified(self) -> None:
-        context = ClauseInfoContext()
-        parent = ClauseInfoMySQL(C, alias_table="my-custom-alias", context=context)
-
-        child = ClauseInfoMySQL(C, context=context)
-
-        self.assertEqual(parent.alias_table, "my-custom-alias")
-        self.assertEqual(parent.alias_table, child.alias_table)
-
-    def test_alias_clause_NULL_when_no_column_is_specified(self):
+    def test_AAalias_clause_NULL_when_no_column_is_specified(self):
         self.assertEqual(ClauseInfoMySQL(A).column, "%s")
+
+
+class TestClauseInfoUsingColumnProxy(unittest.TestCase):
+    def setUp(self):
+        """Clear PATH_CONTEXT before each test to ensure clean state"""
+        PATH_CONTEXT.clear_all_context()
+
+    def test_passing_callable_alias_clause(self):
+        column_proxy = GlobalChecker.resolved_callback_object(lambda x: x.name_a, A)
+        ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
+        self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
 
 
 if __name__ == "__main__":

@@ -3,10 +3,11 @@ from pathlib import Path
 import unittest
 
 
+
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
+from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda.sql import functions as func
 from test.models import D, C
 
@@ -16,7 +17,7 @@ DIALECT = mysql.dialect
 
 
 def ConcatMySQL(*args, **kwargs):
-    return func.Concat(*args, **kwargs, dialect=DIALECT)
+    return func.Concat(*args, **kwargs)
 
 
 class TestConcat(unittest.TestCase):
@@ -45,8 +46,8 @@ class TestConcat(unittest.TestCase):
         self.assertEqual(concat.query(DIALECT), mssg)
 
     def test_concat_passing_ForeignKey_with_context(self):
-        ctx = ClauseInfoContext(table_context={C: "alias-for-c"})
-        concat = ConcatMySQL(values=(D.C), context=ctx)
+        PATH_CONTEXT.add_table_alias(C,'alias-for-c')
+        concat = ConcatMySQL(values=(D.C))
         mssg: str = "CONCAT(`alias-for-c`.pk_c, `alias-for-c`.data_c, `alias-for-c`.fk_b) AS `concat`"
         self.assertEqual(concat.query(DIALECT), mssg)
 

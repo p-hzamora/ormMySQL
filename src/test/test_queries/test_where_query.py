@@ -3,10 +3,11 @@ import sys
 from pathlib import Path
 
 
+
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext  # noqa: E402
+from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda.sql.comparer import Regex, Like  # noqa: E402
 from test.models import (  # noqa: E402
     Address,
@@ -28,7 +29,7 @@ ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026
 
 class TestWhere(unittest.TestCase):
     def tearDown(self):
-        ForeignKey.stored_calls.clear()
+        PATH_CONTEXT.clear_all_context()
 
     def test_one_where(self):
         w = Where(Address.address == 10)
@@ -172,13 +173,10 @@ class TestCondition(unittest.TestCase):
         self.assertEqual(cond.query(DIALECT), "WHERE city.city > 'var_string'")
 
     def test_pass_multiples_comparers(self):
-        ctx = ClauseInfoContext(
-            table_context={
-                Address: "address",
-                City: "city",
-                Country: "country",
-            }
-        )
+        PATH_CONTEXT.add_table_alias(Address, "address")
+        PATH_CONTEXT.add_table_alias(City, "city")
+        PATH_CONTEXT.add_table_alias(Country, "country")
+
         cond = Where(
             Address.address_id >= 40,
             Address.address_id < 100,
@@ -186,7 +184,6 @@ class TestCondition(unittest.TestCase):
             Address.City.city_id < 100,
             Address.City.Country.country_id >= 60,
             Address.City.Country.country_id < 100,
-            context=ctx,
         )
         self.assertEqual(cond.query(DIALECT), "WHERE `address`.address_id >= 40 AND `address`.address_id < 100 AND `city`.city_id >= 30 AND `city`.city_id < 100 AND `country`.country_id >= 60 AND `country`.country_id < 100")
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
 from ormlambda.sql.types import ColumnType
 from ormlambda.sql.clause_info import AggregateFunctionBase
 
@@ -23,7 +22,6 @@ class Order(AggregateFunctionBase, ClauseElement):
         self,
         column: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
         order_type: tp.Iterable[OrderType],
-        context: ClauseContextType = None,
         *,
         dialect: Dialect,
         **kw,
@@ -31,7 +29,6 @@ class Order(AggregateFunctionBase, ClauseElement):
         super().__init__(
             table=None,
             column=column,
-            context=context,
             dialect=dialect,
             **kw,
         )

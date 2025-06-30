@@ -7,7 +7,6 @@ from ormlambda.sql.elements import ClauseElement
 
 if tp.TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.sql.types import TableType
     from ormlambda.sql.types import ColumnType
     from ormlambda.sql.types import AliasType
@@ -22,7 +21,6 @@ class Alias[T: Table](ClauseInfo[T], ClauseElement):
         column: tp.Optional[ColumnType[TProp]] = None,
         alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
         alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
-        context: ClauseContextType = None,
         keep_asterisk: bool = False,
         preserve_context: bool = False,
         **kw,
@@ -34,7 +32,6 @@ class Alias[T: Table](ClauseInfo[T], ClauseElement):
             column,
             alias_table=alias_table,
             alias_clause=alias_clause,
-            context=context,
             keep_asterisk=keep_asterisk,
             preserve_context=preserve_context,
             dtype=None,

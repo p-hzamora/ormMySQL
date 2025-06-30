@@ -10,7 +10,6 @@ from ormlambda.sql.types import (
 )
 
 
-from ..clause_info_context import ClauseContextType
 
 
 class IClauseInfo[T: Table](IQuery):
@@ -29,9 +28,6 @@ class IClauseInfo[T: Table](IQuery):
     @property
     @abc.abstractmethod
     def unresolved_column(self) -> ColumnType: ...
-    @property
-    @abc.abstractmethod
-    def context(self) -> ClauseContextType: ...
     @property
     @abc.abstractmethod
     def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]: ...
