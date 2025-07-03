@@ -561,6 +561,12 @@ class BLOB(LargeBinary):
     __visit_name__ = "BLOB"
 
 
+class BINARY(_Binary):
+    """The SQL BINARY type."""
+
+    __visit_name__ = "BINARY"
+
+
 class VARCHAR(String):
     __visit_name__ = "VARCHAR"
 
