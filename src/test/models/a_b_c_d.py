@@ -1,19 +1,18 @@
-from datetime import datetime
 import sys
 from pathlib import Path
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda import Table, Column, ForeignKey  # noqa: E402
-
+from ormlambda import INT, TEXT, DATETIME
 
 class A(Table):
     __table_name__ = "a"
-    pk_a: Column[int] = Column(int, is_primary_key=True)
-    name_a: Column[str] = Column(str)
-    data_a: Column[str] = Column(str)
-    date_a: Column[datetime] = Column(datetime)
-    value: Column[str] = Column(str)
+    pk_a: Column[INT] = Column(INT(), is_primary_key=True)
+    name_a: Column[TEXT] = Column(TEXT())
+    data_a: Column[TEXT] = Column(TEXT())
+    date_a: Column[DATETIME] = Column(DATETIME())
+    value: Column[TEXT] = Column(TEXT())
 
 
 class B(Table):
