@@ -1,6 +1,6 @@
 from __future__ import annotations
 import abc
-from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
+from typing import Annotated, Any, ClassVar, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
 from ormlambda.sql.type_api import TypeEngine
@@ -24,10 +24,13 @@ from ormlambda.types import (
 
 
 class Column[TProp]:
-    PRIVATE_CHAR: str = "_"
+    PRIVATE_CHAR: ClassVar[str] = "_"
+
+    _dbtype: Optional[TypeEngine]
 
     __slots__ = (
-        "dtype",
+        "_dtype",
+        "_dbtype",
         "column_name",
         "table",
         "is_primary_key",
@@ -161,6 +164,23 @@ class Column[TProp]:
                     elif isinstance(meta, NotNull):
                         self.is_not_null = True
         return None
+
+    @property
+    def dtype(self) -> Type[TProp]:
+        return self._dtype
+
+    @dtype.setter
+    def dtype(self, value: Type[TProp] | TypeEngine) -> None:
+        if isinstance(value, TypeEngine):
+            self._dtype = value.python_type
+            self._dbtype = value
+        else:
+            self._dtype = value
+            self._dbtype = None
+
+    @property
+    def dbtype(self) -> TypeEngine[TProp]:
+        return self._dbtype if self._dbtype else self.dtype
 
     @abc.abstractmethod
     def __comparer_creator(self, other: ColumnType, compare: ComparerType) -> Comparer:
