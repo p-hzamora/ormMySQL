@@ -10,6 +10,7 @@ import ormlambda.util as util
 from uuid import UUID as _python_UUID
 from shapely import Point as _python_Point
 
+
 class _NoArg(enum.Enum):
     NO_ARG = 0
 
@@ -391,7 +392,7 @@ class Enum(String, TypeEngine[EnumType]):
             enum_args = get_args(pt)
             bad_args = [arg for arg in enum_args if not isinstance(arg, str)]
             if bad_args:
-                raise ValueError(f"Can't create string-based Enum datatype from non-string " f"values: {', '.join(repr(x) for x in bad_args)}.  Please " f"provide an explicit Enum datatype for this Python type")
+                raise ValueError(f"Can't create string-based Enum datatype from non-string values: {', '.join(repr(x) for x in bad_args)}.  Please provide an explicit Enum datatype for this Python type")
             native_enum = False
             return enum_args, native_enum
 
@@ -407,7 +408,7 @@ class Enum(String, TypeEngine[EnumType]):
         elif util.is_pep695(python_type):
             value = python_type.__value__
             if not util.is_literal(value):
-                raise ValueError(f"Can't associate TypeAliasType '{python_type}' to an " "Enum since it's not a direct alias of a Literal. Only " "aliases in this form `type my_alias = Literal['a', " "'b']` are supported when generating Enums.")
+                raise ValueError(f"Can't associate TypeAliasType '{python_type}' to an Enum since it's not a direct alias of a Literal. Only aliases in this form `type my_alias = Literal['a', 'b']` are supported when generating Enums.")
             enum_args, native_enum = process_literal(value)
 
         elif isinstance(python_type, type) and issubclass(python_type, enum.Enum):
@@ -439,13 +440,15 @@ class Enum(String, TypeEngine[EnumType]):
 
         self._valid_lookup.update([(value, self._valid_lookup[self._object_lookup[value]]) for value in values])
 
+
 class Point(TypeEngine[_python_Point]):
-    __visit_name__ = 'point'
+    __visit_name__ = "point"
 
     @property
-    def python_type(self)->Type[_python_Point]:
+    def python_type(self) -> Type[_python_Point]:
         return _python_Point
-    
+
+
 class JSON(TypeEngine[Any]):
     """JSON data type."""
 
@@ -597,6 +600,7 @@ class VARBINARY(Varbinary):
 class ENUM(Enum):
     __visit_name__ = "ENUM"
 
+
 class POINT(Point):
     __visit_name__ = "POINT"
 
@@ -623,13 +627,15 @@ _type_dicc: dict[Any, TypeEngine[Any]] = {
     float: Float(),
     NoneType: NULLTYPE,
     dt.datetime: Datetime(timezone=False),
+    dt.date: DATE(),
     bytes: _BINARY,
     bytearray: _BINARY,
     bool: Boolean(),
     enum.Enum: _ENUM,
     Literal: _ENUM,
     _python_UUID: UUID(),
-    _python_Point: POINT()
+    _python_Point: POINT(),
+    decimal.Decimal: DECIMAL(),
 }
 # enderegion
 
