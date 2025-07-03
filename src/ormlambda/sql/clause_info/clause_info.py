@@ -9,6 +9,7 @@ from ormlambda.sql.types import (
     TableType,
     ColumnType,
     AliasType,
+    TypeEngine,
 )
 from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
@@ -161,6 +162,18 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         if isinstance(self._column, Column):
             return self._column.dtype
+
+        if isinstance(self._column, type):
+            return self._column
+        return type(self._column)
+
+    @property
+    def dbtype(self)->tp.Optional[TypeEngine]:
+        if self._dtype is not None:
+            return self._dtype
+
+        if isinstance(self._column, Column):
+            return self._column.dbtype
 
         if isinstance(self._column, type):
             return self._column
