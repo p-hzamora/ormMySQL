@@ -32,7 +32,7 @@ class _NumericType(_NumericCommonType, sqltypes.Numeric): ...
 class _FloatType(_NumericCommonType, sqltypes.Float):
     def __init__(self, precision=None, scale=None, asdecimal=True, **kw):
         if isinstance(self, (REAL, DOUBLE)) and ((precision is None and scale is not None) or (precision is not None and scale is None)):
-            raise AttributeError("You must specify both precision and scale or omit " "both altogether.")
+            raise AttributeError("You must specify both precision and scale or omit both altogether.")
         super().__init__(precision=precision, asdecimal=asdecimal, **kw)
         self.scale = scale
 
@@ -41,6 +41,9 @@ class _IntegerType(_NumericCommonType, sqltypes.Integer):
     def __init__(self, display_width=None, **kw):
         self.display_width = display_width
         super().__init__(**kw)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.display_width})"
 
 
 class _StringType(sqltypes.String):

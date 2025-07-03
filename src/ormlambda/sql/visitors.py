@@ -72,3 +72,6 @@ class Element:
                 # return visitor.visit_unsupported_compilation(self, err, **kw)  # type: ignore  # noqa: E501
 
         cls._compiler_dispatch = _compiler_dispatch
+
+    def __repr__(self):
+        return f"{Element.__name__}: {self.__visit_name__}"

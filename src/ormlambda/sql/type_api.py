@@ -33,3 +33,6 @@ class TypeEngine[T: Any](Element, abc.ABC):
         if _coerced_type is NULLTYPE:
             return self
         return _coerced_type
+
+    def __repr__(self):
+        return f"{TypeEngine.__name__}: {super().__repr__()}"
