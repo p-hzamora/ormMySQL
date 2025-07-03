@@ -10,7 +10,10 @@ if TYPE_CHECKING:
 
 from .types import (
     _NumericType,
+    _NumericCommonType,
     _StringType,
+    VARCHAR,
+    CHAR,
     NUMERIC,
     DECIMAL,
     DOUBLE,
@@ -36,7 +39,15 @@ from .types import (
     MEDIUMBLOB,
     LONGBLOB,
 )
-from ormlambda.sql.sqltypes import BLOB
+from ormlambda.sql.sqltypes import (
+    LARGEBINARY,
+    BLOB,
+    BOOLEAN,
+    DATE,
+    UUID,
+    VARBINARY,
+)
+
 
 from ormlambda.databases.my_sql import MySQLRepository, MySQLCaster
 
@@ -184,28 +195,22 @@ class MySQLTypeCompiler(compiler.GenericTypeCompiler):
             return " ".join([c for c in ("NATIONAL", spec, collation) if c is not None])
         return " ".join([c for c in (spec, charset, collation) if c is not None])
 
-    def visit_INTEGER(self, type_: INTEGER, **kw):
-        if self.mysql_type(type_) and type_.display_width is not None:
-            return self._extend_numeric(
-                type_,
-                f"INTEGER(%({type_.display_width})s)",
-            )
-        else:
-            return self._extend_numeric(type_, "INTEGER")
-
-    def visit_VARCHAR(self, type_, **kw):
-        if type_.length is None:
-            raise ValueError("VARCHAR requires a length on dialect %s" % self.dialect.name)
-        return self._extend_string(type_, {}, "VARCHAR(%d)" % type_.length)
-
-    def visit_CHAR(self, type_, **kw):
-        if type_.length is not None:
-            return self._extend_string(type_, {}, "CHAR(%(length)s)" % {"length": type_.length})
-        else:
-            return self._extend_string(type_, {}, "CHAR")
+    def _mysql_type(self, type_, **kw):
+        return isinstance(type, _StringType | _NumericCommonType)
 
     def visit_NUMERIC(self, type_: NUMERIC, **kw):
-        return "NUMERIC"
+        if type_.precision is None:
+            return self._extend_numeric(type_, "NUMERIC")
+        elif type_.scale is None:
+            return self._extend_numeric(
+                type_,
+                f"NUMERIC({type_.precision})",
+            )
+        else:
+            return self._extend_numeric(
+                type_,
+                f"NUMERIC({type_.precision}, {type_.scale})",
+            )
 
     def visit_DECIMAL(self, type_: DECIMAL, **kw):
         if type_.precision is None:
@@ -216,77 +221,212 @@ class MySQLTypeCompiler(compiler.GenericTypeCompiler):
                 f"DECIMAL({type_.precision})",
             )
         else:
-            return self._extend_numeric(type_, f"DECIMAL({type_.precision}, {type_.scale})")
+            return self._extend_numeric(
+                type_,
+                f"DECIMAL({type_.precision}, {type_.scale})",
+            )
 
     def visit_DOUBLE(self, type_: DOUBLE, **kw):
-        return "DOUBLE"
+        if type_.precision is not None and type_.scale is not None:
+            return self._extend_numeric(
+                type_,
+                f"DOUBLE({type_.precision}, {type_.scale})",
+            )
+        else:
+            return self._extend_numeric(type_, "DOUBLE")
 
     def visit_REAL(self, type_: REAL, **kw):
-        return "REAL"
+        if type_.precision is not None and type_.scale is not None:
+            return self._extend_numeric(
+                type_,
+                f"REAL({type_.precision}, {type_.scale})",
+            )
+        else:
+            return self._extend_numeric(type_, "REAL")
 
     def visit_FLOAT(self, type_: FLOAT, **kw):
-        return "FLOAT"
+        if self._mysql_type(type_) and type_.scale is not None and type_.precision is not None:
+            return self._extend_numeric(type_, f"FLOAT({type_.precision}, {type_.scale})")
+        elif type_.precision is not None:
+            return self._extend_numeric(type_, f"FLOAT({type_.precision})")
+        else:
+            return self._extend_numeric(type_, "FLOAT")
+
+    def visit_INTEGER(self, type_: INTEGER, **kw):
+        if self._mysql_type(type_) and type_.display_width is not None:
+            return self._extend_numeric(
+                type_,
+                f"INTEGER({type_.display_width})",
+            )
+        else:
+            return self._extend_numeric(type_, "INTEGER")
 
     def visit_BIGINT(self, type_: BIGINT, **kw):
-        return "BIGINT"
+        if self._mysql_type(type_) and type_.display_width is not None:
+            return self._extend_numeric(
+                type_,
+                f"BIGINT({type_.display_width})",
+            )
+        else:
+            return self._extend_numeric(type_, "BIGINT")
 
     def visit_MEDIUMINT(self, type_: MEDIUMINT, **kw):
-        return "MEDIUMINT"
+        if self._mysql_type(type_) and type_.display_width is not None:
+            return self._extend_numeric(
+                type_,
+                f"MEDIUMINT({type_.display_width})",
+            )
+        else:
+            return self._extend_numeric(type_, "MEDIUMINT")
 
     def visit_TINYINT(self, type_: TINYINT, **kw):
-        return "TINYINT"
+        if self._mysql_type(type_) and type_.display_width is not None:
+            return self._extend_numeric(type_, f"TINYINT({type_.display_width})")
+        else:
+            return self._extend_numeric(type_, "TINYINT")
 
     def visit_SMALLINT(self, type_: SMALLINT, **kw):
-        return "SMALLINT"
+        if self._mysql_type(type_) and type_.display_width is not None:
+            return self._extend_numeric(
+                type_,
+                f"SMALLINT({type_.display_width})",
+            )
+        else:
+            return self._extend_numeric(type_, "SMALLINT")
 
     def visit_BIT(self, type_: BIT, **kw):
-        return "BIT"
-
-    def visit_TIME(self, type_: TIME, **kw):
-        return "TIME"
-
-    def visit_TIMESTAMP(self, type_: TIMESTAMP, **kw):
-        return "TIMESTAMP"
+        if type_.length is not None:
+            return f"BIT({type_.length})"
+        else:
+            return "BIT"
 
     def visit_DATETIME(self, type_: DATETIME, **kw):
-        return "DATETIME"
+        if getattr(type_, "fsp", None):
+            return f"DATETIME({type_.fsp})"
+        else:
+            return "DATETIME"
+
+    def visit_DATE(self, type_: DATE, **kw):
+        return "DATE"
+
+    def visit_TIME(self, type_: TIME, **kw):
+        if getattr(type_, "fsp", None):
+            return f"TIME({type_.fsp})"
+        else:
+            return "TIME"
+
+    def visit_TIMESTAMP(self, type_: TIMESTAMP, **kw):
+        if getattr(type_, "fsp", None):
+            return f"TIMESTAMP({type_.fsp})"
+        else:
+            return "TIMESTAMP"
 
     def visit_YEAR(self, type_: YEAR, **kw):
-        return "YEAR"
+        if type_.display_width is None:
+            return "YEAR"
+        else:
+            return f"YEAR({type_.display_width})"
 
     def visit_TEXT(self, type_: TEXT, **kw):
         if type_.length is not None:
             return self._extend_string(type_, {}, f"TEXT({type_.length})")
-        return self._extend_string(type_, {}, "TEXT")
+        else:
+            return self._extend_string(type_, {}, "TEXT")
 
     def visit_TINYTEXT(self, type_: TINYTEXT, **kw):
-        return "TINYTEXT"
+        return self._extend_string(type_, {}, "TINYTEXT")
 
     def visit_MEDIUMTEXT(self, type_: MEDIUMTEXT, **kw):
-        return "MEDIUMTEXT"
+        return self._extend_string(type_, {}, "MEDIUMTEXT")
 
     def visit_LONGTEXT(self, type_: LONGTEXT, **kw):
-        return "LONGTEXT"
+        return self._extend_string(type_, {}, "LONGTEXT")
+
+    def visit_VARCHAR(self, type_: VARCHAR, **kw):
+        if type_.length is not None:
+            return self._extend_string(type_, {}, f"VARCHAR({type_.length})")
+        else:
+            raise ValueError(f"VARCHAR requires a length on dialect {self.dialect.name}")
+
+    def visit_CHAR(self, type_: CHAR, **kw):
+        if type_.length is not None:
+            return self._extend_string(type_, {}, f"CHAR({type_.length})")
+        else:
+            return self._extend_string(type_, {}, "CHAR")
 
     def visit_NVARCHAR(self, type_: NVARCHAR, **kw):
-        return "NVARCHAR"
+        # We'll actually generate the equiv. "NATIONAL VARCHAR" instead
+        # of "NVARCHAR".
+        if type_.length is not None:
+            return self._extend_string(
+                type_,
+                {"national": True},
+                f"VARCHAR({type_.length})",
+            )
+        else:
+            raise ValueError(f"NVARCHAR requires a length on dialect {self.dialect.name}")
 
     def visit_NCHAR(self, type_: NCHAR, **kw):
-        return "NCHAR"
+        # We'll actually generate the equiv.
+        # "NATIONAL CHAR" instead of "NCHAR".
+        if type_.length is not None:
+            return self._extend_string(
+                type_,
+                {"national": True},
+                f"CHAR({type_.length})",
+            )
+        else:
+            return self._extend_string(type_, {"national": True}, "CHAR")
+
+    def visit_UUID(self, type_: UUID, **kw):
+        return "UUID"
+
+    def visit_VARBINARY(self, type_: VARBINARY, **kw):
+        return f"VARBINARY({type_.length})"
+
+    def visit_JSON(self, type_, **kw):
+        return "JSON"
+
+    def visit_large_binary(self, type_: LARGEBINARY, **kw):
+        return self.visit_BLOB(type_)
+
+    def visit_enum(self, type_, **kw):
+        if not type_.native_enum:
+            return super().visit_enum(type_)
+        else:
+            return self.visit_ENUM(type_, type_.enums)
+
+    def visit_BLOB(self, type_: BLOB, **kw):
+        if type_.length is not None:
+            return f"BLOB({type_.length})"
+        else:
+            return "BLOB"
 
     def visit_TINYBLOB(self, type_: TINYBLOB, **kw):
         return "TINYBLOB"
-
-    def visit_BLOB(self, type_: BLOB, **kw) -> str:
-        blob = "BLOB"
-        blob += f"({type_.length})" if type_.length is not None else ""
-        return blob
 
     def visit_MEDIUMBLOB(self, type_: MEDIUMBLOB, **kw):
         return "MEDIUMBLOB"
 
     def visit_LONGBLOB(self, type_: LONGBLOB, **kw):
         return "LONGBLOB"
+
+    def _visit_enumerated_values(self, name, type_, enumerated_values):
+        quoted_enums = []
+        for e in enumerated_values:
+            if self.dialect.identifier_preparer._double_percents:
+                e = e.replace("%", "%%")
+            quoted_enums.append(f"'{e.replace("'", "''")}'")
+        return self._extend_string(type_, {}, f"{name}({','.join(quoted_enums)})")
+
+    def visit_ENUM(self, type_, **kw):
+        return self._visit_enumerated_values("ENUM", type_, type_.enums)
+
+    def visit_SET(self, type_, **kw):
+        return self._visit_enumerated_values("SET", type_, type_.values)
+
+    def visit_BOOLEAN(self, type_: BOOLEAN, **kw):
+        return "BOOL"
 
 
 class MySQLDialect(default.DefaultDialect):
