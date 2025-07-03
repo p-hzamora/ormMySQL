@@ -1,4 +1,3 @@
-
 from ormlambda import Column, Table
 from ormlambda import DECIMAL, DATE, DATETIME, POINT, INT, VARCHAR, FLOAT
 
@@ -13,4 +12,4 @@ class TableType(Table):
     points: Column[POINT] = Column(POINT())
     datetimes: Column[DATETIME] = Column(DATETIME())
     dates: Column[DATE] = Column(DATE())
-    decimals: Column[DECIMAL] = Column(DECIMAL(precision=5,scale=2))
+    decimals: Column[DECIMAL] = Column(DECIMAL(precision=5, scale=2))

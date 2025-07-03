@@ -103,6 +103,22 @@ class TestClauseInfo(unittest.TestCase):
         ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
         self.assertEqual(ci.query(DIALECT), f"a.{string_col} AS `{result.__name__}`")
 
+    @parameterized.expand(
+        (
+            (A.pk_a, "pk_a", "INTEGER"),
+            (A.name_a, "name_a", "TEXT"),
+            (A.data_a, "data_a", "TEXT"),
+            (A.date_a, "date_a", 'DATETIME'),
+            (A.value, "value", "TEXT"),
+        )
+    )
+    def test_custom_message_placeholder(self, column, string_col: str, result: object):
+        def message_placeholder(ci: ClauseInfo):
+            return f"{type(ci.dbtype).__visit_name__}~" +"{column}"
+
+        ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
+        self.assertEqual(ci.query(DIALECT), f"a.{string_col} AS `{result}~{string_col}`")
+
     def test_passing_callable_alias_table(self):
         ci = ClauseInfoMySQL(A, A.date_a, alias_table=lambda x: "custom_alias_for_{table}_table")
         self.assertEqual(ci.query(DIALECT), "`custom_alias_for_a_table`.date_a")

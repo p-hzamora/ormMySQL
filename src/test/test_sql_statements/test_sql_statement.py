@@ -567,7 +567,7 @@ class TestAggregateFunctions(unittest.TestCase):
                 x.City.Country.last_update,
             ),
             flavour=dict,
-            alias=lambda x: "{table}~{column}" + f"[{x.dtype.python_type.__name__}]",
+            alias=lambda x: "{table}~{column}" + f"[{x.dbtype.python_type.__name__}]",
         )
         EXPECTED = {
             "address~last_update[datetime]": datetime(2014, 9, 25, 22, 29, 59),
