@@ -46,6 +46,7 @@ from ormlambda.sql.sqltypes import (
     DATE,
     UUID,
     VARBINARY,
+    BINARY,
 )
 
 
