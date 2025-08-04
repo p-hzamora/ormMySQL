@@ -159,14 +159,10 @@ class Table(metaclass=TableMeta):
         return [ForeignKey.MAPPED[x].table_object for x in order_table]
 
     def __eq__(self, __value: Any) -> bool:
-        if isinstance(__value, Table):
-            return all(
-                (
-                    self.__table_name__ == __value.__table_name__,
-                    tuple(self.to_dict().items()),
-                )
-            )
-        return False
+        return hash(self) == hash(__value)
+
+    def __hash__(self):
+        return hash((self.__table_name__, *list(self.to_dict().items())))
 
     @classmethod
     def table_alias(cls, column: Optional[str] = None) -> str:
