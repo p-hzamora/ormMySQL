@@ -103,7 +103,7 @@ class TestSQLStatements(unittest.TestCase):
                 TestTable.Col13: 13,
             }
         )
-        theorical_result = create_instance_of_TestTable(0)[0]
+        theorical_result = instance[2]
         theorical_result.Col2 = 2
         theorical_result.Col5 = 5
         theorical_result.Col13 = 13
