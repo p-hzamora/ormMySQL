@@ -231,3 +231,7 @@ class Column[TProp]:
         from ormlambda.sql.comparer import Like
 
         return Like(self, pattern)
+
+    @property
+    def __name__(self)->str:
+        return self.column_name
