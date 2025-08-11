@@ -59,6 +59,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
             datetimes=datetime(1998, 12, 16),
             dates=date(1998, 12, 16),
             decimals=decimal.Decimal("26.67"),
+            jsons={"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]},
         )
 
         self.model.insert(instance)
@@ -71,6 +72,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         self.assertEqual(select.datetimes, datetime(1998, 12, 16))
         self.assertEqual(select.dates, date(1998, 12, 16))
         self.assertEqual(select.decimals, decimal.Decimal("26.67"))
+        self.assertEqual(select.jsons, {"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]})
 
     def test_update_different_types(self):
         instance = TableType(
