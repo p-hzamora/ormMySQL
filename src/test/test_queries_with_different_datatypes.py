@@ -166,6 +166,18 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         result = self.model.where(TableType.pk == 1).first()
         self.assertEqual(result.jsons, new_data)
 
+    def test_passing_nested_list_into_json_datatype(self):
+        data_list = [{"name": "pablo", "errors": [{"1": "first", "2": "second", "3": "third"}]}]
+
+        instance = TableType(pk=1, jsons=data_list)
+        self.model.insert(instance)
+
+        new_data = [{"name": "pablo", "errors": [{"1": [], "2": "second", "3": "third"}]}]
+
+        self.model.where(TableType.pk == 1).update({TableType.jsons: new_data})
+        result = self.model.where(TableType.pk == 1).first()
+        self.assertEqual(result.jsons, new_data)
+
 
 if __name__ == "__main__":
     unittest.main(failfast=True)
