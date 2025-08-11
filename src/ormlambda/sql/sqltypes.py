@@ -452,7 +452,11 @@ class Point(TypeEngine[_python_Point]):
 class JSON(TypeEngine[Any]):
     """JSON data type."""
 
-    __visit_name__ = "json"
+    __visit_name__ = "JSON"
+
+    @property
+    def python_type(self) -> Type[dict]:
+        return dict
 
 
 type UuidType = str | _python_UUID
