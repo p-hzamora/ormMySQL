@@ -59,7 +59,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
             datetimes=datetime(1998, 12, 16),
             dates=date(1998, 12, 16),
             decimals=decimal.Decimal("26.67"),
-            jsons={"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]},
+            jsons={"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], "is_valid": True},
         )
 
         self.model.insert(instance)
@@ -72,7 +72,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         self.assertEqual(select.datetimes, datetime(1998, 12, 16))
         self.assertEqual(select.dates, date(1998, 12, 16))
         self.assertEqual(select.decimals, decimal.Decimal("26.67"))
-        self.assertEqual(select.jsons, {"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]})
+        self.assertEqual(select.jsons, {"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], "is_valid": True})
 
     def test_update_different_types(self):
         instance = TableType(
@@ -82,15 +82,12 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
             floats=0.99,
             points=shp.Point(5, 5),
             datetimes=datetime(1998, 12, 16),
+            jsons={"new_value": 200, "errors": [1, 2, 3, 4, 5, 6, 7, 8, 9, 0], "is_valid": True},
         )
 
         self.model.insert(instance)
         self.model.where(TableType.pk == 1).update(
-            {
-                "integers": 99,
-                TableType.strings: "new_strings",
-                TableType.points: shp.Point(100, 100),
-            }
+            {"integers": 99, TableType.strings: "new_strings", TableType.points: shp.Point(100, 100), TableType.jsons: {"is_valid": False}},
         )
 
         select = self.model.where(TableType.pk == 1).select_one()
@@ -102,6 +99,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
             floats=0.99,
             points=shp.Point(100, 100),
             datetimes=datetime(1998, 12, 16),
+            jsons={"is_valid": False},
         )
 
         self.assertEqual(select, instance_after_update)
@@ -137,6 +135,36 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         self.assertListEqual(select_list, list(EXPECTED))
         self.assertTupleEqual(select_tuple, EXPECTED)
         self.assertSetEqual(select_set, set(EXPECTED))
+
+    def test_passing_list_into_json_datatype(self):
+        data_list = [
+            {"name": "John", "age": 30, "city": "New York"},
+            {"name": "Jane", "age": 25, "city": "Boston"},
+        ]
+
+        instance = TableType(pk=1, jsons=data_list)
+
+        self.model.insert(instance)
+        result = self.model.where(TableType.pk == 1).first()
+        self.assertEqual(result.jsons, data_list)
+
+    def test_passing_dict_into_json_datatype(self):
+        data_list = {
+            "name": "John",
+            "age": 30,
+            "city": "New York",
+            "errors": [5, 5, 5, 5, 5],
+        }
+
+        instance = TableType(pk=1, jsons=data_list)
+        self.model.insert(instance)
+
+        new_data = data_list.copy()
+        new_data["errors"] = [5, 1, 5, 5, 5]
+        self.model.where(lambda x: x.pk == 1).update({TableType.jsons: new_data})
+
+        result = self.model.where(TableType.pk == 1).first()
+        self.assertEqual(result.jsons, new_data)
 
 
 if __name__ == "__main__":

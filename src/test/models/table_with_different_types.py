@@ -2,6 +2,16 @@ from ormlambda import Column, Table
 from ormlambda import DECIMAL, DATE, DATETIME, POINT, INT, VARCHAR, FLOAT, JSON
 
 
+from typing import TypedDict
+
+
+class ResponseJson(TypedDict):
+    name: str
+    age: int
+    city: str
+    errors: list[int]
+
+
 class TableType(Table):
     __table_name__ = "table_type"
 
@@ -13,4 +23,4 @@ class TableType(Table):
     datetimes: Column[DATETIME] = Column(DATETIME())
     dates: Column[DATE] = Column(DATE())
     decimals: Column[DECIMAL] = Column(DECIMAL(precision=5, scale=2))
-    jsons: Column[JSON] = Column(JSON())
+    jsons: Column[JSON[ResponseJson]] = Column(JSON())
