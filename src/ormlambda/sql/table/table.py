@@ -95,7 +95,12 @@ class Table(metaclass=TableMeta):
     def to_dict(self) -> dict[str, str | int]:
         dicc: dict[str, Any] = {}
         for x in self.__annotations__:
-            dicc[x] = getattr(self, x)
+            value = getattr(self, x)
+            if isinstance(value, dict):
+                value = tuple(sorted(value.items()))
+            if isinstance(value, list | set):
+                value = tuple(value)
+            dicc[x] = value
         return dicc
 
     @classmethod

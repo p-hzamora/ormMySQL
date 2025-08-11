@@ -455,7 +455,7 @@ class JSON[T](TypeEngine[dict | list | T]):
     __visit_name__ = "JSON"
 
     @property
-    def python_type(self) -> Type[dict | list | T]:
+    def python_type(self) -> T | Type[dict | list]:
         return dict | list
 
 
