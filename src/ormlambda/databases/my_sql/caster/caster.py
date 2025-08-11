@@ -37,8 +37,8 @@ class MySQLCaster(Caster):
             date: DatetimeCaster,
             bytes: BytesCaster,
             bytearray: BytesCaster,
-            tuple: JsonCaster,
-            list: JsonCaster,
+            tuple: IterableCaster,
+            list: IterableCaster,
             bool: BooleanCaster,
             Decimal: DecimalCaster,
             dict:JsonCaster

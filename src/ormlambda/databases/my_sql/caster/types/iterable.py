@@ -1,8 +1,9 @@
 from typing import Optional
 from ormlambda.caster import BaseCaster, Caster
+from .json import JsonCaster
 
 
-class IterableCaster[TType](BaseCaster[bytes, TType]):
+class IterableCaster[TType](JsonCaster[TType]):
     def __init__(self, value: bytes, type_value: TType):
         super().__init__(value, type_value)
 
@@ -18,12 +19,12 @@ class IterableCaster[TType](BaseCaster[bytes, TType]):
     @property
     @BaseCaster.return_value_if_exists
     def to_database(self) -> Optional[bytes]:
-        return tuple(self.value)
+        return super().to_database
 
     @property
     @BaseCaster.return_value_if_exists
     def from_database(self) -> Optional[bytes]:
-        return tuple(self.value)
+        return super().from_database
 
     @property
     @BaseCaster.return_value_if_exists
