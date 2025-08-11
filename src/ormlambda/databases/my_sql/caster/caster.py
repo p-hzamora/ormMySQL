@@ -13,6 +13,7 @@ from .types import (
     IterableCaster,
     BooleanCaster,
     DecimalCaster,
+    JsonCaster,
 )
 
 from shapely import Point
@@ -40,4 +41,5 @@ class MySQLCaster(Caster):
             list: IterableCaster,
             bool: BooleanCaster,
             Decimal: DecimalCaster,
+            dict:JsonCaster
         }
