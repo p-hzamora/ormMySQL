@@ -2,7 +2,7 @@ from .module_tree import ModuleTree  # noqa: F401
 from .load_module import __load_module__  # noqa: F401
 import types
 import inspect
-from typing import Any, Literal, Optional, Sequence, overload, get_origin, TypeGuard, TypeAliasType
+from typing import Any, Literal, Optional, overload, get_origin, TypeGuard, TypeAliasType
 from ormlambda.util.typing import LITERAL_TYPES, _AnnotationScanType
 from .plugin_loader import PluginLoader  # noqa: F401
 
@@ -86,3 +86,17 @@ def is_literal(type_: Any) -> bool:
 
 def is_pep695(type_: _AnnotationScanType) -> TypeGuard[TypeAliasType]:
     return isinstance(type_, TypeAliasType)
+
+
+def make_hashable(item: Any) -> Any:
+    if isinstance(item, dict):
+        return tuple(sorted((k, make_hashable(x)) for k, x in item.items()))
+
+    if isinstance(item, (list | set)):
+        return tuple(make_hashable(x) for x in item)
+    if hasattr(item, "__iter__") and not isinstance(item, str | bytes):
+        try:
+            return tuple(make_hashable(x) for x in item)
+        except TypeError:
+            return item  # if it fails, it's already hashable
+    return item
