@@ -8,6 +8,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from ormlambda import Column  # noqa: E402
 from ormlambda import Table  # noqa: E402
 from ormlambda.sql.table import TableMeta  # noqa: E402
+from ormlambda import JSON, INT
 
 
 class Person(Table):
@@ -23,6 +24,13 @@ class Person(Table):
 
 P1 = Person(None, "Pablo", 25, "pablo@icloud.com", "6XXXXXXXXX", "C/ Madrid N_1, 3B")
 P2 = Person(None, "Pablo", 25, "pablo@icloud.com", "6XXXXXXXXX", "C/ Madrid N_1, 3B")
+
+
+class JsonTable(Table):
+    __table_name__ = "json_table"
+
+    pk: Column[INT] = Column(INT(), is_primary_key=True)
+    roles: Column[JSON] = Column(JSON())
 
 
 class TestTableConstructor(unittest.TestCase):
@@ -46,6 +54,19 @@ class TestTableConstructor(unittest.TestCase):
 
     def test_TableMeta_type_is_type(self):
         self.assertTrue(type(TableMeta), type)
+
+    def test_hashable_table(self) -> None:
+        user = JsonTable(
+            pk=1,
+            roles=[1, 2, 3, 4, {1: "one", 2: "two", 3: "three", 4: "four"}, [1, 2, 3, [4, 4, 4, [5, 5, 5, 5, 5]]]],
+        )
+
+        user2 = JsonTable(
+            pk=1,
+            roles=[1, 2, 3, 4, {1: "one", 2: "two", 3: "three", 4: "four"}, [1, 2, 3, [4, 4, 4, [5, 5, 5, 5, 5]]]],
+        )
+
+        self.assertEqual(user, user2)
 
 
 if __name__ == "__main__":
