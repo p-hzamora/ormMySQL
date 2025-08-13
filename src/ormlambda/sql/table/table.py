@@ -6,6 +6,7 @@ from ormlambda.sql import Column
 from ormlambda.sql import ForeignKey
 from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.sql.ddl import CreateTable
+from ormlambda.util import make_hashable 
 
 if TYPE_CHECKING:
     from ormlambda.statements import BaseStatement
@@ -96,11 +97,7 @@ class Table(metaclass=TableMeta):
         dicc: dict[str, Any] = {}
         for x in self.__annotations__:
             value = getattr(self, x)
-            if isinstance(value, dict):
-                value = tuple(sorted(value.items()))
-            if isinstance(value, list | set):
-                value = tuple(value)
-            dicc[x] = value
+            dicc[x] = make_hashable(value)
         return dicc
 
     @classmethod
