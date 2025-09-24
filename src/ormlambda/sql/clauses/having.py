@@ -13,9 +13,6 @@ class Having(Where):
     def __init__(self, *comparer, restrictive=True, **kw):
         super().__init__(*comparer, restrictive=restrictive, **kw)
 
-    @staticmethod
-    def FUNCTION_NAME() -> str:
-        return "HAVING"
 
 
 __all__ = ["Having"]
