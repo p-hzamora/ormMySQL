@@ -55,12 +55,17 @@ class Comparer(Element, IQuery):
         compare: ComparerTypes,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
         dialect: tp.Optional[Dialect] = None,
+        left_alias_table: tp.Optional[str] = "{table}",
+        right_alias_table: tp.Optional[str] = "{table}",
     ) -> None:
         self._compare: ComparerTypes = compare
         self._left_condition: Comparer | ClauseInfo = left_condition
         self._right_condition: Comparer | ClauseInfo = right_condition
         self._flags = flags
         self._dialect = dialect
+
+        self.left_alias_table = left_alias_table
+        self.right_alias_table = right_alias_table
 
     def set_dialect(self, dialect: Dialect) -> None:
         self._dialect = dialect
@@ -74,7 +79,14 @@ class Comparer(Element, IQuery):
 
         if isinstance(cond, Comparer):
             return cond
+
         table = None if not isinstance(cond, Column | ColumnProxy) else cond.table
+
+        if isinstance(cond, ColumnProxy):
+            kw = {
+                **kw,
+                "alias_table": cond.get_table_chain(),
+            }
 
         # it a value that's not depend of any Table
         return ClauseInfo(
@@ -85,11 +97,11 @@ class Comparer(Element, IQuery):
             **kw,
         )
 
-    def left_condition(self, dialect: Dialect) -> Comparer | ClauseInfo:
-        return self._create_clause_info(self._left_condition, dialect=dialect)
+    def left_condition(self, dialect: Dialect, **kwargs) -> Comparer | ClauseInfo:
+        return self._create_clause_info(self._left_condition, dialect=dialect, alias_table=self.left_alias_table, **kwargs)
 
-    def right_condition(self, dialect: Dialect) -> Comparer | ClauseInfo:
-        return self._create_clause_info(self._right_condition, dialect=dialect)
+    def right_condition(self, dialect: Dialect, **kwargs) -> Comparer | ClauseInfo:
+        return self._create_clause_info(self._right_condition, dialect=dialect, alias_table=self.right_alias_table, **kwargs)
 
     @property
     def compare(self) -> ComparerTypes:
