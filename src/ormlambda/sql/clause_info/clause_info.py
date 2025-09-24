@@ -80,9 +80,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             "table": self.replace_table_placeholder,
         }
 
-        if not self._preserve_context and any([alias_table, alias_clause]):
-            PATH_CONTEXT.add_clause_to_context(self)
-
         super().__init__(**kw)
 
     def __repr__(self) -> str:
@@ -110,7 +107,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def alias_clause(self) -> tp.Optional[str]:
-        alias = self._alias_clause if not (a := self.get_clause_alias()) else a
+        alias = self._alias_clause
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -120,7 +117,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def alias_table(self) -> tp.Optional[str]:
-        alias = self._alias_table if not (a := self.get_table_alias()) else a
+        alias = self._alias_table  #TODOL []: if not (a := self.get_table_alias()) else a
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -182,6 +179,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         if self.alias_table:
             table = self._wrapped_with_quotes(self.alias_table)
+        elif isinstance(column, ColumnProxy):
+            table = self._wrapped_with_quotes(column.get_table_chain())
         else:
             table = self.table.__table_name__
 
@@ -280,11 +279,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._alias_resolver(alias(self))
 
         return self._replace_placeholder(alias)
-
-    def get_clause_alias(self) -> tp.Optional[str]:
-        if self._column and self.table:
-            return PATH_CONTEXT.get_clause_alias(self.table, self._column, type(self))
-        return None
 
     def get_table_alias(self) -> tp.Optional[str]:
         if self.table:
