@@ -270,7 +270,7 @@ class PathContext:
 
 class FKChain:
     base: Optional[Table]
-    steps: list[Table | ForeignKey]
+    steps: list[ForeignKey]
 
     def __init__(
         self,
@@ -312,13 +312,10 @@ class FKChain:
 
     def get_depth(self) -> int:
         """Get the depth of this path (number of foreign key steps)"""
-        return len([step for step in self.steps if hasattr(step, "clause_name")])
+        return len(self.steps)
 
-    def get_foreign_keys(self) -> list[ForeignKey]:
-        """Get all foreign keys in this path"""
-        from ormlambda import ForeignKey
-
-        return [step for step in self.steps if isinstance(step, ForeignKey)]
+    def clear(self) -> None:
+        self.steps.clear()
 
 
 NO_CURRENT_PATH = FKChain(None, [])
