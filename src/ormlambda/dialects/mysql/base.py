@@ -3,10 +3,12 @@ from types import ModuleType
 from ormlambda import ColumnProxy
 from ormlambda.sql import compiler
 from ormlambda.sql.clause_info import AggregateFunctionBase
+
 from .. import default
 from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
+    from ormlambda.sql.comparer import Comparer
     from ormlambda.sql.column.column import Column
     from mysql import connector
 
@@ -74,6 +76,12 @@ class MySQLCompiler(compiler.SQLCompiler):
 
     def visit_column_proxy(self, column: ColumnProxy) -> str:
         return column.query(self.dialect)
+
+def visit_comparer(self, comparer: Comparer) -> str:
+        return Comparer.join_comparers(
+            comparer,
+            dialect=self.dialect,
+        )
 
     def visit_select(self, select: Select, **kw):
         return f"SELECT {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
