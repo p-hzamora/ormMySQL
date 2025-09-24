@@ -27,3 +27,19 @@ from .model.base_model import (
 )  # COMMENT: to avoid relative import we need to import BaseModel after import Table,Column, ForeignKey, IRepositoryBase and Disassembler
 
 from .engine import create_engine, URL, make_url  # noqa: F401
+
+
+from .sql.clauses import Alias  # noqa: F401
+from .sql.clauses import Count  # noqa: F401
+from .sql.clauses import Delete  # noqa: F401
+from .sql.clauses import GroupBy  # noqa: F401
+from .sql.clauses import Insert  # noqa: F401
+from .sql.clauses import JoinSelector  # noqa: F401
+from .sql.clauses import Limit  # noqa: F401
+from .sql.clauses import Offset  # noqa: F401
+from .sql.clauses import Order  # noqa: F401
+from .sql.clauses import Select  # noqa: F401
+from .sql.clauses import Where  # noqa: F401
+from .sql.clauses import Having  # noqa: F401
+from .sql.clauses import Update  # noqa: F401
+from .sql.clauses import Upsert  # noqa: F401
