@@ -105,13 +105,13 @@ class ClusterResponse[T]:
         table_attr_dict = defaultdict(make_list_of_dicts)
 
         for i, dicc_cols in enumerate(self._response_sql):
-            for clause in self._select.all_clauses:
-                table = clause.table
-                col = clause.column
+            for clause in self._select._columns: 
+                table = clause.table 
+                col = clause.column_name
 
                 if col is None or not hasattr(table, col):
                     raise AggregateFunctionError(clause)
 
-                table_attr_dict[table][i][col] = dicc_cols[clause.alias_clause]
+                table_attr_dict[table][i][col] = dicc_cols[clause.alias if clause.alias is not None else col]
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
         return dict(table_attr_dict)
