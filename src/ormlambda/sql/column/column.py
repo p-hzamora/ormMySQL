@@ -165,7 +165,6 @@ class Column[TProp]:
                         self.is_not_null = True
         return None
 
-    @abc.abstractmethod
     def __comparer_creator(self, other: ColumnType, compare: ComparerType) -> Comparer:
         from ormlambda.sql.comparer import Comparer
 
