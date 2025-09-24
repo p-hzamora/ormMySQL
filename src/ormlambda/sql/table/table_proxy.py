@@ -61,24 +61,14 @@ class TableProxy[T: Table](ColumnTableProxy):
         """Get the alias for this table based on its path"""
         return self._path.get_alias()
 
+    def get_table_chain(self):
+        return self.get_alias()
 
-    def _get_full_reference(self):
-        from ormlambda import ForeignKey
+    def get_columns(self) -> tuple[ColumnTableProxy]:
+        from ormlambda import ColumnProxy
 
-        alias: list[str] = [self._path.base.__table_name__]
-        base = self._path.base
-
-        n = len(self._path.steps)
-
-        for i in range(n):
-            attr = self._path.steps[i]
-
-            # last element
-            if i == n - 1:
-                value = attr.column_name
-
-            else:
-                value = attr.clause_name
-            alias.append(value)
-
-        return ".".join(alias)
+        result = []
+        for column in self._table_class.get_columns():
+            col_proxy = ColumnProxy(column, self._path)
+            result.append(col_proxy)
+        return result
