@@ -8,6 +8,7 @@ from .. import default
 from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
+    from ormlambda import JoinSelector
     from ormlambda.sql.comparer import Comparer
     from ormlambda.sql.column.column import Column
     from mysql import connector
@@ -74,95 +75,113 @@ class MySQLCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
 
-    def visit_column_proxy(self, column: ColumnProxy) -> str:
-        return column.query(self.dialect)
+    def visit_column_proxy(self, column: ColumnProxy, **kw) -> str:
+        return column.query(self.dialect, **kw)
 
-    def visit_comparer(self, comparer: Comparer) -> str:
-        return Comparer.join_comparers(
-            comparer,
-            dialect=self.dialect,
-        )
+    def visit_comparer(self, comparer: Comparer, **kwargs) -> str:
+        from ormlambda.sql.comparer import CleanValue
+
+        lcond = comparer.left_condition(self.dialect, **kwargs)
+        rcond = comparer.right_condition(self.dialect, **kwargs)
+
+        if comparer._flags:
+            rcond = CleanValue(rcond, comparer._flags).clean()
+
+        return f"{lcond} {comparer.compare} {rcond}"
+
+    def visit_join(self,join:JoinSelector)->str:
+        from_clause = join.right_table.compile(alias_table=join.alias, dialect=self.dialect)
+        left_table_clause = join.left_table.compile(column=join.left_col, alias_table=join.lcon.alias_table, dialect=self.dialect)
+        right_table_clause = join.right_table.compile(column=join.right_col, alias_table=join.alias, dialect=self.dialect)
+        list_ = [
+            join._by.value,  # inner join
+            from_clause.compile(self.dialect),
+            "ON",
+            left_table_clause.compile(self.dialect),
+            join._compareop,  # =
+            right_table_clause.compile(self.dialect),
+        ]
+        return " ".join([x for x in list_ if x is not None])
+
 
     def visit_select(self, select: Select, **kw):
         return f"SELECT {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
 
-    def visit_group_by(self, groupby: GroupBy, **kw):
-        column = groupby._create_query(self.dialect, **kw)
+    def visit_group_by(self, groupby: GroupBy):
+        column = " ".join(x.compile(self.dialect, alias_clause=None).string for x in groupby.column)
         return f"GROUP BY {column}"
 
     def visit_limit(self, limit: Limit, **kw):
-        return f"{limit.LIMIT} {limit._number}"
+        return f"LIMIT {limit._number}"
 
     # TODOH []: include the rest of visit methods
-    def visit_insert(self, insert: Insert, **kw) -> Insert:
+    def visit_insert(self, insert: Insert, **kw) -> str:
         pass
 
-    def visit_delete(self, delete: Delete, **kw) -> Delete:
+    def visit_delete(self, delete: Delete, **kw) -> str:
         pass
 
-    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert:
+    def visit_upsert(self, upsert: Upsert, **kw) -> str:
         pass
 
-    def visit_update(self, update: Update, **kw) -> Update:
+    def visit_update(self, update: Update, **kw) -> str:
         pass
 
-    def visit_offset(self, offset: Offset, **kw) -> Offset:
-        return f"{offset.OFFSET} {offset._number}"
+    def visit_offset(self, offset: Offset, **kw) -> str:
+        return f"OFFSET {offset._number}"
 
-    def visit_count(self, count: Count, **kw) -> Count:
+    def visit_count(self, count: Count, **kw) -> str:
         if isinstance(count.column, ColumnProxy):
-            alias = f"`{count.column.get_table_chain()}`"
-            column = f"{alias}.{count.column.column_name}"
+            column = count.column.compile(self.dialect, alias_clause=None).string
+
         else:
             column = count.column
 
         return f"COUNT({column}) AS {count.alias}"
 
-    def visit_where(self, where: Where, **kw) -> Where:
+    def visit_where(self, where: Where) -> str:
         from ormlambda.sql.comparer import Comparer
 
-        def join_condition(cls, wheres: Iterable[Where], restrictive: bool) -> str:
-            if not isinstance(wheres, Iterable):
-                wheres = (wheres,)
+        cols = Comparer.join_comparers(list(where.comparer), True, dialect=self.dialect)
+        return f"WHERE {cols}"
 
-            comparers: list[Comparer] = []
-            for where in wheres:
-                for c in where._comparer:
-                    comparers.append(c)
-            return cls(*comparers, restrictive=restrictive).query(dialect=self.dialect)
+    def visit_having(self, having: Having) -> str:
+        from ormlambda.sql.comparer import Comparer
 
-        if isinstance(where._comparer, Iterable):
-            comparer = Comparer.join_comparers(
-                where._comparer,
-                restrictive=where._restrictive,
-                dialect=self.dialect,
-            )
-        else:
-            comparer = where._comparer
-        return f"WHERE {comparer}"
+        cols = Comparer.join_comparers(list(having.comparer), True, dialect=self.dialect, table=None, literal=True)
+        return f"HAVING {cols}"
 
-    def visit_having(self, having: Having, **kw) -> Having:
-        pass
-
-    def visit_order(self, order: Order, **kw) -> Order:
+    def visit_order(self, order: Order, **kw) -> str:
+        ORDER = 'ORDER BY'
         string_columns: list[str] = []
         columns = order.columns
 
         # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
         if isinstance(columns, str):
             string_columns = f"{columns} {str(order._order_type[0])}"
-            return f"{order.FUNCTION_NAME()} {string_columns}"
+            return f"{ORDER} {string_columns}"
 
         if not isinstance(columns, Iterable):
             columns = (columns,)
 
         assert len(columns) == len(order._order_type)
 
-        for index, clause in enumerate(AggregateFunctionBase._convert_into_clauseInfo(columns, dialect=self.dialect)):
-            clause.alias_clause = None
-            string_columns.append(f"{clause.query(self.dialect, **kw)} {str(order._order_type[index])}")
+        for index, clause in enumerate(columns):
+            # We need to avoid wrapped columns with `` or '' when clause hasn't table
 
-        return f"{order.FUNCTION_NAME()} {', '.join(string_columns)}"
+            if not clause.table:
+                string_column = clause.compile(
+                    self.dialect,
+                    table=None,
+                    alias_clause=None,
+                    literal=True,
+                ).string
+            else:
+                string_column = clause.compile(self.dialect, alias_clause=None).string
+
+            string_columns.append(f"{string_column} {str(order._order_type[index])}")
+
+        return f"{ORDER} {', '.join(string_columns)}"
 
     def visit_concat(self, concat: Concat, **kw) -> Concat:
         from ormlambda.sql.clause_info import ClauseInfo
