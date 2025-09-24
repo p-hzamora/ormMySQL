@@ -68,7 +68,7 @@ ORM(Address, new_engine).insert(sakila_address.select())
 COUNTRY_TO_DEL = "Afghanistan"
 
 
-address = ORM(Address, new_engine).where(Address.City.Country.country == COUNTRY_TO_DEL).delete()
-city = ORM(City, new_engine).where(City.Country.country == COUNTRY_TO_DEL).delete()
-country = ORM(Country, new_engine).where(Country.country == COUNTRY_TO_DEL).delete()
+address = ORM(Address, new_engine).where(lambda x: x.City.Country.country == COUNTRY_TO_DEL).delete()
+city = ORM(City, new_engine).where(lambda x: x.Country.country == COUNTRY_TO_DEL).delete()
+country = ORM(Country, new_engine).where(lambda x: x.country == COUNTRY_TO_DEL).delete()
 pass

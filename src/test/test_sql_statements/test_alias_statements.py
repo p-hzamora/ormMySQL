@@ -19,7 +19,7 @@ class TestAlias(unittest.TestCase):
         cls.model = ORM(Address, engine)
 
     def test_alias_with_alias_attribute(self):
-        res = self.model.where(Address.City.Country.country == "Spain").first(
+        res = self.model.where(lambda x: x.City.Country.country == "Spain").first(
             (
                 Address.address_id,
                 Address.district,
@@ -38,7 +38,7 @@ class TestAlias(unittest.TestCase):
         self.assertDictEqual(res, EXPECTED)
 
     def test_alias_passing_alias_method(self):
-        res = self.model.where(Address.City.Country.country == "Spain").first(
+        res = self.model.where(lambda x: x.City.Country.country == "Spain").first(
             (
                 self.model.alias(Address.address_id, "{column}"),
                 self.model.alias(Address.district, "{column}"),

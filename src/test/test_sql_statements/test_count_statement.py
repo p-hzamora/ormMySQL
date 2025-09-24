@@ -109,9 +109,9 @@ class CountTest(unittest.TestCase):
 
         self.model.insert(insert)
         n = self.model.count(execute=True)
-        n_20 = self.model.where(TableCount.a == 20).count(execute=True)
-        n_80 = self.model.where(TableCount.a == 80).count(execute=True)
-        n_100 = self.model.where(TableCount.a == 100).count(execute=True)
+        n_20 = self.model.where(lambda x: x.a == 20).count(execute=True)
+        n_80 = self.model.where(lambda x: x.a == 80).count(execute=True)
+        n_100 = self.model.where(lambda x: x.a == 100).count(execute=True)
 
         self.assertEqual(n, 100)
         self.assertEqual(n_20, 20)

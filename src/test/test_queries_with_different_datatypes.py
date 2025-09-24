@@ -73,7 +73,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         )
 
         self.model.insert(instance)
-        self.model.where(TableType.pk == 1).update(
+        self.model.where(lambda x: x.pk == 1).update(
             {
                 "integers": 99,
                 TableType.strings: "new_strings",
@@ -81,7 +81,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
             }
         )
 
-        select = self.model.where(TableType.pk == 1).select_one()
+        select = self.model.where(lambda x: x.pk == 1).select_one()
 
         instance_after_update: TableType = TableType(
             pk=1,

@@ -48,7 +48,7 @@ class TestSQLite(unittest.TestCase):
         )
 
         res = (
-            self.amodel.where(Address.city_id >= 312)
+            self.amodel.where(lambda x: x.city_id >= 312)
             .having(Column(column_name="count") > 1)
             .groupby(Address.city_id)
             .select(

@@ -48,7 +48,7 @@ class TestGroupby(unittest.TestCase):
             address: str
 
         results = [r.district for r in res]
-        res2 = self.model.where(Address.district.contains(results)).order(Address.district, "DESC").select((Address.district, Address.address), flavour=Response2)
+        res2 = self.model.where(lambda x: x.district.contains(results)).order(Address.district, "DESC").select((Address.district, Address.address), flavour=Response2)
         EXPECTED = len(res2)
         self.assertEqual(TOTAL_SUM, EXPECTED)
 
