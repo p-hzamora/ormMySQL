@@ -88,7 +88,7 @@ def visit_comparer(self, comparer: Comparer) -> str:
 
     def visit_group_by(self, groupby: GroupBy, **kw):
         column = groupby._create_query(self.dialect, **kw)
-        return f"{groupby.FUNCTION_NAME()} {column}"
+        return f"GROUP BY {column}"
 
     def visit_limit(self, limit: Limit, **kw):
         return f"{limit.LIMIT} {limit._number}"
