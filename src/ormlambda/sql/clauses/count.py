@@ -14,7 +14,6 @@ if tp.TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import ColumnType, TableType
 
-
 class Count[T: Table](ClauseElement, IAggregate):
     __visit_name__ = "count"
 
@@ -22,9 +21,9 @@ class Count[T: Table](ClauseElement, IAggregate):
     def FUNCTION_NAME() -> str:
         return "COUNT"
 
-    def __init__[TProp: Table](
+    def __init__[TProp](
         self,
-        element: ColumnType[T] | TableType[TProp] = "*",
+        element: ColumnType[TProp] | TableType[T] = "*",
         alias: str = "count",
     ) -> None:
         self.column = element
