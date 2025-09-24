@@ -8,7 +8,7 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.sql.types import ConditionType, ComparerTypes
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda import ConditionType as ConditionEnum
-from ormlambda.sql.elements import Element
+from ormlambda.sql.elements import ClauseElement
 
 if tp.TYPE_CHECKING:
     from ormlambda.dialects import Dialect
@@ -45,7 +45,7 @@ class CleanValue:
         return temp_name
 
 
-class Comparer(Element, IQuery):
+class Comparer(ClauseElement, IQuery):
     __visit_name__ = "comparer"
 
     def __init__(
