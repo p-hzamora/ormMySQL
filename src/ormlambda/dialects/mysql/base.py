@@ -77,7 +77,7 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_column_proxy(self, column: ColumnProxy) -> str:
         return column.query(self.dialect)
 
-def visit_comparer(self, comparer: Comparer) -> str:
+    def visit_comparer(self, comparer: Comparer) -> str:
         return Comparer.join_comparers(
             comparer,
             dialect=self.dialect,
@@ -119,7 +119,27 @@ def visit_comparer(self, comparer: Comparer) -> str:
         return f"COUNT({column}) AS {count.alias}"
 
     def visit_where(self, where: Where, **kw) -> Where:
-        pass
+        from ormlambda.sql.comparer import Comparer
+
+        def join_condition(cls, wheres: Iterable[Where], restrictive: bool) -> str:
+            if not isinstance(wheres, Iterable):
+                wheres = (wheres,)
+
+            comparers: list[Comparer] = []
+            for where in wheres:
+                for c in where._comparer:
+                    comparers.append(c)
+            return cls(*comparers, restrictive=restrictive).query(dialect=self.dialect)
+
+        if isinstance(where._comparer, Iterable):
+            comparer = Comparer.join_comparers(
+                where._comparer,
+                restrictive=where._restrictive,
+                dialect=self.dialect,
+            )
+        else:
+            comparer = where._comparer
+        return f"WHERE {comparer}"
 
     def visit_having(self, having: Having, **kw) -> Having:
         pass
