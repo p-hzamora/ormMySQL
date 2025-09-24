@@ -145,5 +145,26 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
             res.extend(tables)
         return res
 
+    @classmethod
+    def sort_joins_by_alias(cls, joins: set[JoinSelector]) -> tuple[JoinSelector]:
+        # FIXME [x]: How to sort when needed because it's not necessary at this point. It is for testing purpouse
+        if len(joins) == 1:
+            return tuple(joins)
+
+        join_object_map: dict[str, JoinSelector] = {}
+
+        for obj in joins:
+            join_object_map[obj.alias] = obj
+
+        sorted_graph = []
+
+        for alias in sorted([x.alias for x in joins]):
+            sorted_graph.append(join_object_map[alias])
+
+        if not sorted_graph:
+            return tuple(joins)
+
+        return tuple(sorted_graph)
+
 
 __all__ = ["JoinSelector"]
