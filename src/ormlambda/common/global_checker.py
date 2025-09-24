@@ -36,7 +36,7 @@ class GlobalChecker:
                 if isinstance(item, TableProxy):
                     result.extend(item.get_columns())
 
-                if isinstance(item, str):
+                elif isinstance(item, str):
                     new_col = Column(dtype=str, column_name=item)
                     new_col.table = table
                     result = ColumnProxy(new_col, path=FKChain(table, None))
