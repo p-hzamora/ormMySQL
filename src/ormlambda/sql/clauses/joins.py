@@ -6,8 +6,7 @@ from typing import override, Optional, TYPE_CHECKING
 from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.common.interfaces.IJoinSelector import IJoinSelector
 from ormlambda.common.interfaces.IQueryCommand import IQuery
-from ormlambda import JoinType
-from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda import ColumnProxy, JoinType
 from ormlambda.sql.comparer import Comparer
 from ormlambda.sql.elements import ClauseElement
 
@@ -44,8 +43,8 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         dialect: Dialect,
         **kw,
     ) -> None:
-        self.lcon = where.left_condition(dialect)
-        self.rcon = where.right_condition(dialect)
+        self.lcon:ColumnProxy = where._left_condition
+        self.rcon:ColumnProxy = where._right_condition
         self._comparer: Comparer = where
         self._orig_table: TLeft = self.lcon.table
         self._right_table: TRight = self.rcon.table
@@ -67,20 +66,6 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
     @classmethod
     def join_selectors(cls, dialect: Dialect, *args: JoinSelector) -> str:
         return "\n".join([x.query(dialect) for x in args])
-
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        from_clause = ClauseInfo(self.right_table, alias_table=self.alias, dialect=dialect)
-        left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_table=self.lcon.alias_table, dialect=dialect)
-        right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_table=self.alias, dialect=dialect)
-        list_ = [
-            self._by.value,  # inner join
-            from_clause.query(dialect, **kwargs),
-            "ON",
-            left_table_clause.query(dialect, **kwargs),
-            self._compareop,  # =
-            right_table_clause.query(dialect, **kwargs),
-        ]
-        return " ".join([x for x in list_ if x is not None])
 
     @property
     def left_table(self) -> TLeft:
