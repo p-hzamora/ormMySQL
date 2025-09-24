@@ -1,6 +1,6 @@
 from __future__ import annotations
 from ormlambda.sql.elements import ClauseElement
-from typing import Optional, Type, Callable, TYPE_CHECKING
+from typing import Type, Callable, TYPE_CHECKING
 
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.sql.context import PATH_CONTEXT
@@ -35,6 +35,7 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ClauseElement)
         )
         self._alias_table = alias_table
         # We always need to add the self alias of the Select
+        # FIXME [ ]:  Should avoid adding REPLACEHOLDER into context
         PATH_CONTEXT.add_table_alias(self.table, self._alias_table)
 
     @property
@@ -44,7 +45,8 @@ class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ClauseElement)
     @property
     def COLUMNS(self) -> str:
         dialect = self.kwargs.pop("dialect", self._dialect)
-        return ClauseInfo.join_clauses(self._all_clauses, ",", dialect=dialect)
+        
+        return ClauseInfo.join_clauses(self.columns, ",", dialect=dialect)
 
 
 __all__ = ["Select"]
