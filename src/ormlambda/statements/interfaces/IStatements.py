@@ -104,7 +104,6 @@ class IStatements[T: Table](Element):
         type ColumnType[TProp]:
             - TProp
             - Column[TProp]
-            - AsteriskType
             - tuple[Column]
         """
         ...
@@ -115,7 +114,6 @@ class IStatements[T: Table](Element):
         type ColumnType[TProp]:
             - TProp
             - Column[TProp]
-            - AsteriskType
             - tuple[Column]
         """
         ...
@@ -139,7 +137,7 @@ class IStatements[T: Table](Element):
     def count[TProp](
         self,
         selection: None | SelectCols[T, TProp] = ...,
-        alias: str = ...,
+        alias: Optional[AliasType[T]] = ...,
         execute: bool = False,
     ) -> Optional[int]: ...
 
@@ -159,22 +157,18 @@ class IStatements[T: Table](Element):
     # endregion
 
     # region where
-
-    @overload
-    def where[LProp, RTable, RProp](self, conditions: Callable[[T], WhereTypes[T, LProp, RTable, RProp]]) -> IStatements[T]: ...
-
     @abstractmethod
-    def where[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T]: ...
+    def where(self, conditions: WhereTypes[T] = None) -> IStatements[T]: ...
 
     # endregion
 
     # region having
 
     @overload
-    def having[LProp, RTable, RProp](self, conditions: Callable[[T], WhereTypes[T, LProp, RTable, RProp]]) -> IStatements[T]: ...
+    def having(self, conditions: Callable[[T], WhereTypes[T]]) -> IStatements[T]: ...
 
     @abstractmethod
-    def having[LProp, RTable, RProp](self, conditions: WhereTypes[T, LProp, RTable, RProp] = None) -> IStatements[T]: ...
+    def having(self, conditions: WhereTypes[T] = None) -> IStatements[T]: ...
 
     # endregion
     # region order
@@ -184,7 +178,7 @@ class IStatements[T: Table](Element):
     # endregion
     # region concat
     @overload
-    def concat(self, selector: SelectCols[T, str], alias: str = "concat") -> IAggregate: ...
+    def concat(self, selector: SelectCols[T, str], alias: Optional[AliasType[T]] = "concat") -> IAggregate: ...
 
     # endregion
     # region max
@@ -192,7 +186,7 @@ class IStatements[T: Table](Element):
     def max[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: Optional[str] = ...,
+        alias: Optional[AliasType[T]] = ...,
         execute: bool = False,
     ) -> int: ...
     # endregion
@@ -201,7 +195,7 @@ class IStatements[T: Table](Element):
     def min[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: Optional[str] = ...,
+        alias: Optional[AliasType[T]] = ...,
         execute: bool = False,
     ) -> int: ...
     # endregion
@@ -210,7 +204,7 @@ class IStatements[T: Table](Element):
     def sum[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: Optional[str] = ...,
+        alias: Optional[AliasType[T]] = ...,
         execute: bool = False,
     ) -> int: ...
 
@@ -325,11 +319,9 @@ class IStatements[T: Table](Element):
     @abstractmethod
     def groupby[TRepo](self, column: list[SelectCols[T, TRepo]] | SelectCols[T, TRepo]) -> IStatements[T]: ...
 
+    def compile(self)->str: ...
+
     # endregion
-
-    @abstractmethod
-    def alias[TProp](self, column: SelectCols[T, TProp], alias: AliasType[ClauseInfo[T]]) -> ClauseInfo[T]: ...
-
 
 class IStatements_two_generic[T, TPool](IStatements[T]):
     @property

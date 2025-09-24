@@ -42,15 +42,14 @@ type WhereCondition[T, T1] = Callable[[T, T1], bool]
 type JoinCondition[T, T1] = tuple[T1, WhereCondition[T, T1], Optional[JoinType]]
 
 
-# TODOH [x]: This var is duplicated from 'src\ormlambda\databases\my_sql\clauses\create_database.py'
 type TypeExists = Literal["fail", "replace", "append"]
 
 
-type WhereTypes[LTable, LProp, RTable, RProp] = Union[
+type WhereTypes[LTable] = Union[
     bool,
     Comparer,
-    tuple[Comparer],
-    Callable[[LTable], WhereTypes[LTable, LProp, RTable, RProp]],
+    Callable[[LTable], WhereTypes[LTable]],
+    Iterable[WhereTypes[LTable]]
 ]
 
 
