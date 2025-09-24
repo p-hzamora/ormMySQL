@@ -387,9 +387,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         self._deferred_operations.append(deferred_op)
         return self
 
-    @override
-    def alias[TProp](self, column: ColumnProxy[TProp], alias: AliasType[ClauseInfo[T]]) -> clauses.Alias[T]:
-        if isinstance(column, ColumnProxy):
-            column.alias = alias
-
-        return clauses.Alias(column._column, path=column.path)
+    def compile(self) -> str:
+        if not self._query:
+            return self._query_builder.query(self._dialect)
+        return self._query
