@@ -5,9 +5,8 @@ from ormlambda import Table, Column, ColumnProxy, TableProxy
 from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
 from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.clause_info import ClauseInfo, AggregateFunctionBase
-from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda import ForeignKey
-from ormlambda.common.global_checker import GlobalChecker
+
 
 from ormlambda.sql.types import TableType, ColumnType
 from .clause_info_converter import (
@@ -31,6 +30,7 @@ type ValueType = tp.Union[
 
 if tp.TYPE_CHECKING:
     from ormlambda.dialects import Dialect
+    from ormlambda import Alias
 
 
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
@@ -40,7 +40,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
     def __init__(
         self,
         tables: tuple[TableType[T]],
-        columns: tuple[ColumnType,...],
+        columns: tuple[ColumnType, ...],
         alias_table: str = "{table}",
         *,
         dialect: Dialect,
@@ -53,20 +53,19 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         self._columns: tp.Callable[[T], tuple] = columns
         self._all_clauses: list[ClauseInfo | AggregateFunctionBase] = []
         self._alias_table: str = alias_table
-        self.__clauses_list_generetor()
 
     def __getitem__(self, key: str) -> ClauseInfo | AggregateFunctionBase:
-        for clause in self._all_clauses:
-            is_agg_function = isinstance(clause, AggregateFunctionBase)
-            is_clause_info = isinstance(clause, ClauseInfo)
-            if (is_agg_function and clause._alias_aggregate == key) or (is_clause_info and clause.alias_clause == key):
-                return clause
+        for clause in self.columns:
+            if isinstance(clause, ColumnProxy) and key in (clause.column_name, clause.alias):
+                return self.__convert_into_ClauseInfo(clause)[0]
+            if isinstance(clause, IAggregate) and key == clause.alias:
+                return self.__convert_into_ClauseInfo(clause)[0]
 
     def __clauses_list_generetor(self) -> None:
         # Clean self._all_clauses if we update the context
         self._all_clauses.clear() if self._all_clauses else None
 
-        resolved_function = GlobalChecker.resolved_callback_object(self._columns, self.table)
+        resolved_function = self._columns
 
         # Python treats string objects as iterable, so we need to prevent this behavior
         if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
@@ -92,11 +91,11 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
         VALUE_TYPE_MAPPED: dict[tp.Type[ValueType], ClauseInfoConverter[T, TProp]] = {
             ForeignKey: ConvertFromForeignKey[T, Table],
-            Column: ConvertFromColumn[TProp],
             ColumnProxy: ConvertFromColumnProxy[TProp],
+            Column: ConvertFromColumn[TProp],
             IAggregate: ConvertFromIAggregate,
-            Table: ConvertFromTable[T],
             TableProxy: ConvertFromTableProxy[T],
+            Table: ConvertFromTable[T],
         }
         classConverter = next((converter for obj, converter in VALUE_TYPE_MAPPED.items() if validation(data, obj)), ConvertFromAnyType)
         self.kwargs.setdefault("dialect", self._dialect)
@@ -121,10 +120,12 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         return self._tables
 
     @property
-    def columns[*Ts](self) -> tp.Callable[[T], tuple[*Ts]]:
+    def columns[*Ts](self) -> tp.Iterable[ColumnProxy | Alias]:
         return self._columns
 
     @property
-    def all_clauses(self) -> list[ClauseInfo[T]]:
-        return self._all_clauses
+    def all_clauses(self) -> list[ClauseInfo[T] | IAggregate]:
+        if not self._all_clauses:
+            self.__clauses_list_generetor()
 
+        return self._all_clauses
