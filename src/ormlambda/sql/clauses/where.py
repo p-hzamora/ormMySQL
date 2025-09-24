@@ -2,14 +2,13 @@ from __future__ import annotations
 import typing as tp
 from ormlambda import ColumnProxy
 from ormlambda.sql.comparer import Comparer
-from ormlambda.sql.clause_info import AggregateFunctionBase
 from ormlambda.sql.elements import ClauseElement
 
 if tp.TYPE_CHECKING:
     from ormlambda.dialects import Dialect
 
 
-class Where(AggregateFunctionBase, ClauseElement):
+class Where[T](ClauseElement):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.
     """
@@ -42,17 +41,6 @@ class Where(AggregateFunctionBase, ClauseElement):
 
         return res
 
-    def compile(self, dialect: Dialect, **kwargs) -> str:
-        if isinstance(self._comparer, tp.Iterable):
-            comparer = Comparer.join_comparers(
-                self._comparer,
-                restrictive=self._restrictive,
-                dialect=dialect,
-                **kwargs,
-            )
-        else:
-            comparer = self._comparer
-        return f"{self.FUNCTION_NAME()} {comparer}"
 
     @property
     def alias_clause(self) -> None:
