@@ -247,6 +247,15 @@ class FKChain:
     def __repr__(self):
         return f"{FKChain.__name__}: {self.get_path_key()}"
 
+    @property
+    def parent(self) -> FKChain:
+        if len(self.steps) <= 1:
+            steps = []
+        else:
+            steps = self.steps[:-1]
+
+        return FKChain(self.base, steps)
+
     def add_step(self, step: Table | ForeignKey):
         """Add a step to the path"""
         if not self.base:
