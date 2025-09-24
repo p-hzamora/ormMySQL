@@ -273,9 +273,11 @@ class TestClauseInfoUsingColumnProxy(unittest.TestCase):
         PATH_CONTEXT.clear_all_context()
 
     def test_passing_callable_alias_clause(self):
-        column_proxy = GlobalChecker.resolved_callback_object(lambda x: cast(A,x).name_a, A)
-        ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
-        self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
+        with PATH_CONTEXT.query_context(A) as context:
+                
+            column_proxy = GlobalChecker.resolved_callback_object(lambda x: cast(A,x).name_a, A, context)
+            ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
+            self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
 
 
 if __name__ == "__main__":
