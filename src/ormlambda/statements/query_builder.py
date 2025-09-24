@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Callable, Generator, Optional, TYPE_CHECKING, Iterable, overload
 from abc import ABC, abstractmethod
 from ormlambda.sql.clauses import Select, Where, Having, Order, GroupBy, Limit, Offset, JoinSelector
+from ormlambda.sql.comparer import Comparer
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
@@ -98,7 +99,7 @@ class StandardSQLCompiler(IQueryCompiler):
 
         # WHERE
         if components.where:
-            where_sql = self._compile_where(components.where)
+            where_sql = Comparer.join_comparers([x._comparer for x in components.where], dialect= self.dialect)
             if where_sql:
                 query_parts.append(where_sql)
 
@@ -230,7 +231,7 @@ class QueryBuilder(IQuery):
 
     def add_where(self, where: Where) -> QueryBuilder:
         """Add WHERE clause"""
-        self.components.where = where
+        self.components.where.append(where)
         self.used_columns.extend(where.used_columns())
         return self
 
