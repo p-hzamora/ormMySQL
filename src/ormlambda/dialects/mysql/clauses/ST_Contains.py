@@ -34,3 +34,7 @@ class ST_Contains(IAggregate):
     @property
     def alias_clause(self) -> tp.Optional[str]:
         return self._alias_clause
+
+    @property
+    def dtype(self)->str:
+        return str
