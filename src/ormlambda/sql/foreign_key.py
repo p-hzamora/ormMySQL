@@ -134,8 +134,9 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     def get_alias(self, dialect: Dialect) -> str:
         self._comparer = self.resolved_function(dialect)
         self._comparer._dialect = dialect
+        # TODOH []: look into why i dropped 'lcol' 
         lcol = self._comparer.left_condition(dialect)._column.column_name
-        return f"{self.tleft.__table_name__}_{lcol}_{self.clause_name}"
+        return f"{self.tleft.__table_name__}_{self.clause_name}"
 
     @classmethod
     def create_query(cls, orig_table: Table, dialect: Dialect) -> list[str]:
