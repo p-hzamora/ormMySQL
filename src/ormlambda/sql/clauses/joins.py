@@ -1,6 +1,6 @@
 from __future__ import annotations
 from collections import defaultdict
-from typing import override, Optional, TYPE_CHECKING, Type
+from typing import override, Optional, TYPE_CHECKING
 
 
 from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
@@ -9,7 +9,6 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda import JoinType
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.sql.comparer import Comparer
-from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda.sql.elements import ClauseElement
 
 
@@ -34,10 +33,7 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
 
     @override
     def __repr__(self) -> str:
-        table_col_left: str = f"{self.left_table.table_alias()}.{self._left_col}"
-        table_col_right: str = f"{self.right_table.table_alias()}.{self._right_col}"
-
-        return f"{IQuery.__name__}: {self.__class__.__name__} ({table_col_left} == {table_col_right})"
+        return f"{IQuery.__name__}: {self.__class__.__name__} ({self.alias})"
 
     def __init__[LProp, RProp](
         self,
@@ -48,51 +44,41 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         dialect: Dialect,
         **kw,
     ) -> None:
-        lcon = where.left_condition(dialect)
-        rcon = where.right_condition(dialect)
+        self.lcon = where.left_condition(dialect)
+        self.rcon = where.right_condition(dialect)
         self._comparer: Comparer = where
-        self._orig_table: TLeft = lcon.table
-        self._right_table: TRight = rcon.table
+        self._orig_table: TLeft = self.lcon.table
+        self._right_table: TRight = self.rcon.table
         self._by: JoinType = by
-        self._left_col: str = lcon._column.column_name
-        self._right_col: str = rcon._column.column_name
+        self._left_col: str = self.lcon._column.column_name
+        self._right_col: str = self.rcon._column.column_name
         self._compareop = where._compare
 
         # COMMENT: When multiple columns reference the same table, we need to create an alias to maintain clear references.
         self._alias: Optional[str] = alias
 
-        self._from_clause = ClauseInfo(self.right_table, alias_table=alias, dialect=dialect, **kw)
-        self._left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_clause=None, dialect=dialect, **kw)
-        self._right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_clause=None, dialect=dialect, **kw)
-
     def __eq__(self, __value: JoinSelector) -> bool:
         return isinstance(__value, JoinSelector) and self.__hash__() == __value.__hash__()
 
     def __hash__(self) -> int:
-        return hash(
-            (
-                self.left_table,
-                self.right_table,
-                self._by,
-                self._left_col,
-                self._right_col,
-                self._compareop,
-            )
-        )
-
+        # Only can add the first instance of a JoinsSelector which has the same alias
+        return hash(self.alias)
 
     @classmethod
     def join_selectors(cls, dialect: Dialect, *args: JoinSelector) -> str:
         return "\n".join([x.query(dialect) for x in args])
 
     def query(self, dialect: Dialect, **kwargs) -> str:
+        from_clause = ClauseInfo(self.right_table, alias_table=self.alias, dialect=dialect)
+        left_table_clause = ClauseInfo(self.left_table, column=self.left_col, alias_table=self.lcon.alias_table, dialect=dialect)
+        right_table_clause = ClauseInfo(self.right_table, column=self.right_col, alias_table=self.alias, dialect=dialect)
         list_ = [
             self._by.value,  # inner join
-            self._from_clause.query(dialect, **kwargs),
+            from_clause.query(dialect, **kwargs),
             "ON",
-            self._left_table_clause.query(dialect, **kwargs),
+            left_table_clause.query(dialect, **kwargs),
             self._compareop,  # =
-            self._right_table_clause.query(dialect, **kwargs),
+            right_table_clause.query(dialect, **kwargs),
         ]
         return " ".join([x for x in list_ if x is not None])
 
@@ -127,9 +113,9 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         for obj in joins:
             join_object_map[obj.left_table].append(obj)
 
-        graph: dict[Type[Table], list[Type[Table]]] = defaultdict(list)
+        graph: dict[str, list[str]] = defaultdict(list)
         for join in joins:
-            graph[join.left_table].append(join.right_table)
+            graph[join.alias].append(join.right_table.__table_name__)
 
         sorted_graph = DFSTraversal.sort(graph)[::-1]
 
