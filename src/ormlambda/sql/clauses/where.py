@@ -5,7 +5,8 @@ from ormlambda.sql.comparer import Comparer
 from ormlambda.sql.elements import ClauseElement
 
 if tp.TYPE_CHECKING:
-    from ormlambda.dialects import Dialect
+    from ormlambda.statements.types import WhereTypes
+
 
 
 class Where[T](ClauseElement):
@@ -17,22 +18,16 @@ class Where[T](ClauseElement):
 
     def __init__(
         self,
-        *comparer: Comparer,
+        *comparer: WhereTypes,
         restrictive: bool = True,
     ) -> None:
-        if len(comparer) == 1 and isinstance(comparer[0], tp.Iterable):
-            comparer = comparer[0]
-        self._comparer: tuple[Comparer] = comparer
+        self.comparer: set[Comparer] = set(comparer)
         self._restrictive: bool = restrictive
-
-    @staticmethod
-    def FUNCTION_NAME() -> str:
-        return "WHERE"
 
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []
 
-        for comparer in self._comparer:
+        for comparer in self.comparer:
             if isinstance(comparer._left_condition, ColumnProxy):
                 res.append(comparer._left_condition)
 
@@ -41,21 +36,12 @@ class Where[T](ClauseElement):
 
         return res
 
+    def add_comparers(self, comparers: tp.Iterable[Comparer]) -> None:
+        if not isinstance(comparers, tp.Iterable):
+            comparers = [comparers]
 
-    @property
-    def alias_clause(self) -> None:
-        return None
-
-    @classmethod
-    def join_condition(cls, wheres: tp.Iterable[Where], restrictive: bool, dialect: Dialect = None) -> str:
-        if not isinstance(wheres, tp.Iterable):
-            wheres = (wheres,)
-
-        comparers: list[Comparer] = []
-        for where in wheres:
-            for c in where._comparer:
-                comparers.append(c)
-        return cls(*comparers, restrictive=restrictive).query(dialect=dialect)
+        for comparer in comparers:
+            self.comparer.add(comparer)
 
 
 __all__ = ["Where"]
