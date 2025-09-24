@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing as tp
+from typing import Union,Type, TYPE_CHECKING,Iterable,overload
 from ormlambda import Table, Column, ColumnProxy, TableProxy
 
 from ormlambda.common.interfaces import IDecompositionQuery, ICustomAlias
@@ -21,20 +21,20 @@ from .clause_info_converter import (
 )
 
 type TableTupleType[T, *Ts] = tuple[T:TableType, *Ts]
-type ValueType = tp.Union[
-    tp.Type[IAggregate],
-    tp.Type[Table],
-    tp.Type[str],
-    tp.Type[ICustomAlias],
+type ValueType = Union[
+    Type[IAggregate],
+    Type[Table],
+    Type[str],
+    Type[ICustomAlias],
 ]
 
-if tp.TYPE_CHECKING:
+if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
     from ormlambda import Alias
 
 
 class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
-    @tp.overload
+    @overload
     def __init__(self, tables: tuple[TableType[T]], columns: tuple[ColumnType]) -> None: ...
 
     def __init__(
@@ -47,10 +47,10 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         **kwargs,
     ) -> None:
         self.kwargs = kwargs
-        self._tables: tuple[TableType[T]] = tables if isinstance(tables, tp.Iterable) else (tables,)
+        self._tables: tuple[TableType[T]] = tables if isinstance(tables, Iterable) else (tables,)
 
         self._dialect = dialect
-        self._columns: tp.Callable[[T], tuple] = columns
+        self._columns: Iterable[ColumnType] = columns
         self._all_clauses: list[ClauseInfo | AggregateFunctionBase] = []
         self._alias_table: str = alias_table
 
@@ -68,7 +68,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         resolved_function = self._columns
 
         # Python treats string objects as iterable, so we need to prevent this behavior
-        if isinstance(resolved_function, str) or not isinstance(resolved_function, tp.Iterable):
+        if isinstance(resolved_function, str) or not isinstance(resolved_function, Iterable):
             resolved_function = (self.table,) if ClauseInfo.is_asterisk(resolved_function) else (resolved_function,)
 
         for data in resolved_function:
@@ -89,7 +89,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
             is_valid_type: bool = isinstance(data, type) and issubclass(data, type_)
             return isinstance(data, type_) or is_valid_type
 
-        VALUE_TYPE_MAPPED: dict[tp.Type[ValueType], ClauseInfoConverter[T, TProp]] = {
+        VALUE_TYPE_MAPPED: dict[Type[ValueType], ClauseInfoConverter[T, TProp]] = {
             ForeignKey: ConvertFromForeignKey[T, Table],
             ColumnProxy: ConvertFromColumnProxy[TProp],
             Column: ConvertFromColumn[TProp],
@@ -104,7 +104,7 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
         return classConverter.convert(data, alias_table=self._alias_table, **self.kwargs)
 
     def __add_clause[TTable: TableType](self, clauses: list[ClauseInfo[TTable]] | ClauseInfo[TTable]) -> None:
-        if not isinstance(clauses, tp.Iterable):
+        if not isinstance(clauses, Iterable):
             raise ValueError(f"Iterable expected. '{type(clauses)}' got instead.")
 
         for clause in clauses:
@@ -113,14 +113,14 @@ class DecompositionQueryBase[T: Table, *Ts](IDecompositionQuery[T, *Ts]):
 
     @property
     def table(self) -> T:
-        return self.tables[0] if isinstance(self.tables, tp.Iterable) else self.tables
+        return self.tables[0] if isinstance(self.tables, Iterable) else self.tables
 
     @property
     def tables(self) -> T:
         return self._tables
 
     @property
-    def columns[*Ts](self) -> tp.Iterable[ColumnProxy | Alias]:
+    def columns[*Ts](self) -> Iterable[ColumnProxy | Alias]:
         return self._columns
 
     @property
