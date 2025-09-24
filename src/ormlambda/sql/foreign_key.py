@@ -146,7 +146,7 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
                 clauses.append(attr.query(dialect))
         return clauses
 
-    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect) -> Comparer:
+    def resolved_function(self, dialect: Dialect) -> Comparer:
         """ """
         if self._comparer is not None:
             return self._comparer
