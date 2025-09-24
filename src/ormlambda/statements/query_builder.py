@@ -7,20 +7,20 @@ Clean, modern implementation using PATH_CONTEXT exclusively.
 """
 
 from __future__ import annotations
-from typing import Callable, Optional, TYPE_CHECKING, cast
+from typing import Callable, Generator, Optional, TYPE_CHECKING, Iterable, overload
 from abc import ABC, abstractmethod
 from ormlambda.sql.clauses import Select, Where, Having, Order, GroupBy, Limit, Offset, JoinSelector
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
     from ormlambda.sql.context import PathContext
+    from ormlambda import Count
 
-from ormlambda import ColumnProxy
+from ormlambda import ColumnProxy, TableProxy
 
 from ormlambda.common.enums import JoinType
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.common.interfaces import IQuery
-from ormlambda.sql.context import PATH_CONTEXT
 
 # =============================================================================
 # CLEAN QUERY COMPONENTS
@@ -39,6 +39,7 @@ class QueryComponents:
         "limit",
         "offset",
         "joins",
+        "count",
     )
 
     def __init__(
@@ -51,6 +52,7 @@ class QueryComponents:
         limit: Optional[Limit] = None,
         offset: Optional[Offset] = None,
         joins: Optional[set[JoinSelector]] = None,
+        count: Optional[Count] = None,
     ):
         self.select = select
         self.where = where
@@ -60,6 +62,7 @@ class QueryComponents:
         self.limit = limit
         self.offset = offset
         self.joins = joins or set()
+        self.count = count
 
     def clear(self) -> None:
         """Reset all components"""
@@ -139,7 +142,7 @@ class StandardSQLCompiler(IQueryCompiler):
 
         from ormlambda.sql.clauses import JoinSelector
 
-        sorted_joins = JoinSelector.sort_join_selectors(joins)
+        sorted_joins = JoinSelector.sort_joins_by_alias(joins)
         return " ".join(join.query(self.dialect) for join in sorted_joins)
 
     def _compile_where(self, where: Where) -> Optional[str]:
@@ -154,10 +157,9 @@ class StandardSQLCompiler(IQueryCompiler):
         # Note: No more context parameter needed - PATH_CONTEXT handles it
         return having.compile(self.dialect)
 
-
-# =============================================================================
-# MODERN QUERY BUILDER
-# =============================================================================
+    # =============================================================================
+    # MODERN QUERY BUILDER
+    # =============================================================================
 
 
 class ColumnIterable[T: TableProxy | ColumnProxy]:
@@ -204,7 +206,7 @@ class QueryBuilder(IQuery):
     path_contex: PathContext
     compiler: StandardSQLCompiler
     components: QueryComponents
-used_columns: ColumnIterable[ColumnProxy]
+    used_columns: ColumnIterable[ColumnProxy]
     join_type: JoinType
 
     def __init__(self):
@@ -213,7 +215,7 @@ used_columns: ColumnIterable[ColumnProxy]
         # Clean component storage
         self.components = QueryComponents()
         self.join_type = JoinType.INNER_JOIN
-self.used_columns = ColumnIterable()
+        self.used_columns = ColumnIterable()
 
     @staticmethod
     def _get_global_context() -> PathContext:
@@ -228,11 +230,17 @@ self.used_columns = ColumnIterable()
     def add_select(self, select: Select) -> QueryBuilder:
         """Add SELECT clause"""
         self.components.select = select
+        for col in select.columns:
+            if isinstance(col, ColumnProxy):
+                self.used_columns.append(col)
+            else:
+                pass
         return self
 
     def add_where(self, where: Where) -> QueryBuilder:
         """Add WHERE clause"""
         self.components.where = where
+        self.used_columns.extend(where.used_columns())
         return self
 
     def add_having(self, having: Having) -> QueryBuilder:
@@ -243,6 +251,7 @@ self.used_columns = ColumnIterable()
     def add_order(self, order: Order) -> QueryBuilder:
         """Add ORDER BY clause"""
         self.components.order = order
+        self.used_columns.extend(order.used_columns())
         return self
 
     def add_group_by(self, group_by: GroupBy) -> QueryBuilder:
@@ -263,6 +272,11 @@ self.used_columns = ColumnIterable()
     def add_join(self, join: JoinSelector) -> QueryBuilder:
         """Add explicit JOIN"""
         self.components.joins.add(join)
+        return self
+
+    def add_count(self, count: Count) -> QueryBuilder:
+        """Add explicit JOIN"""
+        self.components.count = count
         return self
 
     def set_join_type(self, join_type: JoinType) -> QueryBuilder:
@@ -292,6 +306,7 @@ self.used_columns = ColumnIterable()
             "Limit": self.add_limit,
             "Offset": self.add_offset,
             "JoinSelector": self.add_join,
+            "Count": self.add_count,
         }
 
         method = clause_selector.get(clause_type, None)
@@ -306,8 +321,7 @@ self.used_columns = ColumnIterable()
 
     def query(self, dialect: Optional[Dialect] = None) -> str:
         # Detect required joins
-        detected_joins = self.pop_tables_and_create_joins_from_ForeignKey(dialect)
-        all_joins = self.components.joins | detected_joins
+        all_joins = self.pop_tables_and_create_joins_from_ForeignKey(dialect)
 
         # Compile to SQL
         return StandardSQLCompiler(dialect).compile(self.components, all_joins)
@@ -315,23 +329,23 @@ self.used_columns = ColumnIterable()
     def pop_tables_and_create_joins_from_ForeignKey(self, dialect) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
 
-        joins = set()
-        # Get all foreign key accesses from PATH_CONTEXT
-        for key, fk in PATH_CONTEXT.get_all_foreign_key_accesses().items():
-            # Each value in the registry should be a ForeignKey object
-            if hasattr(fk, 'get_alias') and hasattr(fk, 'resolved_function'):
-                fk_alias = fk.get_alias(dialect)
-                # Use LEFT JOIN as default for detected foreign key relationships
-                # This prevents data loss when the foreign key relationship might be null
-                join_type = self.by if self.by != JoinType.INNER_JOIN else JoinType.LEFT_INCLUSIVE
-                join = JoinSelector(fk.resolved_function(dialect), join_type, alias=fk_alias, dialect=dialect)
-                joins.add(join)
+        joins: set[JoinSelector] = set()
 
-        return joins
+        join_type = self.by if self.by != JoinType.INNER_JOIN else JoinType.LEFT_INCLUSIVE
+        for column in self.used_columns:
+            if not column.number_table_in_chain():  # It would be the same table
+                continue
+            temp_joins = column.get_relations(join_type, dialect)
+
+            [joins.add(x) for x in temp_joins]
+
+        sorted_joins = JoinSelector.sort_joins_by_alias(joins)
+        return sorted_joins
 
     def clear(self) -> QueryBuilder:
         """Clear all components"""
         self.components.clear()
+        self.used_columns.clear()
         return self
 
     @property
