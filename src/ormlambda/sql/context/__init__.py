@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Generator, Literal, Optional, Any, TypedDict, 
 
 
 if TYPE_CHECKING:
-    from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.sql import ForeignKey
     from ormlambda.sql.context import FKChain
@@ -137,7 +136,7 @@ class PathContext:
         context["current_path"] = NO_CURRENT_PATH
         context["query_metadata"].clear()
         context["table_aliases"].clear()
-        context["clause_aliases"].clear()
+        context["join_selector"].clear()
         # Restore preserved registry
         context["foreign_key_registry"] = preserved_registry
 
@@ -215,62 +214,22 @@ class PathContext:
         table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
         return context["table_aliases"].get(table_key, None)
 
-    def add_clause_alias(self, table: Table, column: Column, clause_type: type, alias: str) -> None:
-        """Add a clause alias to the context"""
-        if not all([table, column, clause_type, alias]):
+    def add_join(self, join: JoinSelector, alias: str) -> None:
+        """Add a table alias to the context"""
+        if not join or not alias:
             return None
 
         context = self._get_context()
-        table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
-        column_key = column.column_name if hasattr(column, "column_name") else str(column)
-        clause_key = f"{table_key}.{column_key}.{clause_type.__name__}"
-        context["clause_aliases"][clause_key] = alias
+        context["join_selector"][alias] = join
         return None
 
-    def get_clause_alias(self, table: Table, column: Column, clause_type: type) -> Optional[str]:
-        """Get a clause alias from the context"""
-        if not all([table, column, clause_type]):
+    def get_join(self, alias: str) -> Optional[str]:
+        """Get a table alias from the context"""
+        if not alias:
             return None
 
-        context = self._get_context()
-        table_key = table.__table_name__ if hasattr(table, "__table_name__") else str(table)
-        column_key = column.column_name if hasattr(column, "column_name") else str(column)
-        clause_key = f"{table_key}.{column_key}.{clause_type.__name__}"
-        return context["clause_aliases"].get(clause_key, None)
-
-    def add_clause_to_context(self, clause_info: ClauseInfo) -> None:
-        """Add a ClauseInfo object's aliases to the context - compatibility method"""
-        if not clause_info:
-            return None
-
-        # Add table alias if available
-        if hasattr(clause_info, "table") and hasattr(clause_info, "_alias_table"):
-            table = clause_info.table
-            alias_table = clause_info._alias_table
-            if table and alias_table:
-                self.add_table_alias(table, alias_table)
-
-        # Add clause alias if available
-        if hasattr(clause_info, "table") and hasattr(clause_info, "column") and hasattr(clause_info, "_alias_clause"):
-            table = clause_info.table
-            column = clause_info.column
-            alias_clause = clause_info._alias_clause
-            if table and column and alias_clause:
-                self.add_clause_alias(table, column, type(clause_info), alias_clause)
-
-        return None
-
-    def update_aliases(self, table_aliases: Optional[dict] = None, clause_aliases: Optional[dict] = None) -> None:
-        """Update context with alias dictionaries - compatibility method"""
-        context = self._get_context()
-
-        if table_aliases:
-            context["table_aliases"].update(table_aliases)
-
-        if clause_aliases:
-            context["clause_aliases"].update(clause_aliases)
-
-        return None
+        context = self._get_context("join_selector")
+        return context.get(alias, None)
 
 
 class FKChain:
