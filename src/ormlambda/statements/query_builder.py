@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Callable, Generator, Optional, TYPE_CHECKING, Iterable, overload
 from abc import ABC, abstractmethod
 from ormlambda.sql.clauses import Select, Where, Having, Order, GroupBy, Limit, Offset, JoinSelector
-from ormlambda.sql.comparer import Comparer
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
@@ -47,8 +46,8 @@ class QueryComponents:
         self,
     ):
         self.select: Optional[Select] = None
-        self.where: Optional[list[Where]] = []
-        self.having: Optional[Having] = None
+        self.where: Optional[Where] = Where()
+        self.having: Optional[Having] = Having()
         self.order: Optional[Order] = None
         self.group_by: Optional[GroupBy] = None
         self.limit: Optional[Limit] = None
@@ -98,8 +97,8 @@ class StandardSQLCompiler(IQueryCompiler):
             query_parts.append(joins_sql)
 
         # WHERE
-        if components.where:
-            where_sql = Comparer.join_comparers([x._comparer for x in components.where], dialect= self.dialect)
+        if components.where.comparer:
+            where_sql = components.where.compile(self.dialect).string
             if where_sql:
                 query_parts.append(where_sql)
 
@@ -108,8 +107,8 @@ class StandardSQLCompiler(IQueryCompiler):
             query_parts.append(components.group_by.compile(self.dialect).string)
 
         # HAVING
-        if components.having:
-            having_sql = self._compile_having(components.having)
+        if components.having.comparer:
+            having_sql = components.having.compile(self.dialect).string
             if having_sql:
                 query_parts.append(having_sql)
 
@@ -136,12 +135,6 @@ class StandardSQLCompiler(IQueryCompiler):
 
         sorted_joins = JoinSelector.sort_joins_by_alias(joins)
         return " ".join(join.query(self.dialect) for join in sorted_joins)
-
-    def _compile_where(self, where: Where) -> Optional[str]:
-        """Compile WHERE clause"""
-
-        # Note: No more context parameter needed - PATH_CONTEXT handles it
-        return where.compile(self.dialect)
 
     def _compile_having(self, having: Having) -> Optional[str]:
         """Compile HAVING clause"""
@@ -231,13 +224,18 @@ class QueryBuilder(IQuery):
 
     def add_where(self, where: Where) -> QueryBuilder:
         """Add WHERE clause"""
-        self.components.where.append(where)
+        comparer = where.comparer
+        self.components.where.add_comparers(comparer)
         self.used_columns.extend(where.used_columns())
         return self
 
     def add_having(self, having: Having) -> QueryBuilder:
         """Add HAVING clause"""
-        self.components.having = having
+        comparer = having.comparer
+        self.components.having.add_comparers(comparer)
+        self.used_columns.extend(having.used_columns())
+        return self
+
         return self
 
     def add_order(self, order: Order) -> QueryBuilder:
@@ -249,6 +247,7 @@ class QueryBuilder(IQuery):
     def add_group_by(self, group_by: GroupBy) -> QueryBuilder:
         """Add GROUP BY clause"""
         self.components.group_by = group_by
+        self.used_columns.extend(group_by.used_columns())
         return self
 
     def add_limit(self, limit: Limit) -> QueryBuilder:
