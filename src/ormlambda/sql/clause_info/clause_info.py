@@ -57,6 +57,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         keep_asterisk: bool = False,
         preserve_context: bool = False,
         dtype: tp.Optional[TProp] = None,
+        literal: bool = False,
         *,
         dialect: Dialect,
         **kw,
@@ -72,6 +73,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         self._keep_asterisk: bool = keep_asterisk
         self._preserve_context: bool = preserve_context
         self._dtype = dtype
+        self._literal = literal
 
         self._dialect: Dialect = dialect
 
@@ -117,7 +119,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def alias_table(self) -> tp.Optional[str]:
-        alias = self._alias_table  #TODOL []: if not (a := self.get_table_alias()) else a
+        alias = self._alias_table  # TODOL []: if not (a := self.get_table_alias()) else a
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
@@ -151,10 +153,13 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def query(self, dialect: Dialect, **kwargs) -> str:
         return self._create_query(dialect, **kwargs)
 
+    def compile(self, dialect: Dialect, **kwargs) -> str:
+        return self._create_query(dialect, **kwargs)
+
     def _create_query(self, dialect: Dialect, **kwargs) -> str:
         # when passing some value that is not a column name
         if not self.table and not self._alias_clause:
-            return self.column
+                return self.column
 
         if not self.table and self._alias_clause:
             # it means that we are passing an object with alias. We should delete '' around the object
@@ -251,6 +256,10 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         casted_value = caster.for_value(column, self.dtype)
         if not self._table:
             # if we haven't some table atrribute, we assume that the user want to retrieve the string_data from caster.
+            if self._literal:
+                # That condition will be used when you need to pass a value without wrapped in any quote like using HAVING clause
+                # COMMENT: Check 'test_complex_1' test 
+                return casted_value.value
             return casted_value.string_data
         return casted_value.wildcard_to_select()
 
@@ -292,7 +301,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             if isinstance(c, ClauseElement):
                 queries.append(c.compile(dialect).string)
                 continue
-            c._dialect = dialect
             queries.append(c.query(dialect))
 
         return f"{chr} ".join(queries)
