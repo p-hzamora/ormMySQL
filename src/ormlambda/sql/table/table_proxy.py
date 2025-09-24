@@ -37,7 +37,12 @@ class TableProxy[T: Table](ColumnTableProxy):
         try:
             attr = getattr(self._table_class, name)
         except AttributeError:
-            raise AttributeError(f"'{self._table_class.__name__}' object has no attribute '{name}'")
+            # If column doesn't exist is because we're dealing with aliases like
+            #  `lambda x: x.count` where 'count' is actually an alias not a column name
+            # we don't want use table name
+            attr = Column(dtype=str)
+            attr.column_name = name
+            # raise AttributeError(f"'{self._table_class.__name__}' object has no attribute '{name}'")
 
         if isinstance(attr, ForeignKey):
             new_chain = attr._path
