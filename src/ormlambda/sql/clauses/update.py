@@ -43,7 +43,7 @@ class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseEleme
         if self._where:
             for where in self._where:
                 query_with_table = where.query(self._engine.dialect)
-                for x in where._comparer:
+                for x in where.comparer:
                     # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
                     self._query += " " + query_with_table.replace(x.left_condition(self._dialect).table.__table_name__ + ".", "")
         return self._engine.repository.execute_with_values(self._query, self._values)
