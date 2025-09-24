@@ -100,7 +100,8 @@ class TestComplexQueries(unittest.TestCase):
             contar: int
 
         res = (
-            self.amodel.order("contar", OrderType.DESC)
+            self.amodel
+            .order("contar", OrderType.DESC)
             .groupby(lambda x: x.City.Country.country)
             .first(
                 lambda x: (

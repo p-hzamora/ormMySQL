@@ -13,20 +13,38 @@ from test.models import Address
 
 engine = create_sakila_engine()
 
-CO = "^S"
+
+def pagination(limit: int = 0, skip: int = 0) -> tuple:
+    model = ORM(Address, engine)
+
+    if limit:
+        model.limit(limit)
+
+    if skip:
+        model.offset(skip)
+
+    return model.select()
+
+
+# for x in range(0, 100, 20):
+#     data = pagination(x, x)
+
 # fmt: off
-result = (
-    ORM(Address, engine).offset(3)
-            .groupby(lambda x: x.City.Country)
-            .where(lambda x: x.City.Country.country.regex(CO))
-            .limit(2)
-            .order(lambda x: x.City.city, "ASC")
-            .select(lambda x: (
-                x.City.city,
-                Count(x.address_id)
-            ),flavour=tuple)
-        
+res = (
+    ORM(Address, engine)
+    .where(lambda x: x.address_id >= 10)
+    .where(lambda x: x.City.city_id > 4)
+    .select()
+)
+
+res2 = (
+    ORM(Address, engine)
+    .where(lambda x: [
+        x.address_id >= 10,
+        x.City.city_id > 4,
+        ]
+    ) 
+    .select()
 )
 # fmt: on
-
-pass
+assert res== res2
