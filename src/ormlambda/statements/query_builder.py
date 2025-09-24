@@ -44,25 +44,16 @@ class QueryComponents:
 
     def __init__(
         self,
-        select: Optional[Select] = None,
-        where: Optional[Where] = None,
-        having: Optional[Having] = None,
-        order: Optional[Order] = None,
-        group_by: Optional[GroupBy] = None,
-        limit: Optional[Limit] = None,
-        offset: Optional[Offset] = None,
-        joins: Optional[set[JoinSelector]] = None,
-        count: Optional[Count] = None,
     ):
-        self.select = select
-        self.where = where
-        self.having = having
-        self.order = order
-        self.group_by = group_by
-        self.limit = limit
-        self.offset = offset
-        self.joins = joins or set()
-        self.count = count
+        self.select: Optional[Select] = None
+        self.where: Optional[list[Where]] = []
+        self.having: Optional[Having] = None
+        self.order: Optional[Order] = None
+        self.group_by: Optional[GroupBy] = None
+        self.limit: Optional[Limit] = None
+        self.offset: Optional[Offset] = None
+        self.joins: Optional[set[JoinSelector]] = {}
+        self.count: Optional[Count] = None
 
     def clear(self) -> None:
         """Reset all components"""
