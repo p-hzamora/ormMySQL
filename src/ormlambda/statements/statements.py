@@ -49,7 +49,7 @@ class DeferredOperation:
     def instantiate(
         self,
     ) -> AggregateFunctionBase:
-        return self.cls_obj(self._lambda_function, **self.kwargs)
+        return self.cls_obj(*self._lambda_function, **self.kwargs)
 
     def __repr__(self) -> str:
         return f"{DeferredOperation.__name__}: {self.cls_obj.__name__}"
@@ -154,13 +154,13 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     @override
     def limit(self, number: int) -> IStatements_two_generic[T, TRepo]:
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
-        limit = DeferredOperation(clauses.Limit, lambda_function=lambda x: number, dialect=self._dialect)
+        limit = DeferredOperation(clauses.Limit, lambda_function=lambda x: number)
         self._deferred_operations.append(limit)
         return self
 
     @override
     def offset(self, number: int) -> IStatements_two_generic[T, TRepo]:
-        offset = DeferredOperation(clauses.Offset, lambda_function=lambda x: number, dialect=self._dialect)
+        offset = DeferredOperation(clauses.Offset, lambda_function=lambda x: number)
         self._deferred_operations.append(offset)
         return self
 
@@ -183,7 +183,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         )
         self._deferred_operations.append(deferred_op)
         return clauses.Count(
-            Column=GlobalChecker.resolved_callback_object(selection, self.model),
+            element=selection,
             alias=alias,
         )
 
@@ -196,7 +196,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self
 
     @override
-    def having(self, conditions: WhereTypes) -> IStatements_two_generic[T, TRepo]:
+    def having(self, conditions: Column) -> IStatements_two_generic[T, TRepo]:
         deferred_op = DeferredOperation(clauses.Having, lambda_function=conditions)
         self._deferred_operations.append(deferred_op)
         return self
@@ -213,14 +213,14 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self
 
     @override
-    def concat(self, selector: SelectCols[T, str], alias: str = "concat") -> IAggregate:
+    def concat(self, selector: SelectCols[T, str], alias: AliasType = "concat") -> IAggregate:
         return func.Concat(values=selector, alias_clause=alias, dialect=self._dialect)
 
     @override
     def max[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: str = "max",
+        alias: AliasType = "max",
         execute: bool = False,
     ) -> int:
         if execute is True:
@@ -239,7 +239,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     def min[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: str = "min",
+        alias: AliasType = "min",
         execute: bool = False,
     ) -> int:
         column = GlobalChecker.resolved_callback_object(column, self.model)
@@ -259,7 +259,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     def sum[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: str = "sum",
+        alias: AliasType = "sum",
         execute: bool = False,
     ) -> int:
         if execute is True:
@@ -383,7 +383,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     @override
     def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements_two_generic[T]:
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
-        deferred_op = DeferredOperation(clauses.GroupBy, lambda_function=column, dialect=self.dialect)
+        deferred_op = DeferredOperation(clauses.GroupBy, lambda_function=column)
         self._deferred_operations.append(deferred_op)
         return self
 
