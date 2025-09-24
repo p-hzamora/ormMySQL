@@ -30,7 +30,7 @@ class ConvertFromForeignKey[LT: Table, RT: Table](ClauseInfoConverter[RT, None])
 
 class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
     @classmethod
-    def convert(cls, data: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = "{table}", alias_clause:str="{table}_{column}", **kwargs) -> list[ClauseInfo[None]]:
+    def convert(cls, data: ColumnType[TProp], alias_table: AliasType[ColumnType[TProp]] = "{table}", alias_clause: str = "{table}_{column}", **kwargs) -> list[ClauseInfo[None]]:
         # COMMENT: if the property belongs to the main class, the columnn name in not prefixed. This only done if the property comes from any join.
         attributes = {
             "table": data.table,
@@ -46,9 +46,9 @@ class ConvertFromColumn[TProp](ClauseInfoConverter[None, TProp]):
 class ConvertFromColumnProxy[TProp](ClauseInfoConverter[None, TProp]):
     @classmethod
     def convert(cls, data: ColumnProxy, alias_table: AliasType[ColumnType[TProp]] = "{table}", **kwargs) -> list[ClauseInfo[None]]:
-        alias_table = data.get_alias()
-        alias_clause = f"{alias_table}_{data._column.column_name}"
-        return ConvertFromColumn.convert(data._column, alias_table,alias_clause, **kwargs)
+        alias_table = data.get_table_chain()
+        alias_clause = data.alias or f"{alias_table}_{data._column.column_name}"
+        return ConvertFromColumn.convert(data._column, alias_table, alias_clause, **kwargs)
 
 
 class ConvertFromIAggregate(ClauseInfoConverter[None, None]):
@@ -77,4 +77,5 @@ class ConvertFromTable[T: Table](ClauseInfoConverter[T, None]):
 class ConvertFromTableProxy[T: Table](ClauseInfoConverter[T, None]):
     @classmethod
     def convert(cls, data: TableProxy, alias_table: AliasType[ColumnType] = "{table}", **kwargs) -> list[ClauseInfo[T]]:
-        return ConvertFromTable.convert(data._table_class, alias_table, **kwargs)
+        alias_from_proxy = data.get_alias()
+        return ConvertFromTable.convert(data._table_class, alias_table=alias_from_proxy, **kwargs)
