@@ -9,19 +9,24 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql import ForeignKey
     from ormlambda.sql.context import FKChain
-    from ormlambda.sql.column import Column
-
+    from ormlambda.sql.clauses import JoinSelector
 
 type CurrentPathType = FKChain
 type ForeignKeyRegistryType = dict[str, ForeignKey]
 type QueryMetadataType = dict[str, Any]
 type TableAliasType = dict[str, str]  # table_name -> alias
 type ClauseAliasType = dict[str, str]  # clause_key -> alias
+type JoinSelectorType = dict[str, str]  # clause_key -> alias
 
 # Separate persistent and transient data types
 type PersistentDataKeys = Literal["foreign_key_registry"]
-type TransientDataKeys = Literal["current_path", "query_metadata", "table_aliases", "clause_aliases"]
-type ContextDictKeys = Literal["current_path", "foreign_key_registry", "query_metadata", "table_aliases", "clause_aliases"]
+type ContextDictKeys = Literal[
+    "current_path",
+    "foreign_key_registry",
+    "query_metadata",
+    "table_aliases",
+    "join_selector",
+]
 
 
 class ContextDict(TypedDict):
@@ -29,7 +34,7 @@ class ContextDict(TypedDict):
     foreign_key_registry: ForeignKeyRegistryType  # PERSISTENT: Survives across queries
     query_metadata: QueryMetadataType  # TRANSIENT: Reset per query
     table_aliases: TableAliasType  # TRANSIENT: Reset per query
-    clause_aliases: ClauseAliasType  # TRANSIENT: Reset per query
+    join_selector: JoinSelectorType  # TRANSIENT: Reset per query
 
 
 class LocalContext(Protocol):
@@ -52,7 +57,7 @@ class PathContext:
             "foreign_key_registry": {},
             "query_metadata": {},
             "table_aliases": {},
-            "clause_aliases": {},
+            "join_selector": {},
         }
 
     def _get_context(self, key: Optional[ContextDictKeys] = None) -> ContextDict:
