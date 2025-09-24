@@ -160,10 +160,51 @@ class StandardSQLCompiler(IQueryCompiler):
 # =============================================================================
 
 
+class ColumnIterable[T: TableProxy | ColumnProxy]:
+    @overload
+    def __init__(self) -> None: ...
+    @overload
+    def __init__(self, iterable: Iterable[T], /) -> None: ...
+
+    def __init__(self, iterable=None):
+        self.iterable: list = iterable if iterable is not None else []
+
+    def __repr__(self):
+        return self.iterable.__repr__()
+
+    def append(self, object: T, /) -> None:
+        if isinstance(object, TableProxy):
+            self.extend(object.get_columns())
+            return None
+
+        return self.iterable.append(object)
+
+    def extend(self, iterable: Iterable[T], /) -> None:
+        for item in iterable:
+            if isinstance(item, TableProxy):
+                self.iterable.extend(item.get_columns())
+            else:
+                self.iterable.append(item)
+        return None
+
+    def clear(self) -> None:
+        return self.iterable.clear()
+
+    def __iter__(self) -> Generator[ColumnProxy, None, None]:
+        yield from self.iterable
+
+    def __len__(self) -> int:
+        return len(self.iterable)
+
+    def __getitem__(self, index: int) -> T:
+        return self.iterable[index]
+
+
 class QueryBuilder(IQuery):
     path_contex: PathContext
     compiler: StandardSQLCompiler
     components: QueryComponents
+used_columns: ColumnIterable[ColumnProxy]
     join_type: JoinType
 
     def __init__(self):
@@ -172,6 +213,7 @@ class QueryBuilder(IQuery):
         # Clean component storage
         self.components = QueryComponents()
         self.join_type = JoinType.INNER_JOIN
+self.used_columns = ColumnIterable()
 
     @staticmethod
     def _get_global_context() -> PathContext:
