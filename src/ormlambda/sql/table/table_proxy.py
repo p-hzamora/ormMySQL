@@ -45,7 +45,10 @@ class TableProxy[T: Table](ColumnTableProxy):
 
         elif isinstance(attr, Column):
             # Accessing a column - return column reference with path info
-            return ColumnProxy(attr, self._path)
+
+            column = ColumnProxy(attr, self._path.copy())
+            self._path.clear()
+            return column
 
         else:
             return attr
