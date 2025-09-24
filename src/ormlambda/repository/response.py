@@ -88,10 +88,15 @@ class Response[TFlavour, *Ts]:
             nonlocal data
             replacer_dicc: dict[str, str] = {}
 
-            for col in self._select.all_clauses:
-                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, Alias):
+            for col in self._select.columns:
+                if isinstance(col, Alias):
                     continue
-                replacer_dicc[col.alias_clause] = col.column
+
+                if hasattr(col, "alias"):
+                    continue
+
+                alias = col.alias if col.alias else col.get_full_chain().replace(".", "_")
+                replacer_dicc[alias] = col.column_name
 
             cleaned_column_names = [replacer_dicc.get(col, col) for col in self._columns]
 
