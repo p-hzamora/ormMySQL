@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 from types import NoneType
-from typing import Any, TYPE_CHECKING, Type
+from typing import Any, TYPE_CHECKING, Type, cast
 import unittest
 from parameterized import parameterized
 from shapely import Point
@@ -273,7 +273,7 @@ class TestClauseInfoUsingColumnProxy(unittest.TestCase):
         PATH_CONTEXT.clear_all_context()
 
     def test_passing_callable_alias_clause(self):
-        column_proxy = GlobalChecker.resolved_callback_object(lambda x: x.name_a, A)
+        column_proxy = GlobalChecker.resolved_callback_object(lambda x: cast(A,x).name_a, A)
         ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
         self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
 
