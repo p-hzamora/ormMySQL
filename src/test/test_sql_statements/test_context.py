@@ -1,17 +1,14 @@
-import unittest
 import sys
 from pathlib import Path
 from ormlambda.common.global_checker import GlobalChecker
-from ormlambda.sql.table.table_proxy import TableProxy
 
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import create_env_engine, create_engine_for_db, create_sakila_engine  # noqa: E402
-from ormlambda import Table, Column, BaseModel, ForeignKey, ORM  # noqa: E402
+from test.config import create_env_engine  # noqa: E402
+from ormlambda import Table, Column, ForeignKey  # noqa: E402
 from ormlambda.dialects import mysql
-from ormlambda.sql.clauses import Select
 
 from ormlambda.sql.context import PATH_CONTEXT
 
@@ -78,9 +75,8 @@ def foo(a: A):
 
 
 with PATH_CONTEXT.query_context(A) as context:
-    table_proxy = TableProxy(A, context.get_current_path())
-    resolved_proxy = GlobalChecker.resolved_callback_object(foo, table_proxy)
+    resolved_proxy = GlobalChecker.resolved_callback_object(foo, A,context)
 
     for x in resolved_proxy:
-        a = x._get_full_reference()
+        a = x.get_table_chain()
     resolved_proxy
