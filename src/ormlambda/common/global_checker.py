@@ -7,7 +7,6 @@ from ormlambda.common.errors import UnmatchedLambdaParameterError
 if TYPE_CHECKING:
     from ormlambda.sql.context import PathContext
     from ormlambda.sql import Table
-    from ormlambda.sql.table import TableProxy
     from ormlambda.sql.column import ColumnProxy
 
 
@@ -17,17 +16,16 @@ class GlobalChecker:
         return callable(obj) and not isinstance(obj, type)
 
     @classmethod
-    def resolved_callback_object(cls, lambda_func: Callable[[Type[Table]], Any], table: Type[Table], context: PathContext) -> tuple[ColumnProxy | TableProxy, ...]:
+    def resolved_callback_object(cls, lambda_func: Callable[[Type[Table]], Any], table: Type[Table], context: PathContext) -> tuple[ColumnProxy, ...]:
         from ormlambda.sql.table import TableProxy
         from ormlambda import Column
         from ormlambda.sql.column_table_proxy import FKChain
         from ormlambda.sql.column import ColumnProxy
 
         try:
-            table_proxy = TableProxy(table, context.get_current_path())
+            table_proxy = TableProxy(table, context.get_current_path().copy())
             response = lambda_func(table_proxy)
             result = []
-
 
             if isinstance(response, str) or not isinstance(response, Iterable):
                 response = [response]
@@ -39,7 +37,7 @@ class GlobalChecker:
                 elif isinstance(item, str):
                     new_col = Column(dtype=str, column_name=item)
                     new_col.table = table
-                    result = ColumnProxy(new_col, path=FKChain(table, None))
+                    result.append(ColumnProxy(new_col, path=FKChain(table, None)))
                 else:
                     result.append(item)
 
