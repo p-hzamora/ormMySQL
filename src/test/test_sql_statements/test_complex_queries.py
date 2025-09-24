@@ -11,7 +11,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from pydantic import BaseModel
 from test.config import create_env_engine  # noqa: E402
 from test.models import Address, City  # noqa: F401
-from ormlambda import ORM, Column, Count, OrderType, JoinType, Alias
+from ormlambda import ORM, Count, OrderType, JoinType, Alias
 
 engine = create_env_engine()
 
@@ -31,7 +31,7 @@ class TestComplexQueries(unittest.TestCase):
         # fmt: off
         response = (
             self.cmodel
-                .order("sumCities", "DESC")
+                .order(lambda x: x.sumCities, "DESC")
                 .where(lambda x: x.Country.country.like(f"%{char_to_filter}%"))
                 .groupby(lambda x: x.Country.country)
         )
@@ -60,7 +60,7 @@ class TestComplexQueries(unittest.TestCase):
         PK = 312
         res = (
             self.amodel.where(lambda x: x.City.city_id >= PK)
-            .having(Column(column_name="count") > 1)
+            .having(lambda x: x.count > 1)
             .groupby(lambda x: x.city_id)
             .select(
                 lambda x: (
