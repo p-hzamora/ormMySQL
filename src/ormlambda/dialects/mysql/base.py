@@ -1,6 +1,8 @@
 from __future__ import annotations
 from types import ModuleType
+from ormlambda import ColumnProxy
 from ormlambda.sql import compiler
+from ormlambda.sql.clause_info import AggregateFunctionBase
 from .. import default
 from typing import TYPE_CHECKING, Any, Iterable
 
@@ -66,11 +68,12 @@ if TYPE_CHECKING:
     )
 
 
-
-
 class MySQLCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
+
+    def visit_column_proxy(self, column: ColumnProxy) -> str:
+        return column.query(self.dialect)
 
     def visit_select(self, select: Select, **kw):
         return f"SELECT {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
@@ -83,19 +86,39 @@ class MySQLCompiler(compiler.SQLCompiler):
         return f"{limit.LIMIT} {limit._number}"
 
     # TODOH []: include the rest of visit methods
-    def visit_insert(self, insert: Insert, **kw) -> Insert: ...
-    def visit_delete(self, delete: Delete, **kw) -> Delete: ...
-    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert: ...
-    def visit_update(self, update: Update, **kw) -> Update: ...
+    def visit_insert(self, insert: Insert, **kw) -> Insert:
+        pass
+
+    def visit_delete(self, delete: Delete, **kw) -> Delete:
+        pass
+
+    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert:
+        pass
+
+    def visit_update(self, update: Update, **kw) -> Update:
+        pass
+
     def visit_offset(self, offset: Offset, **kw) -> Offset:
         return f"{offset.OFFSET} {offset._number}"
 
-    def visit_count(self, count: Count, **kw) -> Count: ...
-    def visit_where(self, where: Where, **kw) -> Where: ...
-    def visit_having(self, having: Having, **kw) -> Having: ...
+    def visit_count(self, count: Count, **kw) -> Count:
+        if isinstance(count.column, ColumnProxy):
+            alias = f"`{count.column.get_table_chain()}`"
+            column = f"{alias}.{count.column.column_name}"
+        else:
+            column = count.column
+
+        return f"COUNT({column}) AS {count.alias}"
+
+    def visit_where(self, where: Where, **kw) -> Where:
+        pass
+
+    def visit_having(self, having: Having, **kw) -> Having:
+        pass
+
     def visit_order(self, order: Order, **kw) -> Order:
         string_columns: list[str] = []
-        columns = order.unresolved_column
+        columns = order.columns
 
         # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
         if isinstance(columns, str):
@@ -107,7 +130,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         assert len(columns) == len(order._order_type)
 
-        for index, clause in enumerate(order._convert_into_clauseInfo(columns, dialect=self.dialect)):
+        for index, clause in enumerate(AggregateFunctionBase._convert_into_clauseInfo(columns, dialect=self.dialect)):
             clause.alias_clause = None
             string_columns.append(f"{clause.query(self.dialect, **kw)} {str(order._order_type[index])}")
 
@@ -119,10 +142,10 @@ class MySQLCompiler(compiler.SQLCompiler):
         columns: list[str] = []
 
         new_cols = concat.join_elements()
-        for clause in concat._convert_into_clauseInfo(new_cols, dialect=self.dialect):
+        for clause in AggregateFunctionBase._convert_into_clauseInfo(new_cols, dialect=self.dialect):
             clause.alias_clause = concat.alias_clause
             columns.append(clause)
-        return concat._concat_alias_and_column(f"CONCAT({ClauseInfo.join_clauses(columns, dialect=self.dialect)})", concat._alias_aggregate)
+        return concat._concat_alias_and_column(f"CONCAT({ClauseInfo.join_clauses(columns, dialect=self.dialect)})", concat.alias)
 
     def visit_max(self, max: Max, **kw) -> Max: ...
     def visit_min(self, min: Min, **kw) -> Min: ...
