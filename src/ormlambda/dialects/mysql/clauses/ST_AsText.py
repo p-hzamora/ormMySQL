@@ -1,35 +1,24 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from ormlambda.sql.clause_info import AggregateFunctionBase
+from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.types import ColumnType, AliasType
 
-if TYPE_CHECKING:
-    from ormlambda.dialects import Dialect
-
-
-class ST_AsText[T, TProp](AggregateFunctionBase[None]):
+from ormlambda.sql.elements import ClauseElement
+class ST_AsText[T, TProp](ClauseElement, IAggregate):
     """
     https://dev.mysql.com/doc/refman/8.4/en/fetching-spatial-data.html
 
     The ST_AsText() function converts a geometry from internal format to a WKT string.
     """
 
-    @staticmethod
-    def FUNCTION_NAME() -> str:
-        return "ST_AsText"
+    __visit_name__ = 'st_astext'
 
-    def __init__(
-        self,
-        point: ColumnType[TProp],
-        alias_table: AliasType[ColumnType[TProp]] = None,
-        alias_clause: AliasType[ColumnType[TProp]] = None,
-        *,
-        dialect: Dialect,
-    ) -> None:
-        default_alias_clause = self.create_alias_from(point) if not alias_clause else alias_clause
+    def __init__(self, point: ColumnType[TProp], alias: AliasType[TProp] = "st_astext") -> None:
+        self.alias = alias
+        self.column = point
 
-        super().__init__(table=point.table, column=point, alias_table=alias_table, alias_clause=default_alias_clause, dialect=dialect)
+    def used_columns(self):
+        return [self.column]
 
-    @staticmethod
-    def create_alias_from(element: ColumnType[TProp]) -> str:
-        return element.column_name
+    @property
+    def dtype(self) -> str:
+        return str

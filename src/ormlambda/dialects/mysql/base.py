@@ -3,6 +3,8 @@ from types import ModuleType
 from ormlambda import ColumnProxy, ForeignKey, TableProxy
 from ormlambda.sql import compiler
 from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.common.errors import NotKeysInIAggregateError
+
 
 from .. import default
 from typing import TYPE_CHECKING, Any, Iterable, cast
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda.sql.column.column import Column
     from mysql import connector
+    from ormlambda.dialects.mysql.clauses import ST_AsText
 
 from .types import (
     _NumericType,
@@ -269,6 +272,11 @@ class MySQLCompiler(compiler.SQLCompiler):
         column = sum.column.compile(self.dialect, **attr).string
         return f"SUM({column}) AS `{sum.alias}`"
 
+    def visit_st_astext(self, st_astext: ST_AsText) -> str:
+        # avoid use placeholder when using IAggregate because no make sense.
+        if st_astext.alias and (found := ClauseInfo._keyRegex.findall(st_astext.alias)):
+            raise NotKeysInIAggregateError(found)
+        return f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string}) AS `{st_astext.alias}`"
 
 class MySQLDDLCompiler(compiler.DDLCompiler):
     def get_column_specification(self, column: Column, **kwargs):
