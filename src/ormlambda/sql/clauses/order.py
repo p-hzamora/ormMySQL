@@ -1,20 +1,17 @@
 from __future__ import annotations
 import typing as tp
 
+from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.types import ColumnType
 
 from ormlambda.statements import OrderType
 from ormlambda.sql.elements import ClauseElement
 
 
-class Order[TProp](ClauseElement):
+class Order[TProp](ClauseElement, IAggregate):
     __visit_name__ = "order"
 
     columns: tuple[ColumnType[TProp]]
-
-    @staticmethod
-    def FUNCTION_NAME() -> str:
-        return "ORDER BY"
 
     def __init__(
         self,
@@ -44,5 +41,7 @@ class Order[TProp](ClauseElement):
     def used_columns(self):
         return self.columns
 
+    @property
+    def dtype(self)->tp.Any: ...
 
 __all__ = ["Order"]
