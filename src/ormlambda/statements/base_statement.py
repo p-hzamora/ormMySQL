@@ -8,6 +8,8 @@ from ormlambda.statements.interfaces import IStatements_two_generic
 from ormlambda import Table
 
 from ormlambda.common.errors import AggregateFunctionError
+from ormlambda.sql.clause_info import IAggregate
+
 
 if TYPE_CHECKING:
     from ormlambda.engine.base import Engine
@@ -105,12 +107,13 @@ class ClusterResponse[T]:
         table_attr_dict = defaultdict(make_list_of_dicts)
 
         for i, dicc_cols in enumerate(self._response_sql):
-            for clause in self._select._columns: 
-                table = clause.table 
-                col = clause.column_name
-
-                if col is None or not hasattr(table, col):
+            for clause in self._select.columns:
+                # if col is None or not hasattr(table, col):
+                if isinstance(clause, IAggregate):
                     raise AggregateFunctionError(clause)
+
+                table = clause.table
+                col = clause.column_name
 
                 table_attr_dict[table][i][col] = dicc_cols[clause.alias if clause.alias is not None else col]
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
