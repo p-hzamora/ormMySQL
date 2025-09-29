@@ -261,7 +261,7 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(q.table, D)
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(q)
-        self.assertEqual(q._tables, (D, C, B, A))
+        self.assertEqual(q._table, (D, C, B, A))
 
         self.assertTrue(callable(q._columns))
         qb = QueryBuilder(dialect=DIALECT)

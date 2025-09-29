@@ -179,7 +179,7 @@ class TestJoinQueries(unittest.TestCase):
 
         res = self.model.where(lambda x: x.B3.C1.D2.name == "Developer").first(
             lambda a: (
-                a.B3.C1.D2.name,
+                Alias(a.B3.C1.D2.name, "name"),
                 Alias(a.B3.C1.D2.name, "name_C1_D2"),
                 Alias(a.B3.C2.D2.name, "name_C2_D2"),
                 Alias(a.B3.C3.D2.name, "name_C3_D2"),
@@ -201,9 +201,8 @@ class TestJoinQueries(unittest.TestCase):
         VARIABLE = 3
         res = self.model.where(lambda x: x.pk_a == VARIABLE).first(
             lambda a: (
-                a.B1.C1.D2,
-                a.data_a,
                 # region All B1 possibilities
+                Alias(a.pk_a, alias="PK"),
                 Alias(a.B1.name, alias="a~B1~name"),
                 Alias(a.B1.C1.name, alias="a~B1~C1~name"),
                 Alias(a.B1.C2.name, alias="a~B1~C2~name"),
@@ -242,10 +241,8 @@ class TestJoinQueries(unittest.TestCase):
             ),
             flavour=dict,
         )
-        real_query: dict = {
-            "A_B1_C1_D2_pk_d": 4,
-            "A_B1_C1_D2_name": "Technical Lead",
-            "A_data_a": "Project Gamma - Innovation Track",
+        EXPECTED = {
+            "PK": 3,
             "a~B1~name": "Domestic Operations",
             "a~B1~C1~name": "Customer Service",
             "a~B1~C2~name": "Analytics Division",
@@ -277,10 +274,86 @@ class TestJoinQueries(unittest.TestCase):
             "a~B3~C3~D1~name": "Developer",
             "a~B3~C3~D2~name": "Project Manager",
         }
+        self.assertEqual(res, EXPECTED)
 
-        self.assertEqual(res, real_query)
-
-
+    def test_select_a_lot_of_columns_with_a_lot_of_combines(self):
+        VARIABLE = 3
+        res = self.model.where(lambda x: x.pk_a == VARIABLE).first(
+            lambda a: (
+                a.pk_a,
+                # region All B1 possibilities
+                a.B1.name,
+                a.B1.C1.name,
+                a.B1.C2.name,
+                a.B1.C3.name,
+                a.B1.C1.D1.name,
+                a.B1.C1.D2.name,
+                a.B1.C2.D1.name,
+                a.B1.C2.D2.name,
+                a.B1.C3.D1.name,
+                a.B1.C3.D2.name,
+                # endregion
+                # region All B2 possibilities
+                a.B2.name,
+                a.B2.C1.name,
+                a.B2.C2.name,
+                a.B2.C3.name,
+                a.B2.C1.D1.name,
+                a.B2.C1.D2.name,
+                a.B2.C2.D1.name,
+                a.B2.C2.D2.name,
+                a.B2.C3.D1.name,
+                a.B2.C3.D2.name,
+                # endregion
+                # region All B3 possibilities
+                a.B3.name,
+                a.B3.C1.name,
+                a.B3.C2.name,
+                a.B3.C3.name,
+                a.B3.C1.D1.name,
+                a.B3.C1.D2.name,
+                a.B3.C2.D1.name,
+                a.B3.C2.D2.name,
+                a.B3.C3.D1.name,
+                a.B3.C3.D2.name,
+                # endregion
+            ),
+            flavour=dict,
+        )
+        EXPECTED = {
+            "A_pk_a": 3,
+            "A_B1_name": "Domestic Operations",
+            "A_B1_C1_name": "Customer Service",
+            "A_B1_C2_name": "Analytics Division",
+            "A_B1_C3_name": "Quality Control",
+            "A_B1_C1_D1_name": "User Support",
+            "A_B1_C1_D2_name": "Technical Lead",
+            "A_B1_C2_D1_name": "Data Scientist",
+            "A_B1_C2_D2_name": "UI Designer",
+            "A_B1_C3_D1_name": "Technical Lead",
+            "A_B1_C3_D2_name": "Quality Assurance",
+            "A_B2_name": "Digital Services",
+            "A_B2_C1_name": "Security Department",
+            "A_B2_C2_name": "Operations Unit",
+            "A_B2_C3_name": "Infrastructure Team",
+            "A_B2_C1_D1_name": "Quality Assurance",
+            "A_B2_C1_D2_name": "Security Officer",
+            "A_B2_C2_D1_name": "DevOps Engineer",
+            "A_B2_C2_D2_name": "Product Owner",
+            "A_B2_C3_D1_name": "Security Officer",
+            "A_B2_C3_D2_name": "Network Admin",
+            "A_B3_name": "Traditional Services",
+            "A_B3_C1_name": "Development Team",
+            "A_B3_C2_name": "Consulting Services",
+            "A_B3_C3_name": "Product Development",
+            "A_B3_C1_D1_name": "Network Admin",
+            "A_B3_C1_D2_name": "Developer",
+            "A_B3_C2_D1_name": "Consultant",
+            "A_B3_C2_D2_name": "Database Admin",
+            "A_B3_C3_D1_name": "Developer",
+            "A_B3_C3_D2_name": "Project Manager",
+        }
+        self.assertDictEqual(res, EXPECTED)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda import ORM, Column
+from ormlambda import ORM, Count
 from test.models import Address  # noqa: E402
 
 from test.config import create_sakila_engine
@@ -26,20 +26,21 @@ class TestGroupby(unittest.TestCase):
             district: str
             count: int
 
-        count_name = Column(column_name="count")
-
+        # fmt: off
         res = (
-            self.model.groupby(Address.district)
-            .order(count_name, "DESC")
-            .having(count_name >= 5)
-            .select(
+            self.model
+            .groupby(lambda x: x.district)
+            .order(lambda x: x.count, "DESC")
+            .having(lambda x: x.count >= 5)
+            .select(lambda x:
                 (
-                    Address.district,
-                    self.model.count(Address.address),
+                    x.district,
+                    Count(x.address),
                 ),
                 flavour=Response,
             )
         )
+        # fmt: on
 
         TOTAL_SUM = sum(x.count for x in res)
 
@@ -48,7 +49,19 @@ class TestGroupby(unittest.TestCase):
             address: str
 
         results = [r.district for r in res]
-        res2 = self.model.where(lambda x: x.district.contains(results)).order(Address.district, "DESC").select((Address.district, Address.address), flavour=Response2)
+        # fmt: off
+        res2 = (
+            self.model
+            .where(lambda x: x.district.contains(results))
+            .order(lambda x:x.district, "DESC")
+            .select(lambda x: 
+                    (
+                        x.district,
+                        x.address
+                    ),
+                    flavour=Response2)
+        )
+        # fmt: on
         EXPECTED = len(res2)
         self.assertEqual(TOTAL_SUM, EXPECTED)
 

@@ -263,7 +263,7 @@ class TestPathContextIntegration(unittest.TestCase):
         """Clear PATH_CONTEXT before each test to ensure clean state"""
         PATH_CONTEXT.clear_all_context()
 
-    def test_AAalias_clause_NULL_when_no_column_is_specified(self):
+    def test_alias_clause_NULL_when_no_column_is_specified(self):
         self.assertEqual(ClauseInfoMySQL(A).column, "%s")
 
 
@@ -274,8 +274,7 @@ class TestClauseInfoUsingColumnProxy(unittest.TestCase):
 
     def test_passing_callable_alias_clause(self):
         with PATH_CONTEXT.query_context(A) as context:
-                
-            column_proxy = GlobalChecker.resolved_callback_object(lambda x: cast(A,x).name_a, A, context)
+            column_proxy = GlobalChecker.resolved_callback_object(lambda x: cast(A, x).name_a, A, context)
             ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
             self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
 

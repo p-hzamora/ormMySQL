@@ -32,7 +32,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         cls.model.create_table("fail")
 
     def setUp(self) -> None:
-        if self.model.count(execute=True):
+        if self.model.count():
             self.model.delete()
 
     @classmethod

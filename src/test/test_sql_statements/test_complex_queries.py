@@ -58,6 +58,7 @@ class TestComplexQueries(unittest.TestCase):
             count: int
 
         PK = 312
+        # fmt:off
         res = (
             self.amodel.where(lambda x: x.City.city_id >= PK)
             .having(lambda x: x.count > 1)
@@ -65,18 +66,19 @@ class TestComplexQueries(unittest.TestCase):
             .select(
                 lambda x: (
                     Alias(x.City.city_id, "pkCity"),
-                    self.amodel.count(x.address_id, "count"),
+                    Count(x.address_id, "count"),
                 ),
                 flavour=Response,
             )
         )
+        # fmt:on
         RESULT = (
             Response(pkCity=312, count=2),
             Response(pkCity=576, count=2),
         )
         self.assertTupleEqual(res, RESULT)
 
-    def test_extract_countries_with_white_space_in_the_name(self):
+    def test_AAextract_countries_with_white_space_in_the_name(self):
         res = self.query("spain")
         self.assertEqual(res, Response(country="Spain", sumCities=5))
 
@@ -99,9 +101,10 @@ class TestComplexQueries(unittest.TestCase):
             countryName: str
             contar: int
 
+        # fmt:off
         res = (
             self.amodel
-            .order("contar", OrderType.DESC)
+            .order(lambda x: x.contar, OrderType.DESC)
             .groupby(lambda x: x.City.Country.country)
             .first(
                 lambda x: (
@@ -112,6 +115,7 @@ class TestComplexQueries(unittest.TestCase):
                 by=JoinType.LEFT_EXCLUSIVE,
             )
         )
+        # fmt:on
 
         EXPECTED = Response(countryName="India", contar=60)
         self.assertEqual(res, EXPECTED)

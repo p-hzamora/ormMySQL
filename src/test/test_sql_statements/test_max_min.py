@@ -11,6 +11,7 @@ from test.config import create_sakila_engine  # noqa: E402
 from test.models import Address  # noqa: F401
 from ormlambda import ORM
 from pydantic import BaseModel
+from ormlambda import Min, Max
 
 
 class MaxMinTest(unittest.TestCase):
@@ -20,13 +21,20 @@ class MaxMinTest(unittest.TestCase):
         cls.tmodel = ORM(Address, cls.ddbb)
 
     def test_max_and_min(self):
-        res = self.tmodel.where((Address.address_id <= 200, Address.address_id >= 100)).first(
-            (
-                self.tmodel.max(Address.address_id),
-                self.tmodel.min(Address.address_id),
-            ),
-            flavour=dict,
+        # fmt: off
+        res = (
+            self.tmodel
+            .where(lambda x: (
+                x.address_id <= 200,
+                x.address_id >= 100))
+            .first(lambda x: (
+                Max(x.address_id),
+                Min(x.address_id),
+                ),
+                flavour=dict,
+            )
         )
+        # fmt: on
 
         self.assertEqual(res["max"], 200)
         self.assertEqual(res["min"], 100)
@@ -36,33 +44,38 @@ class MaxMinTest(unittest.TestCase):
             addressIdMax: int
             addressIdMin: int
 
-        res = self.tmodel.where((Address.address_id <= 200, Address.address_id >= 100)).first(
-            selector=(
-                self.tmodel.max(Address.address_id, "addressIdMax"),
-                self.tmodel.min(Address.address_id, "addressIdMin"),
-            ),
-            flavour=MaxMinResponse,
+        # fmt: off
+        res = (
+            self.tmodel
+            .where(lambda x: (x.address_id <= 200, x.address_id >= 100))
+            .first(lambda x: (
+                Max(x.address_id, "addressIdMax"),
+                Min(x.address_id, "addressIdMin"),
+                ),
+                flavour=MaxMinResponse,
+            )
         )
+        # fmt: off
         self.assertEqual(res.addressIdMax, 200)
         self.assertEqual(res.addressIdMin, 100)
 
     def test_max_with_lambda(self):
-        res1 = self.tmodel.groupby(Address.address_id).first(self.tmodel.max(Address.address_id), flavour=dict)
-        res2 = self.tmodel.groupby(Address.address_id).first(self.tmodel.max(lambda x: x.address_id), flavour=dict)
+        res1 = self.tmodel.groupby(lambda x: x.address_id).max(lambda x: x.address_id)
+        res2 = self.tmodel.groupby(lambda x: x.address_id).max(lambda x: x.address_id)
 
-        self.assertDictEqual(res1, res2)
+        self.assertEqual(res1, res2)
 
     def test_min_with_lambda(self):
-        res1 = self.tmodel.groupby(Address.address_id).first(self.tmodel.min(Address.address_id), flavour=dict)
-        res2 = self.tmodel.groupby(Address.address_id).first(self.tmodel.min(lambda x: x.address_id), flavour=dict)
+        res1 = self.tmodel.groupby(lambda x: x.address_id).min(lambda x: x.address_id)
+        res2 = self.tmodel.groupby(lambda x: x.address_id).min(lambda x: x.address_id)
 
-        self.assertDictEqual(res1, res2)
+        self.assertEqual(res1, res2)
 
     def test_sum_with_lambda(self):
-        res1 = self.tmodel.groupby(Address.address_id).first(self.tmodel.sum(Address.address_id), flavour=dict)
-        res2 = self.tmodel.groupby(Address.address_id).first(self.tmodel.sum(lambda x: x.address_id), flavour=dict)
+        res1 = self.tmodel.groupby(lambda x: x.address_id).sum(lambda x: x.address_id)
+        res2 = self.tmodel.groupby(lambda x: x.address_id).sum(lambda x: x.address_id)
 
-        self.assertDictEqual(res1, res2)
+        self.assertEqual(res1, res2)
 
 
 if __name__ == "__main__":
