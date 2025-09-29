@@ -1,11 +1,12 @@
 from __future__ import annotations
+from collections import defaultdict
 import typing as tp
 import re
 
 from ormlambda import Table
 from ormlambda import Column, ColumnProxy
-from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import ASTERISK
+from ormlambda.errors import DuplicatedClauseName
 from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
 
@@ -35,9 +36,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     @tp.overload
     def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp]): ...
     @tp.overload
-    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
+    def __init__[TProp](self, table: TableType[T], column: ColumnType[TProp], alias_table: AliasType[ColumnProxy] = ..., alias_clause: AliasType[ColumnProxy] = ...): ...
     @tp.overload
-    def __init__(self, table: TableType[T], alias_table: AliasType[ClauseInfo[T]] = ..., alias_clause: AliasType[ClauseInfo[T]] = ...): ...
+    def __init__(self, table: TableType[T], alias_table: AliasType[ColumnProxy] = ..., alias_clause: AliasType[ColumnProxy] = ...): ...
     @tp.overload
     def __init__(self, table: TableType[T], keep_asterisk: tp.Optional[bool] = ...): ...
     @tp.overload
@@ -52,8 +53,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         self,
         table: TableType[T],
         column: tp.Optional[ColumnType[TProp]] = None,
-        alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = None,
-        alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = None,
+        alias_table: tp.Optional[AliasType[ColumnProxy]] = None,
+        alias_clause: tp.Optional[AliasType[ColumnProxy]] = None,
         keep_asterisk: bool = False,
         preserve_context: bool = False,
         dtype: tp.Optional[TProp] = None,
@@ -68,8 +69,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         self._table: TableType[T] = table
         self._column: TableType[T] | ColumnType[TProp] = column
-        self._alias_table: tp.Optional[AliasType[ClauseInfo[T]]] = alias_table
-        self._alias_clause: tp.Optional[AliasType[ClauseInfo[T]]] = alias_clause
+        self._alias_table: tp.Optional[AliasType[ColumnProxy]] = alias_table
+        self._alias_clause: tp.Optional[AliasType[ColumnProxy]] = alias_clause
         self._keep_asterisk: bool = keep_asterisk
         self._preserve_context: bool = preserve_context
         self._dtype = dtype
@@ -280,12 +281,12 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         alias = f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
         return alias
 
-    def _alias_resolver(self, alias: AliasType[ClauseInfo[T]]) -> tp.Optional[str]:
+    def _alias_resolver(self, alias: AliasType[ColumnProxy]) -> tp.Optional[str]:
         if alias is None:
             return None
 
         if callable(alias):
-            return self._alias_resolver(alias(self))
+            return self._alias_resolver(alias(self._column))
 
         return self._replace_placeholder(alias)
 
@@ -295,26 +296,34 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return None
 
     @staticmethod
-    def join_clauses(clauses: list[ClauseElement], chr: str = ",", *, dialect: Dialect, **kw) -> str:
-        from ormlambda import Alias
-
+    def join_clauses(clauses: list[ColumnProxy], chr: str = ",", *, dialect: Dialect, **kw) -> str:
+        raise_alias_duplicated = False
+        all_aliases: dict[str, int] = defaultdict(int)
         queries: list[str] = []
         for c in clauses:
-            if isinstance(c, ClauseElement):
-                params = {**kw}
-                if not isinstance(c, Alias) and isinstance(c, ColumnProxy):
-                    if "alias_clause" not in kw:
-                        params.update(
-                            {
-                                "alias_clause": c.get_full_chain('_'),
-                            }
-                        )
+            # That update control the alias we set by default on select clause
+            if "alias_clause" in kw:
+                alias_clause = kw["alias_clause"]
+            elif c.alias:
+                alias_clause = c.alias
+            else:
+                alias_clause = c.column_name
 
-                queries.append(c.compile(dialect, **params).string)
+            param = {**kw, "alias_clause": alias_clause}
+            compiled = c.compile(dialect, **param)
 
-                continue
-            queries.append(c.compile(dialect, **kw))
+            # FIXME [ ]: we use c.alias because we're modifying dynamically when compile the object insdie 'visit_column_proxy' method
+            # it's working right though it's not the way to do it.
+            NEW_ALIAS = c.alias
+            all_aliases[NEW_ALIAS] += 1
 
+            if all_aliases[NEW_ALIAS] > 1:
+                raise_alias_duplicated = True
+
+            queries.append(compiled.string)
+
+        if raise_alias_duplicated:
+            raise DuplicatedClauseName(tuple(alias for alias, number in all_aliases.items() if number > 1))
         return f"{chr} ".join(queries)
 
     @staticmethod
