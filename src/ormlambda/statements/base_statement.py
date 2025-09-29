@@ -113,8 +113,7 @@ class ClusterResponse[T]:
                     raise AggregateFunctionError(clause)
 
                 table = clause.table
-                col = clause.column_name
 
-                table_attr_dict[table][i][col] = dicc_cols[clause.alias if clause.alias is not None else col]
+                table_attr_dict[table][i][clause.column_name] = dicc_cols[clause.alias]
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
         return dict(table_attr_dict)
