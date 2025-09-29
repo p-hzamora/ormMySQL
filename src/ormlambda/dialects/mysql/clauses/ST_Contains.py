@@ -5,35 +5,23 @@ from shapely import Point
 
 from ormlambda import Column
 from ormlambda.sql.types import ColumnType, AliasType
-from ormlambda.sql.clause_info import ClauseInfo, IAggregate
+from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.elements import ClauseElement
 
-if tp.TYPE_CHECKING:
-    from ormlambda.dialects import Dialect
-
-
-class ST_Contains(IAggregate):
-    FUNCTION_NAME: str = "ST_Contains"
+class ST_Contains(ClauseElement, IAggregate):
+    __visit_name__ = "st_contains"
 
     def __init__[TProp: Column](
         self,
         column: ColumnType[TProp],
         point: Point,
-        alias_table: tp.Optional[AliasType[ColumnType[TProp]]] = None,
-        alias_clause: tp.Optional[AliasType[ColumnType[TProp]]] = None,
-        *,
-        dialect: Dialect,
+        alias: AliasType[ColumnType[TProp]]= "st_contains",
+        
     ):
-        self.attr1: ClauseInfo[Point] = ClauseInfo(column.table, column, alias_table, dialect=dialect)
-        self.attr2: ClauseInfo[Point] = ClauseInfo[Point](None, point, dialect=dialect)
+        self.column = column
+        self.point = point
+        self.alias = alias
 
-        self._alias_clause: AliasType[ColumnType[TProp]] = alias_clause
-
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        return f"{self.FUNCTION_NAME}({self.attr1.query(dialect,**kwargs)}, {self.attr2.query(dialect,**kwargs)})"
-
-    @property
-    def alias_clause(self) -> tp.Optional[str]:
-        return self._alias_clause
 
     @property
     def dtype(self) -> str:

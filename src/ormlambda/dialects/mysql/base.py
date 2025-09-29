@@ -10,6 +10,7 @@ from .. import default
 from typing import TYPE_CHECKING, Any, Iterable, cast
 
 if TYPE_CHECKING:
+    from test.test_clause_info import ST_Contains
     from ormlambda import JoinSelector
     from ormlambda.sql.comparer import Comparer
     from ormlambda.sql.column.column import Column
@@ -277,6 +278,12 @@ class MySQLCompiler(compiler.SQLCompiler):
         if st_astext.alias and (found := ClauseInfo._keyRegex.findall(st_astext.alias)):
             raise NotKeysInIAggregateError(found)
         return f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string}) AS `{st_astext.alias}`"
+
+    def visit_st_contains(self, st_contains: ST_Contains) -> str:
+        attr1 = st_contains.column.compile(self.dialect, alias_clause=None).string
+        attr2 = ClauseInfo(None, st_contains.point, dialect=self.dialect).query(self.dialect, alias_clause=None)
+        return f"ST_Contains({attr1}, {attr2})"
+
 
 class MySQLDDLCompiler(compiler.DDLCompiler):
     def get_column_specification(self, column: Column, **kwargs):
