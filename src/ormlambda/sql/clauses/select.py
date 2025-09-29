@@ -1,52 +1,69 @@
 from __future__ import annotations
+from ormlambda import ColumnProxy
 from ormlambda.sql.elements import ClauseElement
-from typing import Type, Callable, TYPE_CHECKING
+from typing import Any, Iterable, Optional, Type, TYPE_CHECKING
 
-from ormlambda.sql.clause_info import ClauseInfo
-from ormlambda.sql.context import PATH_CONTEXT
-from ormlambda.common.abstract_classes.decomposition_query import DecompositionQueryBase
+from ormlambda.sql.clause_info import ClauseInfo, IAggregate
+from ormlambda.sql.types import SelectCol
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import AliasType, ColumnType
     from ormlambda.sql.table import TableProxy
     from ormlambda import Table
-    from ormlambda.dialects import Dialect
 
-type Selectable = ColumnType| TableProxy
-class Select[T: Type[Table], *Ts](DecompositionQueryBase[T, *Ts], ClauseElement):
+type Selectable = ColumnType | TableProxy
+
+
+class Select[T: Type[Table]](ClauseElement, IAggregate):
     __visit_name__ = "select"
-
-    CLAUSE: str = "SELECT"
 
     def __init__(
         self,
-        tables: tuple[T, *Ts],
-        columns: Callable[[T], tuple[Selectable]] = lambda x: x,
+        table: T,
+        columns: SelectCol,
         *,
         alias_table: AliasType[ClauseInfo] = "{table}",
-        dialect: Dialect,
-        **kwargs,
+        alias: Optional[AliasType[T]] = None,
     ) -> None:
-        super().__init__(
-            tables,
-            columns,
-            dialect=dialect,
-            **kwargs,
-        )
+        self._table = table
+        self._columns = columns
         self._alias_table = alias_table
-        # We always need to add the self alias of the Select
-        # FIXME [ ]:  Should avoid adding REPLACEHOLDER into context
-        PATH_CONTEXT.add_table_alias(self.table, self._alias_table)
+        self._alias = alias
 
     @property
-    def FROM(self) -> ClauseInfo[T]:
-        return ClauseInfo(self.table, None, alias_table=self._alias_table, dialect=self._dialect, **self.kwargs)
+    def columns(self) -> tuple[SelectCol, ...]:
+        if not isinstance(self._columns, Iterable):
+            return [self._columns]
+        return self._columns
 
     @property
-    def COLUMNS(self) -> str:
-        dialect = self.kwargs.pop("dialect", self._dialect)
-        
-        return ClauseInfo.join_clauses(self.columns, ",", dialect=dialect)
+    def table(self) -> Type[T]:
+        return self._table
+
+    @property
+    def alias(self) -> str:
+        return self._alias
+
+    def used_columns(self):
+        res = []
+
+        for col in self._columns:
+            if isinstance(col, ColumnProxy):
+                res.append(col)
+
+            elif isinstance(col, IAggregate):
+                res.extend(col.used_columns())
+        return res
+
+    @property
+    def dtype(self) -> Any: ...
+
+    def __getitem__(self, key: str) -> SelectCol:
+        for clause in self.columns:
+            if isinstance(clause, ColumnProxy) and key in (clause.column_name, clause.alias, clause.get_full_chain("_")):
+                return clause
+            if isinstance(clause, IAggregate) and key == clause.alias:
+                return clause
 
 
 __all__ = ["Select"]
