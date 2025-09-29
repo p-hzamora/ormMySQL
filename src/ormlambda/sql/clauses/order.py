@@ -7,15 +7,17 @@ from ormlambda.sql.types import ColumnType
 from ormlambda.statements import OrderType
 from ormlambda.sql.elements import ClauseElement
 
+if tp.TYPE_CHECKING:
+    from ormlambda import ColumnProxy
 
 class Order[TProp](ClauseElement, IAggregate):
     __visit_name__ = "order"
 
-    columns: tuple[ColumnType[TProp]]
+    columns: tuple[ColumnType[TProp],...]
 
     def __init__(
         self,
-        columns: tuple[ColumnType[TProp], ...] | ColumnType[TProp],
+        *columns: ColumnProxy[TProp],
         order_type: tp.Iterable[OrderType],
     ):
         if isinstance(columns, str) or not isinstance(columns, tp.Iterable):
