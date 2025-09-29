@@ -252,7 +252,7 @@ class FKChain:
         if len(self.steps) <= 1:
             steps = []
         else:
-            steps = self.steps[:-1]
+            steps = self.steps[:-1].copy()
 
         return FKChain(self.base, steps)
 
@@ -273,9 +273,13 @@ class FKChain:
 
     def get_alias(self) -> str:
         """Generate table alias from the path"""
+        if not self.base:
+            return ""
         return self._generate_chain("_") if self.steps else self.base.__table_name__
 
     def _generate_chain(self, char: str) -> str:
+        if not self.base:
+            return ""
         result: list[Table] = [self.base.__table_name__]
         for step in self.steps:
             # For foreign keys, use their clause name or a descriptive name
@@ -289,6 +293,9 @@ class FKChain:
 
     def clear(self) -> None:
         self.steps.clear()
+
+    def __getitem__(self, number: int):
+        return FKChain(self.base, self.steps[number])
 
 
 NO_CURRENT_PATH = FKChain(None, [])
