@@ -36,5 +36,8 @@ class ST_Contains(IAggregate):
         return self._alias_clause
 
     @property
-    def dtype(self)->str:
+    def dtype(self) -> str:
         return str
+
+    def used_columns(self) -> tp.Iterable:
+        return [self.attr1]
