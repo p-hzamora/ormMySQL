@@ -14,7 +14,6 @@ from test.test_aggregation_functions import (
 )
 
 from test.test_queries import (
-    test_DecompositionQueryBase,
     test_ForeignKey_query,
     # test_group_by,
     test_join_context_query,
@@ -69,7 +68,6 @@ suite.addTests(
         # *loader.loadTestsFromModule(test_concat),
         # *loader.loadTestsFromModule(test_count),
         # *loader.loadTestsFromModule(test_max),
-        # *loader.loadTestsFromModule(test_DecompositionQueryBase),
         # *loader.loadTestsFromModule(test_ForeignKey_query),
         # # *loader.loadTestsFromModule(test_group_by),
         # *loader.loadTestsFromModule(test_join_context_query),
