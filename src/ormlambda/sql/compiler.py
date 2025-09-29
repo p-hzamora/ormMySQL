@@ -10,7 +10,6 @@ import sys
 from typing import Any, BinaryIO, ClassVar, Optional, TYPE_CHECKING, TextIO, Union
 
 from ormlambda.sql.ddl import CreateColumn
-from ormlambda.sql.foreign_key import ForeignKey
 from ormlambda.sql.sqltypes import resolve_primitive_types
 
 from .visitors import Visitor
@@ -73,7 +72,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.functions import (
         Concat,
         Max,
-        Min,        
+        Min,
         Sum,
     )
 
@@ -260,13 +259,17 @@ class DDLCompiler(Compiled):
             except Exception:
                 raise
 
-        foreign_keys = ForeignKey.create_query(tablecls, self.dialect)
+        foreign_keys = create.element.foreign_keys()
+
+        foreign_keys_string = []
+        for fk in foreign_keys.values():
+            foreign_keys_string.append(fk.compile(self.dialect, orig_table=tablecls).string)
         table_options = " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 
         sql = f"CREATE TABLE {tablecls.__table_name__} (\n\t"
         sql += ",\n\t".join(column_sql)
         sql += "\n\t" if not foreign_keys else ",\n\t"
-        sql += ",\n\t".join(foreign_keys)
+        sql += ",\n\t".join(foreign_keys_string)
         sql += f"\n){table_options};"
         return sql
 
