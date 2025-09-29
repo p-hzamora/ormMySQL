@@ -15,3 +15,12 @@ class NoSuchModuleError(Exception):
 
     def __str__(self):
         return f"NoSuchModuleError: {self.args[0]}"
+
+
+class DuplicatedClauseName(Exception):
+    def __init__(self, names: tuple[str], **kw):
+        self.names = names
+        super().__init__(**kw)
+
+    def __str__(self):
+        return f"Some clauses has the same alias. {self.names}\nTry wrapping the clause with the 'Alias' class first."
