@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, Literal, Optional, Callable, Type
+from typing import TYPE_CHECKING, Literal, Callable, Type
 
 
 if TYPE_CHECKING:
+    from ormlambda.sql.clause_info import IAggregate
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
@@ -18,10 +19,12 @@ type ComparerType = Literal["=", "!=", "<", "<=", ">", ">=", "in"]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
 type UnionType = Literal["AND", "OR", ""]
 type ComparerTypes = ComparerType | UnionType | ConditionEnum
+type SelectCol = ColumnProxy | IAggregate | Comparer
 # endregion
 
 type TupleJoinType[T] = tuple[Comparer]
 
 ASTERISK = "*"
 
-from .compiler import *
+# TODOL []: Look if we can avoid this * 
+from .compiler import *  # noqa: F403, E402
