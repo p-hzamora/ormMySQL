@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Optional, overload
 
 
 from ormlambda.sql.column_table_proxy import ColumnTableProxy
-from ormlambda.sql.context import PATH_CONTEXT
 from .column import Column
 from ormlambda import ConditionType, JoinType
 from ormlambda.sql.elements import ClauseElement
@@ -40,8 +39,10 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
         table = self._column.table
         table = table.__table_name__ if table else None
 
-        path = f"{table}.{self._column.column_name}"
-        return f"{ColumnProxy.__name__}({path if table else self._column.column_name}) Path={self._path.get_path_key()}"
+        col = f"{table}.{self._column.column_name}"
+        path = self._path.get_path_key()
+
+        return f"{ColumnProxy.__name__}({col if table else self._column.column_name}) {f'Path={path}' if path else ""}"
 
     def __getattr__(self, name: str):
         # it does not work when comparing methods
@@ -102,22 +103,14 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
             tbl = self._path.steps[i]
             relation = tbl.resolved_function(dialect)
 
-            lcond = ColumnProxy(column=relation._left_condition, path=self._path.parent, alias=alias)
+            lcond = ColumnProxy(column=relation._left_condition, path=self._path[:i], alias=alias)
 
             alias += f"_{tbl.clause_name}"
-            rcond = ColumnProxy(column=relation._right_condition, path=self._path, alias=alias)
+            rcond = ColumnProxy(column=relation._right_condition, path=self._path[: i + 1], alias=alias)
 
             comparer = Comparer(left_condition=lcond, right_condition=rcond, compare=relation.compare)
             js = JoinSelector(comparer, by, alias, dialect=dialect)
-            PATH_CONTEXT.add_join(js, alias)
+            # PATH_CONTEXT.add_join(js, alias)
             result.append(js)
-            js.compile(dialect)
         return result
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        from ormlambda.sql.clause_info import ClauseInfo
-
-        alias_table = self.get_table_chain()
-
-        params = {"table": self._path.base, "column": self._column.column_name, "alias_table": alias_table if alias_table else "{table}", "alias_clause": self.alias or "{column}", "dtype": self._column.dtype, "dialect": dialect, **kwargs}
-        return ClauseInfo(**params).query(dialect)
