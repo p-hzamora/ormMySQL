@@ -249,6 +249,7 @@ class FKChain:
 
     @property
     def parent(self) -> FKChain:
+        # FIXME [ ]: what if we reach the top parent? we need to return None in some point
         if len(self.steps) <= 1:
             steps = []
         else:
