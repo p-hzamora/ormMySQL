@@ -121,8 +121,8 @@ class Response[TFlavour, *Ts]:
             new_row: list = []
             for i, data in enumerate(row):
                 alias = self._columns[i]
-                clause_info = self._select[alias]
-                parse_data = self._caster.for_value(data, value_type=clause_info.dtype).from_database
+                clause = self._select[alias]
+                parse_data = self._caster.for_value(data, value_type=clause.dtype).from_database
                 new_row.append(parse_data)
             new_row = tuple(new_row)
             if not isinstance(new_row, tuple):
