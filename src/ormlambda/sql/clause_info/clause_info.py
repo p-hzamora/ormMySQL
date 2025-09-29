@@ -159,7 +159,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def _create_query(self, dialect: Dialect, **kwargs) -> str:
         # when passing some value that is not a column name
         if not self.table and not self._alias_clause:
-                return self.column
+            return self.column
 
         if not self.table and self._alias_clause:
             # it means that we are passing an object with alias. We should delete '' around the object
@@ -258,7 +258,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             # if we haven't some table atrribute, we assume that the user want to retrieve the string_data from caster.
             if self._literal:
                 # That condition will be used when you need to pass a value without wrapped in any quote like using HAVING clause
-                # COMMENT: Check 'test_complex_1' test 
+                # COMMENT: Check 'test_complex_1' test
                 return casted_value.value
             return casted_value.string_data
         return casted_value.wildcard_to_select()
@@ -295,13 +295,25 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return None
 
     @staticmethod
-    def join_clauses(clauses: list[ClauseInfo[T]], chr: str = ",", *, dialect: Dialect) -> str:
+    def join_clauses(clauses: list[ClauseElement], chr: str = ",", *, dialect: Dialect, **kw) -> str:
+        from ormlambda import Alias
+
         queries: list[str] = []
         for c in clauses:
             if isinstance(c, ClauseElement):
-                queries.append(c.compile(dialect).string)
+                params = {**kw}
+                if not isinstance(c, Alias) and isinstance(c, ColumnProxy):
+                    if "alias_clause" not in kw:
+                        params.update(
+                            {
+                                "alias_clause": c.get_full_chain('_'),
+                            }
+                        )
+
+                queries.append(c.compile(dialect, **params).string)
+
                 continue
-            queries.append(c.query(dialect))
+            queries.append(c.compile(dialect, **kw))
 
         return f"{chr} ".join(queries)
 
