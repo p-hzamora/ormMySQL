@@ -95,7 +95,7 @@ class Response[TFlavour, *Ts]:
                 if hasattr(col, "alias"):
                     continue
 
-                alias = col.alias if col.alias else col.get_full_chain().replace(".", "_")
+                alias = col.alias if col.alias else col.get_full_chain("_")
                 replacer_dicc[alias] = col.column_name
 
             cleaned_column_names = [replacer_dicc.get(col, col) for col in self._columns]

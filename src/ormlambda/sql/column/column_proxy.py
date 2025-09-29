@@ -70,7 +70,7 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
     def __ge__(self, other: ColumnType) -> Comparer:
         return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value)
 
-    def get_full_chain(self):
+    def get_full_chain(self,chr:str='.'):
         alias: list[str] = [self._path.base.__table_name__]
 
         n = self.number_table_in_chain()
@@ -83,7 +83,7 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
 
         # Column name
         alias.append(self._column.column_name)
-        return ".".join(alias)
+        return chr.join(alias)
 
     def get_table_chain(self) -> str:
         return self._path.get_alias()
