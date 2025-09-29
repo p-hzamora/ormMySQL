@@ -70,12 +70,20 @@ class Comparer(ClauseElement, IAggregate):
     def left_condition(self, dialect: Dialect, **kwargs) -> Comparer | ClauseInfo:
         if isinstance(self._left_condition, ColumnProxy | Comparer):
             return self._left_condition.compile(dialect=dialect, **kwargs).string
+
+        if isinstance(self._left_condition, str):
+            # TODOL []: Check if we can use the Caster class to wrap the condition instead of hardcoding it.
+            return f"'{self._left_condition}'"
         return self._left_condition
 
     def right_condition(self, dialect: Dialect, **kwargs) -> Comparer | ClauseInfo:
         if isinstance(self._right_condition, ColumnProxy | Comparer):
             return self._right_condition.compile(dialect=dialect, **kwargs).string
-        return f"'{self._right_condition}'"
+
+        if isinstance(self._right_condition, str):
+            # TODOL []: Check if we can use the Caster class to wrap the condition instead of hardcoding it.
+            return f"'{self._right_condition}'"
+        return self._right_condition
 
     @property
     def compare(self) -> ComparerTypes:
