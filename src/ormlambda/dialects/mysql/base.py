@@ -1,11 +1,11 @@
 from __future__ import annotations
 from types import ModuleType
-from ormlambda import ColumnProxy
+from ormlambda import ColumnProxy, ForeignKey, TableProxy
 from ormlambda.sql import compiler
 from ormlambda.sql.clause_info import ClauseInfo
 
 from .. import default
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any, Iterable, cast
 
 if TYPE_CHECKING:
     from ormlambda import JoinSelector
@@ -94,7 +94,23 @@ class MySQLCompiler(compiler.SQLCompiler):
         return ClauseInfo(**params).query(self.dialect)
 
     def visit_column_proxy(self, column: ColumnProxy, **kw) -> str:
-        return column.query(self.dialect, **kw)
+        from ormlambda.sql.clause_info import ClauseInfo
+
+        alias_table = column.get_table_chain()
+
+        params = {
+            "table": column.table,
+            "column": column._column.column_name,
+            "alias_table": alias_table if alias_table else "{table}",
+            "alias_clause": column.alias or "{column}",
+            "dtype": column._column.dtype,
+            "dialect": self.dialect,
+            **kw,
+        }
+        clause_info = ClauseInfo(**params)
+        # FIXME [ ]: !! Check why should I set alias when I've already done refactoring all test 
+        self.alias = clause_info.alias_clause
+        return clause_info.query(self.dialect)
 
     def visit_comparer(self, comparer: Comparer, **kwargs) -> str:
         from ormlambda.sql.comparer import CleanValue
@@ -107,26 +123,43 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         return f"{lcond} {comparer.compare} {rcond}"
 
-    def visit_join(self,join:JoinSelector)->str:
-        from_clause = join.right_table.compile(alias_table=join.alias, dialect=self.dialect)
-        left_table_clause = join.left_table.compile(column=join.left_col, alias_table=join.lcon.alias_table, dialect=self.dialect)
-        right_table_clause = join.right_table.compile(column=join.right_col, alias_table=join.alias, dialect=self.dialect)
+    def visit_join(self, join: JoinSelector) -> str:
+        rt = join.rcon.table
+        rtable = TableProxy(table_class=rt, path=join.rcon.path)
+
+        from_clause = rtable.compile(self.dialect, alias_clause=join.alias).string
+        left_table_clause = join.lcon.compile(self.dialect, alias_clause=None).string
+        right_table_clause = join.rcon.compile(self.dialect, alias_table=join.alias, alias_clause=None).string
         list_ = [
             join._by.value,  # inner join
-            from_clause.compile(self.dialect),
+            from_clause,
             "ON",
-            left_table_clause.compile(self.dialect),
+            left_table_clause,
             join._compareop,  # =
-            right_table_clause.compile(self.dialect),
+            right_table_clause,
         ]
         return " ".join([x for x in list_ if x is not None])
 
+    def visit_select(self, select: Select):
+        params = {}
+        if select.alias:
+            # COMMENT: when passing alias into 'select' method, we gonna replace the current aliases of columns with the generic one.
+            params = {
+                "alias_clause": select.alias,
+            }
 
-    def visit_select(self, select: Select, **kw):
-        return f"SELECT {select.COLUMNS} FROM {select.FROM.query(self.dialect, **kw)}"
+        columns = ClauseInfo.join_clauses(select.columns, ",", dialect=self.dialect, **params)
+        from_ = ClauseInfo(
+            select._table,
+            None,
+            alias_table=select._alias_table,
+            dialect=self.dialect,
+        ).query(self.dialect)
+
+        return f"SELECT {columns} FROM {from_}"
 
     def visit_group_by(self, groupby: GroupBy):
-        column = " ".join(x.compile(self.dialect, alias_clause=None).string for x in groupby.column)
+        column = ", ".join(x.compile(self.dialect, alias_clause=None).string for x in groupby.column)
         return f"GROUP BY {column}"
 
     def visit_limit(self, limit: Limit, **kw):
@@ -155,11 +188,13 @@ class MySQLCompiler(compiler.SQLCompiler):
         else:
             column = count.column
 
-        return f"COUNT({column}) AS {count.alias}"
+        return f"COUNT({column}) AS `{count.alias}`"
 
     def visit_where(self, where: Where) -> str:
         from ormlambda.sql.comparer import Comparer
 
+        if not where.comparer:
+            return ""
         cols = Comparer.join_comparers(list(where.comparer), True, dialect=self.dialect)
         return f"WHERE {cols}"
 
@@ -170,14 +205,11 @@ class MySQLCompiler(compiler.SQLCompiler):
         return f"HAVING {cols}"
 
     def visit_order(self, order: Order, **kw) -> str:
-        ORDER = 'ORDER BY'
+        ORDER = "ORDER BY"
         string_columns: list[str] = []
         columns = order.columns
 
         # if this attr is not iterable means that we only pass one column without wrapped in a list or tuple
-        if isinstance(columns, str):
-            string_columns = f"{columns} {str(order._order_type[0])}"
-            return f"{ORDER} {string_columns}"
 
         if not isinstance(columns, Iterable):
             columns = (columns,)
@@ -186,6 +218,9 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         for index, clause in enumerate(columns):
             # We need to avoid wrapped columns with `` or '' when clause hasn't table
+            if isinstance(columns, str):
+                string_columns = f"{columns} {str(order._order_type[0])}"
+                return f"{ORDER} {string_columns}"
 
             if not clause.table:
                 string_column = clause.compile(
@@ -202,19 +237,37 @@ class MySQLCompiler(compiler.SQLCompiler):
         return f"{ORDER} {', '.join(string_columns)}"
 
     def visit_concat(self, concat: Concat, **kw) -> Concat:
-        from ormlambda.sql.clause_info import ClauseInfo
-
         columns: list[str] = []
 
-        new_cols = concat.join_elements()
-        for clause in AggregateFunctionBase._convert_into_clauseInfo(new_cols, dialect=self.dialect):
-            clause.alias_clause = concat.alias_clause
-            columns.append(clause)
-        return concat._concat_alias_and_column(f"CONCAT({ClauseInfo.join_clauses(columns, dialect=self.dialect)})", concat.alias)
+        for clause in concat.values:
+            if isinstance(clause, ColumnProxy):
+                compiled = clause.compile(self.dialect, alias_clause=None).string
+            else:
+                compiled = f"'{clause}'"
+            columns.append(compiled)
 
-    def visit_max(self, max: Max, **kw) -> Max: ...
-    def visit_min(self, min: Min, **kw) -> Min: ...
-    def visit_sum(self, sum: Sum, **kw) -> Sum: ...
+        clause_info = ClauseInfo(
+            table=None,
+            column=f"CONCAT({', '.join(columns)})",
+            alias_clause=concat.alias,
+            dialect=self.dialect,
+        )
+        return clause_info.query(self.dialect)
+
+    def visit_max(self, max: Max, **kw) -> str:
+        attr = {**kw, "alias_clause": None}
+        column = max.column.compile(self.dialect, **attr).string
+        return f"MAX({column}) AS `{max.alias}`"
+
+    def visit_min(self, min: Min, **kw) -> str:
+        attr = {**kw, "alias_clause": None}
+        column = min.column.compile(self.dialect, **attr).string
+        return f"MIN({column}) AS `{min.alias}`"
+
+    def visit_sum(self, sum: Sum, **kw) -> str:
+        attr = {**kw, "alias_clause": None}
+        column = sum.column.compile(self.dialect, **attr).string
+        return f"SUM({column}) AS `{sum.alias}`"
 
 
 class MySQLDDLCompiler(compiler.DDLCompiler):
@@ -233,6 +286,14 @@ class MySQLDDLCompiler(compiler.DDLCompiler):
         colspec += " AUTO_INCREMENT" if column.is_auto_increment else ""
 
         return colspec
+
+    def visit_foreign_key(self, fk: ForeignKey, **kw) -> str:
+        from ormlambda import Column
+
+        compare = fk.resolved_function(self.dialect)
+        left_col = cast(Column, compare.left_condition(self.dialect)).column_name
+        rcon = cast(Column, compare.right_condition(self.dialect)).table.__table_name__
+        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({cast(Column,compare.right_condition(self.dialect)).column_name})"
 
 
 class MySQLTypeCompiler(compiler.GenericTypeCompiler):
