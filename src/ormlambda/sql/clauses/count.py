@@ -1,7 +1,8 @@
 from __future__ import annotations
+from ormlambda.sql import TableProxy
 from ormlambda.sql.clause_info import IAggregate
 
-from ormlambda.sql.types import ColumnType
+from ormlambda.sql.types import ASTERISK, ColumnType
 
 from ormlambda import Table
 
@@ -14,24 +15,31 @@ if tp.TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import ColumnType, TableType
 
+
 class Count[T: Table](ClauseElement, IAggregate):
     __visit_name__ = "count"
 
-    @staticmethod
-    def FUNCTION_NAME() -> str:
-        return "COUNT"
-
     def __init__[TProp](
         self,
-        element: ColumnType[TProp] | TableType[T] = "*",
+        element: str | ColumnType[TProp] | TableType[T] = "*",
         alias: str = "count",
     ) -> None:
+        if isinstance(element, TableProxy):
+            element = ASTERISK
         self.column = element
         self.alias = alias
 
     @property
     def dtype(self) -> str:
         return int
+
+    def used_columns(self) -> tp.Iterable:
+        if isinstance(self.column, str):
+            # If is str, probably will by because we're using * so we don't have to retrieve something
+            return []
+        if not isinstance(self.column, tp.Iterable):
+            return [self.column]
+        return self.column
 
 
 __all__ = ["Count"]
