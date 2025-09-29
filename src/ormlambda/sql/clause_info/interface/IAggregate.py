@@ -8,14 +8,12 @@ from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
 class IAggregate(IQuery):
-    @classmethod
-    @abc.abstractmethod
-    def FUNCTION_NAME(cls) -> str: ...
+    alias: str
 
     def __repr__(self):
         return f"{IAggregate.__name__}: {type(self).__name__}"
 
-    # @abc.abstractmethod
+    @abc.abstractmethod
     def used_columns(self) -> Iterable[ColumnProxy]: ...
 
     @property
