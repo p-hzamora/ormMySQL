@@ -43,3 +43,10 @@ from .sql.clauses import Where  # noqa: F401
 from .sql.clauses import Having  # noqa: F401
 from .sql.clauses import Update  # noqa: F401
 from .sql.clauses import Upsert  # noqa: F401
+
+from .sql.functions import (
+    Max as Max,
+    Min as Min,
+    Concat as Concat,
+    Sum as Sum,
+)
