@@ -2,10 +2,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Any, Type
 
 from ormlambda.sql.column_table_proxy import ColumnTableProxy
+from ormlambda.sql.elements import ClauseElement
+from ormlambda.sql.context import FKChain
 
 if TYPE_CHECKING:
     from ormlambda import Table
-    from ormlambda.sql.context import FKChain
     from ormlambda import ForeignKey
 
 
@@ -15,13 +16,14 @@ type PathAliasesType = dict[str, str]
 type QueryMetadataType = dict[str, Any]
 
 
-class TableProxy[T: Table](ColumnTableProxy):
-    _table_class: Type[T]
+class TableProxy[T: Table](ColumnTableProxy, ClauseElement):
+    __visit_name__ = "table_proxy"
+    _table_class: Type[Table]
     _path: FKChain
 
     def __init__(self, table_class: Type[T], path: FKChain):
         self._table_class = table_class
-        super().__init__(path)
+        super().__init__(path.copy())
 
     def __repr__(self) -> str:
         return f"{TableProxy.__name__}({self._table_class.__table_name__}) Path={self._path.get_path_key()})"
@@ -42,11 +44,12 @@ class TableProxy[T: Table](ColumnTableProxy):
             # we don't want use table name
             attr = Column(dtype=str)
             attr.column_name = name
-            # raise AttributeError(f"'{self._table_class.__name__}' object has no attribute '{name}'")
+            return ColumnProxy(attr, path=FKChain(None, []))
 
         if isinstance(attr, ForeignKey):
-            new_chain = attr._path
-            return TableProxy(attr.tright, new_chain)
+            new_path = self._path.copy()
+            new_path.add_step(attr)
+            return TableProxy(attr.tright, new_path)
 
         elif isinstance(attr, Column):
             # Accessing a column - return column reference with path info
@@ -57,10 +60,6 @@ class TableProxy[T: Table](ColumnTableProxy):
 
         else:
             return attr
-
-    def get_path(self) -> FKChain:
-        """Get the path that led to this table"""
-        return self._path
 
     def get_alias(self) -> str:
         """Get the alias for this table based on its path"""
