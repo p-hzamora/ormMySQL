@@ -136,9 +136,8 @@ class IStatements[T: Table](Element):
     @abstractmethod
     def count[TProp](
         self,
-        selection: None | SelectCols[T, TProp] = ...,
-        alias: Optional[AliasType[T]] = ...,
-        execute: bool = False,
+        selection: Optional[SelectCols[T, TProp]] = ...,
+        alias: AliasType[T] = ...,
     ) -> Optional[int]: ...
 
     # endregion
@@ -186,8 +185,7 @@ class IStatements[T: Table](Element):
     def max[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: Optional[AliasType[T]] = ...,
-        execute: bool = False,
+        alias: AliasType[T] = ...,
     ) -> int: ...
     # endregion
     # region min
@@ -195,8 +193,7 @@ class IStatements[T: Table](Element):
     def min[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: Optional[AliasType[T]] = ...,
-        execute: bool = False,
+        alias: AliasType[T] = ...,
     ) -> int: ...
     # endregion
     # region sum
@@ -204,8 +201,7 @@ class IStatements[T: Table](Element):
     def sum[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: Optional[AliasType[T]] = ...,
-        execute: bool = False,
+        alias: AliasType[T] = ...,
     ) -> int: ...
 
     @overload
