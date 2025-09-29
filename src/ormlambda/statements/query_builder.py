@@ -23,7 +23,6 @@ from ormlambda.sql.clauses import (
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
-    from ormlambda.sql.context import PathContext
     from ormlambda import Count
 
 from ormlambda import ColumnProxy, TableProxy
@@ -211,11 +210,6 @@ class QueryBuilder(IQuery):
         self.join_type = JoinType.INNER_JOIN
         self.used_columns = ColumnIterable()
 
-    @staticmethod
-    def _get_global_context() -> PathContext:
-        from ormlambda.sql.context import PATH_CONTEXT
-
-        return PATH_CONTEXT
 
     # =============================================================================
     # CLEAN CLAUSE MANAGEMENT
