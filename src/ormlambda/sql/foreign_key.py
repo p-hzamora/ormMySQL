@@ -1,21 +1,20 @@
 from __future__ import annotations
 import logging
-from typing import Callable, TYPE_CHECKING, Optional, Any, Type, overload, ClassVar
+from typing import Callable, TYPE_CHECKING, Optional, Any, Type, overload
 
-from ormlambda.common.interfaces.IQueryCommand import IQuery
-from ormlambda.sql.elements import Element
+from ormlambda.sql.ddl import BaseDDLElement
 from ormlambda.sql.context import PATH_CONTEXT
 
 if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import Table
     from ormlambda.dialects import Dialect
-    from ormlambda.sql.context import FKChain
+
 
 log = logging.getLogger(__name__)
 
 
-class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
+class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
     __visit_name__ = "foreign_key"
 
     __slots__ = (
@@ -57,8 +56,6 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         else:
             self.__init_with_callable(tright, relationship)
 
-        self._path: Optional[FKChain] = None
-
     def __init__with_comparer(self, comparer: Comparer, clause_name: str, **kwargs) -> None:
         self._relationship = None
         self._tleft: TLeft = comparer.left_condition(**kwargs).table
@@ -93,13 +90,12 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
             log.critical(f"{ForeignKey.__name__} '{self._clause_name}' accessed outside of path context. Must be used within a query context.")
             return self
 
-        new_path = current_path.copy()
-        new_path.add_step(self)
+        # new_path = current_path.copy()
+        # new_path.add_step(self)
 
-        PATH_CONTEXT.add_foreign_key_access(self, new_path)
-        PATH_CONTEXT.set_current_path(new_path)
-        
-        self._path = new_path
+        # PATH_CONTEXT.add_foreign_key_access(self, new_path)
+        # PATH_CONTEXT.set_current_path(new_path)
+
         return self
 
     def __set__(self, obj, value):
@@ -125,27 +121,12 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
     def clause_name(self) -> str:
         return self._clause_name
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        compare = self.resolved_function(dialect)
-        left_col = compare.left_condition(dialect).column
-        rcon = alias if (alias := compare.right_condition(dialect).alias_table) else compare.right_condition(dialect).table.__table_name__
-        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition(dialect).column})"
-
     def get_alias(self, dialect: Dialect) -> str:
         self._comparer = self.resolved_function(dialect)
         self._comparer._dialect = dialect
-        # TODOH []: look into why i dropped 'lcol' 
+        # TODOH []: look into why i dropped 'lcol'
         lcol = self._comparer.left_condition(dialect)._column.column_name
         return f"{self.tleft.__table_name__}_{self.clause_name}"
-
-    @classmethod
-    def create_query(cls, orig_table: Table, dialect: Dialect) -> list[str]:
-        clauses: list[str] = []
-
-        for attr in orig_table.__dict__.values():
-            if isinstance(attr, ForeignKey):
-                clauses.append(attr.query(dialect))
-        return clauses
 
     def resolved_function(self, dialect: Dialect) -> Comparer:
         """ """
