@@ -10,7 +10,7 @@ from ormlambda.sql.elements import ClauseElement
 class GroupBy(ClauseElement, IAggregate):
     __visit_name__ = "group_by"
 
-    def __init__(self, column: tuple[ColumnType]):
+    def __init__(self, *column: ColumnType):
         self.column: tuple[ColumnType] = column if isinstance(column, Iterable) else [column]
 
     def used_columns(self):
