@@ -5,25 +5,49 @@ from typing import Any, TYPE_CHECKING, Iterable, Type, Callable
 from ormlambda.common.errors import UnmatchedLambdaParameterError
 
 if TYPE_CHECKING:
+    from ormlambda.sql.types import SelectCol  # FIXME [ ]: enhance the name
+    from ormlambda import TableProxy
     from ormlambda.sql.context import PathContext
-    from ormlambda.sql import Table
-    from ormlambda.sql.column import ColumnProxy
 
 
+# type LambdaResponse[T] = TableProxy[T] | ColumnProxy[T] | Comparer
 class GlobalChecker:
     @staticmethod
     def is_lambda_function(obj: Any) -> bool:
         return callable(obj) and not isinstance(obj, type)
 
     @classmethod
-    def resolved_callback_object(cls, lambda_func: Callable[[Type[Table]], Any], table: Type[Table], context: PathContext) -> tuple[ColumnProxy, ...]:
+    def resolved_callback_object(cls, lambda_func: Callable[[TableProxy], Any], table: Type[TableProxy], context: PathContext) -> tuple[SelectCol, ...]:
         from ormlambda.sql.table import TableProxy
         from ormlambda import Column
         from ormlambda.sql.column_table_proxy import FKChain
         from ormlambda.sql.column import ColumnProxy
+        from ormlambda.sql.comparer import Comparer
 
         try:
-            table_proxy = TableProxy(table, context.get_current_path().copy())
+            table_proxy = TableProxy(table, context.get_current_path())
+
+            if not callable(lambda_func) and isinstance(lambda_func, Iterable):
+                # We hit that condition when trying to pass column or function dynamically into select clause.
+
+                # max_fn = Max(lambda x: x.Col1)
+                # min_fn = Min(lambda x: x.Col1)
+                # sum_fn = Sum(lambda x: x.Col1)
+                # result = self.model.select(
+                #     (
+                #         max_fn,
+                #         min_fn,
+                #         sum_fn,
+                #     ),
+                #     flavour=dict,
+                # )
+
+                response = []
+
+                for item in lambda_func:
+                    response.append(item)
+                return response
+
             response = lambda_func(table_proxy)
             result = []
 
@@ -35,9 +59,17 @@ class GlobalChecker:
                     result.extend(item.get_columns())
 
                 elif isinstance(item, str):
+                    # If we got a string, probably means that it'll be an alias,
+                    # so we'll want to avoid add string alias table to alias like  `address`.count
                     new_col = Column(dtype=str, column_name=item)
                     new_col.table = table
                     result.append(ColumnProxy(new_col, path=FKChain(table, None)))
+                elif isinstance(item, Comparer):
+                    result.append(item)
+
+                elif isinstance(item, ColumnProxy):
+                    result.append(item)
+
                 else:
                     result.append(item)
 
