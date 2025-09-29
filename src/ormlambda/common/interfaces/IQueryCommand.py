@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import abstractmethod, ABC
+from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class IQuery(ABC):
     """Interface to queries that retrieve any element such as select, limit, offset, where, group by, etc..."""
 
-    @abstractmethod
+    # @abstractmethod
     def query(self, dialect: Dialect, **kwargs) -> str: ...
 
     def __repr__(self) -> str:
