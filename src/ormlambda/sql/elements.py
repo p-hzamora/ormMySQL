@@ -34,3 +34,6 @@ class ClauseElement(CompilerElement):
     """
 
     __visit_name__ = "clause_element"
+
+    def __repr__(self):
+        return f"{ClauseElement.__name__}: {type(self).__name__}"
