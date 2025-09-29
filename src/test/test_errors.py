@@ -19,7 +19,7 @@ DDBBNAME = "__test_ddbb__"
 
 MSSG_ERROR: str = "Unmatched number of parameters in lambda function with the number of tables: Expected 1 parameters but found ('x', 'y', 'z')."
 
-
+# DEPRECATED
 class TestWorkingWithDifferentTypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

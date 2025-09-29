@@ -77,8 +77,8 @@ class TestConcat(unittest.TestCase):
         )
 
         res = {
-            "address_address": "939 Probolinggo Loop",
-            "city_city": "A Coruña (La Coruña)",
+            "address": "939 Probolinggo Loop",
+            "city": "A Coruña (La Coruña)",
             "CONCAT": "Address: 939 Probolinggo Loop - city: A Coruña (La Coruña) - country: Spain",
         }
         self.assertDictEqual(concat, res)

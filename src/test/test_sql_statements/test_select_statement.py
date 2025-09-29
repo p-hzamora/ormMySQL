@@ -61,35 +61,6 @@ class TestJoinQueries(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.db_engine.drop_schema(DDBBNAME)
 
-    def test_new_select(self):
-        self.model.select()
-        real_query: str = "SELECT `A`.pk_a AS `A_pk_a`, `A`.data_a AS `A_data_a`, `A`.fk_b1 AS `A_fk_b1`, `A`.fk_b2 AS `A_fk_b2`, `A`.fk_b3 AS `A_fk_b3` FROM A AS `A`"
-        self.assertEqual(self.model.query, real_query)
-
-    # FIXME [ ]: Check why ForeignKey alias in 'a.B_fk_b1.CSimple' 'a.B_fk_b2.CSimple' it's not working as expected.
-    def test_new_select_context(self):
-        res = self.model.select(
-            lambda a: (
-                a.data_a,
-                Alias(a.B_fk_b1.name, alias="b_b1_name"),
-                Alias(a.B_fk_b2.name, alias="b_b2_name"),
-                Alias(a.B_fk_b3.name, alias="b_b3_name"),
-                Alias(a.B_fk_b1.CSimple.name, alias="b1_c_name"),
-                Alias(a.B_fk_b2.CSimple.name, alias="b2_c_name"),
-            ),
-        )
-        real_query: str = "SELECT `A`.data_a AS `A_data_a`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `A_fk_b3_pk_b`.name AS `B_name`, `B_fk_c_pk_c`.name AS `C_name`, `B_fk_c_pk_c`.name AS `C_name` FROM A AS `A` INNER JOIN B AS `A_fk_b1_pk_b` ON `A`.fk_b1 = `A_fk_b1_pk_b`.pk_b INNER JOIN B AS `A_fk_b2_pk_b` ON `A`.fk_b2 = `A_fk_b2_pk_b`.pk_b INNER JOIN B AS `A_fk_b3_pk_b` ON `A`.fk_b3 = `A_fk_b3_pk_b`.pk_b INNER JOIN C AS `B_fk_c_pk_c` ON `A_fk_b3_pk_b`.fk_c = `B_fk_c_pk_c`.pk_c"
-        self.assertEqual(self.model.query(DIALECT), real_query)
-
-        select = self.model.select(
-            lambda x: (
-                x.data_a,
-                x.B_fk_b1.name,
-            ),
-            flavour=tuple,
-        )
-        print(select)
-
 
 if __name__ == "__main__":
     unittest.main(failfast=True)

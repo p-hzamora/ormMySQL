@@ -56,7 +56,7 @@ class TestComparer(unittest.TestCase):
     def test_retrieve_string_from_class_property_using_variable(self):
         VAR = 10
         compare = Address.city_id == VAR
-        self.assertEqual(compare.query(DIALECT), "`address`.city_id = 10")
+        self.assertEqual(compare.compile(DIALECT), "`address`.city_id = 10")
 
     @parameterized.expand(
         [

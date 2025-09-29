@@ -78,7 +78,7 @@ class TestComplexQueries(unittest.TestCase):
         )
         self.assertTupleEqual(res, RESULT)
 
-    def test_AAextract_countries_with_white_space_in_the_name(self):
+    def test_extract_countries_with_white_space_in_the_name(self):
         res = self.query("spain")
         self.assertEqual(res, Response(country="Spain", sumCities=5))
 

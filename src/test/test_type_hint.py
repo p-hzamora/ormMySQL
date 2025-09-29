@@ -17,7 +17,7 @@ class TestTypeHint(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.a_model = ORM(Address, engine)
 
-    def test_SELECT_method_passing_3_columns(self):
+    def test_AASELECT_method_passing_3_columns(self):
         response = self.a_model.select(lambda a: (a, a.City, a.City.Country))
         a, city, country = response
         self.assertIsInstance(response, tuple)

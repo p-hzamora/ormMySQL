@@ -275,11 +275,11 @@ class TestSQLStatements(unittest.TestCase):
         # fmt: on
 
         tuple_: tuple[dict[str, int]] = (
-            {"address_address_id": 59, "address_City_city_id": 49, "address_City_Country_country_id": 80},
-            {"address_address_id": 65, "address_City_city_id": 56, "address_City_Country_country_id": 91},
-            {"address_address_id": 75, "address_City_city_id": 61, "address_City_Country_country_id": 75},
-            {"address_address_id": 88, "address_City_city_id": 40, "address_City_Country_country_id": 60},
-            {"address_address_id": 98, "address_City_city_id": 82, "address_City_Country_country_id": 75},
+            {"address_id": 59, "city_id": 49, "country_id": 80},
+            {"address_id": 65, "city_id": 56, "country_id": 91},
+            {"address_id": 75, "city_id": 61, "country_id": 75},
+            {"address_id": 88, "city_id": 40, "country_id": 60},
+            {"address_id": 98, "city_id": 82, "country_id": 75},
         )
         self.assertTupleEqual(tuple_, select)
 
@@ -580,7 +580,7 @@ class TestAggregateFunctions(unittest.TestCase):
         self.assertEqual(select.country, "Spain")
         self.assertEqual(select.city, "A Coruña (La Coruña)")
 
-    def test_AAreturn_all_results_beside_calling_columns_with_the_same_names(self):
+    def test_return_all_results_beside_calling_columns_with_the_same_names(self):
         # FIXME []: We should provide types for new TypeEngine object. That's the reason 'python_type' wasn't detected
         res = ORM(Address, create_engine_for_db("sakila")).first(
             lambda x: (
@@ -589,7 +589,7 @@ class TestAggregateFunctions(unittest.TestCase):
                 x.City.Country.last_update,
             ),
             flavour=dict,
-            alias=lambda x: "{table}~{column}" + f"[{x.dtype.python_type.__name__}]",
+            alias=lambda x: "{table}~{column}" + f"[{x._column.dtype.python_type.__name__}]",
         )
         EXPECTED = {
             "address~last_update[datetime]": datetime(2014, 9, 25, 22, 30, 27),

@@ -8,6 +8,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from pydantic import BaseModel
 from test.config import create_env_engine, create_engine_for_db  # noqa: E402
+from ormlambda.sql.clause_info.clause_info import DuplicatedClauseName
 from ormlambda import Table, Column, ORM, ForeignKey  # noqa: E402
 from ormlambda.dialects import mysql
 from ormlambda import Alias
@@ -177,16 +178,22 @@ class TestJoinQueries(unittest.TestCase):
             name_C2_D2: str
             name_C3_D2: str
 
-        res = self.model.where(lambda x: x.B3.C1.D2.name == "Developer").first(
-            lambda a: (
-                Alias(a.B3.C1.D2.name, "name"),
-                Alias(a.B3.C1.D2.name, "name_C1_D2"),
-                Alias(a.B3.C2.D2.name, "name_C2_D2"),
-                Alias(a.B3.C3.D2.name, "name_C3_D2"),
-                # endregion
-            ),
-            flavour=Response,
+        # fmt: off
+        res = (
+            self.model
+            .order(lambda x: x.name_C2_D2, 'ASC')
+            .where(lambda x: x.B3.C1.D2.name == "Developer")
+            .first(lambda a:
+                (
+                    Alias(a.B3.C1.D2.name, "name"),
+                    Alias(a.B3.C1.D2.name, "name_C1_D2"),
+                    Alias(a.B3.C2.D2.name, "name_C2_D2"),
+                    Alias(a.B3.C3.D2.name, "name_C3_D2"),
+                ),
+                flavour=Response,
+            )
         )
+        # fmt: on
         EXPECTED_RESPONSE = Response(
             name="Developer",
             name_C1_D2="Developer",
@@ -195,9 +202,22 @@ class TestJoinQueries(unittest.TestCase):
         )
         self.assertEqual(res, EXPECTED_RESPONSE)
 
+    def test_raise_DuplicatedClauseName_withous_usingalias_when_repeting_columns(self):
+        with self.assertRaises(DuplicatedClauseName) as err:
+            self.model.where(lambda x: x.B3.C1.D2.name == "Developer").first(
+                lambda a: (
+                    a.B3.C1.D2.name,
+                    a.B3.C2.D2.name,
+                    a.B3.C3.D2.name,
+                    # endregion
+                ),
+            )
+
+        self.assertEqual(err.exception.names, ("name",))
+
     # FIXME [x]: Check why ForeignKey alias in 'a.B_fk_b1.C' 'a.B_fk_b2.C' it's not working as expected.
 
-    def test_new_select_context(self):
+    def test_select_a_lot_of_columns_with_a_lot_of_combines(self):
         VARIABLE = 3
         res = self.model.where(lambda x: x.pk_a == VARIABLE).first(
             lambda a: (
@@ -276,7 +296,7 @@ class TestJoinQueries(unittest.TestCase):
         }
         self.assertEqual(res, EXPECTED)
 
-    def test_select_a_lot_of_columns_with_a_lot_of_combines(self):
+    def test_select_a_lot_of_columns_using_global_alias(self):
         VARIABLE = 3
         res = self.model.where(lambda x: x.pk_a == VARIABLE).first(
             lambda a: (
@@ -318,6 +338,7 @@ class TestJoinQueries(unittest.TestCase):
                 a.B3.C3.D2.name,
                 # endregion
             ),
+            alias=lambda x: x.get_full_chain("_"),
             flavour=dict,
         )
         EXPECTED = {
