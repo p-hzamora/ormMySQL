@@ -104,7 +104,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         params = {
             "table": column.table,
-            "column": column._column.column_name,
+            "column": column,
             "alias_table": alias_table if alias_table else "{table}",
             "alias_clause": column.alias or "{column}",
             "dtype": column._column.dtype,
@@ -112,8 +112,8 @@ class MySQLCompiler(compiler.SQLCompiler):
             **kw,
         }
         clause_info = ClauseInfo(**params)
-        # FIXME [ ]: !! Check why should I set alias when I've already done refactoring all test 
-        self.alias = clause_info.alias_clause
+        if column.alias != clause_info.alias_clause:
+            column.alias = clause_info.alias_clause
         return clause_info.query(self.dialect)
 
     def visit_comparer(self, comparer: Comparer, **kwargs) -> str:
