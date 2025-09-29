@@ -29,9 +29,15 @@ class UpdateKeyError(KeyError):
 class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseElement):
     __visit_name__ = "update"
 
-    def __init__(self, model: T, repository: Any, where: list[Where], engine: Engine) -> None:
+    def __init__(
+        self,
+        model: T,
+        repository: Any,
+        where: list[Where],
+        engine: Engine,
+    ) -> None:
         super().__init__(model, repository, engine=engine)
-        self._where: Optional[list[Where]] = where
+        self._where: Optional[Where] = where
 
     @override
     @property
@@ -41,11 +47,9 @@ class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseEleme
     @override
     def execute(self) -> None:
         if self._where:
-            for where in self._where:
-                query_with_table = where.query(self._engine.dialect)
-                for x in where.comparer:
-                    # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
-                    self._query += " " + query_with_table.replace(x.left_condition(self._dialect).table.__table_name__ + ".", "")
+            where_string = self._where.compile(self._engine.dialect).string
+
+            self._query += " " + where_string
         return self._engine.repository.execute_with_values(self._query, self._values)
 
     @override
