@@ -1,6 +1,6 @@
 from __future__ import annotations
-import abc
 from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
+from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
 
@@ -23,7 +23,8 @@ from ormlambda.types import (
 )
 
 
-class Column[TProp]:
+class Column[TProp](ClauseElement):
+    __visit_name__ = 'column'
     PRIVATE_CHAR: str = "_"
 
     __slots__ = (
@@ -99,8 +100,8 @@ class Column[TProp]:
     def __str__(self) -> str:
         return self.table.__table_name__ + "." + self.column_name
 
-    def __set_name__[T: Table](self, owner: TableType[T], name: str) -> None:
-        self.table: TableType[T] = owner
+    def __set_name__(self, owner: TableType[Table], name: str) -> None:
+        self.table: TableType[Table] = owner
         self.column_name = name
         self.__private_name = self.PRIVATE_CHAR + name
 

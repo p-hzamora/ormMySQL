@@ -2,7 +2,7 @@ from __future__ import annotations
 from types import ModuleType
 from ormlambda import ColumnProxy
 from ormlambda.sql import compiler
-from ormlambda.sql.clause_info import AggregateFunctionBase
+from ormlambda.sql.clause_info import ClauseInfo
 
 from .. import default
 from typing import TYPE_CHECKING, Any, Iterable
@@ -82,6 +82,17 @@ class MySQLCompiler(compiler.SQLCompiler):
             dialect=self.dialect,
             **kw,
         ).query(dialect=self.dialect)
+
+    def visit_column(self, column: Column, **kw) -> str:
+        params = {
+            "table": column.table,
+            "column": column.column_name,
+            "dtype": column.dtype,
+            "dialect": self.dialect,
+            **kw,
+        }
+        return ClauseInfo(**params).query(self.dialect)
+
     def visit_column_proxy(self, column: ColumnProxy, **kw) -> str:
         return column.query(self.dialect, **kw)
 
