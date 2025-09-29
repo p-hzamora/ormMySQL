@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 type TableType[T: Table] = Type[T]
 type ColumnType[TProp] = TProp | ColumnProxy[TProp]
-type AliasType[T] = str | Callable[[T], str]
+type AliasType[TProp] = str | Callable[[ColumnProxy[TProp]], str]
 
 # region Comparer Types
 type ComparerType = Literal["=", "!=", "<", "<=", ">", ">=", "in"]
