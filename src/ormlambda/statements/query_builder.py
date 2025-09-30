@@ -131,10 +131,6 @@ class StandardSQLCompiler:
         sorted_joins = JoinSelector.sort_joins_by_alias(joins)
         return " ".join(join.compile(self.dialect).string for join in sorted_joins)
 
-    def _compile_having(self, having: Having) -> Optional[str]:
-        """Compile HAVING clause"""
-        return having.compile(self.dialect)
-
     # =============================================================================
     # MODERN QUERY BUILDER
     # =============================================================================
