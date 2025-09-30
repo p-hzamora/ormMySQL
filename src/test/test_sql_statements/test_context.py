@@ -10,7 +10,6 @@ from test.config import create_env_engine  # noqa: E402
 from ormlambda import Table, Column, ForeignKey  # noqa: E402
 from ormlambda.dialects import mysql
 
-from ormlambda.sql.context import PATH_CONTEXT
 
 DIALECT = mysql.dialect
 
@@ -74,9 +73,8 @@ def foo(a: A):
     )
 
 
-with PATH_CONTEXT.query_context(A) as context:
-    resolved_proxy = GlobalChecker.resolved_callback_object(foo, A,context)
+resolved_proxy = GlobalChecker.resolved_callback_object(foo, A)
 
-    for x in resolved_proxy:
-        a = x.get_table_chain()
-    resolved_proxy
+for x in resolved_proxy:
+    a = x.get_table_chain()
+resolved_proxy

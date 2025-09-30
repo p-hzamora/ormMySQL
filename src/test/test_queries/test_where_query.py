@@ -28,8 +28,7 @@ ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026
 
 
 class TestWhere(unittest.TestCase):
-    def tearDown(self):
-        PATH_CONTEXT.clear_all_context()
+
 
     def test_one_where(self):
         w = Where(Address.address == 10)

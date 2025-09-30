@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 import unittest
 
-from ormlambda.sql.context import PATH_CONTEXT
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
@@ -14,9 +13,6 @@ from ormlambda.dialects import mysql
 
 DIALECT = mysql.dialect
 class TestForeignKey(unittest.TestCase):
-    @classmethod
-    def tearDownClass(cls):
-        return PATH_CONTEXT.clear_all_context()
 
     def test_init_with_comparer(self):
         comparer = Address.city_id == City.city_id

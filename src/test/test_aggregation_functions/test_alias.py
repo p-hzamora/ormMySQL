@@ -6,20 +6,17 @@ import unittest
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.sql.context import PATH_CONTEXT
 from ormlambda.sql.clauses import Alias
 
 
 # from ormlambda.common.abstract_classes.clause_info_context import ClauseInfoContext
-from test.models import D, Address, City
+from test.models import D, Address
 from ormlambda.dialects import mysql
 
 DIALECT = mysql.dialect
 
 
 class TestAlias(unittest.TestCase):
-    def tearDown(self):
-        return PATH_CONTEXT.clear_all_context()
 
     def test_alias_without_aliases(self) -> None:
         with self.assertRaises(TypeError):
@@ -47,7 +44,6 @@ class TestAlias(unittest.TestCase):
         )
 
     def test_alias_passing_only_table_with_context(self) -> None:
-        PATH_CONTEXT.add_table_alias(City, "ctx_name_for_address")
         query = "`ctx_name_for_address`.city_id AS `alias-name`"
         self.assertEqual(
             Alias(

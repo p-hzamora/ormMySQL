@@ -49,7 +49,7 @@ class TestTypeHint(unittest.TestCase):
         self.assertIsInstance(response[1], Optional[str])
         self.assertIsInstance(response[2], int)
 
-    def test_SELECT_ONE_method_passing_3_columns(self):
+    def test_AASELECT_ONE_method_passing_3_columns(self):
         response = self.a_model.select_one(
             lambda a: (
                 a,
