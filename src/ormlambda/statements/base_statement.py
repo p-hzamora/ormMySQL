@@ -59,7 +59,7 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
     def _return_model(self, select, query: str) -> tuple[tuple[T]]:
         response_sql = self._repository.read_sql(query, flavour=dict, select=select)  # store all columns of the SQL query
         if response_sql and isinstance(response_sql, Iterable):
-            return ClusterResponse(self._dialect, select, response_sql).cluster()
+            return ClusterResponse(select, response_sql).cluster()
 
         return response_sql
 
@@ -77,11 +77,9 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
 
 class ClusterResponse[T]:
-    def __init__(self, dialect: Dialect, select: Select[T], response_sql: tuple[dict[str, Any]]) -> None:
-        self._dialect: Dialect = dialect
+    def __init__(self, select: Select[T], response_sql: tuple[dict[str, Any]]) -> None:
         self._select: Select[T] = select
         self._response_sql: tuple[dict[str, Any]] = response_sql
-        self._caster = dialect.caster
 
     def cluster(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
         tbl_dicc: dict[Type[Table], list[dict[str, Any]]] = self._create_cluster()
