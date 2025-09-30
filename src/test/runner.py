@@ -37,6 +37,7 @@ from test.test_sql_statements import (
     test_sql_statement,
     test_where_statement,
     test_max_statement,
+    test_multiples_references_to_the_same_table
 )
 
 import test.test_abstract_model as test_abstract_model
@@ -106,6 +107,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_type_hint),
         *loader.loadTestsFromModule(test_sql_types),
         *loader.loadTestsFromModule(test_create_backup),
+        *loader.loadTestsFromModule(test_multiples_references_to_the_same_table),
         # endregion
     )
 )
