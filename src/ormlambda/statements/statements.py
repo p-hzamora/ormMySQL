@@ -208,10 +208,6 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self
 
     @override
-    def concat(self, selector: SelectCols[T, str], alias: AliasType = "concat") -> IAggregate:
-        return func.Concat(values=selector, alias_clause=alias, dialect=self._dialect)
-
-    @override
     def max[TProp](
         self,
         column: SelectCols[T, TProp],

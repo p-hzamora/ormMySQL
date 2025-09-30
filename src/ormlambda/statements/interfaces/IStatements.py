@@ -175,11 +175,7 @@ class IStatements[T: Table](Element):
     def order[TValue](self, columns: SelectCols[T, TValue], order_type: OrderTypes) -> IStatements[T]: ...
 
     # endregion
-    # region concat
-    @overload
-    def concat(self, selector: SelectCols[T, str], alias: Optional[AliasType[T]] = "concat") -> IAggregate: ...
 
-    # endregion
     # region max
     @abstractmethod
     def max[TProp](
@@ -315,9 +311,10 @@ class IStatements[T: Table](Element):
     @abstractmethod
     def groupby[TRepo](self, column: list[SelectCols[T, TRepo]] | SelectCols[T, TRepo]) -> IStatements[T]: ...
 
-    def compile(self)->str: ...
+    def compile(self) -> str: ...
 
     # endregion
+
 
 class IStatements_two_generic[T, TPool](IStatements[T]):
     @property
@@ -330,4 +327,3 @@ class IStatements_two_generic[T, TPool](IStatements[T]):
 
     @property
     def model(self) -> Type[T]: ...
-
