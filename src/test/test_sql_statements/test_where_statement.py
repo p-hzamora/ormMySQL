@@ -26,7 +26,7 @@ class TestWhereStatement(unittest.TestCase):
         cls.ddbb = create_sakila_engine()
         cls.tmodel = ORM(Address, cls.ddbb)
 
-    def test_where(self):
+    def test_one_where(self):
         co = "Spain"
         # fmt: off
         select = (
@@ -70,9 +70,35 @@ class TestWhereStatement(unittest.TestCase):
             },
         )
 
+    def test_pass_multiples_where_clause(self):
+        city = "Ourense (Orense)"
+        country = r"[sS]pain"
 
-    def pass_multiples_where_clause(self):
-        self.tmodel.where(lambda x: x)
+        # fmt: off
+        result = (
+            self.tmodel
+            .where(lambda x: x.City.Country.country.regex(country))
+            .where(lambda x: x.City.city == city)
+            .select(lambda x: (
+                    x.City.city,
+                    x.City.Country.country,
+                ),
+                flavour=dict,
+            )
+            
+        )
+
+        # fmt: on
+
+        self.assertEqual(len(result), 1)
+        self.assertDictEqual(
+            result[0],
+            {
+                "city": "Ourense (Orense)",
+                "country": "Spain",
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
