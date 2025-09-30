@@ -119,7 +119,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def alias_table(self) -> tp.Optional[str]:
-        alias = self._alias_table  # TODOL []: if not (a := self.get_table_alias()) else a
+        alias = self._alias_table
         return self._alias_resolver(alias)
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
