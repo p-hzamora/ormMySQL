@@ -7,7 +7,6 @@ from ormlambda.common.errors import UnmatchedLambdaParameterError
 if TYPE_CHECKING:
     from ormlambda.sql.types import SelectCol  # FIXME [ ]: enhance the name
     from ormlambda import TableProxy
-    from ormlambda.sql.context import PathContext
 
 
 # type LambdaResponse[T] = TableProxy[T] | ColumnProxy[T] | Comparer
@@ -17,7 +16,7 @@ class GlobalChecker:
         return callable(obj) and not isinstance(obj, type)
 
     @classmethod
-    def resolved_callback_object(cls, lambda_func: Callable[[TableProxy], Any], table: Type[TableProxy], context: PathContext) -> tuple[SelectCol, ...]:
+    def resolved_callback_object(cls, lambda_func: Callable[[TableProxy], Any], table: Type[TableProxy]) -> tuple[SelectCol, ...]:
         from ormlambda.sql.table import TableProxy
         from ormlambda import Column
         from ormlambda.sql.column_table_proxy import FKChain
@@ -25,7 +24,7 @@ class GlobalChecker:
         from ormlambda.sql.comparer import Comparer
 
         try:
-            table_proxy = TableProxy(table, context.get_current_path())
+            table_proxy = TableProxy(table, FKChain(table, []))
 
             if not callable(lambda_func) and isinstance(lambda_func, Iterable):
                 # We hit that condition when trying to pass column or function dynamically into select clause.
