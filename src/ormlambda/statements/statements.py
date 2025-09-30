@@ -92,6 +92,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return None
 
     @override
+    @clear_list
     def delete(self, instances: Optional[T | list[T]] = None) -> None:
         if instances is None:
             response = self.select()
