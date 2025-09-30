@@ -11,7 +11,6 @@ from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
 
 
-from ormlambda.sql.context import PATH_CONTEXT
 
 if tp.TYPE_CHECKING:
     from ormlambda.sql.types import TableType, ColumnType, AliasType
@@ -289,11 +288,6 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._alias_resolver(alias(self._column))
 
         return self._replace_placeholder(alias)
-
-    def get_table_alias(self) -> tp.Optional[str]:
-        if self.table:
-            return PATH_CONTEXT.get_table_alias(self.table)
-        return None
 
     @staticmethod
     def join_clauses(clauses: list[ColumnProxy], chr: str = ",", *, dialect: Dialect, **kw) -> str:

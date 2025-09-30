@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 from ormlambda.sql.clause_info import AggregateFunctionBase, ClauseInfo
 from ormlambda.statements import BaseStatement
-from ormlambda.sql.context import PATH_CONTEXT, PathContext
 
 from ormlambda import Table, Column, ColumnProxy
 from ormlambda.common.enums import JoinType
@@ -35,8 +34,6 @@ from ormlambda.sql import functions as func
 
 
 class DeferredOperation:
-    """Represents a clause that will be created once PATH_CONTEXT is available"""
-
     def __init__(
         self,
         clause_obj: Type[AggregateFunctionBase],
@@ -106,20 +103,18 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
     @override
     def drop_table(self) -> None:
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            q = self.model.drop_table(self.dialect)
-            self._repository.execute(q)
+        self._resolve_deferred_operations(self.model)
+        q = self.model.drop_table(self.dialect)
+        self._repository.execute(q)
         return None
 
     @override
     @clear_list
     def insert(self, instances: T | list[T]) -> None:
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            insert = clauses.Insert(self._model, self.repository, self._dialect)
-            insert.insert(instances)
-            insert.execute()
+        self._resolve_deferred_operations(self.model)
+        insert = clauses.Insert(self._model, self.repository, self._dialect)
+        insert.insert(instances)
+        insert.execute()
         return None
 
     @override
@@ -132,33 +127,30 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
             # We always going to have a tuple of one element
             return self.delete(response)
 
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
+        self._resolve_deferred_operations(self.model)
 
-            delete = clauses.Delete(self._model, self._repository, engine=self._engine)
-            delete.delete(instances)
-            delete.execute()
+        delete = clauses.Delete(self._model, self._repository, engine=self._engine)
+        delete.delete(instances)
+        delete.execute()
         # not necessary to call self._query_builder.clear() because select() method already call it
         return None
 
     @override
     @clear_list
     def upsert(self, instances: T | list[T]) -> None:
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            upsert = clauses.Upsert(self._model, self._repository, engine=self._engine)
-            upsert.upsert(instances)
-            upsert.execute()
+        self._resolve_deferred_operations(self.model)
+        upsert = clauses.Upsert(self._model, self._repository, engine=self._engine)
+        upsert.upsert(instances)
+        upsert.execute()
         return None
 
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            update = clauses.Update(self._model, self._repository, self._query_builder.components.where, engine=self._engine)
-            update.update(dicc)
-            update.execute()
+        self._resolve_deferred_operations(self.model)
+        update = clauses.Update(self._model, self._repository, self._query_builder.components.where, engine=self._engine)
+        update.update(dicc)
+        update.execute()
 
         return None
 
@@ -179,17 +171,16 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     def count[TProp](
         self,
         selection: Optional[SelectCols[T, TProp] | str] = ASTERISK,
-        alias:AliasType = 'count'
+        alias: AliasType = "count",
     ) -> Optional[int]:
         if selection == ASTERISK:
             return self.select_one(lambda x: clauses.Count(x, alias), flavour=dict)[alias]
 
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
+        self._resolve_deferred_operations(self.model)
 
-            # get first position because 'resolved_callback_object' always return an Iterable and we should only pass one column
-            res = GlobalChecker.resolved_callback_object(selection, self.model, context)[0]
-            return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
+        # get first position because 'resolved_callback_object' always return an Iterable and we should only pass one column
+        res = GlobalChecker.resolved_callback_object(selection, self.model)[0]
+        return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
 
     @override
     def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, TRepo]:
@@ -226,14 +217,10 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column: SelectCols[T, TProp],
         alias: AliasType = "max",
     ) -> int:
-        
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            res = GlobalChecker.resolved_callback_object(column, self.model, context)[0]
+        self._resolve_deferred_operations(self.model)
+        res = GlobalChecker.resolved_callback_object(column, self.model)[0]
 
-            return self.select_one(lambda x: func.Max(res, alias), flavour=dict)[alias]
-
-       
+        return self.select_one(lambda x: func.Max(res, alias), flavour=dict)[alias]
 
     @override
     def min[TProp](
@@ -241,11 +228,10 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column: SelectCols[T, TProp],
         alias: AliasType = "min",
     ) -> int:
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            res = GlobalChecker.resolved_callback_object(column, self.model, context)[0]
+        self._resolve_deferred_operations(self.model)
+        res = GlobalChecker.resolved_callback_object(column, self.model)[0]
 
-            return self.select_one(lambda x: func.Min(res, alias), flavour=dict)[alias]
+        return self.select_one(lambda x: func.Min(res, alias), flavour=dict)[alias]
 
     @override
     def sum[TProp](
@@ -253,11 +239,10 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column: SelectCols[T, TProp],
         alias: AliasType = "sum",
     ) -> int:
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
-            res = GlobalChecker.resolved_callback_object(column, self.model, context)[0]
+        self._resolve_deferred_operations(self.model)
+        res = GlobalChecker.resolved_callback_object(column, self.model)[0]
 
-            return self.select_one(lambda x: func.Sum(res, alias), flavour=dict)[alias]
+        return self.select_one(lambda x: func.Sum(res, alias), flavour=dict)[alias]
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
@@ -283,30 +268,27 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
                 return result
             return () if not result else result[0]
 
-        with PATH_CONTEXT.query_context(self.model) as context:
-            self._resolve_deferred_operations(self.model, context)
+        self._resolve_deferred_operations(self.model)
 
-            select_clause = GlobalChecker.resolved_callback_object(selector, self.model, context)
+        select_clause = GlobalChecker.resolved_callback_object(selector, self.model)
 
-            select = clauses.Select(table=self.model, columns=select_clause, alias=alias)
+        select = clauses.Select(table=self.model, columns=select_clause, alias=alias)
 
-            self._query_builder.add_statement(select)
+        self._query_builder.add_statement(select)
 
-            self._query_builder.by = by
-            self._query: str = self._query_builder.query(self._dialect)
+        self._query_builder.by = by
+        self._query: str = self._query_builder.query(self._dialect)
 
-            if flavour:
-                result = self._return_flavour(self.query, flavour, select, **kwargs)
-                if issubclass(flavour, tuple) and len(select_clause) == 1 and isinstance(select_clause[0], Column | ClauseInfo | ColumnProxy):
-                    return tuple([x[0] for x in result])
-                return result
-            return self._return_model(select, self.query)
+        if flavour:
+            result = self._return_flavour(self.query, flavour, select, **kwargs)
+            if issubclass(flavour, tuple) and len(select_clause) == 1 and isinstance(select_clause[0], Column | ClauseInfo | ColumnProxy):
+                return tuple([x[0] for x in result])
+            return result
+        return self._return_model(select, self.query)
 
-    def _resolve_deferred_operations(self, table: Type[Table], context: PathContext):
-        """Resolve all deferred operations with active PATH_CONTEXT"""
-
+    def _resolve_deferred_operations(self, table: Type[Table]):
         for deferred_op in self._deferred_operations:
-            result = GlobalChecker.resolved_callback_object(deferred_op._lambda_function, table, context)
+            result = GlobalChecker.resolved_callback_object(deferred_op._lambda_function, table)
 
             deferred_op._lambda_function = result
             instance_object = deferred_op.instantiate()

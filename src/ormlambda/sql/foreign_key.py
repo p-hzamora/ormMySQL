@@ -3,7 +3,6 @@ import logging
 from typing import Callable, TYPE_CHECKING, Optional, Any, Type, overload
 
 from ormlambda.sql.ddl import BaseDDLElement
-from ormlambda.sql.context import PATH_CONTEXT
 
 if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
@@ -77,25 +76,6 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
     def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey[TLeft, TRight] | TRight:
         if obj:
             return self.tright
-
-        current_path = PATH_CONTEXT.get_current_path()
-
-        # Reset CONTEXT when we detect that base table is the same at left table in ForeignKey class and .steps is filled
-        if not current_path.base or (current_path.base == self.tleft and len(current_path.steps) > 0):
-            PATH_CONTEXT.reset_current_path(self.tleft)
-
-            # update PATH_CONTEXT with a new initialization like we'll do on PATH_CONTEXT.query_context(self.tleft) in with statement
-            current_path = PATH_CONTEXT.get_current_path()
-        if not current_path:
-            log.critical(f"{ForeignKey.__name__} '{self._clause_name}' accessed outside of path context. Must be used within a query context.")
-            return self
-
-        # new_path = current_path.copy()
-        # new_path.add_step(self)
-
-        # PATH_CONTEXT.add_foreign_key_access(self, new_path)
-        # PATH_CONTEXT.set_current_path(new_path)
-
         return self
 
     def __set__(self, obj, value):

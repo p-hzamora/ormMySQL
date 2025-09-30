@@ -1,11 +1,3 @@
-"""
-CLEAN MODERN QUERY BUILDER - NO LEGACY CODE
-===========================================
-
-Complete rewrite without any backward compatibility.
-Clean, modern implementation using PATH_CONTEXT exclusively.
-"""
-
 from __future__ import annotations
 from typing import Callable, Generator, Optional, TYPE_CHECKING, Iterable, overload, Concatenate
 from ormlambda.sql.clause_info import IAggregate
@@ -141,8 +133,6 @@ class StandardSQLCompiler:
 
     def _compile_having(self, having: Having) -> Optional[str]:
         """Compile HAVING clause"""
-
-        # Note: No more context parameter needed - PATH_CONTEXT handles it
         return having.compile(self.dialect)
 
     # =============================================================================

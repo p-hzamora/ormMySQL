@@ -110,7 +110,6 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
 
             comparer = Comparer(left_condition=lcond, right_condition=rcond, compare=relation.compare)
             js = JoinSelector(comparer, by, alias, dialect=dialect)
-            # PATH_CONTEXT.add_join(js, alias)
             result.append(js)
         return result
 
