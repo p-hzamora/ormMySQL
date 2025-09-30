@@ -14,12 +14,11 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from ormlambda.common.global_checker import GlobalChecker
 
 if TYPE_CHECKING:
-    from ormlambda.sql.clause_info import AggregateFunctionBase
     from ormlambda.dialects import Dialect
 from ormlambda.common.errors import NotKeysInIAggregateError
 from ormlambda.dialects.mysql.clauses.ST_AsText import ST_AsText
 from ormlambda.dialects.mysql.clauses.ST_Contains import ST_Contains
-from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.clause_info import ClauseInfo, IAggregate
 
 from ormlambda.sql import functions as func
 from ormlambda import ColumnProxy
@@ -176,7 +175,7 @@ class TestClauseInfo(unittest.TestCase):
             (func.Sum, "sum", DIALECT),
         )
     )
-    def test_max_function(self, fn: Type[AggregateFunctionBase], result: str, dialect: Dialect):
+    def test_max_function(self, fn: Type[IAggregate], result: str, dialect: Dialect):
         column_proxy = GlobalChecker.resolved_callback_object(lambda x: cast(A, x).data_a, A)[0]
         ci = fn(column_proxy)
         self.assertEqual(ci.compile(DIALECT).string, f"{result.upper()}(`a`.data_a) AS `{result}`")

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ormlambda.statements.types import WhereTypes
 
 
-from ormlambda.sql.clause_info import AggregateFunctionBase, ClauseInfo
+from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.statements import BaseStatement
 
 from ormlambda import Table, Column, ColumnProxy

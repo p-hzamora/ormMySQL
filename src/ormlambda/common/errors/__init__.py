@@ -37,14 +37,14 @@ class AggregateFunctionError[T](Exception):
 
     def __get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
         """
-        Get the class name of those classes that inherit from 'AggregateFunctionBase' class in order to create a better error message.
+        Get the class name of those classes that inherit from 'IAggregate' class in order to create a better error message.
         """
-        from ormlambda.sql.clause_info import AggregateFunctionBase
+        from ormlambda.sql.clause_info import IAggregate
 
         res: set[str] = set()
         if not isinstance(clauses, tp.Iterable):
             return clauses.__class__.__name__
         for clause in clauses:
-            if isinstance(clause, AggregateFunctionBase):
+            if isinstance(clause, IAggregate):
                 res.add(clause.__class__.__name__)
         return ", ".join(res)
