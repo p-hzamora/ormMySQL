@@ -8,7 +8,6 @@ if tp.TYPE_CHECKING:
     from ormlambda.statements.types import WhereTypes
 
 
-
 class Where[T](ClauseElement):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.

@@ -11,7 +11,6 @@ from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
 
 
-
 if tp.TYPE_CHECKING:
     from ormlambda.sql.types import TableType, ColumnType, AliasType
     from ormlambda.dialects import Dialect

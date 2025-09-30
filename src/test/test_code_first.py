@@ -27,7 +27,7 @@ class Test_my_sql(unittest.TestCase):
         cls.country_model = ORM(Country, cls.engine)
 
     def tearDown(self) -> None:
-        self.engine.drop_schema(DB_NAME,True)
+        self.engine.drop_schema(DB_NAME, True)
 
     # FIXME [ ]: refactor to fix and include this method
     def test_create_table_code_first_passing_folder(self):

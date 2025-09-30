@@ -5,7 +5,6 @@ from ormlambda import util
 import importlib
 
 
-
 if TYPE_CHECKING:
     from ormlambda.caster.caster import Caster
     from ormlambda.repository.interfaces.IRepositoryBase import DBAPIConnection

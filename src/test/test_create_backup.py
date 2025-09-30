@@ -66,7 +66,7 @@ class BackupTest(unittest.TestCase):
     def test_binary_stream(self):
         binary_stream = io.BytesIO()
         backup = self.engine.create_backup(output=binary_stream, compress=True)
-        self.assertIsInstance(backup,bytes)
+        self.assertIsInstance(backup, bytes)
 
     # def test_standard_output(self):
     #     self.engine.create_backup(output=sys.stdout)

@@ -10,8 +10,6 @@ from ormlambda.sql.types import (
 )
 
 
-
-
 class IClauseInfo[T: Table](IQuery):
     @property
     @abc.abstractmethod

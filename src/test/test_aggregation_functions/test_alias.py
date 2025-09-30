@@ -17,7 +17,6 @@ DIALECT = mysql.dialect
 
 
 class TestAlias(unittest.TestCase):
-
     def test_alias_without_aliases(self) -> None:
         with self.assertRaises(TypeError):
             Alias(D.data_d)

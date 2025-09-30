@@ -24,7 +24,7 @@ from ormlambda.types import (
 
 
 class Column[TProp](ClauseElement):
-    __visit_name__ = 'column'
+    __visit_name__ = "column"
     PRIVATE_CHAR: str = "_"
 
     __slots__ = (

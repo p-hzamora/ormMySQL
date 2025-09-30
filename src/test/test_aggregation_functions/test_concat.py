@@ -3,7 +3,6 @@ from pathlib import Path
 import unittest
 
 
-
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
@@ -46,7 +45,7 @@ class TestConcat(unittest.TestCase):
         self.assertEqual(concat.query(DIALECT), mssg)
 
     def test_concat_passing_ForeignKey_with_context(self):
-        PATH_CONTEXT.add_table_alias(C,'alias-for-c')
+        PATH_CONTEXT.add_table_alias(C, "alias-for-c")
         concat = ConcatMySQL(values=(D.C))
         mssg: str = "CONCAT(`alias-for-c`.pk_c, `alias-for-c`.data_c, `alias-for-c`.fk_b) AS `concat`"
         self.assertEqual(concat.query(DIALECT), mssg)

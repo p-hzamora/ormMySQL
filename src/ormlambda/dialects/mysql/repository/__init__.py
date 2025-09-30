@@ -1,1 +1,1 @@
-from .repository import MySQLRepository
+from .repository import MySQLRepository  # noqa: F401

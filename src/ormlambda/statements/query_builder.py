@@ -196,7 +196,6 @@ class QueryBuilder(IQuery):
         self.join_type = JoinType.INNER_JOIN
         self.used_columns = ColumnIterable()
 
-
     # =============================================================================
     # CLEAN CLAUSE MANAGEMENT
     # =============================================================================

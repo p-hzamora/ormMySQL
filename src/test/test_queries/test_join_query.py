@@ -11,6 +11,7 @@ from ormlambda.sql.clauses import JoinSelector
 from test.models import City, Country, Address  # noqa: E402
 from ormlambda.dialects import mysql
 from ormlambda.sql.context import PATH_CONTEXT
+
 DIALECT = mysql.dialect
 
 
@@ -70,7 +71,6 @@ class TestJoinSelector(unittest.TestCase):
         self.assertEqual(query, query_parser)
 
     def test_join_selectors(self):
-
         s1 = JoinSelector[Address, City](
             by=JoinType.LEFT_EXCLUSIVE,
             where=Address.city_id == City.city_id,

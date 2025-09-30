@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from ormlambda.statements.interfaces import IStatements_two_generic
 
 
-
 class BaseModel[T]:
     """
     Class to select the correct BaseStatement class depends on the repository.

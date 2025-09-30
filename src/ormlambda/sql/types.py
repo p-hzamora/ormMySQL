@@ -26,5 +26,5 @@ type TupleJoinType[T] = tuple[Comparer]
 
 ASTERISK = "*"
 
-# TODOL []: Look if we can avoid this * 
+# TODOL []: Look if we can avoid this *
 from .compiler import *  # noqa: F403, E402

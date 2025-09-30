@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 
 
-
 sys.path = [str(Path(__file__).parent.parent), *sys.path]
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
@@ -28,8 +27,6 @@ ADDRESS_1 = Address(200, "Calle Cristo de la victoria", "Usera", None, 1, "28026
 
 
 class TestWhere(unittest.TestCase):
-
-
     def test_one_where(self):
         w = Where(Address.address == 10)
         self.assertEqual(w.query(DIALECT), "WHERE address.address = 10")

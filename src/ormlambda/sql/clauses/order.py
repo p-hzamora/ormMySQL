@@ -10,10 +10,11 @@ from ormlambda.sql.elements import ClauseElement
 if tp.TYPE_CHECKING:
     from ormlambda import ColumnProxy
 
+
 class Order[TProp](ClauseElement, IAggregate):
     __visit_name__ = "order"
 
-    columns: tuple[ColumnType[TProp],...]
+    columns: tuple[ColumnType[TProp], ...]
 
     def __init__(
         self,
@@ -44,6 +45,7 @@ class Order[TProp](ClauseElement, IAggregate):
         return self.columns
 
     @property
-    def dtype(self)->tp.Any: ...
+    def dtype(self) -> tp.Any: ...
+
 
 __all__ = ["Order"]

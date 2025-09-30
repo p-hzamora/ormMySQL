@@ -19,8 +19,10 @@ from ormlambda.dialects.mysql import DECIMAL, INTEGER, MEDIUMINT, TIMESTAMP, TIN
 
 DIALECT = mysql.dialect
 
-def create_url(x:str=""):
+
+def create_url(x: str = ""):
     return f"mysql://root:1500@localhost:3306/{x}?pool_size=3"
+
 
 BORRAR = "borrar"
 
@@ -51,10 +53,12 @@ class TestResolverType(unittest.TestCase):
             temp.create_schema(BORRAR)
 
         self.engine = create_engine(create_url(BORRAR))
+
     def test_new_test(self) -> None:
         ORM(EConceptoFacturadoPm, self.engine).create_table()
         pass
         EConceptoFacturadoPm().base_imponible
+
 
 if __name__ == "__main__":
     unittest.main()

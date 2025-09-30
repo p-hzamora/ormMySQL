@@ -300,7 +300,7 @@ class DDLCompiler(Compiled):
             return None
         return None
 
-    #TODOH []: refactor in order to improve clarity
+    # TODOH []: refactor in order to improve clarity
     def visit_create_backup(
         self,
         backup: CreateBackup,

@@ -10,6 +10,7 @@ import ormlambda.util as util
 from uuid import UUID as _python_UUID
 from shapely import Point as _python_Point
 
+
 class _NoArg(enum.Enum):
     NO_ARG = 0
 
@@ -439,13 +440,15 @@ class Enum(String, TypeEngine[EnumType]):
 
         self._valid_lookup.update([(value, self._valid_lookup[self._object_lookup[value]]) for value in values])
 
+
 class Point(TypeEngine[_python_Point]):
-    __visit_name__ = 'point'
+    __visit_name__ = "point"
 
     @property
-    def python_type(self)->Type[_python_Point]:
+    def python_type(self) -> Type[_python_Point]:
         return _python_Point
-    
+
+
 class JSON(TypeEngine[Any]):
     """JSON data type."""
 
@@ -597,6 +600,7 @@ class VARBINARY(Varbinary):
 class ENUM(Enum):
     __visit_name__ = "ENUM"
 
+
 class POINT(Point):
     __visit_name__ = "POINT"
 
@@ -617,20 +621,7 @@ _UNICODE = Unicode()
 _BINARY = LargeBinary()
 _ENUM = Enum(enum.Enum)
 
-_type_dicc: dict[Any, TypeEngine[Any]] = {
-    str: _STRING,
-    int: Integer(),
-    float: Float(),
-    NoneType: NULLTYPE,
-    dt.datetime: Datetime(timezone=False),
-    bytes: _BINARY,
-    bytearray: _BINARY,
-    bool: Boolean(),
-    enum.Enum: _ENUM,
-    Literal: _ENUM,
-    _python_UUID: UUID(),
-    _python_Point: POINT()
-}
+_type_dicc: dict[Any, TypeEngine[Any]] = {str: _STRING, int: Integer(), float: Float(), NoneType: NULLTYPE, dt.datetime: Datetime(timezone=False), bytes: _BINARY, bytearray: _BINARY, bool: Boolean(), enum.Enum: _ENUM, Literal: _ENUM, _python_UUID: UUID(), _python_Point: POINT()}
 # enderegion
 
 

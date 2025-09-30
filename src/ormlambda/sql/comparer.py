@@ -101,7 +101,7 @@ class Comparer(ClauseElement, IAggregate):
     def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, *, dialect, **kwargs) -> str:
         if not isinstance(comparers, tp.Iterable):
             raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
-        
+
         if len(comparers) == 1:
             comparer = comparers[0]
             return comparer.compile(dialect, alias_clause=None, **kwargs).string

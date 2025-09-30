@@ -6,7 +6,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from test.config import create_sakila_engine
 from ormlambda import ORM
-from test.models import Address 
+from test.models import Address
 
 
 engine = create_sakila_engine()
@@ -45,4 +45,4 @@ res2 = (
     .select()
 )
 # fmt: on
-assert res== res2
+assert res == res2

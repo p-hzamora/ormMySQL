@@ -14,5 +14,4 @@ class Having(Where):
         super().__init__(*comparer, restrictive=restrictive, **kw)
 
 
-
 __all__ = ["Having"]

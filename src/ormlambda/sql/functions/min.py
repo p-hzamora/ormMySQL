@@ -20,5 +20,5 @@ class Min(ClauseElement, IAggregate):
         return [self.column]
 
     @property
-    def dtype(self)->int:
+    def dtype(self) -> int:
         return int
