@@ -309,7 +309,7 @@ response = ORM(Address, db).where(Address.City.Country.country.regex(r"^Spain"))
             (
                 Address.address,
                 Address.City.city,
-                self.tmodel.concat(lambda x:
+                Concat(lambda x:
                     (
                         "Address: ",
                         x.address,
