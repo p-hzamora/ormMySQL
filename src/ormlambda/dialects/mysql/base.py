@@ -199,13 +199,13 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         if not where.comparer:
             return ""
-        cols = Comparer.join_comparers(list(where.comparer), True, dialect=self.dialect)
+        cols = Comparer.join_comparers(list(where.comparer), restrictive=where.restrictive, dialect=self.dialect)
         return f"WHERE {cols}"
 
     def visit_having(self, having: Having) -> str:
         from ormlambda.sql.comparer import Comparer
 
-        cols = Comparer.join_comparers(list(having.comparer), True, dialect=self.dialect, table=None, literal=True)
+        cols = Comparer.join_comparers(list(having.comparer), restrictive=having.restrictive, dialect=self.dialect, table=None, literal=True)
         return f"HAVING {cols}"
 
     def visit_order(self, order: Order, **kw) -> str:

@@ -21,7 +21,7 @@ class Where[T](ClauseElement):
         restrictive: bool = True,
     ) -> None:
         self.comparer: set[Comparer] = set(comparer)
-        self._restrictive: bool = restrictive
+        self.restrictive: bool = restrictive
 
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []

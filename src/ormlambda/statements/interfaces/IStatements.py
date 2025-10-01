@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Optional, Type, overload, TYPE_CHECKING
+from typing import Any, Callable, Iterable, Optional, Type, overload, TYPE_CHECKING
 from enum import Enum
 from abc import abstractmethod
 
@@ -7,11 +7,9 @@ from abc import abstractmethod
 if TYPE_CHECKING:
     from ormlambda.repository import BaseRepository
     from ormlambda import Table
-    from ormlambda.sql.clause_info import IAggregate
     from ormlambda.sql.types import TupleJoinType, ColumnType
     from ormlambda.sql.clauses.join import JoinContext
     from ormlambda.common.enums import JoinType
-    from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda.sql.types import AliasType
 
 from ..types import (
@@ -156,18 +154,24 @@ class IStatements[T: Table](Element):
     # endregion
 
     # region where
+    @overload
+    def where(self, conditions: WhereTypes[T]) -> IStatements[T]: ...
+    @overload
+    def where(self, conditions: WhereTypes[T], restrictive: bool) -> IStatements[T]: ...
     @abstractmethod
-    def where(self, conditions: WhereTypes[T] = None) -> IStatements[T]: ...
+    def where(self, conditions: WhereTypes[T] = None, restrictive: bool = ...) -> IStatements[T]: ...
 
     # endregion
 
     # region having
 
     @overload
-    def having(self, conditions: Callable[[T], WhereTypes[T]]) -> IStatements[T]: ...
+    def having(self, conditions: WhereTypes[T]) -> IStatements[T]: ...
+    @overload
+    def having(self, conditions: WhereTypes[T], restrictive: bool) -> IStatements[T]: ...
 
     @abstractmethod
-    def having(self, conditions: WhereTypes[T] = None) -> IStatements[T]: ...
+    def having(self, conditions: WhereTypes[T] = None, restrictive: bool = ...) -> IStatements[T]: ...
 
     # endregion
     # region order

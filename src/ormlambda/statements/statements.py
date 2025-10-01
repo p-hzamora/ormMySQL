@@ -152,19 +152,19 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
 
     @override
-    def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, TRepo]:
+    def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements_two_generic[T, TRepo]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         result = GlobalChecker.resolved_callback_object(conditions, self.model)
 
-        deferred_op = clauses.Where(*result)
-        self._query_builder.add_statement(deferred_op)
+        where = clauses.Where(*result, restrictive=restrictive)
+        self._query_builder.add_statement(where)
         return self
 
     @override
-    def having(self, conditions: ColumnType) -> IStatements_two_generic[T, TRepo]:
+    def having(self, conditions: ColumnType, restrictive: bool = True) -> IStatements_two_generic[T, TRepo]:
         result = GlobalChecker.resolved_callback_object(conditions, self.model)
-        deferred_op = clauses.Having(*result)
-        self._query_builder.add_statement(deferred_op)
+        having = clauses.Having(*result, restrictive=restrictive)
+        self._query_builder.add_statement(having)
         return self
 
     @override

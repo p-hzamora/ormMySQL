@@ -47,8 +47,8 @@ class QueryComponents:
         self,
     ):
         self.select: Optional[Select] = None
-        self.where: Optional[Where] = Where()
-        self.having: Optional[Having] = Having()
+        self.where: Optional[Where] = None
+        self.having: Optional[Having] = None
         self.order: Optional[Order] = None
         self.group_by: Optional[GroupBy] = None
         self.limit: Optional[Limit] = None
@@ -61,11 +61,7 @@ class QueryComponents:
 
         for att_name in self.__slots__:
             # We can restore those cases that are different of None
-            if att_name == "where":
-                setattr(self, att_name, Where())
-            elif att_name == "having":
-                setattr(self, att_name, Having())
-            elif att_name == "joins":
+            if att_name == "joins":
                 setattr(self, att_name, set())
             else:
                 setattr(self, att_name, None)
@@ -96,7 +92,7 @@ class StandardSQLCompiler:
             query_parts.append(joins_sql)
 
         # WHERE
-        if components.where.comparer:
+        if components.where:
             query_parts.append(components.where.compile(self.dialect).string)
 
         # GROUP BY
@@ -104,7 +100,7 @@ class StandardSQLCompiler:
             query_parts.append(components.group_by.compile(self.dialect).string)
 
         # HAVING
-        if components.having.comparer:
+        if components.having:
             query_parts.append(components.having.compile(self.dialect).string)
 
         # ORDER BY
@@ -207,12 +203,24 @@ class QueryBuilder(IQuery):
 
     @call_used_column
     def add_where(self, where: Where) -> QueryBuilder:
+        if not self.components.where:
+            # we need to do that in order to initialize with our first where clause to control 'restrictive' attribute.
+            # Otherwise, we'd always has the same attribute
+            self.components.where = where
+            return self
+
         comparer = where.comparer
         self.components.where.add_comparers(comparer)
         return self
 
     @call_used_column
     def add_having(self, having: Having) -> QueryBuilder:
+        if not self.components.having:
+            # we need to do that in order to initialize with our first having clause to control 'restrictive' attribute.
+            # Otherwise, we'd always has the same attribute
+            self.components.having = having
+            return self
+
         comparer = having.comparer
         self.components.having.add_comparers(comparer)
         return self
