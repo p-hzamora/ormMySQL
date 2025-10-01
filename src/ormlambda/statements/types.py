@@ -7,23 +7,15 @@ from typing import (
     Union,
     TYPE_CHECKING,
 )
-import enum
 
 
 if TYPE_CHECKING:
     from ormlambda.common.enums import JoinType
     from ormlambda.sql.comparer import Comparer
     from ormlambda.sql.types import ColumnType
+    from ormlambda.common.enums import OrderType
 
 type OrderTypes = Literal["ASC", "DESC"] | OrderType | Iterable[OrderType]
-
-
-class OrderType(str, enum.Enum):
-    def __str__(self):
-        return super().__str__()
-
-    ASC = "ASC"
-    DESC = "DESC"
 
 
 type Tuple[T] = tuple[T, ...]

@@ -4,6 +4,7 @@ import ormlambda.env  # noqa: F401 Necesary to load all variables inside ormalam
 from .common.enums import (
     JoinType as JoinType,
     ConditionType as ConditionType,
+    OrderType as OrderType,
 )
 # endregion
 
@@ -20,7 +21,6 @@ from .sql import (
 
 from .repository import BaseRepository as BaseRepository
 from .statements import BaseStatement as BaseStatement
-from .statements.types import OrderType as OrderType
 from .model.base_model import (
     BaseModel as BaseModel,
     ORM as ORM,

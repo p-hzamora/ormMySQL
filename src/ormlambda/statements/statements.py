@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.statements import BaseStatement
 
-from ormlambda import Table, Column, ColumnProxy
+from ormlambda import OrderType, Table, Column, ColumnProxy
 from ormlambda.common.enums import JoinType
 from ormlambda.sql.clauses.join import JoinContext, TupleJoinType
 
@@ -168,7 +168,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self
 
     @override
-    def order[TValue](self, columns: str | Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, TRepo]:
+    def order[TValue](self, columns: str | Callable[[T], TValue], order_type: OrderTypes = OrderType.ASC) -> IStatements_two_generic[T, TRepo]:
         if isinstance(columns, str):
             callable_func = lambda x: columns  # noqa: E731
         else:

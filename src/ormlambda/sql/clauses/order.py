@@ -4,7 +4,7 @@ import typing as tp
 from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.types import ColumnType
 
-from ormlambda.statements import OrderType
+from ormlambda.common.enums import OrderType
 from ormlambda.sql.elements import ClauseElement
 
 if tp.TYPE_CHECKING:

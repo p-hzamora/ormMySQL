@@ -171,8 +171,16 @@ class IStatements[T: Table](Element):
 
     # endregion
     # region order
-    @abstractmethod
+    @overload
+    def order[TValue](self, columns: SelectCols[T, TValue]) -> IStatements[T]: ...
+    @overload
     def order[TValue](self, columns: SelectCols[T, TValue], order_type: OrderTypes) -> IStatements[T]: ...
+    @overload
+    def order[TValue](self, columns: Iterable[SelectCols[T, TValue]]) -> IStatements[T]: ...
+    @overload
+    def order[TValue](self, columns: Iterable[SelectCols[T, TValue]], order_type: Iterable[OrderTypes]) -> IStatements[T]: ...
+    @abstractmethod
+    def order[TValue](self, columns: SelectCols[T, TValue], order_type: OrderTypes = ...) -> IStatements[T]: ...
 
     # endregion
 
