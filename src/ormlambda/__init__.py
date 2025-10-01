@@ -1,4 +1,5 @@
-import ormlambda.env  # noqa: F401 Necesary to load all variables inside ormalambda.env
+# COMMENT: Necesary to load all variables inside ormalambda.env
+import ormlambda.env  # noqa: F401
 
 # region enums
 from .common.enums import (
