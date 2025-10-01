@@ -37,7 +37,12 @@ type JoinCondition[T, T1] = tuple[T1, WhereCondition[T, T1], Optional[JoinType]]
 type TypeExists = Literal["fail", "replace", "append"]
 
 
-type WhereTypes[LTable] = Union[bool, Comparer, Callable[[LTable], WhereTypes[LTable]], Iterable[WhereTypes[LTable]]]
+type WhereTypes[LTable] = Union[
+    bool,
+    Comparer,
+    Callable[[LTable], WhereTypes[LTable]],
+    Iterable[WhereTypes[LTable]],
+]
 
 
 type SelectCols[T, TProp] = Callable[[T], ColumnType[TProp]] | ColumnType[TProp]
