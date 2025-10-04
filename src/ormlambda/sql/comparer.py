@@ -4,15 +4,14 @@ import re
 import typing as tp
 
 
-from ormlambda.sql.types import ConditionType, ComparerTypes
-from ormlambda.sql.clause_info import ClauseInfo, IAggregate
+from ormlambda.sql.types import ConditionType
+from ormlambda.sql.types import ComparerTypes
+
+from ormlambda.sql.clause_info import IAggregate
 from ormlambda import ConditionType as ConditionEnum
 from ormlambda.sql.elements import ClauseElement
 
 from ormlambda import ColumnProxy
-
-if tp.TYPE_CHECKING:
-    from ormlambda.dialects import Dialect
 
 
 class ICleaner(abc.ABC):
@@ -57,33 +56,15 @@ class Comparer(ClauseElement, IAggregate):
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ) -> None:
         self._compare: ComparerTypes = compare
-        self._left_condition: ConditionType = left_condition
-        self._right_condition: ConditionType = right_condition
+        self.left_condition: ConditionType = left_condition
+        self.right_condition: ConditionType = right_condition
         self._flags = flags
 
     @property
     def dtype(self) -> tp.Any: ...
 
     def __repr__(self) -> str:
-        return f"{Comparer.__name__}: {self._left_condition} {self._compare} {self._right_condition}"
-
-    def left_condition(self, dialect: Dialect, **kwargs) -> Comparer | ClauseInfo:
-        if isinstance(self._left_condition, ColumnProxy | Comparer):
-            return self._left_condition.compile(dialect=dialect, **kwargs).string
-
-        if isinstance(self._left_condition, str):
-            # TODOL []: Check if we can use the Caster class to wrap the condition instead of hardcoding it.
-            return f"'{self._left_condition}'"
-        return self._left_condition
-
-    def right_condition(self, dialect: Dialect, **kwargs) -> Comparer | ClauseInfo:
-        if isinstance(self._right_condition, ColumnProxy | Comparer):
-            return self._right_condition.compile(dialect=dialect, **kwargs).string
-
-        if isinstance(self._right_condition, str):
-            # TODOL []: Check if we can use the Caster class to wrap the condition instead of hardcoding it.
-            return f"'{self._right_condition}'"
-        return self._right_condition
+        return f"{Comparer.__name__}: {self.left_condition} {self._compare} {self.right_condition}"
 
     @property
     def compare(self) -> ComparerTypes:
@@ -122,11 +103,11 @@ class Comparer(ClauseElement, IAggregate):
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []
 
-        if isinstance(self._left_condition, ColumnProxy):
-            res.append(self._left_condition)
+        if isinstance(self.left_condition, ColumnProxy):
+            res.append(self.left_condition)
 
-        if isinstance(self._right_condition, ColumnProxy):
-            res.append(self._right_condition)
+        if isinstance(self.right_condition, ColumnProxy):
+            res.append(self.right_condition)
 
         return res
 
