@@ -2,12 +2,13 @@ from __future__ import annotations
 from typing import Any, Optional, Type, dataclass_transform, TYPE_CHECKING
 import json
 
-from ormlambda.sql import Column, ForeignKey, ColumnProxy
-from ormlambda.util.module_tree.dfs_traversal import DFSTraversal
 from ormlambda.sql.ddl import CreateTable, DropTable
+from ormlambda import util
 
 if TYPE_CHECKING:
+    from ormlambda.sql import Column
     from ormlambda.dialects import Dialect
+    from ormlambda import ForeignKey
 
 from .table_constructor import __init_constructor__
 
@@ -97,15 +98,21 @@ class Table(metaclass=TableMeta):
             dicc[x] = getattr(self, x)
         return dicc
 
+    @util.preload_module("ormlambda.sql")
     @classmethod
     def get_pk(cls) -> Optional[Column]:
+        Column = util.preloaded.sql_column.Column
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
         for obj in cls.__dict__.values():
             if isinstance(obj, Column | ColumnProxy) and obj.is_primary_key:
                 return obj
         return None
 
+    @util.preload_module("ormlambda.sql")
     @classmethod
     def get_columns(cls) -> tuple[Column, ...]:
+        Column = util.preloaded.sql_column.Column
+
         return tuple([x for x in cls.__annotations__.values() if isinstance(x, Column)])
 
     @classmethod
@@ -138,6 +145,9 @@ class Table(metaclass=TableMeta):
             return f"`{cls.__table_name__}_{column}`"
         return cls.__table_name__
 
+    @util.preload_module()
     @classmethod
     def foreign_keys(cls) -> dict[str, ForeignKey]:
+        from ormlambda import ForeignKey
+
         return {key: value for key, value in cls.__dict__.items() if isinstance(value, ForeignKey)}

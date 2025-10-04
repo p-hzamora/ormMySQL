@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.dialects import Dialect
 
+from ormlambda.util import preloaded as _preloaded
 
 log = logging.getLogger(__name__)
 
@@ -103,15 +104,15 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
         # TODOH []: look into why i dropped 'lcol' variable
         return f"{self.tleft.__table_name__}_{self.clause_name}"
 
-    def resolved_function(self, dialect: Dialect) -> Comparer:
-        """ """
+    @_preloaded.preload_module("ormlambda.sql.table")
+    def resolved_function(self) -> Comparer:
+        util = _preloaded.sql_table
         if self._comparer is not None:
             return self._comparer
 
-        left = self._tleft
-        right = self._tright
+        left = util.TableProxy(self._tleft)
+        right = util.TableProxy(self._tright)
         comparer = self._relationship(left, right)
-        comparer._dialect = dialect
         return comparer
 
     def __hash__(self):
