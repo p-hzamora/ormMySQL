@@ -147,14 +147,14 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         if selection == ASTERISK:
             return self.select_one(lambda x: clauses.Count(x, alias), flavour=dict)[alias]
 
-        # get first position because 'resolved_callback_object' always return an Iterable and we should only pass one column
-        res = GlobalChecker.resolved_callback_object(selection, self.model)[0]
+        # get first position because 'resolved_callback_object' return an, alway Iterable and we should only pass one column
+        res = GlobalChecker.resolved_callback_object(self.model, selection)[0]
         return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
 
     @override
     def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements_two_generic[T, TRepo]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
-        result = GlobalChecker.resolved_callback_object(conditions, self.model)
+        result = GlobalChecker.resolved_callback_object(self.model, conditions)
 
         where = clauses.Where(*result, restrictive=restrictive)
         self._query_builder.add_statement(where)
@@ -162,7 +162,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
     @override
     def having(self, conditions: ColumnType, restrictive: bool = True) -> IStatements_two_generic[T, TRepo]:
-        result = GlobalChecker.resolved_callback_object(conditions, self.model)
+        result = GlobalChecker.resolved_callback_object(self.model, conditions)
         having = clauses.Having(*result, restrictive=restrictive)
         self._query_builder.add_statement(having)
         return self
@@ -174,7 +174,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         else:
             callable_func = columns
 
-        res = GlobalChecker.resolved_callback_object(callable_func, self.model)
+        res = GlobalChecker.resolved_callback_object(self.model, callable_func)
         deferred_op = clauses.Order(*res, order_type=order_type)
         self._query_builder.add_statement(deferred_op)
 
@@ -186,7 +186,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column: SelectCols[T, TProp],
         alias: AliasType = "max",
     ) -> int:
-        res = GlobalChecker.resolved_callback_object(column, self.model)[0]
+        res = GlobalChecker.resolved_callback_object(self.model, column)[0]
 
         return self.select_one(lambda x: func.Max(res, alias), flavour=dict)[alias]
 
@@ -196,7 +196,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column: SelectCols[T, TProp],
         alias: AliasType = "min",
     ) -> int:
-        res = GlobalChecker.resolved_callback_object(column, self.model)[0]
+        res = GlobalChecker.resolved_callback_object(self.model, column)[0]
 
         return self.select_one(lambda x: func.Min(res, alias), flavour=dict)[alias]
 
@@ -206,7 +206,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         column: SelectCols[T, TProp],
         alias: AliasType = "sum",
     ) -> int:
-        res = GlobalChecker.resolved_callback_object(column, self.model)[0]
+        res = GlobalChecker.resolved_callback_object(self.model, column)[0]
 
         return self.select_one(lambda x: func.Sum(res, alias), flavour=dict)[alias]
 
@@ -223,6 +223,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         flavour: Optional[Type[TFlavour]] = None,
         by: JoinType = JoinType.INNER_JOIN,
         alias: Optional[AliasType[T]] = None,
+        avoid_duplicates: bool = False,
         **kwargs,
     ):
         if selector is None:
@@ -240,7 +241,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
                 return result
             return () if not result else result[0]
 
-        select_clause = GlobalChecker.resolved_callback_object(selector, self.model)
+        select_clause = GlobalChecker.resolved_callback_object(self.model, selector)
 
         select = clauses.Select(
             table=self.model,
@@ -307,7 +308,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
     @override
     def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements_two_generic[T]:
-        result = GlobalChecker.resolved_callback_object(column, self.model)
+        result = GlobalChecker.resolved_callback_object(self.model, column)
         deferred_op = clauses.GroupBy(*result)
         self._query_builder.add_statement(deferred_op)
         return self

@@ -16,12 +16,7 @@ class GlobalChecker:
         return callable(obj) and not isinstance(obj, type)
 
     @classmethod
-    def resolved_callback_object(cls, lambda_func: Callable[[TableProxy], Any], table: Type[TableProxy]) -> tuple[SelectCol, ...]:
-        from ormlambda.sql.table import TableProxy
-        from ormlambda import Column
-        from ormlambda.sql.column_table_proxy import FKChain
-        from ormlambda.sql.column import ColumnProxy
-        from ormlambda.sql.comparer import Comparer
+    def resolved_callback_object(cls, table: T, lambda_func: Callable[[T], Any]) -> tuple[SelectCol, ...]:
 
         try:
             table_proxy = TableProxy(table, FKChain(table, []))
