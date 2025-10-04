@@ -14,5 +14,10 @@ class ColumnTableProxy(abc.ABC):
     def path(self) -> FKChain:
         return self._path
 
+    @path.setter
+    def path(self, value: FKChain) -> None:
+        self._path = value
+        return None
+
     @abc.abstractmethod
     def get_table_chain(self): ...
