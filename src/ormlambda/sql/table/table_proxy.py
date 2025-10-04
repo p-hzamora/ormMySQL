@@ -21,7 +21,10 @@ class TableProxy[T: Table](ColumnTableProxy, ClauseElement):
     _table_class: Type[Table]
     _path: FKChain
 
-    def __init__(self, table_class: Type[T], path: FKChain):
+    def __init__(self, table_class: Type[T], path: Optional[FKChain] = None):
+        if not path:
+            path = FKChain(table_class, [])
+            
         self._table_class = table_class
         super().__init__(path.copy())
 
