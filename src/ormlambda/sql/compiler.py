@@ -234,8 +234,6 @@ class DDLCompiler(Compiled):
         """
         schema_name = create.schema
 
-        util.avoid_sql_injection(schema_name)
-
         if_not_exists_clause = "IF NOT EXISTS " if create.if_not_exists else ""
         return f"CREATE SCHEMA {if_not_exists_clause}{schema_name};"
 
