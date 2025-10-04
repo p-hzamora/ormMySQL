@@ -1,25 +1,32 @@
 from __future__ import annotations
 import re
-from typing import Any, TYPE_CHECKING, Iterable, Type, Callable
+from typing import Any, TYPE_CHECKING, Iterable, Callable
 
 from ormlambda.common.errors import UnmatchedLambdaParameterError
+from ormlambda import util
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import SelectCol  # FIXME [ ]: enhance the name
     from ormlambda import TableProxy
+    from ormlambda.sql.column import ColumnProxy
 
 
 # type LambdaResponse[T] = TableProxy[T] | ColumnProxy[T] | Comparer
-class GlobalChecker:
+class GlobalChecker[T: TableProxy]:
+    FIRST_QUOTE = "`"
+    END_QUOTE = "`"
+
     @staticmethod
     def is_lambda_function(obj: Any) -> bool:
         return callable(obj) and not isinstance(obj, type)
 
+    @util.preload_module("ormlambda.sql")
     @classmethod
     def resolved_callback_object(cls, table: T, lambda_func: Callable[[T], Any]) -> tuple[SelectCol, ...]:
+        TableProxy = util.preloaded.sql_table.TableProxy
 
         try:
-            table_proxy = TableProxy(table, FKChain(table, []))
+            table_proxy = TableProxy(table)
 
             if not callable(lambda_func) and isinstance(lambda_func, Iterable):
                 # We hit that condition when trying to pass column or function dynamically into select clause.
@@ -49,23 +56,9 @@ class GlobalChecker:
                 response = [response]
 
             for item in response:
-                if isinstance(item, TableProxy):
-                    result.extend(item.get_columns())
+                column = cls.parser_object(item, table)
 
-                elif isinstance(item, str):
-                    # If we got a string, probably means that it'll be an alias,
-                    # so we'll want to avoid add string alias table to alias like  `address`.count
-                    new_col = Column(dtype=str, column_name=item)
-                    new_col.table = table
-                    result.append(ColumnProxy(new_col, path=FKChain(table, None)))
-                elif isinstance(item, Comparer):
-                    result.append(item)
-
-                elif isinstance(item, ColumnProxy):
-                    result.append(item)
-
-                else:
-                    result.append(item)
+                result.extend(column)
 
             return result
 
@@ -75,3 +68,35 @@ class GlobalChecker:
             if re.search(r"(" + f"{cond1}|{cond2}" + r")", err.args[0]):
                 raise UnmatchedLambdaParameterError(len(table), lambda_func)
             raise err
+
+    @util.preload_module(
+        "ormlambda.sql.column",
+        "ormlambda.sql.table",
+        "ormlambda.sql.comparer",
+        "ormlambda.sql.column_table_proxy",
+    )
+    @staticmethod
+    def parser_object(item: Any, table: T) -> tuple[ColumnProxy, ...]:
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
+        Column = util.preloaded.sql_column.Column
+
+        TableProxy = util.preloaded.sql_table.TableProxy
+        Comparer = util.preloaded.sql_comparer.Comparer
+        FKChain = util.preloaded.sql_column_table_proxy.FKChain
+
+        if isinstance(item, TableProxy):
+            return item.get_columns()
+
+        if isinstance(item, str):
+            # If we got a string, probably means that it'll be an alias,
+            # so we'll want to avoid add string alias table to alias like  `address`.count
+            new_col = Column(dtype=str, column_name=item)
+            new_col.table = table
+            return [ColumnProxy(new_col, path=FKChain(table, None))]
+        if isinstance(item, Comparer):
+            return [item]
+
+        if isinstance(item, ColumnProxy):
+            return [item]
+
+        return [item]
