@@ -99,10 +99,8 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
         return self._clause_name
 
     def get_alias(self, dialect: Dialect) -> str:
-        self._comparer = self.resolved_function(dialect)
-        self._comparer._dialect = dialect
-        # TODOH []: look into why i dropped 'lcol'
-        lcol = self._comparer.left_condition(dialect)._column.column_name
+        self._comparer = self.resolved_function()
+        # TODOH []: look into why i dropped 'lcol' variable
         return f"{self.tleft.__table_name__}_{self.clause_name}"
 
     def resolved_function(self, dialect: Dialect) -> Comparer:
