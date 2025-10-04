@@ -4,10 +4,11 @@ from ormlambda import ColumnProxy, ForeignKey, TableProxy
 from ormlambda.sql import compiler
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.common.errors import NotKeysInIAggregateError
+from ormlambda.sql.types import ASTERISK
 
 
 from .. import default
-from typing import TYPE_CHECKING, Any, Iterable, cast
+from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
     from test.test_clause_info import ST_Contains
@@ -80,12 +81,14 @@ class MySQLCompiler(compiler.SQLCompiler):
     """Overridden from base SQLCompiler value"""
 
     def visit_table_proxy(self, table: TableProxy, **kw) -> str:
-        return ClauseInfo(
-            table=None,
-            column=table._table_class.__table_name__,
-            dialect=self.dialect,
+        param = {
+            "table": None,
+            "column": table._table_class.__table_name__,
+            "dialect": self.dialect,
+            "alias_clause": alias if (alias := table.get_table_chain()) else None,
             **kw,
-        ).query(dialect=self.dialect)
+        }
+        return ClauseInfo(**param).query(dialect=self.dialect)
 
     def visit_column(self, column: Column, **kw) -> str:
         params = {
@@ -113,14 +116,24 @@ class MySQLCompiler(compiler.SQLCompiler):
         }
         clause_info = ClauseInfo(**params)
         if column.alias != clause_info.alias_clause:
+            # FIXME [ ]: i don't understand why
             column.alias = clause_info.alias_clause
         return clause_info.query(self.dialect)
 
     def visit_comparer(self, comparer: Comparer, **kwargs) -> str:
-        from ormlambda.sql.comparer import CleanValue
+        from ormlambda.sql.comparer import CleanValue, Comparer
 
-        lcond = comparer.left_condition(self.dialect, **kwargs)
-        rcond = comparer.right_condition(self.dialect, **kwargs)
+        def compile_condition(condition: Any):
+            if isinstance(condition, ColumnProxy | Comparer):
+                param = {
+                    "alias_clause": None,
+                    **kwargs,
+                }
+                return condition.compile(self.dialect, **param).string
+            return MySQLCaster.cast(condition, type(condition)).string_data
+
+        lcond = compile_condition(comparer.left_condition)
+        rcond = compile_condition(comparer.right_condition)
 
         if comparer._flags:
             rcond = CleanValue(rcond, comparer._flags).clean()
@@ -146,11 +159,13 @@ class MySQLCompiler(compiler.SQLCompiler):
 
     def visit_select(self, select: Select):
         params = {}
-        if select.alias:
-            # COMMENT: when passing alias into 'select' method, we gonna replace the current aliases of columns with the generic one.
-            params = {
-                "alias_clause": select.alias,
-            }
+
+        # COMMENT: when passing alias into 'select' method, we gonna replace the current aliases of columns with the generic one.
+        # TODOM []: Check if we manage some conditions or not
+        if select.avoid_duplicates:
+            params["alias_clause"] = lambda x: x.get_full_chain("_")
+        elif select.alias:
+            params["alias_clause"] = select.alias
 
         columns = ClauseInfo.join_clauses(select.columns, ",", dialect=self.dialect, **params)
         from_ = ClauseInfo(
@@ -189,10 +204,13 @@ class MySQLCompiler(compiler.SQLCompiler):
         if isinstance(count.column, ColumnProxy):
             column = count.column.compile(self.dialect, alias_clause=None).string
 
+        elif isinstance(count.column, TableProxy):
+            column = ASTERISK
+
         else:
             column = count.column
 
-        return f"COUNT({column}) AS `{count.alias}`"
+        return ClauseInfo.concat_alias_and_column(f"COUNT({column})", count.alias)
 
     def visit_where(self, where: Where) -> str:
         from ormlambda.sql.comparer import Comparer
@@ -261,23 +279,23 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_max(self, max: Max, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = max.column.compile(self.dialect, **attr).string
-        return f"MAX({column}) AS `{max.alias}`"
+        return ClauseInfo.concat_alias_and_column(f"MAX({column})", max.alias)
 
     def visit_min(self, min: Min, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = min.column.compile(self.dialect, **attr).string
-        return f"MIN({column}) AS `{min.alias}`"
+        return ClauseInfo.concat_alias_and_column(f"MIN({column})", min.alias)
 
     def visit_sum(self, sum: Sum, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = sum.column.compile(self.dialect, **attr).string
-        return f"SUM({column}) AS `{sum.alias}`"
+        return ClauseInfo.concat_alias_and_column(f"SUM({column})", sum.alias)
 
     def visit_st_astext(self, st_astext: ST_AsText) -> str:
         # avoid use placeholder when using IAggregate because no make sense.
         if st_astext.alias and (found := ClauseInfo._keyRegex.findall(st_astext.alias)):
             raise NotKeysInIAggregateError(found)
-        return f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string}) AS `{st_astext.alias}`"
+        return ClauseInfo.concat_alias_and_column(f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string})", st_astext.alias)
 
     def visit_st_contains(self, st_contains: ST_Contains) -> str:
         attr1 = st_contains.column.compile(self.dialect, alias_clause=None).string
@@ -303,12 +321,10 @@ class MySQLDDLCompiler(compiler.DDLCompiler):
         return colspec
 
     def visit_foreign_key(self, fk: ForeignKey, **kw) -> str:
-        from ormlambda import Column
-
-        compare = fk.resolved_function(self.dialect)
-        left_col = cast(Column, compare.left_condition(self.dialect)).column_name
-        rcon = cast(Column, compare.right_condition(self.dialect)).table.__table_name__
-        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({cast(Column,compare.right_condition(self.dialect)).column_name})"
+        compare = fk.resolved_function()
+        lcon = compare.left_condition
+        rcon = compare.right_condition
+        return f"FOREIGN KEY ({lcon.column_name}) REFERENCES {rcon.table.__table_name__}({rcon.column_name})"
 
 
 class MySQLTypeCompiler(compiler.GenericTypeCompiler):
