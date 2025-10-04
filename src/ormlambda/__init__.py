@@ -24,7 +24,7 @@ from .statements import BaseStatement as BaseStatement
 
 from .model.base_model import BaseModel as BaseModel
 from .model.base_model import ORM as ORM
-  # COMMENT: to avoid relative import we need to import BaseModel after import Table,Column, ForeignKey, IRepositoryBase and Disassembler
+# COMMENT: to avoid relative import we need to import BaseModel after import Table,Column, ForeignKey, IRepositoryBase and Disassembler
 
 from .engine import create_engine, URL, make_url  # noqa: F401
 
@@ -49,3 +49,7 @@ from .sql.functions import Min as Min
 from .sql.functions import Concat as Concat
 from .sql.functions import Sum as Sum
 
+
+from . import util as _util
+
+_util.import_prefix("ormlambda")
