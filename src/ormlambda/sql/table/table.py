@@ -145,9 +145,9 @@ class Table(metaclass=TableMeta):
             return f"`{cls.__table_name__}_{column}`"
         return cls.__table_name__
 
-    @util.preload_module()
+    @util.preload_module("ormlambda.sql")
     @classmethod
     def foreign_keys(cls) -> dict[str, ForeignKey]:
-        from ormlambda import ForeignKey
+        ForeignKey = util.preloaded.sql_foreign_key.ForeignKey
 
         return {key: value for key, value in cls.__dict__.items() if isinstance(value, ForeignKey)}

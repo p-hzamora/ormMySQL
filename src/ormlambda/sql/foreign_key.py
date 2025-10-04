@@ -107,6 +107,7 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
     @_preloaded.preload_module("ormlambda.sql.table")
     def resolved_function(self) -> Comparer:
         util = _preloaded.sql_table
+
         if self._comparer is not None:
             return self._comparer
 

@@ -7,7 +7,7 @@ import shapely as shp
 from ormlambda.sql.clauses import Alias
 
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+    from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.sql.clauses import Select
 

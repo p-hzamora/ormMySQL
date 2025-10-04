@@ -9,11 +9,14 @@ if TYPE_CHECKING:
     from ormlambda.sql import column as _sql_column
     from ormlambda.sql import comparer as _sql_comparer
     from ormlambda.sql import column_table_proxy as _sql_column_table_proxy
+    from ormlambda.sql import foreign_key as _sql_foreign_key
 
-    sql_column= _sql_column
-    sql_table= _sql_table
-    sql_comparer= _sql_comparer
-    sql_column_table_proxy= _sql_column_table_proxy
+    sql_column = _sql_column
+    sql_table = _sql_table
+    sql_comparer = _sql_comparer
+    sql_column_table_proxy = _sql_column_table_proxy
+    sql_foreign_key = _sql_foreign_key
+
 
 class ModuleRegistry:
     """Registry of modules to load in a package init file.
@@ -34,6 +37,7 @@ class ModuleRegistry:
     in the form `<package>_<module>`, omitting ``sqlalchemy`` from the package
     name. Example: ``sqlalchemy.sql.util`` becomes ``preloaded.sql_util``.
     """
+
     def __init__(self, prefix="ormlambda."):
         self.module_registry: set[str] = set()
         self.prefix: str = prefix
@@ -60,6 +64,7 @@ class ModuleRegistry:
             if (not path or module.startswith(path)) and key not in self.__dict__:
                 _module = importlib.import_module(module)
                 self.__dict__[key] = globals()[key] = _module
+        return None
 
 
 _reg = ModuleRegistry()

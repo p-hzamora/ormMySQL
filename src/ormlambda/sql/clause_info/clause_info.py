@@ -3,16 +3,17 @@ from collections import defaultdict
 import typing as tp
 import re
 
-from ormlambda import Table
-from ormlambda import Column, ColumnProxy
 from ormlambda.sql.types import ASTERISK
 from ormlambda.errors import DuplicatedClauseName
 from .interface import IClauseInfo
-from ormlambda.sql import ForeignKey
 from ormlambda.common import GlobalChecker
+from ormlambda import util
 
 
 if tp.TYPE_CHECKING:
+    from ormlambda.sql import ForeignKey
+    from ormlambda import ColumnProxy
+    from ormlambda import Table
     from ormlambda.sql.types import TableType, ColumnType, AliasType
     from ormlambda.dialects import Dialect
 
@@ -143,7 +144,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if self._dtype is not None:
             return self._dtype
 
-        if isinstance(self._column, Column | ColumnProxy):
+        if self.is_column(self._column):
             return self._column.dtype
 
         if isinstance(self._column, type):
@@ -177,8 +178,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._get_all_columns(dialect)
         return self._join_table_and_column(self._column, dialect)
 
+    @util.preload_module("ormlambda.sql")
     def _join_table_and_column[TProp](self, column: ColumnType[TProp], dialect: Dialect) -> str:
-        # FIXME [x]: Study how to deacoplate from mysql database
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
 
         caster = dialect.caster()
 
@@ -236,7 +238,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if isinstance(column, tp.Iterable) and isinstance(column[0], ClauseInfo):
             return self.join_clauses(column)
 
-        if isinstance(column, Column | ColumnProxy):
+        if self.is_column(column):
             return column.column_name
 
         # if we want to pass the name of a column as a string, the 'table' var must not be None
@@ -330,7 +332,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return f"{first}{string}{end}"
 
     @classmethod
-    def extract_table(cls, element: ColumnType[T] | TableType[T]) -> tp.Optional[T]:
+    def extract_table(cls, element: ForeignKey | ColumnType[T] | TableType[T]) -> tp.Optional[T]:
         if element is None:
             return None
 
@@ -340,20 +342,30 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if cls.is_foreign_key(element):
             return element.tright
 
-        if isinstance(element, Column | ColumnProxy):
+        if cls.is_column(element):
             return element.table
         return None
 
+    @util.preload_module("ormlambda.sql")
     @staticmethod
     def is_table(data: ColumnType | Table | ForeignKey) -> bool:
-        return isinstance(data, type) and issubclass(data, Table)
+        Table = util.preloaded.sql_table.Table
+        TableProxy = util.preloaded.sql_table.TableProxy
+        
+        return isinstance(data, type) and issubclass(data, Table | TableProxy)
 
+    @util.preload_module("ormlambda.sql")
     @staticmethod
     def is_foreign_key(data: ColumnType | Table | ForeignKey) -> bool:
+        ForeignKey = util.preloaded.sql_foreign_key.ForeignKey
         return isinstance(data, ForeignKey)
 
+    @util.preload_module("ormlambda.sql")
     @classmethod
     def is_column(cls, data: tp.Any) -> bool:
+        Column = util.preloaded.sql_column.Column
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
+
         if cls.is_table(data) or cls.is_foreign_key(data) or cls.is_asterisk(data):
             return False
         if isinstance(data, Column | ColumnProxy):

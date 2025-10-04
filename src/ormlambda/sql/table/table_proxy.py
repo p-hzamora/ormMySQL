@@ -5,6 +5,8 @@ from ormlambda.sql.column_table_proxy import ColumnTableProxy
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.context import FKChain
 
+from ormlambda import util
+
 if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda import ForeignKey
@@ -24,19 +26,23 @@ class TableProxy[T: Table](ColumnTableProxy, ClauseElement):
     def __init__(self, table_class: Type[T], path: Optional[FKChain] = None):
         if not path:
             path = FKChain(table_class, [])
-            
+
         self._table_class = table_class
         super().__init__(path.copy())
 
     def __repr__(self) -> str:
         return f"{TableProxy.__name__}({self._table_class.__table_name__}) Path={self._path.get_path_key()})"
 
+    @util.preload_module(
+        "ormlambda.sql.foreign_key",
+        "ormlambda.sql.column",
+    )
     def __getattr__(self, name: str):
         """Intercept attribute access to handle foreign keys and columns"""
 
-        from ormlambda import ColumnProxy
-        from ormlambda.sql.foreign_key import ForeignKey
-        from ormlambda import Column
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
+        Column = util.preloaded.sql_column.Column
+        ForeignKey = util.preloaded.sql_foreign_key.ForeignKey
 
         # Get the actual attribute from the table class
         try:
