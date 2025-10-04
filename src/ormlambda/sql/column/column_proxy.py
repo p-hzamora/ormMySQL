@@ -94,21 +94,22 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
 
     def get_relations(self, by: JoinType, dialect: Dialect) -> tuple[JoinSelector]:
         from ormlambda.sql.clauses import JoinSelector
-        from ormlambda.sql.comparer import Comparer
 
         result: list[JoinSelector] = []
         alias = self._path.base.__table_name__
 
         for i in range(self.number_table_in_chain()):
             tbl = self._path.steps[i]
-            relation = tbl.resolved_function(dialect)
+            relation = tbl.resolved_function()
 
-            lcond = ColumnProxy(column=relation._left_condition, path=self._path[:i], alias=alias)
+            relation.left_condition.alias = alias
+            relation.left_condition.path = self._path[:i]
 
             alias += f"_{tbl.clause_name}"
-            rcond = ColumnProxy(column=relation._right_condition, path=self._path[: i + 1], alias=alias)
 
-            comparer = Comparer(left_condition=lcond, right_condition=rcond, compare=relation.compare)
-            js = JoinSelector(comparer, by, alias, dialect=dialect)
+            relation.right_condition.alias = alias
+            relation.right_condition.path = self._path[: i + 1]
+
+            js = JoinSelector(relation, by, alias, dialect=dialect)
             result.append(js)
         return result

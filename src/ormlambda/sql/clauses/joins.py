@@ -43,8 +43,8 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
         dialect: Dialect,
         **kw,
     ) -> None:
-        self.lcon: ColumnProxy = where._left_condition
-        self.rcon: ColumnProxy = where._right_condition
+        self.lcon: ColumnProxy = where.left_condition
+        self.rcon: ColumnProxy = where.right_condition
         self._comparer: Comparer = where
         self._orig_table: TLeft = self.lcon.table
         self._right_table: TRight = self.rcon.table

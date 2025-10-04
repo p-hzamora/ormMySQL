@@ -27,11 +27,11 @@ class Where[T](ClauseElement):
         res = []
 
         for comparer in self.comparer:
-            if isinstance(comparer._left_condition, ColumnProxy):
-                res.append(comparer._left_condition)
+            if isinstance(comparer.left_condition, ColumnProxy):
+                res.append(comparer.left_condition)
 
-            if isinstance(comparer._right_condition, ColumnProxy):
-                res.append(comparer._right_condition)
+            if isinstance(comparer.right_condition, ColumnProxy):
+                res.append(comparer.right_condition)
 
         return res
 
