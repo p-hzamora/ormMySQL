@@ -5,10 +5,10 @@ from typing import Any, Iterable, Optional, Type, TYPE_CHECKING
 
 from ormlambda.sql.clause_info import ClauseInfo, IAggregate
 from ormlambda.sql.types import SelectCol
+from ormlambda.sql.table import TableProxy
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import AliasType, ColumnType
-    from ormlambda.sql.table import TableProxy
     from ormlambda import Table
 
 type Selectable = ColumnType | TableProxy
@@ -24,11 +24,13 @@ class Select[T: Type[Table]](ClauseElement, IAggregate):
         *,
         alias_table: AliasType[ClauseInfo] = "{table}",
         alias: Optional[AliasType[T]] = None,
+        avoid_duplicates: bool = False,
     ) -> None:
         self._table = table
         self._columns = columns
         self._alias_table = alias_table
         self._alias = alias
+        self._avoid_duplicates = avoid_duplicates
 
     @property
     def columns(self) -> tuple[SelectCol, ...]:
@@ -37,12 +39,20 @@ class Select[T: Type[Table]](ClauseElement, IAggregate):
         return self._columns
 
     @property
-    def table(self) -> Type[T]:
-        return self._table
+    def table(self) -> TableProxy[T]:
+        return TableProxy(self._table)
 
     @property
     def alias(self) -> str:
         return self._alias
+
+    @alias.setter
+    def alias(self, value) -> None:
+        self._alias = value
+
+    @property
+    def avoid_duplicates(self) -> bool:
+        return self._avoid_duplicates
 
     def used_columns(self):
         res = []

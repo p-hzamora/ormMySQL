@@ -227,7 +227,13 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     ):
         if selector is None:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
-            result = self.select(selector=lambda x: x, flavour=flavour, by=by)
+            result = self.select(
+                selector=lambda x: x,
+                flavour=flavour,
+                by=by,
+                avoid_duplicates=avoid_duplicates,
+                **kwargs,
+            )
             # COMMENT: Always we want to retrieve tuple[tuple[Any]]. That's the reason to return result[0] when we ensure the user want only objects of the first table.
             # Otherwise, we wil return the result itself
             if flavour:
@@ -236,7 +242,12 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
 
         select_clause = GlobalChecker.resolved_callback_object(selector, self.model)
 
-        select = clauses.Select(table=self.model, columns=select_clause, alias=alias)
+        select = clauses.Select(
+            table=self.model,
+            columns=select_clause,
+            alias=alias,
+            avoid_duplicates=avoid_duplicates,
+        )
 
         self._query_builder.add_statement(select)
 
