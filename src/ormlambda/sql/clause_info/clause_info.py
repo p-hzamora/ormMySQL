@@ -9,6 +9,7 @@ from ormlambda.sql.types import ASTERISK
 from ormlambda.errors import DuplicatedClauseName
 from .interface import IClauseInfo
 from ormlambda.sql import ForeignKey
+from ormlambda.common import GlobalChecker
 
 
 if tp.TYPE_CHECKING:
@@ -163,14 +164,14 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if not self.table and self._alias_clause:
             # it means that we are passing an object with alias. We should delete '' around the object
             alias_clause = self.alias_clause
-            return self._concat_alias_and_column(self._column, alias_clause)
+            return self.concat_alias_and_column(self._column, alias_clause)
 
         # When passing the Table itself without 'column'
         if self.table and not self._column:
             if not self._alias_table:
                 return self.table.__table_name__
             alias_table = self.alias_table
-            return self._concat_alias_and_column(self.table.__table_name__, alias_table)
+            return self.concat_alias_and_column(self.table.__table_name__, alias_table)
 
         if self._return_all_columns():
             return self._get_all_columns(dialect)
@@ -182,9 +183,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         caster = dialect.caster()
 
         if self.alias_table:
-            table = self._wrapped_with_quotes(self.alias_table)
+            table = self.wrapped_with_quotes(self.alias_table)
         elif isinstance(column, ColumnProxy):
-            table = self._wrapped_with_quotes(column.get_table_chain())
+            table = self.wrapped_with_quotes(column.get_table_chain())
         else:
             table = self.table.__table_name__
 
@@ -194,7 +195,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         dtype = str if self.is_table(self.dtype) else self.dtype
         wrapped_column = caster.for_value(table_column, dtype).wildcard_to_select(table_column)
-        return self._concat_alias_and_column(wrapped_column, self.alias_clause)
+        return self.concat_alias_and_column(wrapped_column, self.alias_clause)
 
     def _return_all_columns(self) -> bool:
         if self._keep_asterisk:
@@ -273,10 +274,11 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         return func(self._column)
 
-    def _concat_alias_and_column(self, column: str, alias_clause: tp.Optional[str] = None) -> str:
+    @classmethod
+    def concat_alias_and_column(cls, column: str, alias_clause: tp.Optional[str] = None) -> str:
         if alias_clause is None:
             return column
-        alias = f"{column} AS {self._wrapped_with_quotes(alias_clause)}"
+        alias = f"{column} AS {cls.wrapped_with_quotes(alias_clause)}"
         return alias
 
     def _alias_resolver(self, alias: AliasType[ColumnProxy]) -> tp.Optional[str]:
@@ -320,8 +322,12 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return f"{chr} ".join(queries)
 
     @staticmethod
-    def _wrapped_with_quotes(string: str) -> str:
-        return f"`{string}`"
+    def wrapped_with_quotes(
+        string: str,
+        first: str = GlobalChecker.FIRST_QUOTE,
+        end: str = GlobalChecker.END_QUOTE,
+    ) -> str:
+        return f"{first}{string}{end}"
 
     @classmethod
     def extract_table(cls, element: ColumnType[T] | TableType[T]) -> tp.Optional[T]:
