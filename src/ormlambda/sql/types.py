@@ -7,10 +7,10 @@ if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
     from ormlambda.common.enums.join_type import JoinType as JoinType
-    from ormlambda.sql.column import ColumnProxy
+    from ormlambda import ColumnProxy, TableProxy
 
 
-type TableType[T: Table] = Type[T]
+type TableType[T: Table] = Type[T] | TableProxy[T]
 type ColumnType[TProp] = TProp | ColumnProxy[TProp]
 type AliasType[TProp] = str | Callable[[ColumnProxy[TProp]], str]
 
