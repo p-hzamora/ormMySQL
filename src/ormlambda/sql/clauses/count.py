@@ -1,8 +1,7 @@
 from __future__ import annotations
-from ormlambda.sql import TableProxy
 from ormlambda.sql.clause_info import IAggregate
 
-from ormlambda.sql.types import ASTERISK, ColumnType
+from ormlambda.sql.types import ColumnType
 
 from ormlambda import Table
 
@@ -24,8 +23,6 @@ class Count[T: Table](ClauseElement, IAggregate):
         element: str | ColumnType[TProp] | TableType[T] = "*",
         alias: str = "count",
     ) -> None:
-        if isinstance(element, TableProxy):
-            element = ASTERISK
         self.column = element
         self.alias = alias
 
