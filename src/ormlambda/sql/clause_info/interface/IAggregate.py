@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
-class IAggregate(IQuery):
+class IAggregate():
     alias: str
 
     def __repr__(self):
