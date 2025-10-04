@@ -65,9 +65,9 @@ suite = unittest.TestSuite()
 
 suite.addTests(
     (
-        # *loader.loadTestsFromModule(test_alias),
-        # *loader.loadTestsFromModule(test_concat),
-        # *loader.loadTestsFromModule(test_count),
+        *loader.loadTestsFromModule(test_alias),
+        *loader.loadTestsFromModule(test_concat),
+        *loader.loadTestsFromModule(test_count),
         # *loader.loadTestsFromModule(test_max),
         *loader.loadTestsFromModule(test_ForeignKey_query),
         # # *loader.loadTestsFromModule(test_group_by),
@@ -97,7 +97,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_clause_info),
         *loader.loadTestsFromModule(test_code_first),
         *loader.loadTestsFromModule(test_column),
-        # *loader.loadTestsFromModule(test_comparer),
+        *loader.loadTestsFromModule(test_comparer),
         *loader.loadTestsFromModule(test_constructor),
         *loader.loadTestsFromModule(test_depth_first_search),
         # *loader.loadTestsFromModule(test_errors), #COMMENT: DEPRECATED
@@ -160,5 +160,5 @@ class CustomTestResult(unittest.TextTestResult):
 
 
 if __name__ == "__main__":
-    runner = CustomTextTestRunner(failfast=False)
+    runner = CustomTextTestRunner(failfast=True)
     result = runner.run(suite)
