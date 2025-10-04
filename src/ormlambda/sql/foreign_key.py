@@ -21,7 +21,6 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
         "_relationship",
         "_comparer",
         "_clause_name",
-        "_keep_alive",
     )
 
     @overload
@@ -45,11 +44,9 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
         *,
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
-        keep_alive: bool = False,
         **kwargs: Any,
     ) -> None:
         self.kwargs = kwargs
-        self._keep_alive = keep_alive
         if comparer is not None and clause_name is not None:
             self.__init__with_comparer(comparer, clause_name, **kwargs)
         else:
@@ -57,8 +54,8 @@ class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
 
     def __init__with_comparer(self, comparer: Comparer, clause_name: str, **kwargs) -> None:
         self._relationship = None
-        self._tleft: TLeft = comparer.left_condition(**kwargs).table
-        self._tright: TRight = comparer.right_condition(**kwargs).table
+        self._tleft: TLeft = comparer.left_condition.table
+        self._tright: TRight = comparer.right_condition.table
         self._clause_name: str = clause_name
         self._comparer: Comparer = comparer
 
