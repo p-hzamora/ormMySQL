@@ -122,38 +122,6 @@ class Table(metaclass=TableMeta):
     def drop_table(cls, dialect: Dialect) -> str:
         return DropTable(cls).compile(dialect).string
 
-    @classmethod
-    def find_dependent_tables(cls) -> tuple["Table", ...]:
-        """Work in progress"""
-        return
-
-        # TODOL: Dive into new way to return dependent tables
-        def get_involved_tables(graph: dict[Table, list[Table]], table_name: str) -> None:
-            """
-            Create a graph to be ordered
-            """
-            table = ForeignKey[Table, Table].MAPPED[table_name]
-            for x in table.referenced_tables:
-                if data := ForeignKey.MAPPED.get(x, None):
-                    get_involved_tables(graph, data.table_object.__table_name__)
-
-            graph[table.table_object.__table_name__] = list(table.referenced_tables)
-            return None
-
-        graph: dict[Table, list[Table]] = {}
-        dependent = ForeignKey.MAPPED.get(cls.__table_name__, None)
-        if dependent is None:
-            return tuple([])
-
-        graph[cls.__table_name__] = list(dependent.referenced_tables)
-        get_involved_tables(graph, cls.__table_name__)
-
-        dfs = DFSTraversal.sort(graph)
-
-        order_table = dfs[: dfs.index(cls.__table_name__)]
-
-        return [ForeignKey.MAPPED[x].table_object for x in order_table]
-
     def __eq__(self, __value: Any) -> bool:
         if isinstance(__value, Table):
             return all(
