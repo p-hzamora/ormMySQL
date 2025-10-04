@@ -29,7 +29,7 @@ DIALECT = mysql.dialect
 
 
 def SelectMySQL[**T](*args: T.args, **kwargs: T.kwargs) -> Select[T]:
-    return Select(*args, **kwargs, dialect=DIALECT)
+    return Select(*args, **kwargs)
 
 
 class TestSelect(unittest.TestCase):

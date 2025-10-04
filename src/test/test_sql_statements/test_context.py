@@ -63,17 +63,16 @@ class A(Table):
 engine = create_env_engine()
 
 
-def foo(a: A):
-    return (
+resolved_proxy = GlobalChecker[A].resolved_callback_object(
+    A,
+    lambda a: (
         a.B2,
         a.B1.C1,
         a.B2.C2,
         a.B2.C3,
         a.B1.C1.D2.pk_d,
-    )
-
-
-resolved_proxy = GlobalChecker.resolved_callback_object(foo, A)
+    ),
+)
 
 for x in resolved_proxy:
     a = x.get_table_chain()

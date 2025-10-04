@@ -60,7 +60,7 @@ class CountTest(unittest.TestCase):
         self.assertEqual(n_after_insert, 4)
         self.assertEqual(n_after_delete, n_before_insert)
 
-    def test_count_when_filtering(self):
+    def test_AAcount_when_filtering(self):
         self.model.insert(self.TableCount_generator(100))
 
         n_select = self.model.where(lambda x: (x.pos <= 70) & (x.pos >= 50)).count()

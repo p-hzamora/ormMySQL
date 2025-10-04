@@ -90,7 +90,7 @@ class TestJoinStatements(unittest.TestCase):
                 (JoinB.fk_a == JoinA.pk_a, JoinType.INNER_JOIN),
                 (JoinB.fk_c == JoinC.pk_c, JoinType.INNER_JOIN),
             ]
-        ):
+        ) as ctx:
             result1 = self.model_b.where([JoinB.fk_a == 2, JoinB.fk_c == 2]).select(
                 (
                     JoinB.data_b,
