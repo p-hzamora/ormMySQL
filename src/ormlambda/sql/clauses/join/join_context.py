@@ -6,7 +6,7 @@ from ormlambda.sql.comparer import Comparer
 
 
 if TYPE_CHECKING:
-    from ormlambda.statements.interfaces.IStatements import IStatements_two_generic
+    from ormlambda.statements.interfaces.IStatements import IStatements
     from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.common.enums.join_type import JoinType
@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 type TupleJoinType[LTable: Table, LProp, RTable: Table, RProp] = tuple[Comparer]
 
 
-class JoinContext[TParent: Table, TRepo]:
+class JoinContext[TParent: Table]:
     def __init__(
         self,
-        statements: IStatements_two_generic[TParent, TRepo],
+        statements: IStatements[TParent],
         joins: tuple,
         dialect: Dialect,
     ) -> None:
@@ -28,7 +28,7 @@ class JoinContext[TParent: Table, TRepo]:
         self._joins: Iterable[tuple[Comparer, JoinType]] = joins
         self._dialect: Dialect = dialect
 
-    def __enter__(self) -> IStatements_two_generic[TParent, TRepo]:
+    def __enter__(self) -> IStatements[TParent]:
         for comparer, by in self._joins:
             fk_clause, alias = self.get_fk_clause(comparer)
 
@@ -50,7 +50,6 @@ class JoinContext[TParent: Table, TRepo]:
 
         for comparer, _ in self._joins:
             _, attribute = self.get_fk_clause(comparer)
-            fk: ForeignKey = getattr(self._parent, attribute)
             delattr(self._parent, attribute)
         return None
 

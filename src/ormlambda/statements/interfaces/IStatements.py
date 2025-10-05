@@ -326,16 +326,3 @@ class IStatements[T: Table](Element):
     def compile(self) -> str: ...
 
     # endregion
-
-
-class IStatements_two_generic[T, TPool](IStatements[T]):
-    @property
-    @abstractmethod
-    def repository(self) -> BaseRepository[TPool]: ...
-
-    @property
-    @abstractmethod
-    def query(self) -> str: ...
-
-    @property
-    def model(self) -> Type[T]: ...

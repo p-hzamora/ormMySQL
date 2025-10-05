@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ormlambda.statements.types import OrderTypes
     from ormlambda.sql.types import ColumnType
     from ormlambda.statements.types import SelectCols
-    from ormlambda.statements.interfaces import IStatements_two_generic
+    from ormlambda.statements.interfaces import IStatements
     from ormlambda.statements.types import TypeExists
     from ormlambda.statements.types import WhereTypes
 
@@ -46,7 +46,7 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
     return wrapper
 
 
-class Statements[T: Table, TRepo](BaseStatement[T, None]):
+class Statements[T: Table](BaseStatement[T]):
     def __init__(self, model: T, engine: Engine) -> None:
         super().__init__(model, engine)
         self._query_builder = QueryBuilder()
@@ -126,14 +126,14 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return None
 
     @override
-    def limit(self, number: int) -> IStatements_two_generic[T, TRepo]:
+    def limit(self, number: int) -> IStatements[T]:
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
         limit = clauses.Limit(number=number)
         self._query_builder.add_statement(limit)
         return self
 
     @override
-    def offset(self, number: int) -> IStatements_two_generic[T, TRepo]:
+    def offset(self, number: int) -> IStatements[T]:
         offset = clauses.Offset(number=number)
         self._query_builder.add_statement(offset)
         return self
@@ -152,7 +152,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
 
     @override
-    def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements_two_generic[T, TRepo]:
+    def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements[T]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
         result = GlobalChecker.resolved_callback_object(self.model, conditions)
 
@@ -161,14 +161,14 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         return self
 
     @override
-    def having(self, conditions: ColumnType, restrictive: bool = True) -> IStatements_two_generic[T, TRepo]:
+    def having(self, conditions: ColumnType, restrictive: bool = True) -> IStatements[T]:
         result = GlobalChecker.resolved_callback_object(self.model, conditions)
         having = clauses.Having(*result, restrictive=restrictive)
         self._query_builder.add_statement(having)
         return self
 
     @override
-    def order[TValue](self, columns: str | Callable[[T], TValue], order_type: OrderTypes = OrderType.ASC) -> IStatements_two_generic[T, TRepo]:
+    def order[TValue](self, columns: str | Callable[[T], TValue], order_type: OrderTypes = OrderType.ASC) -> IStatements[T]:
         if isinstance(columns, str):
             callable_func = lambda x: columns  # noqa: E731
         else:
@@ -307,7 +307,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         )
 
     @override
-    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements_two_generic[T]:
+    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements[T]:
         result = GlobalChecker.resolved_callback_object(self.model, column)
         deferred_op = clauses.GroupBy(*result)
         self._query_builder.add_statement(deferred_op)

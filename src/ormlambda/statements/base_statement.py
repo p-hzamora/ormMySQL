@@ -4,7 +4,7 @@ from collections import defaultdict
 
 
 from ormlambda.repository import BaseRepository
-from ormlambda.statements.interfaces import IStatements_two_generic
+from ormlambda.statements.interfaces import IStatements
 from ormlambda import Table
 
 from ormlambda.common.errors import AggregateFunctionError
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
 
 
-class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
+class BaseStatement[T: Table](IStatements[T]):
     def __init__(self, model: tuple[T, ...], engine: Engine) -> None:
         self._engine = engine
         self._dialect = engine.dialect
@@ -29,7 +29,7 @@ class BaseStatement[T: Table, TRepo](IStatements_two_generic[T, TRepo]):
 
         repository = engine.repository
         self.__valid_repository(repository)
-        self._repository: BaseRepository[TRepo] = repository
+        self._repository: BaseRepository = repository
 
         if not issubclass(self._model, Table):
             # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
