@@ -23,4 +23,4 @@ class DuplicatedClauseName(Exception):
         super().__init__(**kw)
 
     def __str__(self):
-        return f"Some clauses has the same alias. {self.names}\nTry wrapping the clause with the 'Alias' class first."
+        return f"Some clauses has the same alias. {self.names}\nTry wrapping the clause with the 'Alias' class first or setting 'avoid_duplicate' param as 'True'"
