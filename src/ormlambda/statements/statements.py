@@ -18,10 +18,10 @@ if TYPE_CHECKING:
     from ormlambda.statements.types import WhereTypes
 
 
-from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.statements import BaseStatement
+from ormlambda.statements.base_statement import ClusterResponse
 
-from ormlambda import OrderType, Table, Column, ColumnProxy
+from ormlambda import OrderType, Table
 from ormlambda.common.enums import JoinType
 from ormlambda.sql.clauses.join import JoinContext, TupleJoinType
 
@@ -235,12 +235,7 @@ class Statements[T: Table](BaseStatement[T]):
                 avoid_duplicates=avoid_duplicates,
                 **kwargs,
             )
-            # COMMENT: Always we want to retrieve tuple[tuple[Any]]. That's the reason to return result[0] when we ensure the user want only objects of the first table.
-            # Otherwise, we wil return the result itself
-            if flavour:
-                return result
-            return () if not result else result[0]
-
+            return result
         select_clause = GlobalChecker.resolved_callback_object(self.model, selector)
 
         select = clauses.Select(
@@ -255,12 +250,7 @@ class Statements[T: Table](BaseStatement[T]):
         self._query_builder.by = by
         self._query: str = self._query_builder.query(self._dialect)
 
-        if flavour:
-            result = self._return_flavour(self.query, flavour, select, **kwargs)
-            if issubclass(flavour, tuple) and len(select_clause) == 1 and isinstance(select_clause[0], Column | ClauseInfo | ColumnProxy):
-                return tuple([x[0] for x in result])
-            return result
-        return self._return_model(select, self.query)
+        return ClusterResponse(select, self._engine, flavour, self._query).response()
 
     @override
     def select_one[TValue, TFlavour, *Ts](

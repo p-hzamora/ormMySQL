@@ -53,16 +53,6 @@ class BaseStatement[T: Table](IStatements[T]):
     def __repr__(self):
         return f"<Model: {self.__class__.__name__}>"
 
-    def _return_flavour[TValue](self, query, flavour: Type[TValue], select, **kwargs) -> tuple[TValue]:
-        return self._repository.read_sql(query, flavour=flavour, select=select, **kwargs)
-
-    def _return_model(self, select, query: str) -> tuple[tuple[T]]:
-        response_sql = self._repository.read_sql(query, flavour=dict, select=select)  # store all columns of the SQL query
-        if response_sql and isinstance(response_sql, Iterable):
-            return ClusterResponse(select, response_sql).cluster()
-
-        return response_sql
-
     @property
     def query(self) -> str:
         return self._query
@@ -76,35 +66,41 @@ class BaseStatement[T: Table](IStatements[T]):
         return self._repository
 
 
-class ClusterResponse[T]:
-    def __init__(self, select: Select[T], response_sql: tuple[dict[str, Any]]) -> None:
+type ResponseType = Iterable[dict[str, Any]]
+
+
+class ClusterResponse[T, TFlavour]:
+    def __init__(self, select: Select[T], engine: Engine, flavour: TFlavour, query: str) -> None:
         self._select: Select[T] = select
-        self._response_sql: tuple[dict[str, Any]] = response_sql
+        self.engine = engine
+        self.flavour = flavour
+        self.query = query
 
-    def cluster(self) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
-        tbl_dicc: dict[Type[Table], list[dict[str, Any]]] = self._create_cluster()
+    def cluster(self, response_sql: ResponseType) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
+        tbl_dicc: dict[Type[Table], list[dict[str, Any]]] = self._create_cluster(response_sql)
 
-        response = {}
+        first_table = list(tbl_dicc)[0]
         tuple_response = []
         # it not depend of flavour attr
-        for table, attribute_list in tbl_dicc.items():
+        n_attrs = len(tbl_dicc[first_table])
+        for i in range(n_attrs):
             new_instance = []
-            for attrs in attribute_list:
+            for table in tbl_dicc:
+                attrs = tbl_dicc[table][i]
                 new_instance.append(table(**attrs))
-            response[table] = tuple(new_instance)
             tuple_response.append(tuple(new_instance))
         return tuple(tuple_response)
 
-    def _create_cluster(self) -> dict[Type[Table], list[dict[str, Any]]]:
+    def _create_cluster(self, response_sql: ResponseType) -> dict[Type[Table], list[dict[str, Any]]]:
         # We'll create a default list of dicts *once* we know how many rows are in _response_sql
-        row_count = len(self._response_sql)
+        row_count = len(response_sql)
 
         def make_list_of_dicts() -> list[dict[str, Any]]:
             return [{} for _ in range(row_count)]
 
         table_attr_dict = defaultdict(make_list_of_dicts)
 
-        for i, dicc_cols in enumerate(self._response_sql):
+        for i, dicc_cols in enumerate(response_sql):
             for clause in self._select.columns:
                 # if col is None or not hasattr(table, col):
                 if isinstance(clause, IAggregate):
@@ -115,3 +111,27 @@ class ClusterResponse[T]:
                 table_attr_dict[table][i][clause.column_name] = dicc_cols[clause.alias]
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
         return dict(table_attr_dict)
+
+    def response(self, **kwargs) -> TFlavour[T, ...]:
+        from ormlambda.sql import ColumnProxy
+
+        if not self.flavour:
+            return self._return_model()
+
+        result = self._return_flavour(self.flavour, self._select, **kwargs)
+        if issubclass(self.flavour, tuple) and len(self._select.used_columns()) == 1 and isinstance(self._select.used_columns()[0], ColumnProxy):
+            return tuple([x[0] for x in result])
+        return result
+
+    def _return_flavour[TValue](self, flavour: Type[TValue], select, **kwargs) -> tuple[TValue]:
+        return self.engine.repository.read_sql(self.query, flavour=flavour, select=select, **kwargs)
+
+    def _return_model(self) -> tuple[tuple[T]]:
+        response_sql = self.engine.repository.read_sql(self.query, flavour=dict, select=self._select)  # store all columns of the SQL query
+        if response_sql and isinstance(response_sql, Iterable):
+            response = self.cluster(response_sql)
+            if response and len(response[0]) == 1:
+                return tuple([x[0] for x in response])
+            return response
+
+        return response_sql
