@@ -16,6 +16,9 @@ class Engine:
         self.url = url
         self.repository = self.dialect.repository_cls(url, dialect=dialect)
 
+    def __repr__(self):
+        return f"{Engine.__name__}: {self.url}"
+
     def create_schema(self, schema_name: str, if_exists: TypeExists = "fail") -> None:
         if if_exists == "replace":
             self.drop_schema(schema_name, if_exists)
