@@ -1,33 +1,21 @@
 from __future__ import annotations
 from typing import Any, Callable, Iterable, Optional, Type, overload, TYPE_CHECKING
-from enum import Enum
 from abc import abstractmethod
 
 
 if TYPE_CHECKING:
-    from ormlambda.repository import BaseRepository
     from ormlambda import Table
     from ormlambda.sql.types import TupleJoinType, ColumnType
     from ormlambda.sql.clauses.join import JoinContext
     from ormlambda.common.enums import JoinType
     from ormlambda.sql.types import AliasType
 
-from ..types import (
-    OrderTypes,
-    Tuple,
-    Select2,
-    Select3,
-    Select4,
-    Select5,
-    Select6,
-    Select7,
-    Select8,
-    Select9,
-    Select10,
-    TypeExists,
-    WhereTypes,
-    SelectCols,
-)
+    from ..types import OrderTypes
+    from ..types import Tuple
+    from ..types import TypeExists
+    from ..types import WhereTypes
+    from ..types import SelectCols
+
 from ormlambda.sql.elements import Element
 
 
@@ -217,100 +205,79 @@ class IStatements[T: Table](Element):
 
     # endregion
     # region select
-    type SelectorType[TOri, *T] = Callable[[TOri], tuple[*T]] | tuple[*T]
-    type SelectorFlavourType[T, TResponse] = Optional[Callable[[T], TResponse]] | TResponse
-    type SelectorOneType[T, TResponse] = Callable[[T, TResponse]] | TResponse
+    @overload
+    def select[T1](self, selector: Callable[[T], T1 | tuple[T1]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[T1, ...]: ...
+    @overload
+    def select[*T1](self, selector: Callable[[T], tuple[*T1]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> Tuple[*T1]: ...
+    @overload
+    def select(self, *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> Tuple[T]: ...
 
+    # region deal with flavours
     @overload
-    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](self, selector: SelectorType[T, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], *, by: Optional[Enum] = ...) -> Select10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]: ...
+    def select[TFlavour](self, selector: Callable[[T], tuple[tuple]] = ..., *, flavour: Type[TFlavour], **kwargs) -> tuple[TFlavour, ...]: ...
     @overload
-    def select[T1, T2, T3, T4, T5, T6, T7, T8, T9](self, selector: SelectorType[T, T1, T2, T3, T4, T5, T6, T7, T8, T9], *, by: Optional[Enum] = ...) -> Select9[T1, T2, T3, T4, T5, T6, T7, T8, T9]: ...
-    @overload
-    def select[T1, T2, T3, T4, T5, T6, T7, T8](self, selector: SelectorType[T, T1, T2, T3, T4, T5, T6, T7, T8], *, by: Optional[Enum] = ...) -> Select8[T1, T2, T3, T4, T5, T6, T7, T8]: ...
-    @overload
-    def select[T1, T2, T3, T4, T5, T6, T7](self, selector: SelectorType[T, T1, T2, T3, T4, T5, T6, T7], *, by: Optional[Enum] = ...) -> Select7[T1, T2, T3, T4, T5, T6, T7]: ...
-    @overload
-    def select[T1, T2, T3, T4, T5, T6](self, selector: SelectorType[T, T1, T2, T3, T4, T5, T6], *, by: Optional[Enum] = ...) -> Select6[T1, T2, T3, T4, T5, T6]: ...
-    @overload
-    def select[T1, T2, T3, T4, T5](self, selector: SelectorType[T, T1, T2, T3, T4, T5], *, by: Optional[Enum] = ...) -> Select5[T1, T2, T3, T4, T5]: ...
-    @overload
-    def select[T1, T2, T3, T4](self, selector: SelectorType[T, T1, T2, T3, T4], *, by: Optional[Enum] = ...) -> Select4[T1, T2, T3, T4]: ...
-    @overload
-    def select[T1, T2, T3](self, selector: SelectorType[T, T1, T2, T3], *, by: Optional[Enum] = ...) -> Select3[T1, T2, T3]: ...
-    @overload
-    def select[T1, T2](self, selector: SelectorType[T, T1, T2], *, by: Optional[Enum] = ...) -> Select2[T1, T2]: ...
-    @overload
-    def select[T1](self, selector: SelectorType[T, T1], *, by: Optional[Enum] = ...) -> Tuple[T1]: ...
-    @overload
-    def select[T1](self, selector: Callable[[T], T1], *, by: Optional[Enum] = ...) -> Tuple[T1]: ...
-    @overload
-    def select(self) -> Tuple[T]: ...
+    def select[*TRes](self, selector: Callable[[T], tuple[*TRes]] = ..., *, flavour: Type[tuple], **kwargs) -> tuple[tuple[*TRes]]: ...
 
-    # @overload
-    # def select[TFlavour](self, selector: Optional[Callable[[T], tuple]] = ..., *, cast_to_tuple: bool = ..., flavour: Type[TFlavour], by: Optional[Enum] = ..., **kwargs) -> TFlavour: ...
-    @overload
-    def select[TRes](self, selector: SelectorFlavourType[T, TRes] = ..., *, flavour: Type[tuple], by: Optional[Enum] = ..., alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> tuple[TRes, ...]: ...
-    @overload
-    def select[*TRes](self, selector: SelectorFlavourType[T, tuple[*TRes]] = ..., *, flavour: Type[tuple], by: Optional[Enum] = ..., alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> tuple[tuple[*TRes]]: ...
-    @overload
-    def select[TFlavour](self, selector: SelectorFlavourType[T, tuple] = ..., *, flavour: Type[TFlavour], by: Optional[Enum] = ..., alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> tuple[TFlavour, ...]: ...
+    # endregion
 
     @abstractmethod
-    def select[TValue, TFlavour, P](self, selector: SelectorFlavourType[T, tuple[TValue, P]] = ..., *, cast_to_tuple: bool = ..., flavour: Type[TFlavour] = ..., by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., **kwargs): ...
+    def select(
+        self,
+        selector=...,
+        *,
+        flavour=...,
+        by=...,
+        alias=...,
+        avoid_duplicates=...,
+    ): ...
 
     # endregion
     # region select_one
     @overload
-    def select_one(self) -> T: ...
+    def select_one[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def select_one[TFlavour](self, *, by: Optional[Enum] = ..., flavour: Type[TFlavour], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> TFlavour: ...
+    def select_one(self, selector: Callable[[T], tuple], *, flavour: Type[dict], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> dict[str, Any]: ...
     @overload
-    def select_one[T1](self, selector: SelectorOneType[T, T1 | tuple[T1]], *, by: Optional[Enum] = ...) -> T1: ...
+    def select_one[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[tuple], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def select_one[*TRes](self, selector: SelectorOneType[T, tuple[*TRes]], *, by: Optional[Enum] = ...) -> tuple[*TRes]: ...
+    def select_one[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[list], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def select_one[T1](self, selector: SelectorOneType[T, tuple[T1]], *, by: Optional[Enum] = ..., flavour: Type, alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> T1: ...
-    @overload
-    def select_one[T1, TFlavour](self, selector: SelectorOneType[T, T1], *, by: Optional[Enum] = ..., flavour: Type[TFlavour], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> TFlavour: ...
-    @overload
-    def select_one[*TRest](self, selector: SelectorOneType[T, tuple[*TRest]], *, by: Optional[Enum] = ..., flavour: Type[tuple], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> tuple[*TRest]: ...
-    @overload
-    def select_one[TFlavour](self, selector: SelectorOneType[T, tuple], *, by: Optional[Enum] = ..., flavour: Type[TFlavour], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> TFlavour: ...
+    def select_one[TFlavour, *TRes](self, selector: Callable[[T], tuple[T, *TRes]], *, flavour: Type[TFlavour], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> TFlavour[*TRes]: ...
+
     @abstractmethod
-    def select_one[TValue, TFlavour, *TRest](
+    def select_one(
         self,
-        selector: Optional[SelectorOneType[T, tuple[TValue, *TRest]]] = lambda: None,
+        selector=...,
         *,
-        flavour: Type[TFlavour] = ...,
-        by: Optional[Enum] = ...,
+        flavour=...,
+        by=...,
+        alias=...,
+        avoid_duplicates=...,
     ): ...
 
     # endregion
 
     # region first
     @overload
-    def first(self) -> T: ...
+    def first[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def first[T1](self, selector: SelectorOneType[T, T1 | tuple[T1]], *, by: Optional[Enum] = ...) -> T1: ...
+    def first(self, selector: Callable[[T], tuple], *, flavour: Type[dict], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> dict[str, Any]: ...
     @overload
-    def first[*TRes](self, selector: SelectorOneType[T, tuple[*TRes]], *, by: Optional[Enum] = ...) -> tuple[*TRes]: ...
+    def first[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[tuple], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def first[TFlavour](self, *, by: Optional[Enum] = ..., flavour: Type[TFlavour], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> TFlavour: ...
+    def first[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[list], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def first[T1](self, selector: SelectorOneType[T, tuple[T1]], *, by: Optional[Enum] = ..., flavour: Type, alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> T1: ...
-    @overload
-    def first[T1, TFlavour](self, selector: SelectorOneType[T, T1], *, by: Optional[Enum] = ..., flavour: Type[TFlavour], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> TFlavour: ...
-    @overload
-    def first[*TRest](self, selector: SelectorOneType[T, tuple[*TRest]], *, by: Optional[Enum] = ..., flavour: Type[tuple], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> tuple[*TRest]: ...
-    @overload
-    def first[TFlavour](self, selector: SelectorOneType[T, tuple], *, by: Optional[Enum] = ..., flavour: Type[TFlavour], alias: Optional[AliasType[ColumnType]] = ..., **kwargs) -> TFlavour: ...
+    def first[TFlavour, *TRes](self, selector: Callable[[T], tuple[T, *TRes]], *, flavour: Type[TFlavour], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> TFlavour[*TRes]: ...
+
     @abstractmethod
-    def first[TValue, TFlavour, *TRest](
+    def first(
         self,
-        selector: Optional[SelectorOneType[T, tuple[TValue, *TRest]]] = lambda: None,
+        selector=...,
         *,
-        flavour: Type[TFlavour] = ...,
-        by: Optional[Enum] = ...,
+        flavour=...,
+        by=...,
+        alias=...,
+        avoid_duplicates=...,
     ): ...
 
     # endregion
