@@ -6,60 +6,50 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from test.config import create_env_engine, create_engine_for_db  # noqa: E402
-from ormlambda import Table, Column, BaseModel, ForeignKey, Alias  # noqa: E402
+from test.config import create_sakila_engine  # noqa: E402
 from ormlambda.dialects import mysql
+from test.models import Address, City, Country
+from ormlambda import ORM
 
 DIALECT = mysql.dialect
 
-DDBBNAME = "__test_ddbb__"
+
+engine = create_sakila_engine()
 
 
-class CSimple(Table):
-    __table_name__ = "C"
-    pk_c: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
-    name: Column[str]
+class TestSelectTest(unittest.TestCase):
+    def test_select_all(self):
+        model = ORM(Address, engine)
 
+        res1 = model.select()
+        res2 = model.select(lambda x: x)
+        res3 = model.select(lambda x: (x,))
 
-class BSimple(Table):
-    __table_name__ = "B"
-    pk_b: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
-    name: Column[str]
-    fk_c: Column[int]
+        self.assertIsInstance(res1, tuple)
+        self.assertIsInstance(res1[0], Address)
+        self.assertEqual(res1, res2)
+        self.assertEqual(res2, res3)
 
-    CSimple = ForeignKey["BSimple", CSimple](CSimple, lambda self, c: self.fk_c == c.pk_c)
+    def test_select_all_different_tables(self):
+        model = ORM(Address, engine)
 
+        res1 = model.select(
+            lambda x: (
+                x,
+                x.City,
+                x.City.Country,
+            ),
+            avoid_duplicates=True,
+        )
 
-class AWithMultipleReferencesToB(Table):
-    __table_name__ = "A"
-    pk_a: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
-    data_a: Column[str]
-    fk_b1: Column[int]
-    fk_b2: Column[int]
-    fk_b3: Column[int]
+        self.assertIsInstance(res1, tuple)
+        self.assertIsInstance(res1[0][0], Address)
+        self.assertIsInstance(res1[0][1], City)
+        self.assertIsInstance(res1[0][2], Country)
 
-    B_fk_b1 = ForeignKey["AWithMultipleReferencesToB", BSimple](BSimple, lambda self, b: self.fk_b1 == b.pk_b)
-    B_fk_b2 = ForeignKey["AWithMultipleReferencesToB", BSimple](BSimple, lambda self, b: self.fk_b2 == b.pk_b)
-    B_fk_b3 = ForeignKey["AWithMultipleReferencesToB", BSimple](BSimple, lambda self, b: self.fk_b3 == b.pk_b)
-
-
-engine = create_env_engine()
-
-
-class TestJoinQueries(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        engine.create_schema(DDBBNAME, "replace")
-        cls.db_engine = create_engine_for_db(DDBBNAME)
-
-        cls.model = BaseModel(AWithMultipleReferencesToB, cls.db_engine)
-        BaseModel(CSimple, cls.db_engine).create_table()
-        BaseModel(BSimple, cls.db_engine).create_table()
-        cls.model.create_table()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.db_engine.drop_schema(DDBBNAME)
+        for a, ci, co in res1:
+            self.assertEqual(a.city_id, ci.city_id)
+            self.assertEqual(ci.country_id, co.country_id)
 
 
 if __name__ == "__main__":

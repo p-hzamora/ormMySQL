@@ -24,19 +24,18 @@ class TestTypeHint(unittest.TestCase):
                 a.City,
                 a.City.Country,
             ),
-            avoid_duplicates=True
-
+            avoid_duplicates=True,
         )
-        a, city, country = response
-        self.assertIsInstance(response, tuple)
-        self.assertIsInstance(a[0], Address)
-        self.assertIsInstance(city[0], City)
-        self.assertIsInstance(country[0], Country)
+        for a, city, country in response:
+            self.assertIsInstance(response, tuple)
+            self.assertIsInstance(a, Address)
+            self.assertIsInstance(city, City)
+            self.assertIsInstance(country, Country)
 
     def test_SELECT_method_passing_1_column(self):
         response = self.a_model.select(lambda a: (a.City,))
         self.assertIsInstance(response, tuple)
-        self.assertIsInstance(response[0][0], City)
+        self.assertIsInstance(response[0], City)
 
     def test_SELECT_ONE_method_passing_0_column(self):
         response = self.a_model.select_one()
@@ -63,7 +62,8 @@ class TestTypeHint(unittest.TestCase):
                 a,
                 a.City,
                 a.City.Country,
-            ), avoid_duplicates=True,   
+            ),
+            avoid_duplicates=True,
         )
         a, city, country = response
         self.assertIsInstance(response, tuple)
