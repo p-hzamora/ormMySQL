@@ -12,9 +12,7 @@ if TYPE_CHECKING:
 
 class BaseModel[T]:
     """
-    Class to select the correct BaseStatement class depends on the repository.
-
-    Contiene los metodos necesarios para hacer consultas a una tabla
+    This class contains those methods to make query to a table
     """
 
     def __new__(cls, model: Type[T], engine: Engine) -> IStatements[T]:
