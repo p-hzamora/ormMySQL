@@ -1,5 +1,4 @@
 from __future__ import annotations
-import abc
 import datetime
 import io
 import logging
@@ -13,7 +12,6 @@ from ormlambda.sql.ddl import CreateColumn
 from ormlambda.sql.sqltypes import resolve_primitive_types
 
 from .visitors import Visitor
-from ormlambda import util
 from ormlambda.sql.type_api import TypeEngine
 
 if TYPE_CHECKING:
@@ -53,27 +51,6 @@ if TYPE_CHECKING:
         VARBINARY,
         ENUM,
         POINT,
-    )
-
-    from ormlambda.sql.clauses import (
-        Insert,
-        Delete,
-        Upsert,
-        Update,
-        Limit,
-        Offset,
-        Count,
-        Where,
-        Having,
-        Order,
-        GroupBy,
-    )
-
-    from ormlambda.sql.functions import (
-        Concat,
-        Max,
-        Min,
-        Sum,
     )
 
 type customString = Union[str | Path]
@@ -161,39 +138,8 @@ class TypeCompiler(Visitor):
         return type_._compiler_dispatch(self, **kw)
 
 
-class SQLCompiler(Compiled, abc.ABC):
+class SQLCompiler(Compiled):
     is_sql = True
-
-    @abc.abstractmethod
-    def visit_insert(self, insert: Insert, **kw) -> Insert: ...
-    @abc.abstractmethod
-    def visit_delete(self, delete: Delete, **kw) -> Delete: ...
-    @abc.abstractmethod
-    def visit_upsert(self, upsert: Upsert, **kw) -> Upsert: ...
-    @abc.abstractmethod
-    def visit_update(self, update: Update, **kw) -> Update: ...
-    @abc.abstractmethod
-    def visit_limit(self, limit: Limit, **kw) -> Limit: ...
-    @abc.abstractmethod
-    def visit_offset(self, offset: Offset, **kw) -> Offset: ...
-    @abc.abstractmethod
-    def visit_count(self, count: Count, **kw) -> Count: ...
-    @abc.abstractmethod
-    def visit_where(self, where: Where, **kw) -> Where: ...
-    @abc.abstractmethod
-    def visit_having(self, having: Having, **kw) -> Having: ...
-    @abc.abstractmethod
-    def visit_order(self, order: Order, **kw) -> Order: ...
-    @abc.abstractmethod
-    def visit_concat(self, concat: Concat, **kw) -> Concat: ...
-    @abc.abstractmethod
-    def visit_max(self, max: Max, **kw) -> Max: ...
-    @abc.abstractmethod
-    def visit_min(self, min: Min, **kw) -> Min: ...
-    @abc.abstractmethod
-    def visit_sum(self, sum: Sum, **kw) -> Sum: ...
-    @abc.abstractmethod
-    def visit_group_by(self, groupby: GroupBy, **kw) -> GroupBy: ...
 
 
 class DDLCompiler(Compiled):
