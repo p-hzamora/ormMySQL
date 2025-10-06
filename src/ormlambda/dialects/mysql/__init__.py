@@ -2,7 +2,6 @@ from . import base as base
 from . import mysqlconnector as mysqlconnector
 
 from .base import BIGINT as BIGINT
-from .base import BINARY as BINARY
 from .base import BIT as BIT
 from .base import BLOB as BLOB
 from .base import BOOLEAN as BOOLEAN
@@ -32,6 +31,8 @@ from .base import TINYTEXT as TINYTEXT
 from .base import VARBINARY as VARBINARY
 from .base import VARCHAR as VARCHAR
 from .base import YEAR as YEAR
+from .types import POINT as POINT
+
 
 from .repository import MySQLRepository as MySQLRepository  # noqa: F401
 from .caster import MySQLCaster as MySQLCaster  # noqa: F401

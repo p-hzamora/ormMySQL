@@ -11,6 +11,9 @@ import datetime
 
 from ormlambda.sql import sqltypes
 
+# to be able to import the same object with different dialect
+from ormlambda.sql.sqltypes import POINT  # noqa: F401
+
 
 class _NumericCommonType:
     """Base for MySQL numeric types.
@@ -229,6 +232,9 @@ class INTEGER(_IntegerType, sqltypes.INTEGER):
 
         """
         super().__init__(display_width=display_width, **kw)
+
+
+INT = INTEGER
 
 
 class BIGINT(_IntegerType, sqltypes.BIGINT):
