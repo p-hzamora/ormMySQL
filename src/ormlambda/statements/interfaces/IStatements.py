@@ -234,6 +234,8 @@ class IStatements[T: Table](Element):
     # endregion
     # region select_one
     @overload
+    def select_one(self, *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> T: ...
+    @overload
     def select_one[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
     def select_one(self, selector: Callable[[T], tuple], *, flavour: Type[dict], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> dict[str, Any]: ...
@@ -258,6 +260,8 @@ class IStatements[T: Table](Element):
     # endregion
 
     # region first
+    @overload
+    def first(self, *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> T: ...
     @overload
     def first[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
