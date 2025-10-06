@@ -4,7 +4,6 @@ from typing import Any, Iterable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ormlambda import ColumnProxy
-from ormlambda.common.interfaces.IQueryCommand import IQuery
 
 
 class IAggregate():
