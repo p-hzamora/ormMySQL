@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
+from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args, ClassVar
 from ormlambda.sql.elements import ClauseElement
-from ormlambda.sql.types import TableType, ComparerType, ColumnType
+from ormlambda.sql.types import TableType, ComparerType, ColumnType, TypeEngine
 from ormlambda import ConditionType
 from ormlambda import util
 

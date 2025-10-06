@@ -93,6 +93,19 @@ class Table(metaclass=TableMeta):
         return None
 
     def to_dict(self) -> dict[str, str | int]:
+        def make_hashable(item: Any) -> Any:
+            if isinstance(item, dict):
+                return tuple(sorted((k, make_hashable(x)) for k, x in item.items()))
+
+            if isinstance(item, (list | set)):
+                return tuple(make_hashable(x) for x in item)
+            if hasattr(item, "__iter__") and not isinstance(item, str | bytes):
+                try:
+                    return tuple(make_hashable(x) for x in item)
+                except TypeError:
+                    return item  # if it fails, it's already hashable
+            return item
+
         dicc: dict[str, Any] = {}
         for x in self.__annotations__:
             value = getattr(self, x)

@@ -150,7 +150,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         instance = TableType(pk=1, jsons=data_list)
 
         self.model.insert(instance)
-        result = self.model.where(TableType.pk == 1).first()
+        result = self.model.where(lambda x: x.pk == 1).first()
         self.assertEqual(result.jsons, data_list)
 
     def test_passing_dict_into_json_datatype(self):
@@ -168,7 +168,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         new_data["errors"] = [5, 1, 5, 5, 5]
         self.model.where(lambda x: x.pk == 1).update({TableType.jsons: new_data})
 
-        result = self.model.where(TableType.pk == 1).first()
+        result = self.model.where(lambda x: x.pk == 1).first()
         self.assertEqual(result.jsons, new_data)
 
     def test_passing_nested_list_into_json_datatype(self):
@@ -179,8 +179,8 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
 
         new_data = [{"name": "pablo", "errors": [{"1": [], "2": "second", "3": "third"}]}]
 
-        self.model.where(TableType.pk == 1).update({TableType.jsons: new_data})
-        result = self.model.where(TableType.pk == 1).first()
+        self.model.where(lambda x: x.pk == 1).update({TableType.jsons: new_data})
+        result = self.model.where(lambda x: x.pk == 1).first()
         self.assertEqual(result.jsons, new_data)
 
 
