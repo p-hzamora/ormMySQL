@@ -50,3 +50,11 @@ class AggregateFunctionError[T](Exception):
             if isinstance(clause, IAggregate):
                 res.add(clause.__class__.__name__)
         return ", ".join(res)
+
+
+class NotCallableError(ValueError):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def __str__(self)->str:
+        return f"You must provide a function or callable to proceed with the query creation. Passed '{self.args[0].__class__.__name__}' "

@@ -3,6 +3,7 @@ import re
 from typing import Any, TYPE_CHECKING, Iterable, Callable
 
 from ormlambda.common.errors import UnmatchedLambdaParameterError
+from ormlambda.common.errors import NotCallableError
 from ormlambda import util
 
 if TYPE_CHECKING:
@@ -28,7 +29,10 @@ class GlobalChecker[T: TableProxy]:
         try:
             table_proxy = TableProxy(table)
 
-            if not callable(lambda_func) and isinstance(lambda_func, Iterable):
+            if not callable(lambda_func): 
+                raise NotCallableError(lambda_func)
+
+            if isinstance(lambda_func, Iterable):
                 # We hit that condition when trying to pass column or function dynamically into select clause.
 
                 # max_fn = Max(lambda x: x.Col1)
