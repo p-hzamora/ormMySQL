@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import Concatenate, Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
 
-from ormlambda import ForeignKey
-
+from ormlambda.sql.types import ASTERISK
 
 if TYPE_CHECKING:
     from ormlambda.engine.base import Engine
@@ -11,16 +10,14 @@ if TYPE_CHECKING:
     from ormlambda.statements.types import OrderTypes
     from ormlambda.sql.types import ColumnType
     from ormlambda.statements.types import SelectCols
-    from ormlambda.statements.interfaces import IStatements_two_generic
     from ormlambda.statements.types import TypeExists
-    from ormlambda.sql.clause_info import IAggregate
     from ormlambda.statements.types import WhereTypes
+    from ormlambda.dialects import Dialect
 
+from ormlambda.statements.interfaces import IStatements
+from ormlambda.statements.base_statement import ClusterResponse
 
-from ormlambda.sql.clause_info import ClauseInfo
-from ormlambda.statements import BaseStatement
-
-from ormlambda import Table, Column
+from ormlambda import OrderType, Table
 from ormlambda.common.enums import JoinType
 from ormlambda.sql.clauses.join import JoinContext, TupleJoinType
 
@@ -40,23 +37,53 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
         except Exception as err:
             raise err
         finally:
-            ForeignKey.stored_calls.clear()
             self._query_builder.clear()
 
     return wrapper
 
 
-class Statements[T: Table, TRepo](BaseStatement[T, None]):
+class Statements[T: Table](IStatements[T]):
     def __init__(self, model: T, engine: Engine) -> None:
-        super().__init__(model, engine)
-        self._query_builder = QueryBuilder(self.dialect)
+        self._query_builder = QueryBuilder()
+        self._engine = engine
+        self._dialect = engine.dialect
+        self._query: Optional[str] = None
+        self._model: T = model[0] if isinstance(model, Iterable) else model
+
+        if not issubclass(self._model, Table):
+            # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
+            # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
+            raise Exception(f"'{model}' class does not inherit from Table class")
+
+    @property
+    def dialect(self) -> Dialect:
+        return self._dialect
+
+    @property
+    def engine(self) -> Engine:
+        return self._engine
+
+    @override
+    def table_exists(self) -> bool:
+        return self.engine.repository.table_exists(self._model.__table_name__)
+
+    def __repr__(self):
+        return f"<Model: {self.__class__.__name__}>"
+
+    @property
+    def query(self) -> str:
+        return self._query
+
+    @property
+    def model(self) -> Type[T]:
+        return self._model
 
     @override
     def create_table(self, if_exists: TypeExists = "fail") -> None:
         name: str = self._model.__table_name__
-        if self._repository.table_exists(name):
+        if self.engine.repository.table_exists(name):
             if if_exists == "replace":
-                self._repository.drop_table(name)
+                self.drop_table()
 
             elif if_exists == "fail":
                 raise ValueError(f"Table '{self._model.__table_name__}' already exists")
@@ -64,7 +91,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
             elif if_exists == "append":
                 counter: int = 0
                 char: str = ""
-                while self._repository.table_exists(name + char):
+                while self.engine.repository.table_exists(name + char):
                     counter += 1
                     char = f"_{counter}"
                 name += char
@@ -74,18 +101,25 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
                 return new_model.create_table(self.dialect)
 
         query = self.model.create_table(self.dialect)
-        self._repository.execute(query)
+        self.engine.repository.execute(query)
+        return None
+
+    @override
+    def drop_table(self) -> None:
+        q = self.model.drop_table(self.dialect)
+        self.engine.repository.execute(q)
         return None
 
     @override
     @clear_list
     def insert(self, instances: T | list[T]) -> None:
-        insert = clauses.Insert(self._model, self.repository, self._dialect)
+        insert = clauses.Insert(self._model, self.engine.repository, self._dialect)
         insert.insert(instances)
         insert.execute()
         return None
 
     @override
+    @clear_list
     def delete(self, instances: Optional[T | list[T]] = None) -> None:
         if instances is None:
             response = self.select()
@@ -95,7 +129,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
             # We always going to have a tuple of one element
             return self.delete(response)
 
-        delete = clauses.Delete(self._model, self._repository, engine=self._engine)
+        delete = clauses.Delete(self._model, self.engine.repository, engine=self._engine)
         delete.delete(instances)
         delete.execute()
         # not necessary to call self._query_builder.clear() because select() method already call it
@@ -104,7 +138,7 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     @override
     @clear_list
     def upsert(self, instances: T | list[T]) -> None:
-        upsert = clauses.Upsert(self._model, self._repository, engine=self._engine)
+        upsert = clauses.Upsert(self._model, self.engine.repository, engine=self._engine)
         upsert.upsert(instances)
         upsert.execute()
         return None
@@ -112,107 +146,96 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        update = clauses.Update(self._model, self._repository, self._query_builder.WHERE, engine=self._engine)
+        update = clauses.Update(self._model, self.engine.repository, self._query_builder.components.where, engine=self._engine)
         update.update(dicc)
         update.execute()
 
         return None
 
     @override
-    def limit(self, number: int) -> IStatements_two_generic[T, TRepo]:
-        limit = clauses.Limit(number, dialect=self._dialect)
+    def limit(self, number: int) -> IStatements[T]:
         # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
+        limit = clauses.Limit(number=number)
         self._query_builder.add_statement(limit)
         return self
 
     @override
-    def offset(self, number: int) -> IStatements_two_generic[T, TRepo]:
-        offset = clauses.Offset(number, dialect=self._dialect)
+    def offset(self, number: int) -> IStatements[T]:
+        offset = clauses.Offset(number=number)
         self._query_builder.add_statement(offset)
         return self
 
     @override
     def count[TProp](
         self,
-        selection: None | SelectCols[T, TProp] = lambda x: "*",
-        alias="count",
-        execute: bool = False,
+        selection: Optional[SelectCols[T, TProp] | str] = ASTERISK,
+        alias: AliasType = "count",
     ) -> Optional[int]:
-        if execute is True:
-            return self.select_one(self.count(selection, alias, False), flavour=dict)[alias]
+        if selection == ASTERISK:
+            return self.select_one(lambda x: clauses.Count(x, alias), flavour=dict)[alias]
 
-        selection = GlobalChecker.resolved_callback_object(selection, self.models)
-        return clauses.Count(
-            element=selection,
-            alias_clause=alias,
-            context=self._query_builder._context,
-            dialect=self._dialect,
-        )
+        # get first position because 'resolved_callback_object' return an, alway Iterable and we should only pass one column
+        res = GlobalChecker.resolved_callback_object(self.model, selection)[0]
+        return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
 
     @override
-    def where(self, conditions: WhereTypes) -> IStatements_two_generic[T, TRepo]:
+    def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements[T]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
+        result = GlobalChecker.resolved_callback_object(self.model, conditions)
 
-        conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
-        if not isinstance(conditions, Iterable):
-            conditions = (conditions,)
-        self._query_builder.add_statement(clauses.Where(*conditions))
+        where = clauses.Where(*result, restrictive=restrictive)
+        self._query_builder.add_statement(where)
         return self
 
     @override
-    def having(self, conditions: WhereTypes) -> IStatements_two_generic[T, TRepo]:
-        conditions = GlobalChecker.resolved_callback_object(conditions, self._models)
-        if not isinstance(conditions, Iterable):
-            conditions = (conditions,)
-        self._query_builder.add_statement(clauses.Having(*conditions))
+    def having(self, conditions: ColumnType, restrictive: bool = True) -> IStatements[T]:
+        result = GlobalChecker.resolved_callback_object(self.model, conditions)
+        having = clauses.Having(*result, restrictive=restrictive)
+        self._query_builder.add_statement(having)
         return self
 
     @override
-    def order[TValue](self, columns: Callable[[T], TValue], order_type: OrderTypes) -> IStatements_two_generic[T, TRepo]:
-        query = GlobalChecker.resolved_callback_object(columns, self._models)
-        order = clauses.Order(query, order_type, dialect=self._dialect)
-        self._query_builder.add_statement(order)
-        return self
+    def order[TValue](self, columns: str | Callable[[T], TValue], order_type: OrderTypes = OrderType.ASC) -> IStatements[T]:
+        if isinstance(columns, str):
+            callable_func = lambda x: columns  # noqa: E731
+        else:
+            callable_func = columns
 
-    @override
-    def concat(self, selector: SelectCols[T, str], alias: str = "concat") -> IAggregate:
-        return func.Concat(values=selector, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        res = GlobalChecker.resolved_callback_object(self.model, callable_func)
+        deferred_op = clauses.Order(*res, order_type=order_type)
+        self._query_builder.add_statement(deferred_op)
+
+        return self
 
     @override
     def max[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: str = "max",
-        execute: bool = False,
+        alias: AliasType = "max",
     ) -> int:
-        column = GlobalChecker.resolved_callback_object(column, self.models)
-        if execute is True:
-            return self.select_one(self.max(column, alias, execute=False), flavour=dict)[alias]
-        return func.Max(elements=column, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        res = GlobalChecker.resolved_callback_object(self.model, column)[0]
+
+        return self.select_one(lambda x: func.Max(res, alias), flavour=dict)[alias]
 
     @override
     def min[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: str = "min",
-        execute: bool = False,
+        alias: AliasType = "min",
     ) -> int:
-        column = GlobalChecker.resolved_callback_object(column, self.models)
-        if execute is True:
-            return self.select_one(self.min(column, alias, execute=False), flavour=dict)[alias]
-        return func.Min(elements=column, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        res = GlobalChecker.resolved_callback_object(self.model, column)[0]
+
+        return self.select_one(lambda x: func.Min(res, alias), flavour=dict)[alias]
 
     @override
     def sum[TProp](
         self,
         column: SelectCols[T, TProp],
-        alias: str = "sum",
-        execute: bool = False,
+        alias: AliasType = "sum",
     ) -> int:
-        column = GlobalChecker.resolved_callback_object(column, self.models)
-        if execute is True:
-            return self.select_one(self.sum(column, alias, execute=False), flavour=dict)[alias]
-        return func.Sum(elements=column, alias_clause=alias, context=self._query_builder._context, dialect=self._dialect)
+        res = GlobalChecker.resolved_callback_object(self.model, column)[0]
+
+        return self.select_one(lambda x: func.Sum(res, alias), flavour=dict)[alias]
 
     @override
     def join[LTable: Table, LProp, RTable: Table, RProp](self, joins: tuple[TupleJoinType[LTable, LProp, RTable, RProp]]) -> JoinContext[tuple[*TupleJoinType[LTable, LProp, RTable, RProp]]]:
@@ -226,39 +249,35 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         *,
         flavour: Optional[Type[TFlavour]] = None,
         by: JoinType = JoinType.INNER_JOIN,
+        alias: Optional[AliasType[T]] = None,
+        avoid_duplicates: bool = False,
         **kwargs,
     ):
-        if "alias" in kwargs:
-            alias = kwargs.pop("alias")
-            kwargs["alias_clause"] = alias
-        select_clause = GlobalChecker.resolved_callback_object(selector, self._models)
-
         if selector is None:
             # COMMENT: if we do not specify any lambda function we assumed the user want to retreive only elements of the Model itself avoiding other models
-            result = self.select(selector=lambda x: x, flavour=flavour, by=by)
-            # COMMENT: Always we want to retrieve tuple[tuple[Any]]. That's the reason to return result[0] when we ensure the user want only objects of the first table.
-            # Otherwise, we wil return the result itself
-            if flavour:
-                return result
-            return () if not result else result[0]
+            result = self.select(
+                selector=lambda x: x,
+                flavour=flavour,
+                by=by,
+                avoid_duplicates=avoid_duplicates,
+                **kwargs,
+            )
+            return result
+        select_clause = GlobalChecker.resolved_callback_object(self.model, selector)
 
         select = clauses.Select(
-            self._models,
+            table=self.model,
             columns=select_clause,
-            dialect=self.dialect,
-            **kwargs,
+            alias=alias,
+            avoid_duplicates=avoid_duplicates,
         )
+
         self._query_builder.add_statement(select)
 
         self._query_builder.by = by
         self._query: str = self._query_builder.query(self._dialect)
 
-        if flavour:
-            result = self._return_flavour(self.query, flavour, select, **kwargs)
-            if issubclass(flavour, tuple) and isinstance(select_clause, Column | ClauseInfo):
-                return tuple([x[0] for x in result])
-            return result
-        return self._return_model(select, self.query)
+        return ClusterResponse(select, self._engine, flavour, self._query).response()
 
     @override
     def select_one[TValue, TFlavour, *Ts](
@@ -305,22 +324,13 @@ class Statements[T: Table, TRepo](BaseStatement[T, None]):
         )
 
     @override
-    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements_two_generic[T]:
-        column = GlobalChecker.resolved_callback_object(column, self.models)
-
-        groupby = clauses.GroupBy(column=column, context=self._query_builder._context, dialect=self.dialect)
-        # Only can be one LIMIT SQL parameter. We only use the last LimitQuery
-        self._query_builder.add_statement(groupby)
+    def groupby[TProp](self, column: ColumnType[TProp] | Callable[[T], Any]) -> IStatements[T]:
+        result = GlobalChecker.resolved_callback_object(self.model, column)
+        deferred_op = clauses.GroupBy(*result)
+        self._query_builder.add_statement(deferred_op)
         return self
 
-    @override
-    def alias[TProp](self, column: SelectCols[T, TProp], alias: AliasType[ClauseInfo[T]]) -> clauses.Alias[T]:
-        column = GlobalChecker.resolved_callback_object(column, self.models)
-
-        return clauses.Alias(
-            table=column.table,
-            column=column,
-            alias_clause=alias,
-            context=self._query_builder._context,
-            dialect=self.dialect,
-        )
+    def compile(self) -> str:
+        if not self._query:
+            return self._query_builder.query(self._dialect)
+        return self._query

@@ -283,19 +283,19 @@ with this approach, we will obtain a dictionary where the key will be the concat
 
 ## max
 ```python
-res = AddressModel.max(Address.address_id, execute=True)
+res = AddressModel.max(lambda x: x.address_id)
 ```
 ## min
 ```python
-res = AddressModel.min(Address.address_id, execute=True)
+res = AddressModel.min(lambda x: x.address_id)
 ```
 ## sum
 ```python
-res = AddressModel.sum(Address.address_id, execute=True)
+res = AddressModel.sum(lambda x: x.address_id)
 ```
 ## count
 ```python
-res = AddressModel.count(Address.address_id, execute=True)
+res = AddressModel.count(lambda x: x.address_id)
 ```
 
 ## 1. Concat
@@ -309,14 +309,14 @@ response = ORM(Address, db).where(Address.City.Country.country.regex(r"^Spain"))
             (
                 Address.address,
                 Address.City.city,
-                self.tmodel.concat(
+                Concat(lambda x:
                     (
                         "Address: ",
-                        Address.address,
+                        x.address,
                         " - city: ",
-                        Address.City.city,
+                        x.City.city,
                         " - country: ",
-                        Address.City.Country.country,
+                        x.City.Country.country,
                     )
                 ),
             ),
@@ -351,15 +351,13 @@ class Response(BaseModel):
 engine= create_engine(DATABASE_URL)
 model = ORM(Address,engine)
 
-count_name = Column(column_name="count")
-
 res = (
     self.model
-    .groupby(Address.district)
-    .select(
+    .groupby(lambda x: x.district)
+    .select(lambda x:
         (
-            Address.district,
-            self.model.count(Address.address),
+            x.district,
+            Count(x.address),
         ),
         flavour=Response,
     )
@@ -374,12 +372,12 @@ The `having` method is used to filter results based on aggregate functions. It i
 ```python
 res = (
     model
-    .groupby(Address.district)
-    .having(count_name > 4)
-    .select(
+    .groupby(lambda x: x.district)
+    .having(lambda x: x.count > 4)
+    .select(lambda x:
         (
-            Address.district,
-            model.count(Address.address),
+            x.district,
+            Count(x.address),
         ),
         flavour=Response,
     )
@@ -409,9 +407,9 @@ select = (
     ORM(Address, db)
     .order(lambda x: x.City.Country.country, "DESC")
     .limit(10)
-    .where(Address.City.Country.country == "Spain")
-    .first(
-        lambda x: (
+    .where(lambda x: x.City.Country.country == "Spain")
+    .first(lambda x: 
+        (
             x.address,
             x.City.city,
             x.City.Country.country,
@@ -436,9 +434,9 @@ As shown in the previous examples, setting the `execute` attribute to `True` all
 ```python
 result = AddressModel.select_one(
             lambda x: (
-                AddressModel.min(x.address_id),
-                AddressModel.max(x.address_id),
-                AddressModel.count(x.address_id),
+                Min(x.address_id),
+                Max(x.address_id),
+                Count(x.address_id),
             ),flavour=dict
         )
 ```
@@ -455,11 +453,11 @@ Getting something like
 You also can use custom alias for each method
 
 ```python
-AddressModel.select_one(
-    lambda x: (
-        AddressModel.min(x.address_id),
-        AddressModel.max(x.address_id, alias="custom-max"),
-        AddressModel.count(x.address_id),
+AddressModel.select_one(lambda x: 
+    (
+        Min(x.address_id),
+        Max(x.address_id, alias="custom-max"),
+        Count(x.address_id),
     ),
     flavour=dict,
 )

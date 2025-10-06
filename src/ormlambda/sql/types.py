@@ -1,27 +1,30 @@
-import typing as tp
+from typing import TYPE_CHECKING, Literal, Callable, Type
 
 
-if tp.TYPE_CHECKING:
-    from ormlambda import Table, Column, ForeignKey
+if TYPE_CHECKING:
+    from ormlambda.sql.clause_info import IAggregate
+    from ormlambda import Table
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
-    from ormlambda.common.enums.join_type import JoinType
+    from ormlambda.common.enums.join_type import JoinType as JoinType
+    from ormlambda import ColumnProxy, TableProxy
 
 
-type AsteriskType = str
-type TableType[T: Table] = tp.Type[T] | ForeignKey[T]
-type ColumnType[TProp] = TProp | Column[TProp] | AsteriskType | tuple[Column]
-type AliasType[T] = tp.Optional[str | tp.Callable[[T], str]]
+type TableType[T: Table] = Type[T] | TableProxy[T]
+type ColumnType[TProp] = TProp | ColumnProxy[TProp]
+type AliasType[TProp] = str | Callable[[ColumnProxy[TProp]], str]
 
 # region Comparer Types
-type ComparerType = tp.Literal["=", "!=", "<", "<=", ">", ">=", "in"]
+type ComparerType = Literal["=", "!=", "<", "<=", ">", ">=", "in"]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
-type UnionType = tp.Literal["AND", "OR", ""]
+type UnionType = Literal["AND", "OR", ""]
 type ComparerTypes = ComparerType | UnionType | ConditionEnum
+type SelectCol = ColumnProxy | IAggregate | Comparer
 # endregion
 
 type TupleJoinType[T] = tuple[Comparer]
 
-ASTERISK: AsteriskType = "*"
+ASTERISK = "*"
 
-from .compiler import *
+# TODOL []: Look if we can avoid this *
+from .compiler import *  # noqa: F403, E402

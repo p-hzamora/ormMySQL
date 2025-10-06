@@ -26,47 +26,23 @@ class TestWhereStatement(unittest.TestCase):
         cls.ddbb = create_sakila_engine()
         cls.tmodel = ORM(Address, cls.ddbb)
 
-    def test_where(self):
+    def test_one_where(self):
         co = "Spain"
+        # fmt: off
         select = (
             self.tmodel.offset(3)
-            .where(Address.City.Country.country == co)
+            .where(lambda x: x.City.Country.country == co)
             .limit(2)
             .order(lambda x: x.City.city, "ASC")
-            .select(
-                lambda x: x.City.city,
-                flavour=tuple,
-            )
+            .select(lambda x: x.City.city,flavour=tuple)
         )
+        # fmt: on
 
         res = (
             ("Ourense (Orense)"),
             ("Santiago de Compostela"),
         )
         self.assertTupleEqual(select, res)
-
-    def test_multiple_wheres_using_tables(self) -> None:
-        city = "Ourense (Orense)"
-        country = r"[sS]pain"
-
-        result = self.tmodel.where(
-            [
-                Address.City.Country.country.regex(country),
-                Address.City.city == city,
-            ]
-        ).select(
-            (City.city, Country.country),
-            flavour=dict,
-        )
-
-        self.assertEqual(len(result), 1)
-        self.assertDictEqual(
-            result[0],
-            {
-                "city_city": "Ourense (Orense)",
-                "country_country": "Spain",
-            },
-        )
 
     def test_multiple_wheres_using_lambda(self) -> None:
         city = "Ourense (Orense)"
@@ -78,7 +54,10 @@ class TestWhereStatement(unittest.TestCase):
                 x.City.city == city,
             )
         ).select(
-            lambda x: (x.City.city, x.City.Country.country),
+            lambda x: (
+                x.City.city,
+                x.City.Country.country,
+            ),
             flavour=dict,
         )
 
@@ -86,8 +65,37 @@ class TestWhereStatement(unittest.TestCase):
         self.assertDictEqual(
             result[0],
             {
-                "city_city": "Ourense (Orense)",
-                "country_country": "Spain",
+                "city": "Ourense (Orense)",
+                "country": "Spain",
+            },
+        )
+
+    def test_pass_multiples_where_clause(self):
+        city = "Ourense (Orense)"
+        country = r"[sS]pain"
+
+        # fmt: off
+        result = (
+            self.tmodel
+            .where(lambda x: x.City.Country.country.regex(country))
+            .where(lambda x: x.City.city == city)
+            .select(lambda x: (
+                    x.City.city,
+                    x.City.Country.country,
+                ),
+                flavour=dict,
+            )
+            
+        )
+
+        # fmt: on
+
+        self.assertEqual(len(result), 1)
+        self.assertDictEqual(
+            result[0],
+            {
+                "city": "Ourense (Orense)",
+                "country": "Spain",
             },
         )
 

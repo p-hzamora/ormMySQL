@@ -1,30 +1,24 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Any, Iterable
 
-if TYPE_CHECKING:
-    from ormlambda.dialects import Dialect
-from ormlambda.sql.clause_info import AggregateFunctionBase, ClauseInfoContext
+from ormlambda.sql.clause_info import IAggregate
+
 from ormlambda.sql.types import ColumnType
 from ormlambda.sql.elements import ClauseElement
 
 
-class GroupBy(AggregateFunctionBase, ClauseElement):
+class GroupBy(ClauseElement, IAggregate):
     __visit_name__ = "group_by"
 
-    @classmethod
-    def FUNCTION_NAME(self) -> str:
-        return "GROUP BY"
+    def __init__(self, *column: ColumnType):
+        self.column: tuple[ColumnType] = column if isinstance(column, Iterable) else [column]
 
-    def __init__(self, column: ColumnType, context: ClauseInfoContext, dialect: Dialect, **kwargs):
-        super().__init__(
-            table=column.table,
-            column=column,
-            alias_table=None,
-            alias_clause=None,
-            context=context,
-            dialect=dialect,
-            **kwargs,
-        )
+    def used_columns(self):
+        return self.column
+
+    @property
+    def dtype(self) -> Any:
+        return ...
 
 
 __all__ = ["GroupBy"]

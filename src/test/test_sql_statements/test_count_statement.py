@@ -22,17 +22,15 @@ class TableCount(Table):
     c: int
 
 
-
 class CountTest(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_env_engine()
 
         self.engine.create_schema(DATABASE_NAME, "replace")
 
-        new_engine = create_engine(f'mysql://{DB_USERNAME}:{DB_PASSWORD}@localhost:3306/{DATABASE_NAME}?pool_size=3')
-        self.engine= new_engine
-        self.model = ORM(TableCount,self.engine)
-
+        new_engine = create_engine(f"mysql://{DB_USERNAME}:{DB_PASSWORD}@localhost:3306/{DATABASE_NAME}?pool_size=3")
+        self.engine = new_engine
+        self.model = ORM(TableCount, self.engine)
 
         self.model.create_table()
 
@@ -50,22 +48,22 @@ class CountTest(unittest.TestCase):
         return insert_values
 
     def test_count_all_rows(self):
-        n_before_insert = self.model.count(execute=True)
+        n_before_insert = self.model.count()
 
         self.model.insert(self.TableCount_generator(4))
-        n_after_insert = self.model.count(execute=True)
+        n_after_insert = self.model.count()
 
         self.model.delete()
-        n_after_delete = self.model.count(execute=True)
+        n_after_delete = self.model.count()
 
         self.assertEqual(n_before_insert, 0)
         self.assertEqual(n_after_insert, 4)
         self.assertEqual(n_after_delete, n_before_insert)
 
-    def test_count_when_filtering(self):
+    def test_AAcount_when_filtering(self):
         self.model.insert(self.TableCount_generator(100))
 
-        n_select = self.model.where((TableCount.pos <= 70) & (TableCount.pos >= 50)).count(execute=True)
+        n_select = self.model.where(lambda x: (x.pos <= 70) & (x.pos >= 50)).count()
 
         self.assertEqual(n_select, 21)
 
@@ -73,11 +71,11 @@ class CountTest(unittest.TestCase):
         self.model.insert(self.TableCount_generator(100))
 
         n_select = self.model.where(
-            [
-                TableCount.pos <= 70,
-                TableCount.pos >= 50,
+            lambda x: [
+                x.pos <= 70,
+                x.pos >= 50,
             ]
-        ).count(execute=True)
+        ).count()
 
         self.assertEqual(n_select, 21)
 
@@ -90,7 +88,7 @@ class CountTest(unittest.TestCase):
 
         self.model.insert(all_rows)
 
-        rows_different_none = self.model.count(TableCount.a, execute=True)
+        rows_different_none = self.model.count(lambda x: x.a)
 
         self.assertEqual(rows_different_none, 90)
 
@@ -108,18 +106,16 @@ class CountTest(unittest.TestCase):
             insert.append(table_count)
 
         self.model.insert(insert)
-        n = self.model.count(execute=True)
-        n_20 = self.model.where(TableCount.a == 20).count(execute=True)
-        n_80 = self.model.where(TableCount.a == 80).count(execute=True)
-        n_100 = self.model.where(TableCount.a == 100).count(execute=True)
+        n = self.model.count()
+        n_20 = self.model.where(lambda x: x.a == 20).count()
+        n_80 = self.model.where(lambda x: x.a == 80).count()
+        n_100 = self.model.where(lambda x: x.a == 100).count()
 
         self.assertEqual(n, 100)
         self.assertEqual(n_20, 20)
         self.assertEqual(n_80, 60)
         self.assertEqual(n_100, 20)
 
-        self.assertEqual(self.model._query_builder._query_list, {})
-
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(failfast=True)

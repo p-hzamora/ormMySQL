@@ -10,7 +10,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from pydantic import BaseModel
 from test.config import create_sakila_engine  # noqa: E402
 from test.models import Address  # noqa: F401
-from ormlambda import ORM
+from ormlambda import ORM, Concat
 
 
 class TestConcat(unittest.TestCase):
@@ -25,11 +25,14 @@ class TestConcat(unittest.TestCase):
             city: str
             concat: str
 
-        concat = self.tmodel.where(Address.City.Country.country.regex(r"^Spain")).first(
-            lambda x: (
+        # fmt: off
+        concat = (
+            self.tmodel
+            .where(lambda x: x.City.Country.country.regex(r"^Spain"))
+            .first(lambda x: (
                 x.address,
                 x.City.city,
-                self.tmodel.concat(
+                Concat(
                     (
                         "Address: ",
                         x.address,
@@ -43,6 +46,8 @@ class TestConcat(unittest.TestCase):
             ),
             flavour=QueryResponse,
         )
+        )
+        # fmt: on
 
         res = QueryResponse(
             address="939 Probolinggo Loop",
@@ -52,18 +57,18 @@ class TestConcat(unittest.TestCase):
         self.assertEqual(concat, res)
 
     def test_concat_without_lambda(self):
-        concat = self.tmodel.where(Address.City.Country.country.regex(r"^Spain")).first(
-            (
-                Address.address,
-                Address.City.city,
-                self.tmodel.concat(
+        concat = self.tmodel.where(lambda x: x.City.Country.country.regex(r"^Spain")).first(
+            lambda x: (
+                x.address,
+                x.City.city,
+                Concat(
                     (
                         "Address: ",
-                        Address.address,
+                        x.address,
                         " - city: ",
-                        Address.City.city,
+                        x.City.city,
                         " - country: ",
-                        Address.City.Country.country,
+                        x.City.Country.country,
                     ),
                     alias="CONCAT",
                 ),
@@ -72,12 +77,13 @@ class TestConcat(unittest.TestCase):
         )
 
         res = {
-            "address_address": "939 Probolinggo Loop",
-            "city_city": "A Coruña (La Coruña)",
+            "address": "939 Probolinggo Loop",
+            "city": "A Coruña (La Coruña)",
             "CONCAT": "Address: 939 Probolinggo Loop - city: A Coruña (La Coruña) - country: Spain",
         }
         self.assertDictEqual(concat, res)
 
 
 if __name__ == "__main__":
+    a = Address.City.Country.country
     unittest.main()

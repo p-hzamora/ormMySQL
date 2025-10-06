@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import Type, override, Any, TYPE_CHECKING, Optional
 
-from ormlambda import Table, Column
-from ormlambda.caster.caster import Caster
+from ormlambda import Table, Column, ColumnProxy
 from .where import Where
 from ormlambda.common.abstract_classes import NonQueryBase
 from .interfaces import IUpdate
@@ -30,9 +29,15 @@ class UpdateKeyError(KeyError):
 class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseElement):
     __visit_name__ = "update"
 
-    def __init__(self, model: T, repository: Any, where: list[Where], engine: Engine) -> None:
+    def __init__(
+        self,
+        model: T,
+        repository: Any,
+        where: list[Where],
+        engine: Engine,
+    ) -> None:
         super().__init__(model, repository, engine=engine)
-        self._where: Optional[list[Where]] = where
+        self._where: Optional[Where] = where
 
     @override
     @property
@@ -42,11 +47,9 @@ class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseEleme
     @override
     def execute(self) -> None:
         if self._where:
-            for where in self._where:
-                query_with_table = where.query(self._engine.dialect)
-                for x in where._comparer:
-                    # TODOH []: Refactor this part. We need to get only the columns withouth __table_name__ preffix
-                    self._query += " " + query_with_table.replace(x.left_condition(self._dialect).table.__table_name__ + ".", "")
+            where_string = self._where.compile(self._engine.dialect).string
+
+            self._query += " " + where_string
         return self._engine.repository.execute_with_values(self._query, self._values)
 
     @override
@@ -61,7 +64,7 @@ class Update[T: Type[Table], TRepo](NonQueryBase[T, TRepo], IUpdate, ClauseEleme
                 if not hasattr(self._model, col):
                     raise UpdateKeyError(self._model, col)
                 col = getattr(self._model, col)
-            if not isinstance(col, Column):
+            if not isinstance(col, Column | ColumnProxy):
                 raise ValueError
 
             if self.__is_valid__(col):

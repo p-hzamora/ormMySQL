@@ -11,6 +11,7 @@ from uuid import UUID as _python_UUID
 from shapely import Point as _python_Point
 
 
+
 class _NoArg(enum.Enum):
     NO_ARG = 0
 
@@ -441,10 +442,13 @@ class Enum(String, TypeEngine[EnumType]):
         self._valid_lookup.update([(value, self._valid_lookup[self._object_lookup[value]]) for value in values])
 
 
+
 class Point(TypeEngine[_python_Point]):
+    __visit_name__ = "point"
     __visit_name__ = "point"
 
     @property
+    def python_type(self) -> Type[_python_Point]:
     def python_type(self) -> Type[_python_Point]:
         return _python_Point
 

@@ -10,7 +10,6 @@ from mysql.connector.pooling import MySQLConnectionPool  # noqa: F401
 from ormlambda.repository import BaseRepository
 
 # Custom libraries
-from .clauses import DropTable
 from ormlambda.repository.response import Response
 from ormlambda.caster import Caster
 
@@ -166,10 +165,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
             with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(query)
         return None
-
-    @override
-    def drop_table(self, name: str) -> None:
-        return DropTable(self).execute(name)
 
     @override
     def database_exists(self, name: str) -> bool:

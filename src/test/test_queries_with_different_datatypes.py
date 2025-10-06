@@ -33,7 +33,7 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         cls.model.create_table("fail")
 
     def setUp(self) -> None:
-        if self.model.count(execute=True):
+        if self.model.count():
             self.model.delete()
 
     @classmethod
@@ -86,11 +86,16 @@ class TestWorkingWithDifferentTypes(unittest.TestCase):
         )
 
         self.model.insert(instance)
-        self.model.where(TableType.pk == 1).update(
-            {"integers": 99, TableType.strings: "new_strings", TableType.points: shp.Point(100, 100), TableType.jsons: {"is_valid": False}},
+        self.model.where(lambda x: x.pk == 1).update(
+            {
+                "integers": 99,
+                TableType.strings: "new_strings",
+                TableType.points: shp.Point(100, 100),
+                TableType.jsons: {"is_valid": False},
+            },
         )
 
-        select = self.model.where(TableType.pk == 1).select_one()
+        select = self.model.where(lambda x: x.pk == 1).select_one()
 
         instance_after_update: TableType = TableType(
             pk=1,

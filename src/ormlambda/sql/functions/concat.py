@@ -1,48 +1,45 @@
 from __future__ import annotations
-import typing as tp
+from typing import Any, Iterable
 
-from ormlambda.sql.clause_info import AggregateFunctionBase
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext, ClauseContextType
+
+from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import ColumnType, AliasType
-from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda import ColumnProxy, TableProxy
+from ormlambda.common import GlobalChecker
+
+VALID_CONCAT_TYPES = ColumnProxy | str | TableProxy
 
 
-type ConcatResponse[TProp] = tuple[str | ColumnType[TProp]]
-
-
-if tp.TYPE_CHECKING:
-    from ormlambda.dialects import Dialect
-
-
-class Concat[T](AggregateFunctionBase[T]):
-    @staticmethod
-    def FUNCTION_NAME() -> str:
-        return "CONCAT"
+class Concat[T](ClauseElement, IAggregate):
+    __visit_name__ = "concat"
 
     def __init__[TProp](
         self,
-        values: ConcatResponse[TProp],
-        alias_clause: AliasType[ColumnType[TProp]] = "concat",
-        context: ClauseContextType = None,
-        *,
-        dialect: Dialect,
+        values: tuple[str | ColumnType[TProp] | TableProxy[T], ...],
+        alias: AliasType[ColumnType[TProp]] = "concat",
     ) -> None:
-        super().__init__(
-            table=None,
-            column=values,
-            alias_clause=alias_clause,
-            context=context,
-            dtype=str,
-            dialect=dialect,
-        )
+        if isinstance(values, TableProxy):
+            values = GlobalChecker.parser_object(values, values._table_class)
+        if not self.is_valid(values):
+            raise ValueError(values)
 
-    @tp.override
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        columns: list[str] = []
+        self.values = values
+        self.alias = alias
 
-        context = ClauseInfoContext(table_context=self._context._table_context, clause_context=None) if self._context else None
+    def used_columns(self):
+        return [x for x in self.values if not isinstance(x, str)]
 
-        for clause in self._convert_into_clauseInfo(self.unresolved_column, context=context, dialect=self._dialect):
-            clause.alias_clause = self.alias_clause
-            columns.append(clause)
-        return self._concat_alias_and_column(f"{self.FUNCTION_NAME()}({ClauseInfo.join_clauses(columns,dialect=self._dialect)})", self._alias_aggregate)
+    @property
+    def dtype(self) -> str:
+        return str
+
+    @staticmethod
+    def is_valid(values: Any) -> bool:
+        if not isinstance(values, Iterable):
+            return False
+        for val in values:
+            if not isinstance(val, VALID_CONCAT_TYPES):
+                return False
+
+        return True

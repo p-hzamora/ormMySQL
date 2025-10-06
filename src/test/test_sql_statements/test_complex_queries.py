@@ -11,7 +11,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from pydantic import BaseModel
 from test.config import create_env_engine  # noqa: E402
 from test.models import Address, City  # noqa: F401
-from ormlambda import ORM, Column, OrderType, JoinType
+from ormlambda import ORM, Count, OrderType, JoinType, Alias
 
 engine = create_env_engine()
 
@@ -28,7 +28,14 @@ class TestComplexQueries(unittest.TestCase):
         cls.cmodel = ORM(City, engine)
 
     def query(self, char_to_filter: str, limit: Optional[int] = None, offset: int = 0) -> tuple[Response, ...] | Response:
-        response = self.cmodel.order(Column(column_name="sumCities"), "DESC").where([City.Country.country.like(f"%{char_to_filter}%")]).groupby(City.Country.country)
+        # fmt: off
+        response = (
+            self.cmodel
+                .order(lambda x: x.sumCities, "DESC")
+                .where(lambda x: x.Country.country.like(f"%{char_to_filter}%"))
+                .groupby(lambda x: x.Country.country)
+        )
+        # fmt: on
 
         if limit:
             response.limit(limit)
@@ -37,9 +44,9 @@ class TestComplexQueries(unittest.TestCase):
             response.offset(offset)
 
         res = response.select(
-            (
-                City.Country.country,
-                self.cmodel.count(City, "sumCities"),
+            lambda x: (
+                x.Country.country,
+                Count(alias="sumCities"),
             ),
             flavour=Response,
         )
@@ -50,18 +57,21 @@ class TestComplexQueries(unittest.TestCase):
             pkCity: int
             count: int
 
+        PK = 312
+        # fmt:off
         res = (
-            self.amodel.where(Address.City.city_id >= 312)
-            .having(Column(column_name="count") > 1)
-            .groupby(Address.city_id)
+            self.amodel.where(lambda x: x.City.city_id >= PK)
+            .having(lambda x: x.count > 1)
+            .groupby(lambda x: x.city_id)
             .select(
-                (
-                    self.amodel.alias(Address.City.city_id, "pkCity"),
-                    self.amodel.count(Address.address_id, "count"),
+                lambda x: (
+                    Alias(x.City.city_id, "pkCity"),
+                    Count(x.address_id, "count"),
                 ),
                 flavour=Response,
             )
         )
+        # fmt:on
         RESULT = (
             Response(pkCity=312, count=2),
             Response(pkCity=576, count=2),
@@ -91,18 +101,21 @@ class TestComplexQueries(unittest.TestCase):
             countryName: str
             contar: int
 
+        # fmt:off
         res = (
-            self.amodel.order("contar", OrderType.DESC)
-            .groupby(Address.City.Country.country)
+            self.amodel
+            .order(lambda x: x.contar, OrderType.DESC)
+            .groupby(lambda x: x.City.Country.country)
             .first(
-                (
-                    self.amodel.alias(Address.City.Country.country, "countryName"),
-                    self.amodel.count(alias="contar"),
+                lambda x: (
+                    Alias(x.City.Country.country, "countryName"),
+                    Count(alias="contar"),
                 ),
                 flavour=Response,
                 by=JoinType.LEFT_EXCLUSIVE,
             )
         )
+        # fmt:on
 
         EXPECTED = Response(countryName="India", contar=60)
         self.assertEqual(res, EXPECTED)

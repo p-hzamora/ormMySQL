@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import Type, Any, TYPE_CHECKING, Optional
-from ormlambda.dialects.interface.dialect import Dialect
+from ormlambda.dialects import Dialect
 import shapely as shp
 
 # Custom libraries
 from ormlambda.sql.clauses import Alias
 
 if TYPE_CHECKING:
-    from ormlambda.common.abstract_classes.decomposition_query import ClauseInfo
+    from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.sql.clauses import Select
 
@@ -88,10 +88,15 @@ class Response[TFlavour, *Ts]:
             nonlocal data
             replacer_dicc: dict[str, str] = {}
 
-            for col in self._select.all_clauses:
-                if hasattr(col, "_alias_aggregate") or col.alias_clause is None or isinstance(col, Alias):
+            for col in self._select.columns:
+                if isinstance(col, Alias):
                     continue
-                replacer_dicc[col.alias_clause] = col.column
+
+                if hasattr(col, "alias"):
+                    continue
+
+                alias = col.alias if col.alias else col.get_full_chain("_")
+                replacer_dicc[alias] = col.column_name
 
             cleaned_column_names = [replacer_dicc.get(col, col) for col in self._columns]
 
@@ -116,8 +121,8 @@ class Response[TFlavour, *Ts]:
             new_row: list = []
             for i, data in enumerate(row):
                 alias = self._columns[i]
-                clause_info = self._select[alias]
-                parse_data = self._caster.for_value(data, value_type=clause_info.dtype).from_database
+                clause = self._select[alias]
+                parse_data = self._caster.for_value(data, value_type=clause.dtype).from_database
                 new_row.append(parse_data)
             new_row = tuple(new_row)
             if not isinstance(new_row, tuple):

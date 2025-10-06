@@ -1,10 +1,20 @@
 from __future__ import annotations
 import abc
+from typing import Any, Iterable, TYPE_CHECKING
 
-from ormlambda.common.interfaces.IQueryCommand import IQuery
+if TYPE_CHECKING:
+    from ormlambda import ColumnProxy
 
 
-class IAggregate(IQuery):
-    @classmethod
+class IAggregate():
+    alias: str
+
+    def __repr__(self):
+        return f"{IAggregate.__name__}: {type(self).__name__}"
+
     @abc.abstractmethod
-    def FUNCTION_NAME(cls) -> str: ...
+    def used_columns(self) -> Iterable[ColumnProxy]: ...
+
+    @property
+    @abc.abstractmethod
+    def dtype(self) -> Any: ...

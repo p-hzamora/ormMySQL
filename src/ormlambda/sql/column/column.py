@@ -1,9 +1,9 @@
 from __future__ import annotations
-import abc
-from typing import Annotated, Any, ClassVar, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
+from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_type_hints, overload, get_origin, get_args
+from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
-from ormlambda.sql.type_api import TypeEngine
+from ormlambda import util
 
 if TYPE_CHECKING:
     import re
@@ -23,7 +23,8 @@ from ormlambda.types import (
 )
 
 
-class Column[TProp]:
+class Column[TProp](ClauseElement):
+    __visit_name__ = "column"
     PRIVATE_CHAR: ClassVar[str] = "_"
 
     _dbtype: Optional[TypeEngine]
@@ -43,6 +44,8 @@ class Column[TProp]:
         "__private_name",
         "_check",
     )
+
+    table: Type[Table]
 
     @overload
     def __init__(self, *, column_name: str): ...
@@ -100,8 +103,8 @@ class Column[TProp]:
     def __str__(self) -> str:
         return self.table.__table_name__ + "." + self.column_name
 
-    def __set_name__[T: Table](self, owner: TableType[T], name: str) -> None:
-        self.table: TableType[T] = owner
+    def __set_name__(self, owner: TableType[Table], name: str) -> None:
+        self.table: TableType[Table] = owner
         self.column_name = name
         self.__private_name = self.PRIVATE_CHAR + name
 
@@ -133,8 +136,11 @@ class Column[TProp]:
             )
         )
 
+    @util.preload_module("ormlambda.sql.type_api")
     def _fill_from_annotations[T: Table](self, obj: Type[T], name: str) -> None:
         """Read the metada when using Annotated typing class, and set the attributes accordingly"""
+
+        TypeEngine = util.preloaded.sql_type_api.TypeEngine
 
         annotations = get_type_hints(obj, include_extras=True)
         if name in annotations:
@@ -182,9 +188,9 @@ class Column[TProp]:
     def dbtype(self) -> TypeEngine[TProp]:
         return self._dbtype if self._dbtype else self.dtype
 
-    @abc.abstractmethod
+    @util.preload_module("ormlambda.sql.comparer")
     def __comparer_creator(self, other: ColumnType, compare: ComparerType) -> Comparer:
-        from ormlambda.sql.comparer import Comparer
+        Comparer = util.preloaded.sql_comparer.Comparer
 
         return Comparer(self, other, compare)
 
@@ -215,20 +221,21 @@ class Column[TProp]:
     def not_contains(self, other: ColumnType) -> Comparer:
         return self.__comparer_creator(other, ConditionType.NOT_IN.value)
 
+    @util.preload_module("ormlambda.sql.comparer")
     def regex(self, pattern: str, flags: Optional[re.RegexFlag | Iterable[re.RegexFlag]] = None) -> Regex:
-        from ormlambda.sql.comparer import Regex
+        Regex = util.preloaded.sql_comparer.Regex
 
         if not isinstance(flags, Iterable):
             flags = (flags,)
         return Regex(
             left_condition=self,
             right_condition=pattern,
-            context=None,
             flags=flags,
         )
 
+    @util.preload_module("ormlambda.sql.comparer")
     def like(self, pattern: str) -> Like:
-        from ormlambda.sql.comparer import Like
+        Like = util.preloaded.sql_comparer.Like
 
         return Like(self, pattern)
 

@@ -9,11 +9,7 @@ from typing import (
     Sequence,
     Type,
     Iterable,
-    TYPE_CHECKING,
 )
-
-if TYPE_CHECKING:
-    from ormlambda.statements.types import TypeExists
 
 
 type _DBAPICursorDescription = Sequence[
@@ -141,9 +137,6 @@ class IRepositoryBase(ABC):
 
     @abstractmethod
     def execute(self, query: str) -> None: ...
-
-    @abstractmethod
-    def drop_table(self, name: str) -> None: ...
 
     @abstractmethod
     def table_exists(self, name: str) -> bool: ...

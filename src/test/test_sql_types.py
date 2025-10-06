@@ -1,14 +1,15 @@
 import sys
 from pathlib import Path
 import unittest
-from ormlambda.sql.type_api import TypeEngine
 from parameterized import parameterized
 
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
-from ormlambda import Table, Column
-from ormlambda import (
+
+from ormlambda.sql.type_api import TypeEngine
+from ormlambda.sql.sqltypes import (
+    INTEGER,
     STRING,
     CHAR,
     TEXT,

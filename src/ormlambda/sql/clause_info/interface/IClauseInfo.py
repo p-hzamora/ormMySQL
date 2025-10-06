@@ -1,16 +1,14 @@
 from __future__ import annotations
 import abc
-import typing as tp
-
-from ormlambda import Table
+from typing import Optional, Type, TYPE_CHECKING
 from ormlambda.common.interfaces.IQueryCommand import IQuery
 from ormlambda.sql.types import (
     TableType,
     ColumnType,
 )
 
-
-from ..clause_info_context import ClauseContextType
+if TYPE_CHECKING:
+    from ormlambda import Table
 
 
 class IClauseInfo[T: Table](IQuery):
@@ -19,10 +17,10 @@ class IClauseInfo[T: Table](IQuery):
     def table(self) -> TableType[T]: ...
     @property
     @abc.abstractmethod
-    def alias_clause(self) -> tp.Optional[str]: ...
+    def alias_clause(self) -> Optional[str]: ...
     @property
     @abc.abstractmethod
-    def alias_table(self) -> tp.Optional[str]: ...
+    def alias_table(self) -> Optional[str]: ...
     @property
     @abc.abstractmethod
     def column(self) -> str: ...
@@ -31,7 +29,4 @@ class IClauseInfo[T: Table](IQuery):
     def unresolved_column(self) -> ColumnType: ...
     @property
     @abc.abstractmethod
-    def context(self) -> ClauseContextType: ...
-    @property
-    @abc.abstractmethod
-    def dtype[TProp](self) -> tp.Optional[tp.Type[TProp]]: ...
+    def dtype[TProp](self) -> Optional[Type[TProp]]: ...

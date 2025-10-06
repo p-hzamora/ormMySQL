@@ -1,42 +1,28 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Optional, Any, Type, cast, overload, ClassVar
+import logging
+from typing import Callable, TYPE_CHECKING, Optional, Any, Type, overload
 
-from ormlambda.common.interfaces.IQueryCommand import IQuery
-from ormlambda.sql.elements import Element
+from ormlambda.sql.ddl import BaseDDLElement
 
 if TYPE_CHECKING:
     from ormlambda.sql.comparer import Comparer
     from ormlambda import Table
-    from ormlambda.sql.clause_info.clause_info_context import ClauseContextType
     from ormlambda.dialects import Dialect
 
+from ormlambda.util import preloaded as _preloaded
 
-class ForeignKeyContext(set["ForeignKey"]):
-    def clear(self):
-        to_remove = {x for x in self if not cast(ForeignKey, x)._keep_alive}
-        for el in to_remove:
-            self.remove(el)
-
-    def remove(self, element):
-        return super().remove(element)
-
-    def pop(self, item):
-        for el in self:
-            if el != item:
-                continue
-
-            if not cast(ForeignKey, el)._keep_alive:
-                super().remove(el)
-            return el
-
-    def add(self, element):
-        return super().add(element)
+log = logging.getLogger(__name__)
 
 
-class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
+class ForeignKey[TLeft: Table, TRight: Table](BaseDDLElement):
     __visit_name__ = "foreign_key"
 
-    stored_calls: ClassVar[ForeignKeyContext] = ForeignKeyContext()
+    __slots__ = (
+        "_tright",
+        "_relationship",
+        "_comparer",
+        "_clause_name",
+    )
 
     @overload
     def __new__(self, comparer: Comparer, clause_name: str) -> None: ...
@@ -59,11 +45,9 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         *,
         comparer: Optional[Comparer] = None,
         clause_name: Optional[str] = None,
-        keep_alive: bool = False,
         **kwargs: Any,
     ) -> None:
         self.kwargs = kwargs
-        self._keep_alive = keep_alive
         if comparer is not None and clause_name is not None:
             self.__init__with_comparer(comparer, clause_name, **kwargs)
         else:
@@ -71,8 +55,8 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
 
     def __init__with_comparer(self, comparer: Comparer, clause_name: str, **kwargs) -> None:
         self._relationship = None
-        self._tleft: TLeft = comparer.left_condition(**kwargs).table
-        self._tright: TRight = comparer.right_condition(**kwargs).table
+        self._tleft: TLeft = comparer.left_condition.table
+        self._tright: TRight = comparer.right_condition.table
         self._clause_name: str = clause_name
         self._comparer: Comparer = comparer
 
@@ -88,10 +72,9 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         self._clause_name: str = name
 
     def __get__(self, obj: Optional[TRight], objtype=None) -> ForeignKey[TLeft, TRight] | TRight:
-        if not obj:
-            ForeignKey.stored_calls.add(self)
-            return self
-        return self._tright
+        if obj:
+            return self.tright
+        return self
 
     def __set__(self, obj, value):
         raise AttributeError(f"The {ForeignKey.__name__} '{self._clause_name}' in the '{self._tleft.__table_name__}' table cannot be overwritten.")
@@ -102,50 +85,45 @@ class ForeignKey[TLeft: Table, TRight: Table](Element, IQuery):
         return getattr(self._tright, name)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" f"left={self._tleft.__name__ if self._tleft else 'None'}, " f"right={self._tright.__name__ if self._tright else 'None'}, " f"name={self._clause_name})"
+        return f"{self.__class__.__name__}(left={self._tleft.__name__ if self._tleft else 'None'}, right={self._tright.__name__ if self._tright else 'None'}, name={self._clause_name})"
 
     @property
-    def tleft(self) -> TLeft:
+    def tleft(self) -> Table:
         return self._tleft
 
     @property
-    def tright(self) -> TRight:
+    def tright(self) -> Table:
         return self._tright
 
     @property
     def clause_name(self) -> str:
         return self._clause_name
 
-    def query(self, dialect: Dialect, **kwargs) -> str:
-        compare = self.resolved_function(dialect)
-        left_col = compare.left_condition(dialect).column
-        rcon = alias if (alias := compare.right_condition(dialect).alias_table) else compare.right_condition(dialect).table.__table_name__
-        return f"FOREIGN KEY ({left_col}) REFERENCES {rcon}({compare.right_condition(dialect).column})"
-
     def get_alias(self, dialect: Dialect) -> str:
-        self._comparer = self.resolved_function(dialect)
-        self._comparer._dialect = dialect
-        lcol = self._comparer.left_condition(dialect)._column.column_name
-        rcol = self._comparer.right_condition(dialect)._column.column_name
-        return f"{self.tleft.__table_name__}_{lcol}_{rcol}"
+        self._comparer = self.resolved_function()
+        # TODOH []: look into why i dropped 'lcol' variable
+        return f"{self.tleft.__table_name__}_{self.clause_name}"
 
-    @classmethod
-    def create_query(cls, orig_table: Table, dialect: Dialect) -> list[str]:
-        clauses: list[str] = []
+    @_preloaded.preload_module("ormlambda.sql.table")
+    def resolved_function(self) -> Comparer:
+        util = _preloaded.sql_table
 
-        for attr in orig_table.__dict__.values():
-            if isinstance(attr, ForeignKey):
-                clauses.append(attr.query(dialect))
-        return clauses
-
-    def resolved_function[LProp: Any, RProp: Any](self, dialect: Dialect, context: Optional[ClauseContextType] = None) -> Comparer:
-        """ """
         if self._comparer is not None:
             return self._comparer
 
-        left = self._tleft
-        right = self._tright
+        left = util.TableProxy(self._tleft)
+        right = util.TableProxy(self._tright)
         comparer = self._relationship(left, right)
-        comparer.set_context(context)
-        comparer._dialect = dialect
         return comparer
+
+    def __hash__(self):
+        return hash(
+            (
+                self._tleft,
+                self._tright,
+                self._clause_name,
+            )
+        )
+
+    def __eq__(self, other: ForeignKey):
+        return hash(other) == hash(self)

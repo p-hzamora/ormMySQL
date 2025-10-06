@@ -1,4 +1,4 @@
-from ormlambda.dialects.interface import Dialect
+from ormlambda.dialects import Dialect
 from ormlambda.sql import compiler
 from typing import Optional, Any
 from types import ModuleType

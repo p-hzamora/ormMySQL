@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 from types import NoneType
-from typing import Any, TYPE_CHECKING, Type
+from typing import Any, TYPE_CHECKING, Type, cast
 import unittest
 from parameterized import parameterized
 from shapely import Point
@@ -11,15 +11,18 @@ from shapely import Point
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
+from ormlambda.common.global_checker import GlobalChecker
+from ormlambda.sql.elements import ClauseElement
+
 if TYPE_CHECKING:
-    from ormlambda.sql.clause_info import AggregateFunctionBase
     from ormlambda.dialects import Dialect
 from ormlambda.common.errors import NotKeysInIAggregateError
-from ormlambda.databases.my_sql.clauses.ST_AsText import ST_AsText
-from ormlambda.databases.my_sql.clauses.ST_Contains import ST_Contains
-from ormlambda.sql.clause_info import ClauseInfo, ClauseInfoContext
+from ormlambda.dialects.mysql.clauses.ST_AsText import ST_AsText
+from ormlambda.dialects.mysql.clauses.ST_Contains import ST_Contains
+from ormlambda.sql.clause_info import ClauseInfo
 
 from ormlambda.sql import functions as func
+from ormlambda import ColumnProxy
 from test.models import A, C, TableType
 from ormlambda.dialects import mysql
 
@@ -76,8 +79,9 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query(DIALECT), "a.pk_a")
 
     def test_passing_callable_alias_clause(self):
-        ci = ClauseInfoMySQL(A, A.name_a, alias_clause=lambda x: "resolver_with_lambda_{column}")
-        self.assertEqual(ci.query(DIALECT), "a.name_a AS `resolver_with_lambda_name_a`")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.name_a)[0]
+        ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
+        self.assertEqual(ci.query(DIALECT), "`a`.name_a AS `resolver_with_lambda_name_a`")
 
     def test_passing_string_with_placeholder_alias_clause(self):
         ci = ClauseInfoMySQL(A, A.name_a, alias_clause="resolver_with_lambda_{column}")
@@ -97,7 +101,7 @@ class TestClauseInfo(unittest.TestCase):
         )
     )
     def test_passing_callable_and_custom_method(self, column, string_col: str, result: object):
-        def message_placeholder(ci: ClauseInfo):
+        def message_placeholder(ci: ColumnProxy):
             return ci.dtype.__name__
 
         ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
@@ -172,12 +176,14 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query(DIALECT), "`ALIAS_TABLE`.* AS `ALIAS_FOR_ALL_CLAUSE`")
 
     def test_passing_aggregation_method(self):
-        ci = ST_AsText(A.data_a, alias_clause="cast_point", dialect=DIALECT)
-        self.assertEqual(ci.query(DIALECT), "ST_AsText(a.data_a) AS `cast_point`")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
+        ci = ST_AsText(column_proxy, alias="cast_point")
+        self.assertEqual(ci.compile(DIALECT).string, "ST_AsText(`a`.data_a) AS `cast_point`")
 
     def test_passing_aggregation_method_with_alias_inside_of_the_method(self):
-        ci = ST_AsText(A.data_a, alias_table="new_table", dialect=DIALECT)
-        self.assertEqual(ci.query(DIALECT), "ST_AsText(`new_table`.data_a) AS `data_a`")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
+        ci = ST_AsText(column_proxy, alias="alias-for-clause")
+        self.assertEqual(ci.compile(DIALECT).string, "ST_AsText(`a`.data_a) AS `alias-for-clause`")
 
     @parameterized.expand(
         (
@@ -186,29 +192,36 @@ class TestClauseInfo(unittest.TestCase):
             (func.Sum, "sum", DIALECT),
         )
     )
-    def test_max_function(self, fn: Type[AggregateFunctionBase], result: str, dialect: Dialect):
-        ci = fn(A.data_a, context=ClauseInfoContext(table_context={A: "new_table"}), dialect=dialect)
-        self.assertEqual(ci.query(DIALECT), f"{result.upper()}(`new_table`.data_a) AS `{result}`")
+    def test_max_function(self, fn: Type[ClauseElement], result: str, dialect: Dialect):
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
+        ci = fn(column_proxy)
+        self.assertEqual(ci.compile(dialect).string, f"{result.upper()}(`a`.data_a) AS `{result}`")
 
     def test_max_function_with_clause_alias(self):
-        ci = func.Max(A.data_a, alias_clause="alias-clause", dialect=DIALECT)
-        self.assertEqual(ci.query(DIALECT), "MAX(a.data_a) AS `alias-clause`")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
+
+        ci = func.Max(column_proxy, "alias-clause")
+        self.assertEqual(ci.compile(DIALECT).string, "MAX(`a`.data_a) AS `alias-clause`")
 
     def test_passing_aggregation_method_ST_Contains(self):
-        comparer = ST_Contains(TableType.points, Point(5, -5), dialect=DIALECT)
-        mssg: str = "ST_Contains(ST_AsText(table_type.points), ST_AsText(%s))"
-        self.assertEqual(comparer.query(DIALECT), mssg)
+        column_proxy = GlobalChecker.resolved_callback_object(TableType, lambda x: cast(TableType, x).points)[0]
+        comparer = ST_Contains(column_proxy, Point(5, -5))
+        mssg: str = "ST_Contains(ST_AsText(`table_type`.points), ST_AsText(%s))"
+        self.assertEqual(comparer.compile(DIALECT).string, mssg)
 
     def test_alias_table_property(self):
-        ci = ClauseInfoMySQL(A, A.name_a, alias_table="{table}~{column}")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.name_a)[0]
+        ci = ClauseInfoMySQL(A, column_proxy, alias_table="{table}~{column}")
         self.assertEqual(ci.alias_table, "a~name_a")
 
     def test_alias_clause_property(self):
-        ci = ClauseInfoMySQL(A, A.name_a, alias_clause="{table}~{column}")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.name_a)[0]
+        ci = ClauseInfoMySQL(A, column_proxy, alias_clause="{table}~{column}")
         self.assertEqual(ci.alias_clause, "a~name_a")
 
     def test_alias_clause_property_as_none(self):
-        ci = ClauseInfoMySQL(A, A.name_a, alias_table="{table}~{column}")
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.name_a)[0]
+        ci = ClauseInfoMySQL(A, column_proxy, alias_table="{table}~{column}")
         self.assertEqual(ci.alias_clause, None)
 
     @parameterized.expand(
@@ -247,13 +260,15 @@ class TestClauseInfo(unittest.TestCase):
 
     def test_raise_NotKeysInIAggregateError(self) -> None:
         with self.assertRaises(NotKeysInIAggregateError) as err:
-            ST_AsText(A.data_a, alias_clause="{table}~{column}", dialect=DIALECT).query(DIALECT)
+            column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
+            ST_AsText(column_proxy, alias="{table}~{column}").compile(DIALECT)
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table', 'column']"
         self.assertEqual(mssg, err.exception.__str__())
 
     def test_raise_NotKeysInIAggregateError_with_one_placeholder(self) -> None:
         with self.assertRaises(NotKeysInIAggregateError) as err:
-            ST_AsText(A.data_a, alias_clause="{table}", dialect=DIALECT).query(DIALECT)
+            column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
+            ST_AsText(column_proxy, alias="{table}").compile(DIALECT)
         mssg: str = "We cannot use placeholders in IAggregate class. You used ['table']"
         self.assertEqual(mssg, err.exception.__str__())
 
@@ -262,49 +277,16 @@ class TestClauseInfo(unittest.TestCase):
         self.assertEqual(ci.query(DIALECT), "b.pk_b, b.data_b, b.fk_a, b.data")
 
 
-class TestContextClauseInfo(unittest.TestCase):
-    def test_context(self):
-        context = ClauseInfoContext()
-        ci_parent_dataC = ClauseInfoMySQL(
-            table=C,
-            column=C.data_c,
-            alias_table="alias-for-{table}",
-            alias_clause="{column}~alias",
-            context=context,
-        )
-        ci_column_dataC = ClauseInfoMySQL(C, C.data_c, context=context)
-        ci_table = ClauseInfoMySQL(C, C, context=context)
-
-        ci_column_fkB_with_alias_clause = ClauseInfoMySQL(C, C.fk_b, alias_clause="{column}-random", context=context)
-
-        self.assertEqual(ci_column_fkB_with_alias_clause.alias_clause, "fk_b-random")
-        self.assertEqual(ci_parent_dataC.alias_table, "alias-for-c")
-        self.assertEqual(ci_parent_dataC.alias_table, ci_table.alias_table)
-
-        self.assertEqual(ci_parent_dataC.alias_clause, "data_c~alias")
-        self.assertEqual(ci_parent_dataC.alias_clause, ci_column_dataC.alias_clause)
-
-    def test_table_context(self) -> None:
-        context = ClauseInfoContext()
-        parent = ClauseInfoMySQL(C, None, alias_table="my-custom-{table}-table", context=context)
-        child = ClauseInfoMySQL(C, C.data_c, alias_clause="{table}", context=context)
-        child_with_his_own_alias = ClauseInfoMySQL(C, alias_table="other-alias", context=context)
-
-        self.assertEqual(child.alias_clause, "c")
-        self.assertEqual(child.alias_table, parent.alias_table)
-        self.assertEqual(child_with_his_own_alias.alias_table, parent.alias_table)
-
-    def test_use_context_even_if_clause_is_not_specified(self) -> None:
-        context = ClauseInfoContext()
-        parent = ClauseInfoMySQL(C, alias_table="my-custom-alias", context=context)
-
-        child = ClauseInfoMySQL(C, context=context)
-
-        self.assertEqual(parent.alias_table, "my-custom-alias")
-        self.assertEqual(parent.alias_table, child.alias_table)
-
+class TestPathContextIntegration(unittest.TestCase):
     def test_alias_clause_NULL_when_no_column_is_specified(self):
         self.assertEqual(ClauseInfoMySQL(A).column, "%s")
+
+
+class TestClauseInfoUsingColumnProxy(unittest.TestCase):
+    def test_passing_callable_alias_clause(self):
+        column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.name_a)[0]
+        ci = ClauseInfoMySQL(A, column_proxy, alias_clause=lambda x: "resolver_with_lambda_{column}")
+        self.assertEqual(ci.query(DIALECT), "`a`.name_a AS `resolver_with_lambda_name_a`")
 
 
 if __name__ == "__main__":

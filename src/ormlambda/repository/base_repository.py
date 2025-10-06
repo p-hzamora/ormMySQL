@@ -5,7 +5,7 @@ import abc
 
 if TYPE_CHECKING:
     from ormlambda import URL as _URL
-    from ormlambda.dialects.interface.dialect import Dialect
+    from ormlambda.dialects import Dialect
 
 
 class BaseRepository[TPool](IRepositoryBase):

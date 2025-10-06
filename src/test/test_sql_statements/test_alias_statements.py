@@ -9,7 +9,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from test.config import create_sakila_engine  # noqa: E402
 from test.models import Address  # noqa: F401
-from ormlambda import ORM
+from ormlambda import ORM, Alias
 
 
 class TestAlias(unittest.TestCase):
@@ -19,12 +19,12 @@ class TestAlias(unittest.TestCase):
         cls.model = ORM(Address, engine)
 
     def test_alias_with_alias_attribute(self):
-        res = self.model.where(Address.City.Country.country == "Spain").first(
-            (
-                Address.address_id,
-                Address.district,
-                Address.City.city,
-                Address.City.Country.country,
+        res = self.model.where(lambda x: x.City.Country.country == "Spain").first(
+            lambda x: (
+                x.address_id,
+                x.district,
+                x.City.city,
+                x.City.Country.country,
             ),
             flavour=dict,
             alias="{column}",
@@ -37,13 +37,13 @@ class TestAlias(unittest.TestCase):
         }
         self.assertDictEqual(res, EXPECTED)
 
-    def test_alias_passing_alias_method(self):
-        res = self.model.where(Address.City.Country.country == "Spain").first(
-            (
-                self.model.alias(Address.address_id, "{column}"),
-                self.model.alias(Address.district, "{column}"),
-                self.model.alias(Address.City.city, "{column}"),
-                self.model.alias(Address.City.Country.country, "{column}"),
+    def test_AAalias_passing_alias_method(self):
+        res = self.model.where(lambda x: x.City.Country.country == "Spain").first(
+            lambda x: (
+                Alias(x.address_id, "{column}"),
+                Alias(x.district, "{column}"),
+                Alias(x.City.city, "{column}"),
+                Alias(x.City.Country.country, "{column}"),
             ),
             flavour=dict,
         )

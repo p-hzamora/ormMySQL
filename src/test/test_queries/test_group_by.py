@@ -11,6 +11,7 @@ from ormlambda.dialects import mysql
 
 DIALECT = mysql.dialect
 
+
 class TestGroupBy(unittest.TestCase):
     def test_Concat(self) -> None:
         concat = func.Concat(

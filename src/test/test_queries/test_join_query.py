@@ -6,12 +6,11 @@ from pathlib import Path
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.sql.foreign_key import ForeignKey
-from ormlambda.sql.clause_info.clause_info_context import ClauseInfoContext
 from ormlambda import JoinType
 from ormlambda.sql.clauses import JoinSelector
 from test.models import City, Country, Address  # noqa: E402
 from ormlambda.dialects import mysql
+from ormlambda.sql.context import PATH_CONTEXT
 
 DIALECT = mysql.dialect
 
@@ -19,7 +18,7 @@ DIALECT = mysql.dialect
 class TestJoinSelector(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        ForeignKey.stored_calls.clear()
+        PATH_CONTEXT.clear_all_context()
 
         return None
 
@@ -72,20 +71,16 @@ class TestJoinSelector(unittest.TestCase):
         self.assertEqual(query, query_parser)
 
     def test_join_selectors(self):
-        ctx = ClauseInfoContext()
-
         s1 = JoinSelector[Address, City](
             by=JoinType.LEFT_EXCLUSIVE,
             where=Address.city_id == City.city_id,
             dialect=DIALECT,
-            context=ctx,
         )
 
         s2 = JoinSelector[City, Country](
             by=JoinType.LEFT_EXCLUSIVE,
             where=City.country_id == Country.country_id,
             dialect=DIALECT,
-            context=ctx,
         )
         query_parser = JoinSelector.join_selectors(DIALECT, s1, s2)
         query = "LEFT JOIN city AS `city` ON address.city_id = `city`.city_id\nLEFT JOIN country AS `country` ON `city`.country_id = `country`.country_id"

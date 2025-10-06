@@ -7,22 +7,15 @@ from ormlambda.statements import Statements
 from ormlambda.engine import Engine
 
 if TYPE_CHECKING:
-    from ormlambda.statements.interfaces import IStatements_two_generic
-
-
-# endregion
+    from ormlambda.statements.interfaces import IStatements
 
 
 class BaseModel[T]:
     """
-    Class to select the correct BaseStatement class depends on the repository.
-
-    Contiene los metodos necesarios para hacer consultas a una tabla
+    This class contains those methods to make query to a table
     """
 
-    # region Constructor
-
-    def __new__[TPool](cls, model: Type[T], engine: Engine) -> IStatements_two_generic[T, TPool]:
+    def __new__(cls, model: Type[T], engine: Engine) -> IStatements[T]:
         if engine is None:
             raise ValueError("`None` cannot be passed to the `repository` attribute when calling the `BaseModel` class")
 

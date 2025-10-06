@@ -4,9 +4,8 @@ from ormlambda.sql.elements import ClauseElement
 
 class Offset(ClauseElement):
     __visit_name__ = "offset"
-    OFFSET = "OFFSET"
 
-    def __init__(self, number: int, **kwargs) -> None:
+    def __init__(self, number: int) -> None:
         if not isinstance(number, int):
             raise ValueError
         self._number: int = number

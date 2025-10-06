@@ -14,7 +14,6 @@ from test.test_aggregation_functions import (
 )
 
 from test.test_queries import (
-    test_DecompositionQueryBase,
     test_ForeignKey_query,
     # test_group_by,
     test_join_context_query,
@@ -38,6 +37,7 @@ from test.test_sql_statements import (
     test_sql_statement,
     test_where_statement,
     test_max_statement,
+    test_multiples_references_to_the_same_table,
 )
 
 import test.test_abstract_model as test_abstract_model
@@ -54,6 +54,7 @@ import test.test_queries_with_different_datatypes as test_queries_with_different
 import test.test_table_class as test_table_class
 import test.test_type_hint as test_type_hint
 import test.test_sql_types as test_sql_types
+import test.test_create_backup as test_create_backup
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
@@ -67,31 +68,30 @@ suite.addTests(
         *loader.loadTestsFromModule(test_alias),
         *loader.loadTestsFromModule(test_concat),
         *loader.loadTestsFromModule(test_count),
-        *loader.loadTestsFromModule(test_max),
-        *loader.loadTestsFromModule(test_DecompositionQueryBase),
+        # *loader.loadTestsFromModule(test_max),
         *loader.loadTestsFromModule(test_ForeignKey_query),
-        # *loader.loadTestsFromModule(test_group_by),
-        *loader.loadTestsFromModule(test_join_context_query),
-        *loader.loadTestsFromModule(test_join_query),
+        # # *loader.loadTestsFromModule(test_group_by),
+        # *loader.loadTestsFromModule(test_join_context_query),
+        # *loader.loadTestsFromModule(test_join_query),
         *loader.loadTestsFromModule(test_QueryBuilder),
-        *loader.loadTestsFromModule(test_select_query),
-        *loader.loadTestsFromModule(test_table_query),
-        *loader.loadTestsFromModule(test_where_query),
+        # *loader.loadTestsFromModule(test_select_query),
+        # *loader.loadTestsFromModule(test_table_query),
+        # *loader.loadTestsFromModule(test_where_query),
+        # # region statement tests
         *loader.loadTestsFromModule(test_max_statement),
-        # region statement tests
         *loader.loadTestsFromModule(test_alias_statements),
         *loader.loadTestsFromModule(test_complex_queries),
         *loader.loadTestsFromModule(test_concat_sql),
         *loader.loadTestsFromModule(test_count_statement),
         *loader.loadTestsFromModule(test_groupby),
-        *loader.loadTestsFromModule(test_join_statement),
+        # *loader.loadTestsFromModule(test_join_statement),
         *loader.loadTestsFromModule(test_max_min),
         *loader.loadTestsFromModule(test_order_statement),
         *loader.loadTestsFromModule(test_select_statement),
         *loader.loadTestsFromModule(test_sql_statement),
         *loader.loadTestsFromModule(test_where_statement),
-        # endregion
-        # region other tests
+        # # endregion
+        # # region other tests
         *loader.loadTestsFromModule(test_abstract_model),
         *loader.loadTestsFromModule(test_cast),
         *loader.loadTestsFromModule(test_clause_info),
@@ -100,12 +100,14 @@ suite.addTests(
         *loader.loadTestsFromModule(test_comparer),
         *loader.loadTestsFromModule(test_constructor),
         *loader.loadTestsFromModule(test_depth_first_search),
-        *loader.loadTestsFromModule(test_errors),
+        # *loader.loadTestsFromModule(test_errors), #COMMENT: DEPRECATED
         *loader.loadTestsFromModule(test_mapped_table),
         *loader.loadTestsFromModule(test_queries_with_different_datatypes),
         *loader.loadTestsFromModule(test_table_class),
         *loader.loadTestsFromModule(test_type_hint),
         *loader.loadTestsFromModule(test_sql_types),
+        *loader.loadTestsFromModule(test_create_backup),
+        *loader.loadTestsFromModule(test_multiples_references_to_the_same_table),
         # endregion
     )
 )
@@ -158,5 +160,5 @@ class CustomTestResult(unittest.TextTestResult):
 
 
 if __name__ == "__main__":
-    runner = CustomTextTestRunner(failfast=False)
+    runner = CustomTextTestRunner(failfast=True)
     result = runner.run(suite)

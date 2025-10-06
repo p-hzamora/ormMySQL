@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Literal
+from pathlib import Path
+from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TextIO
 from ormlambda.engine import url
-from ormlambda.sql.ddl import CreateSchema, DropSchema
-
+from ormlambda.sql.ddl import CreateSchema, DropSchema, CreateBackup
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
@@ -16,11 +16,14 @@ class Engine:
         self.url = url
         self.repository = self.dialect.repository_cls(url, dialect=dialect)
 
+    def __repr__(self):
+        return f"{Engine.__name__}: {self.url}"
+
     def create_schema(self, schema_name: str, if_exists: TypeExists = "fail") -> None:
         if if_exists == "replace":
             self.drop_schema(schema_name, if_exists)
 
-        sql = CreateSchema(schema=schema_name, if_not_exists=if_exists== 'append').compile(self.dialect).string
+        sql = CreateSchema(schema=schema_name, if_not_exists=if_exists == "append").compile(self.dialect).string
         try:
             self.repository.execute(sql)
         except Exception:
@@ -56,3 +59,22 @@ class Engine:
     def set_database(self, name: str) -> None:
         self.repository.database = name
         return None
+
+    def create_backup(
+        self,
+        output: Optional[str | BinaryIO | TextIO] = None,
+        compress: bool = False,
+        backup_dir: str = "backups",
+        **kw,
+    ) -> Optional[str | BinaryIO | Path]:
+        return (
+            CreateBackup(self.url)
+            .compile(
+                self.dialect,
+                output=output,
+                compress=compress,
+                backup_dir=backup_dir,
+                **kw,
+            )
+            .string
+        )
