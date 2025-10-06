@@ -3,9 +3,6 @@ from typing import Concatenate, Iterable, override, Type, TYPE_CHECKING, Any, Ca
 
 from ormlambda.sql.types import ASTERISK
 
-# from ormlambda import ForeignKey
-
-
 if TYPE_CHECKING:
     from ormlambda.engine.base import Engine
     from ormlambda.sql.types import AliasType
@@ -13,12 +10,11 @@ if TYPE_CHECKING:
     from ormlambda.statements.types import OrderTypes
     from ormlambda.sql.types import ColumnType
     from ormlambda.statements.types import SelectCols
-    from ormlambda.statements.interfaces import IStatements
     from ormlambda.statements.types import TypeExists
     from ormlambda.statements.types import WhereTypes
+    from ormlambda.dialects import Dialect
 
-
-from ormlambda.statements import BaseStatement
+from ormlambda.statements.interfaces import IStatements
 from ormlambda.statements.base_statement import ClusterResponse
 
 from ormlambda import OrderType, Table
@@ -46,15 +42,46 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
     return wrapper
 
 
-class Statements[T: Table](BaseStatement[T]):
+class Statements[T: Table](IStatements[T]):
     def __init__(self, model: T, engine: Engine) -> None:
-        super().__init__(model, engine)
         self._query_builder = QueryBuilder()
+        self._engine = engine
+        self._dialect = engine.dialect
+        self._query: Optional[str] = None
+        self._model: T = model[0] if isinstance(model, Iterable) else model
+
+        if not issubclass(self._model, Table):
+            # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
+            # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
+            raise Exception(f"'{model}' class does not inherit from Table class")
+
+    @property
+    def dialect(self) -> Dialect:
+        return self._dialect
+
+    @property
+    def engine(self) -> Engine:
+        return self._engine
+
+    @override
+    def table_exists(self) -> bool:
+        return self.engine.repository.table_exists(self._model.__table_name__)
+
+    def __repr__(self):
+        return f"<Model: {self.__class__.__name__}>"
+
+    @property
+    def query(self) -> str:
+        return self._query
+
+    @property
+    def model(self) -> Type[T]:
+        return self._model
 
     @override
     def create_table(self, if_exists: TypeExists = "fail") -> None:
         name: str = self._model.__table_name__
-        if self._repository.table_exists(name):
+        if self.engine.repository.table_exists(name):
             if if_exists == "replace":
                 self.drop_table()
 
@@ -64,7 +91,7 @@ class Statements[T: Table](BaseStatement[T]):
             elif if_exists == "append":
                 counter: int = 0
                 char: str = ""
-                while self._repository.table_exists(name + char):
+                while self.engine.repository.table_exists(name + char):
                     counter += 1
                     char = f"_{counter}"
                 name += char
@@ -74,19 +101,19 @@ class Statements[T: Table](BaseStatement[T]):
                 return new_model.create_table(self.dialect)
 
         query = self.model.create_table(self.dialect)
-        self._repository.execute(query)
+        self.engine.repository.execute(query)
         return None
 
     @override
     def drop_table(self) -> None:
         q = self.model.drop_table(self.dialect)
-        self._repository.execute(q)
+        self.engine.repository.execute(q)
         return None
 
     @override
     @clear_list
     def insert(self, instances: T | list[T]) -> None:
-        insert = clauses.Insert(self._model, self.repository, self._dialect)
+        insert = clauses.Insert(self._model, self.engine.repository, self._dialect)
         insert.insert(instances)
         insert.execute()
         return None
@@ -102,7 +129,7 @@ class Statements[T: Table](BaseStatement[T]):
             # We always going to have a tuple of one element
             return self.delete(response)
 
-        delete = clauses.Delete(self._model, self._repository, engine=self._engine)
+        delete = clauses.Delete(self._model, self.engine.repository, engine=self._engine)
         delete.delete(instances)
         delete.execute()
         # not necessary to call self._query_builder.clear() because select() method already call it
@@ -111,7 +138,7 @@ class Statements[T: Table](BaseStatement[T]):
     @override
     @clear_list
     def upsert(self, instances: T | list[T]) -> None:
-        upsert = clauses.Upsert(self._model, self._repository, engine=self._engine)
+        upsert = clauses.Upsert(self._model, self.engine.repository, engine=self._engine)
         upsert.upsert(instances)
         upsert.execute()
         return None
@@ -119,7 +146,7 @@ class Statements[T: Table](BaseStatement[T]):
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        update = clauses.Update(self._model, self._repository, self._query_builder.components.where, engine=self._engine)
+        update = clauses.Update(self._model, self.engine.repository, self._query_builder.components.where, engine=self._engine)
         update.update(dicc)
         update.execute()
 

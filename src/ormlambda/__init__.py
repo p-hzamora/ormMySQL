@@ -20,7 +20,6 @@ from .sql import TableProxy as TableProxy
 # endregion
 
 from .repository import BaseRepository as BaseRepository
-from .statements import BaseStatement as BaseStatement
 
 from .model.base_model import BaseModel as BaseModel
 from .model.base_model import ORM as ORM

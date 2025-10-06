@@ -1,10 +1,8 @@
 from __future__ import annotations
-from typing import Any, Type, override, Iterable, Literal, TYPE_CHECKING, Optional
+from typing import Any, Type, Iterable, Literal, TYPE_CHECKING
 from collections import defaultdict
 
 
-from ormlambda.repository import BaseRepository
-from ormlambda.statements.interfaces import IStatements
 from ormlambda import Table
 from ormlambda import util
 
@@ -14,57 +12,10 @@ from ormlambda.sql.clause_info import IAggregate
 
 if TYPE_CHECKING:
     from ormlambda.engine.base import Engine
-    from ormlambda.dialects import Dialect
     from ormlambda.sql.clauses import Select
 
 
 ORDER_QUERIES = Literal["select", "join", "where", "order", "with", "group by", "limit", "offset"]
-
-
-class BaseStatement[T: Table](IStatements[T]):
-    def __init__(self, model: tuple[T, ...], engine: Engine) -> None:
-        self._engine = engine
-        self._dialect = engine.dialect
-        self._query: Optional[str] = None
-        self._model: T = model[0] if isinstance(model, Iterable) else model
-
-        repository = engine.repository
-        self.__valid_repository(repository)
-        self._repository: BaseRepository = repository
-
-        if not issubclass(self._model, Table):
-            # Deben heredar de Table ya que es la forma que tenemos para identificar si estamos pasando una instancia del tipo que corresponde o no cuando llamamos a insert o upsert.
-            # Si no heredase de Table no sabriamos identificar el tipo de dato del que se trata porque al llamar a isinstance, obtendriamos el nombre de la clase que mapea a la tabla, Encargo, Edificio, Presupuesto y no podriamos crear una clase generica
-            raise Exception(f"'{model}' class does not inherit from Table class")
-
-    @property
-    def dialect(self) -> Dialect:
-        return self._dialect
-
-    @override
-    def table_exists(self) -> bool:
-        return self._repository.table_exists(self._model.__table_name__)
-
-    @staticmethod
-    def __valid_repository(repository: Any) -> bool:
-        if not isinstance(repository, BaseRepository):
-            raise ValueError(f"'repository' attribute does not instance of '{BaseRepository.__name__}'")
-        return True
-
-    def __repr__(self):
-        return f"<Model: {self.__class__.__name__}>"
-
-    @property
-    def query(self) -> str:
-        return self._query
-
-    @property
-    def model(self) -> Type[T]:
-        return self._model
-
-    @property
-    def repository(self) -> BaseRepository:
-        return self._repository
 
 
 type ResponseType = Iterable[dict[str, Any]]
