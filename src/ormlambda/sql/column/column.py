@@ -3,6 +3,7 @@ from typing import Annotated, Any, Iterable, Type, Optional, TYPE_CHECKING, get_
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import TableType, ComparerType, ColumnType
 from ormlambda import ConditionType
+from ormlambda import util
 
 if TYPE_CHECKING:
     import re
@@ -132,10 +133,11 @@ class Column[TProp](ClauseElement):
             )
         )
 
+    @util.preload_module("ormlambda.sql.type_api")
     def _fill_from_annotations[T: Table](self, obj: Type[T], name: str) -> None:
         """Read the metada when using Annotated typing class, and set the attributes accordingly"""
 
-        from ormlambda.sql.type_api import TypeEngine
+        TypeEngine = util.preloaded.sql_type_api.TypeEngine
 
         annotations = get_type_hints(obj, include_extras=True)
         if name in annotations:
@@ -166,8 +168,9 @@ class Column[TProp](ClauseElement):
                         self.is_not_null = True
         return None
 
+    @util.preload_module("ormlambda.sql.comparer")
     def __comparer_creator(self, other: ColumnType, compare: ComparerType) -> Comparer:
-        from ormlambda.sql.comparer import Comparer
+        Comparer = util.preloaded.sql_comparer.Comparer
 
         return Comparer(self, other, compare)
 
@@ -198,8 +201,9 @@ class Column[TProp](ClauseElement):
     def not_contains(self, other: ColumnType) -> Comparer:
         return self.__comparer_creator(other, ConditionType.NOT_IN.value)
 
+    @util.preload_module("ormlambda.sql.comparer")
     def regex(self, pattern: str, flags: Optional[re.RegexFlag | Iterable[re.RegexFlag]] = None) -> Regex:
-        from ormlambda.sql.comparer import Regex
+        Regex = util.preloaded.sql_comparer.Regex
 
         if not isinstance(flags, Iterable):
             flags = (flags,)
@@ -209,7 +213,8 @@ class Column[TProp](ClauseElement):
             flags=flags,
         )
 
+    @util.preload_module("ormlambda.sql.comparer")
     def like(self, pattern: str) -> Like:
-        from ormlambda.sql.comparer import Like
+        Like = util.preloaded.sql_comparer.Like
 
         return Like(self, pattern)

@@ -2,6 +2,7 @@ from __future__ import annotations
 import inspect
 import typing as tp
 
+from ormlambda import util
 
 if tp.TYPE_CHECKING:
     from ormlambda.sql.clause_info import ClauseInfo
@@ -35,12 +36,13 @@ class AggregateFunctionError[T](Exception):
         agg_methods = self.__get_all_aggregate_method(self.clause)
         return f"You cannot use aggregation method like '{agg_methods}' to return model objects. Try specifying 'flavour' attribute as 'dict'."
 
+    @util.preload_module("ormlambda.sql.clause_info")
     def __get_all_aggregate_method(self, clauses: list[ClauseInfo]) -> str:
         """
         Get the class name of those classes that inherit from 'IAggregate' class in order to create a better error message.
         """
-        from ormlambda.sql.clause_info import IAggregate
 
+        IAggregate = util.preloaded.sql_clause_info.IAggregate
         res: set[str] = set()
         if not isinstance(clauses, tp.Iterable):
             return clauses.__class__.__name__

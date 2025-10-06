@@ -6,6 +6,7 @@ from collections import defaultdict
 from ormlambda.repository import BaseRepository
 from ormlambda.statements.interfaces import IStatements
 from ormlambda import Table
+from ormlambda import util
 
 from ormlambda.common.errors import AggregateFunctionError
 from ormlambda.sql.clause_info import IAggregate
@@ -112,8 +113,9 @@ class ClusterResponse[T, TFlavour]:
         # Convert back to a normal dict if you like (defaultdict is a dict subclass).
         return dict(table_attr_dict)
 
+    @util.preload_module("ormlambda.sql.column")
     def response(self, **kwargs) -> TFlavour[T, ...]:
-        from ormlambda.sql import ColumnProxy
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
 
         if not self.flavour:
             return self._return_model()

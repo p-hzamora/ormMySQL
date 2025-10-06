@@ -77,8 +77,9 @@ class TableProxy[T: Table](ColumnTableProxy, ClauseElement):
     def get_table_chain(self):
         return self.get_alias()
 
+    @util.preload_module("ormlambda.sql.column")
     def get_columns(self) -> tuple[ColumnTableProxy]:
-        from ormlambda import ColumnProxy
+        ColumnProxy = util.preloaded.sql_column.ColumnProxy
 
         result = []
         for column in self._table_class.get_columns():

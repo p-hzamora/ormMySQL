@@ -10,13 +10,21 @@ if TYPE_CHECKING:
     from ormlambda.sql import comparer as _sql_comparer
     from ormlambda.sql import column_table_proxy as _sql_column_table_proxy
     from ormlambda.sql import foreign_key as _sql_foreign_key
+    from ormlambda.sql import clause_info as _sql_clause_info
+    from ormlambda.sql import sqltypes as _sql_sqltypes
+    from ormlambda.sql import clauses as _sql_clauses
+    from ormlambda.sql import type_api as _sql_type_api
 
     sql_column = _sql_column
     sql_table = _sql_table
     sql_comparer = _sql_comparer
     sql_column_table_proxy = _sql_column_table_proxy
     sql_foreign_key = _sql_foreign_key
+    sql_clause_info = _sql_clause_info
+    sql_types = _sql_sqltypes
+    sql_clauses = _sql_clauses
 
+    sql_type_api = _sql_type_api
 
 class ModuleRegistry:
     """Registry of modules to load in a package init file.

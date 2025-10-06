@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, ClassVar
 from ormlambda.sql.visitors import Element
+from ormlambda import util
 import abc
 
 
@@ -26,8 +27,10 @@ class TypeEngine[T: Any](Element, abc.ABC):
     def _resolve_for_literal_value(self, value: T) -> TypeEngine[T]:
         return self
 
+    @util.preload_module("ormlambda.sql.sqltypes")
     def coerce_compared_value[TType](self, value: TType) -> TypeEngine[TType]:
-        from .sqltypes import resolve_primitive_types, NULLTYPE
+        resolve_primitive_types = util.preloaded.sql_types.resolve_primitive_types
+        NULLTYPE = util.preloaded.sql_types.NULLTYPE
 
         _coerced_type = resolve_primitive_types(value)
         if _coerced_type is NULLTYPE:

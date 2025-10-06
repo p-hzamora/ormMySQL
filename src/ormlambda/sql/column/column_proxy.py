@@ -6,7 +6,7 @@ from ormlambda.sql.column_table_proxy import ColumnTableProxy
 from .column import Column
 from ormlambda import ConditionType, JoinType
 from ormlambda.sql.elements import ClauseElement
-
+from ormlambda import util
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType, ComparerType
@@ -48,8 +48,9 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
         # it does not work when comparing methods
         return getattr(self._column, name)
 
+    @util.preload_module("ormlambda.sql.comparer")
     def __comparer_creator(self, other: ColumnType, compare: ComparerType) -> Comparer:
-        from ormlambda.sql.comparer import Comparer
+        Comparer = util.preloaded.sql_comparer.Comparer
 
         return Comparer(self, other, compare)
 
@@ -92,8 +93,9 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
     def number_table_in_chain(self) -> int:
         return len(self._path.steps)
 
+    @util.preload_module("ormlambda.sql.clauses")
     def get_relations(self, by: JoinType, dialect: Dialect) -> tuple[JoinSelector]:
-        from ormlambda.sql.clauses import JoinSelector
+        JoinSelector = util.preloaded.sql_clauses.JoinSelector
 
         result: list[JoinSelector] = []
         alias = self._path.base.__table_name__
