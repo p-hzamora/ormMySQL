@@ -277,7 +277,7 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder.by = by
         self._query: str = self._query_builder.query(self._dialect)
 
-        return ClusterResponse(select, self._engine, flavour, self._query).response()
+        return ClusterResponse(select, self._engine, flavour, self._query).cluster_data()
 
     @override
     def select_one[TValue, TFlavour, *Ts](
@@ -301,11 +301,8 @@ class Statements[T: Table](IStatements[T]):
         # select columns from different tables using a join query
         # FIXME [x]: before it was if len(response) == 1 and len(response[0]) == 1: return response[0][0]
         if len(response) == 1:
-            if isinstance(response[0], Iterable) and len(response[0]) == 1:
-                return response[0][0]
-            else:
-                return response[0]
-        return tuple([res[0] for res in response])
+            return response[0]
+        return response
 
     @override
     def first[TValue, TFlavour, *Ts](
