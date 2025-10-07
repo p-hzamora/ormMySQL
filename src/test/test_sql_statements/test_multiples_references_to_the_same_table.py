@@ -217,7 +217,7 @@ class TestJoinQueries(unittest.TestCase):
 
     # FIXME [x]: Check why ForeignKey alias in 'a.B_fk_b1.C' 'a.B_fk_b2.C' it's not working as expected.
 
-    def test_AAselect_a_lot_of_columns_with_a_lot_of_combines(self):
+    def test_select_a_lot_of_columns_with_a_lot_of_combines(self):
         VARIABLE = 3
         res = self.model.where(lambda x: x.pk_a == VARIABLE).first(
             lambda a: (

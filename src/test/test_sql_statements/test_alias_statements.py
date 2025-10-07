@@ -37,7 +37,7 @@ class TestAlias(unittest.TestCase):
         }
         self.assertDictEqual(res, EXPECTED)
 
-    def test_AAalias_passing_alias_method(self):
+    def test_alias_passing_alias_method(self):
         res = self.model.where(lambda x: x.City.Country.country == "Spain").first(
             lambda x: (
                 Alias(x.address_id, "{column}"),
