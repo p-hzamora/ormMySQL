@@ -67,7 +67,15 @@ class Response[TFlavour, *Ts]:
 
         def _tuple(**kwargs) -> list[tuple[*Ts]]:
             nonlocal data
-            return data
+            result = []
+            for value in data:
+                if len(value) ==1:
+                    result.append(value[0])
+                    continue
+                result.append(value)
+
+
+            return result
 
         def _set(**kwargs) -> list[set]:
             nonlocal data
