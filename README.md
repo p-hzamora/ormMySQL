@@ -77,16 +77,7 @@ If we were used `select_one` method, we retrieved `tuple[Address, City, Country]
 
 ## Filter by `where` condition
 
-we can use only the Original Table to pass the variables like
-```python
-result = AddressModel.where(
-    [
-        Address.address_id >= 10,
-        Address.address_id <= 30,
-    ]
-).select()
-```
-Or by using a lambda function that returns an iterable for tables where the name is unusually long.
+We can use lambda function that returns an iterable to pass the iterable like.
 
 ```python
 result = AddressModel.where(
@@ -106,7 +97,7 @@ result = AddressModel.where(Address.City.Country.country_id  == 87).select()
 We can also return `Address`, `City` or `Country` if needed.
 
 ```python
-result = AddressModel.where(Address.City.Country.country_id == 87).select(lambda x: (x, x.City, x.City.Country))
+result = AddressModel.where(lambda x: x.City.Country.country_id == 87).select(lambda x: (x, x.City, x.City.Country))
 ```
 
 ### Pass variables to the `where` method
@@ -114,10 +105,10 @@ result = AddressModel.where(Address.City.Country.country_id == 87).select(lambda
 LOWER = 10
 UPPER = 30
 
-AddressModel.where(
+AddressModel.where(lambda x:
     [
-        Address.address_id >= LOWER,
-        Address.address_id <= UPPER,
+        x.address_id >= LOWER,
+        x.address_id <= UPPER,
     ]
 ).select()
 ```
@@ -225,7 +216,7 @@ result = (
     AddressModel
     .order(lambda a: a.address_id, order_type="DESC")
     .where(lambda x: x.City.Country.country_id >= 50)
-    .select(Address)
+    .select()
 )
 
 ```
@@ -233,13 +224,12 @@ Also you can use `ConditionType` enum for `regular expressions` and get, for exa
 
 
 ```python
-address, city, country = (
+response = (
     AddressModel
-    .order(Address.address_id, order_type="DESC")
-    .where(Address.City.Country.country.regex(r"^[A]"))
+    .order(lambda x: x.address_id, order_type="DESC")
+    .where(lambda x: x.City.Country.country.regex(r"^[A]"))
     .limit(100)
-    .select(
-        lambda a: (
+    .select(lambda a: (
             a,
             a.City,
             a.City.Country,
@@ -248,13 +238,9 @@ address, city, country = (
 )
 
 
-for a in address:
+for a,c,co in response:
     print(a.address_id)
-
-for c in city:
     print(c.city_id)
-
-for co in country:
     print(co.country)
 ```
 
@@ -263,10 +249,9 @@ In the example above, we see that the `result` var returns a tuple of tuples. Ho
 
 ```python
 result = (
-    AddressModel.where(Address.City.Country.country.regex(r"^[A]"))
+    AddressModel.where(lambda x: x.City.Country.country.regex(r"^[A]"))
     .limit(100)
-    .select(
-        lambda a: (
+    .select(lambda a: (
             a.address_id,
             a.City.city_id,
             a.City.Country.country_id,
@@ -305,28 +290,23 @@ The `concat` method allows you to concatenate multiple columns or values into a 
 ### Usage
 
 ```python
-response = ORM(Address, db).where(Address.City.Country.country.regex(r"^Spain")).first(
-            (
-                Address.address,
-                Address.City.city,
-                Concat(lambda x:
-                    (
-                        "Address: ",
-                        x.address,
-                        " - city: ",
-                        x.City.city,
-                        " - country: ",
-                        x.City.Country.country,
-                    )
-                ),
-            ),
-            flavour=dict,
-        )
+response = (
+    ORM(Address, db)
+    .where(lambda x: x.City.Country.country.regex(r"^Spain"))
+    .first(
+        lambda x: (
+            x.address,
+            x.City.city,
+            Concat(("Address: ", x.address, " - city: ", x.City.city, " - country: ", x.City.Country.country)),
+        ),
+        flavour=dict,
+    )
+)
 
 {
-    "address_address": "939 Probolinggo Loop",
-    "city_city": "A Coruña (La Coruña)",
-    "CONCAT": "Address: 939 Probolinggo Loop - city: A Coruña (La Coruña) - country: Spain",
+    "address": "939 Probolinggo Loop",
+    "city": "A Coruña (La Coruña)",
+    "concat": "Address: 939 Probolinggo Loop - city: A Coruña (La Coruña) - country: Spain",
 }
 ```
 As you can see in the response, the result is a dictionary where the keys are a combination of the table name and the column name. This is done to avoid collisions with columns from other tables that might have the same name.
@@ -377,7 +357,7 @@ res = (
     .select(lambda x:
         (
             x.district,
-            Count(x.address),
+            Count(x.address,alias="count"),
         ),
         flavour=Response,
     )
@@ -429,11 +409,10 @@ print(select.city)
 print(select.country)
 ```
 
-## Combine aggregation method
-As shown in the previous examples, setting the `execute` attribute to `True` allows us to perform the corresponding query in a single line. However, if you're looking to improve efficiency, you can combine all of them into one query.
+## Aggregation method
+You can also use `aggregation methods` to create more informative queries.
 ```python
-result = AddressModel.select_one(
-            lambda x: (
+result = AddressModel.select_one(lambda x: (
                 Min(x.address_id),
                 Max(x.address_id),
                 Count(x.address_id),
