@@ -214,9 +214,9 @@ class IStatements[T: Table](Element):
 
     # region deal with flavours
     @overload
-    def select[TFlavour](self, selector: Callable[[T], tuple[tuple]] = ..., *, flavour: Type[TFlavour], **kwargs) -> tuple[TFlavour, ...]: ...
-    @overload
     def select[*TRes](self, selector: Callable[[T], tuple[*TRes]] = ..., *, flavour: Type[tuple], **kwargs) -> tuple[tuple[*TRes]]: ...
+    @overload
+    def select[TFlavour](self, selector: Callable[[T], tuple] = ..., *, flavour: Type[TFlavour], **kwargs) -> tuple[TFlavour, ...]: ...
 
     # endregion
 
@@ -244,7 +244,7 @@ class IStatements[T: Table](Element):
     @overload
     def select_one[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[list], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def select_one[TFlavour, *TRes](self, selector: Callable[[T], tuple[T, *TRes]], *, flavour: Type[TFlavour], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> TFlavour[*TRes]: ...
+    def select_one[TFlavour, *TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[TFlavour], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> TFlavour[*TRes]: ...
 
     @abstractmethod
     def select_one(
@@ -271,7 +271,7 @@ class IStatements[T: Table](Element):
     @overload
     def first[*TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[list], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[*TRes]: ...
     @overload
-    def first[TFlavour, *TRes](self, selector: Callable[[T], tuple[T, *TRes]], *, flavour: Type[TFlavour], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> TFlavour[*TRes]: ...
+    def first[TFlavour, *TRes](self, selector: Callable[[T], tuple[*TRes]], *, flavour: Type[TFlavour], by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> TFlavour[*TRes]: ...
 
     @abstractmethod
     def first(
