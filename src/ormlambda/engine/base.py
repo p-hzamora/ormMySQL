@@ -78,3 +78,15 @@ class Engine:
             )
             .string
         )
+
+    @property
+    def engine(self) -> Engine:
+        return self
+
+    @property
+    def driver(self) -> str:
+        return self.dialect.driver
+
+    @property
+    def name(self) -> str:
+        return self.dialect.name
