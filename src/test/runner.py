@@ -55,6 +55,7 @@ import test.test_table_class as test_table_class
 import test.test_type_hint as test_type_hint
 import test.test_sql_types as test_sql_types
 import test.test_create_backup as test_create_backup
+import test.test_connection as test_connection
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
@@ -107,6 +108,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_type_hint),
         *loader.loadTestsFromModule(test_sql_types),
         *loader.loadTestsFromModule(test_create_backup),
+        *loader.loadTestsFromModule(test_connection),
         *loader.loadTestsFromModule(test_multiples_references_to_the_same_table),
         # endregion
     )
