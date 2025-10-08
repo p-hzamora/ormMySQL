@@ -42,3 +42,7 @@ class BaseRepository[TPool](IRepositoryBase):
 
     @abc.abstractmethod
     def get_connection[TCnx](self) -> Generator[TCnx, None, None]: ...
+
+    @property
+    def pool(self) -> TPool:
+        return self._pool
