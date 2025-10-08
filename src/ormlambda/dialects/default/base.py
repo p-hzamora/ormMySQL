@@ -2,7 +2,6 @@ from ormlambda.dialects import Dialect
 from ormlambda.sql import compiler
 from typing import Optional, Any
 from types import ModuleType
-from ormlambda import BaseRepository
 
 
 class DefaultDialect(Dialect):
@@ -11,7 +10,6 @@ class DefaultDialect(Dialect):
     statement_compiler = compiler.SQLCompiler
     ddl_compiler = compiler.DDLCompiler
     type_compiler_cls = compiler.GenericTypeCompiler
-    repository_cls = BaseRepository
     default_paramstyle = "named"
 
     def __init__(
@@ -37,3 +35,6 @@ class DefaultDialect(Dialect):
         self.type_compiler_instance = self.type_compiler = tt_callable(self)
 
         super().__init__(**kwargs)
+
+    def get_dialect_pool_class(self, url):
+        return self.get_pool_class(url)

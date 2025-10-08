@@ -3,13 +3,14 @@ from typing import Callable, Optional, Type, TYPE_CHECKING, ClassVar
 import abc
 from ormlambda import util
 import importlib
+from ormlambda import BaseRepository
 
 
 if TYPE_CHECKING:
+    from ormlambda import URL
     from ormlambda.caster.caster import Caster
     from ormlambda.repository.interfaces.IRepositoryBase import DBAPIConnection
     from ormlambda.sql.types import DDLCompiler, SQLCompiler, TypeCompiler
-    from ormlambda import BaseRepository
 
 
 class Dialect(abc.ABC):
@@ -57,14 +58,20 @@ class Dialect(abc.ABC):
     type_compiler_instance: ClassVar[TypeCompiler]
     """The instance of the type compiler class used by the dialect."""
 
-    repository_cls: ClassVar[Type[BaseRepository]]
-    """The repository class used by the dialect."""
-
     caster: ClassVar[Type[Caster]]
 
     @classmethod
     def get_dialect_cls(cls) -> Type[Dialect]:
         return cls
+
+    @classmethod
+    @abc.abstractmethod
+    def get_pool_class(cls, url: URL) -> Type[BaseRepository]: ...
+
+    @abc.abstractmethod
+    def get_dialect_pool_class(self, url: str) -> None:
+        """Validates an identifier name, raising an exception if invalid"""
+        ...
 
     @classmethod
     @abc.abstractmethod

@@ -627,7 +627,6 @@ class MySQLDialect(default.DefaultDialect):
     statement_compiler = MySQLCompiler
     ddl_compiler = MySQLDDLCompiler
     type_compiler_cls = MySQLTypeCompiler
-    repository_cls = MySQLRepository
     caster = MySQLCaster
 
     def __init__(self, **kwargs):
@@ -638,3 +637,7 @@ class MySQLDialect(default.DefaultDialect):
         from mysql import connector
 
         return connector
+
+    @classmethod
+    def get_pool_class(cls, url):
+        return MySQLRepository

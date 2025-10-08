@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TextIO
 from ormlambda.engine import url
 from ormlambda.sql.ddl import CreateSchema, DropSchema, CreateBackup
+from ormlambda import BaseRepository
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
@@ -11,10 +12,10 @@ type TypeExists = Literal["fail", "replace", "append"]
 
 
 class Engine:
-    def __init__(self, dialect: Dialect, url: url.URL):
+    def __init__(self, repository: BaseRepository, dialect: Dialect, url: url.URL):
+        self.repository = repository
         self.dialect = dialect
         self.url = url
-        self.repository = self.dialect.repository_cls(url, dialect=dialect)
 
     def __repr__(self):
         return f"{Engine.__name__}: {self.url}"

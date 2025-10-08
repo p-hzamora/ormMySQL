@@ -18,4 +18,9 @@ def create_engine(url: URL | str, **kwargs: Any) -> base.Engine:
     dialect_args["dbapi"] = dialect_cls.import_dbapi()
 
     dialect = dialect_cls(**dialect_args)
-    return base.Engine(dialect, u)
+
+    repositoryclass = dialect.get_dialect_pool_class(u)
+
+    repository_args = {"dialect": dialect, **kwargs}
+    repository = repositoryclass(u, **repository_args)
+    return base.Engine(repository, dialect, u)
