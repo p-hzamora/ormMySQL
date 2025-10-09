@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer
     from ormlambda import ConditionType as ConditionEnum
-    from ormlambda.common.enums.join_type import JoinType as JoinType
+    from ormlambda.common.enums import UnionEnum
     from ormlambda import ColumnProxy, TableProxy
 
 
@@ -17,7 +17,7 @@ type AliasType[TProp] = str | Callable[[ColumnProxy[TProp]], str]
 # region Comparer Types
 type ComparerType = Literal["=", "!=", "<", "<=", ">", ">=", "in"]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
-type UnionType = Literal["AND", "OR", ""]
+type UnionType = Literal["AND", "OR"] | UnionEnum
 type ComparerTypes = ComparerType | UnionType | ConditionEnum
 type SelectCol = ColumnProxy | IAggregate | Comparer
 # endregion
