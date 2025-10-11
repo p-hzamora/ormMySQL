@@ -6,15 +6,18 @@ from abc import abstractmethod
 if TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import TupleJoinType, ColumnType
+    from ormlambda.sql.types import compileOptions
+    from ormlambda.sql.types import AliasType
+
     from ormlambda.sql.clauses.join import JoinContext
     from ormlambda.common.enums import JoinType
-    from ormlambda.sql.types import AliasType
 
     from ..types import OrderTypes
     from ..types import Tuple
     from ..types import TypeExists
     from ..types import WhereTypes
     from ..types import SelectCols
+
 
 from ormlambda.sql.elements import Element
 
@@ -294,6 +297,7 @@ class IStatements[T: Table](Element):
     @abstractmethod
     def groupby[TRepo](self, column: list[SelectCols[T, TRepo]] | SelectCols[T, TRepo]) -> IStatements[T]: ...
 
-    def compile(self) -> str: ...
+    @abstractmethod
+    def query(self, component: Optional[compileOptions]) -> str: ...
 
     # endregion
