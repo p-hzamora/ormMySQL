@@ -5,11 +5,13 @@ import typing as tp
 
 
 from ormlambda.sql.types import ConditionType
-from ormlambda.sql.types import ComparerTypes
+from ormlambda.sql.types import UnionType
+from ormlambda.sql.types import ComparerType
 
 from ormlambda.sql.clause_info import IAggregate
 from ormlambda import ConditionType as ConditionEnum
 from ormlambda.sql.elements import ClauseElement
+from ormlambda.common.enums import UnionEnum
 
 from ormlambda import ColumnProxy
 
@@ -45,20 +47,53 @@ class CleanValue:
         return temp_name
 
 
-class Comparer(ClauseElement, IAggregate):
+class IComparer(tp.Protocol):
+    join: UnionEnum
+
+
+type ClusterType = Comparer | ComparerCluster
+
+
+class ComparerCluster(ClauseElement, IComparer):
+    __visit_name__ = "comparer_cluster"
+
+    def __init__(self, comp1: ClusterType, comp2: ClusterType, join: UnionType):
+        self.left_comparer = comp1
+        self.right_comparer = comp2
+        self.join = join
+
+    def used_columns(self) -> tp.Iterable[ColumnProxy]:
+        res = []
+
+        res.extend(self.left_comparer.used_columns())
+        res.extend(self.right_comparer.used_columns())
+
+        return res
+
+    def __and__(self, other: ClusterType) -> ComparerCluster:
+        # Customize the behavior of '&'
+        return ComparerCluster(self, other, UnionEnum.AND)
+
+    def __or__(self, other: ClusterType) -> ComparerCluster:
+        # Customize the behavior of '|'
+        return ComparerCluster(self, other, UnionEnum.OR)
+
+
+class Comparer(ClauseElement, IComparer, IAggregate):
     __visit_name__ = "comparer"
 
     def __init__(
         self,
         left_condition: ConditionType,
         right_condition: ConditionType,
-        compare: ComparerTypes,
+        compare: ComparerType,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
     ) -> None:
-        self._compare: ComparerTypes = compare
+        self._compare: ComparerType = compare
         self.left_condition: ConditionType = left_condition
         self.right_condition: ConditionType = right_condition
         self._flags = flags
+        self.join: UnionType = UnionEnum.AND
 
     @property
     def dtype(self) -> tp.Any: ...
@@ -67,38 +102,16 @@ class Comparer(ClauseElement, IAggregate):
         return f"{Comparer.__name__}: {self.left_condition} {self._compare} {self.right_condition}"
 
     @property
-    def compare(self) -> ComparerTypes:
+    def compare(self) -> UnionType:
         return self._compare
 
-    def __and__(self, other: Comparer, **kwargs) -> Comparer:
+    def __and__(self, other: Comparer) -> ComparerCluster:
         # Customize the behavior of '&'
-        return Comparer(self, other, "AND", **kwargs)
+        return ComparerCluster(self, other, UnionEnum.AND)
 
-    def __or__(self, other: Comparer, **kwargs) -> Comparer:
+    def __or__(self, other: Comparer) -> ComparerCluster:
         # Customize the behavior of '|'
-        return Comparer(self, other, "OR", **kwargs)
-
-    @classmethod
-    def join_comparers(cls, comparers: list[Comparer], restrictive: bool = True, *, dialect, **kwargs) -> str:
-        if not isinstance(comparers, tp.Iterable):
-            raise ValueError(f"Excepted '{Comparer.__name__}' iterable not {type(comparers).__name__}")
-
-        if len(comparers) == 1:
-            comparer = comparers[0]
-            return comparer.compile(dialect, alias_clause=None, **kwargs).string
-
-        join_method = cls.__or__ if not restrictive else cls.__and__
-
-        ini_comparer: Comparer = None
-        for i in range(len(comparers) - 1):
-            if ini_comparer is None:
-                ini_comparer = comparers[i]
-            right_comparer = comparers[i + 1]
-            new_comparer = join_method(ini_comparer, right_comparer)
-            ini_comparer = new_comparer
-
-        res = new_comparer.compile(dialect, alias_clause=None, **kwargs)
-        return res.string
+        return ComparerCluster(self, other, UnionEnum.OR)
 
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []
