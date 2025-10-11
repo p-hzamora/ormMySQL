@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.clause_info import IAggregate
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer
-    from ormlambda import ConditionType as ConditionEnum
+    from ormlambda.common.enums import JoinType
     from ormlambda.common.enums import UnionEnum
     from ormlambda import ColumnProxy, TableProxy
 
@@ -18,13 +18,24 @@ type AliasType[TProp] = str | Callable[[ColumnProxy[TProp]], str]
 type ComparerType = Literal["=", "!=", "<", "<=", ">", ">=", "in"]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
 type UnionType = Literal["AND", "OR"] | UnionEnum
-type ComparerTypes = ComparerType | UnionType | ConditionEnum
 type SelectCol = ColumnProxy | IAggregate | Comparer
+type JoinType = JoinType
 # endregion
 
 type TupleJoinType[T] = tuple[Comparer]
 
 ASTERISK = "*"
 
+type compileOptions = Literal[
+    "select",
+    "where",
+    "having",
+    "order",
+    "group_by",
+    "limit",
+    "offset",
+    # "joins",
+    "count",
+]
 # TODOL []: Look if we can avoid this *
 from .compiler import *  # noqa: F403, E402
