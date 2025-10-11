@@ -21,7 +21,7 @@ from test.test_queries import (
     test_QueryBuilder,
     test_select_query,
     test_table_query,
-    test_where_query,
+    test_where_query, 
 )
 
 from test.test_sql_statements import (
@@ -45,7 +45,6 @@ import test.test_cast as test_cast
 import test.test_clause_info as test_clause_info
 import test.test_code_first as test_code_first
 import test.test_column as test_column
-import test.test_comparer as test_comparer
 import test.test_constructor as test_constructor
 import test.test_depth_first_search as test_depth_first_search
 import test.test_errors as test_errors
@@ -77,7 +76,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_QueryBuilder),
         # *loader.loadTestsFromModule(test_select_query),
         # *loader.loadTestsFromModule(test_table_query),
-        # *loader.loadTestsFromModule(test_where_query),
+        *loader.loadTestsFromModule(test_where_query),
         # # region statement tests
         *loader.loadTestsFromModule(test_max_statement),
         *loader.loadTestsFromModule(test_alias_statements),
@@ -98,7 +97,6 @@ suite.addTests(
         *loader.loadTestsFromModule(test_clause_info),
         *loader.loadTestsFromModule(test_code_first),
         *loader.loadTestsFromModule(test_column),
-        *loader.loadTestsFromModule(test_comparer),
         *loader.loadTestsFromModule(test_constructor),
         *loader.loadTestsFromModule(test_depth_first_search),
         # *loader.loadTestsFromModule(test_errors), #COMMENT: DEPRECATED

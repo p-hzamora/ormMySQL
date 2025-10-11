@@ -96,7 +96,7 @@ class TestComplexQueries(unittest.TestCase):
         }
         self.assertEqual(result, EXPECTED)
 
-    def test_get_country_with_more_address_registered(self):
+    def test_AAAget_country_with_more_address_registered(self):
         class Response(BaseModel):
             countryName: str
             contar: int

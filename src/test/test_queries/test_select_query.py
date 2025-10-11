@@ -231,7 +231,7 @@ class TestSelect(unittest.TestCase):
         self.select_joins_testing(qb, select, joins)
 
     def select_joins_testing(self, query_builder: QueryBuilder, select_result: str, join_result: set[str]):
-        extract_joins = set([x.query(DIALECT) for x in query_builder.pop_tables_and_create_joins_from_ForeignKey(query_builder.by)])
+        extract_joins = set([x.query(DIALECT) for x in query_builder.get_joins(query_builder.by)])
 
         self.assertEqual(query_builder.SELECT.compile(DIALECT).string, select_result)
         self.assertSetEqual(extract_joins, join_result)
