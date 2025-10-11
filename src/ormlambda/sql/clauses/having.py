@@ -10,8 +10,8 @@ class Having(Where):
 
     __visit_name__ = "having"
 
-    def __init__(self, *comparer, restrictive=True, **kw):
-        super().__init__(*comparer, restrictive=restrictive, **kw)
+    def __init__(self):
+        super().__init__()
 
 
 __all__ = ["Having"]
