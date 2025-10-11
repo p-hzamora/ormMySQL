@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ConditionType(Enum):
+class ConditionType(str, Enum):
     EQUAL = "="
     LESS_THAN = "<"
     GREATER_THAN = ">"
@@ -15,3 +15,6 @@ class ConditionType(Enum):
     NOT_IN = "NOT IN"
     IS = "IS"
     IS_NOT = "IS NOT"
+
+    def __str__(self):
+        return super().__str__()
