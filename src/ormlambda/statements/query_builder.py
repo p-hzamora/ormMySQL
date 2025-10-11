@@ -10,62 +10,24 @@ from ormlambda.sql.clauses import (
     Limit,
     Offset,
     JoinSelector,
+    Count,
 )
+from ormlambda.sql.comparer import Comparer, ComparerCluster
 
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
-    from ormlambda import Count
 
 from ormlambda import ColumnProxy, TableProxy
+import ormlambda.util as util
 
-from ormlambda.common.enums import JoinType
+from ormlambda.common.enums import JoinType, UnionEnum
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.common.interfaces import IQuery
 
 # =============================================================================
 # CLEAN QUERY COMPONENTS
 # =============================================================================
-
-
-class QueryComponents:
-    """Clean storage for all query components"""
-
-    __slots__ = (
-        "select",
-        "where",
-        "having",
-        "order",
-        "group_by",
-        "limit",
-        "offset",
-        "joins",
-        "count",
-    )
-
-    def __init__(
-        self,
-    ):
-        self.select: Optional[Select] = None
-        self.where: Optional[Where] = None
-        self.having: Optional[Having] = None
-        self.order: Optional[Order] = None
-        self.group_by: Optional[GroupBy] = None
-        self.limit: Optional[Limit] = None
-        self.offset: Optional[Offset] = None
-        self.joins: Optional[set[JoinSelector]] = {}
-        self.count: Optional[Count] = None
-
-    def clear(self) -> None:
-        """Reset all components"""
-
-        for att_name in self.__slots__:
-            # We can restore those cases that are different of None
-            if att_name == "joins":
-                setattr(self, att_name, set())
-            else:
-                setattr(self, att_name, None)
-
 
 # =============================================================================
 # QUERY COMPILER INTERFACE
@@ -78,58 +40,32 @@ class StandardSQLCompiler:
     def __init__(self, dialect: Dialect):
         self.dialect = dialect
 
-    def compile(self, components: QueryComponents, joins: set[JoinSelector]) -> str:
+    def compile(self, components: QueryBuilder, joins: set[JoinSelector]) -> str:
         """Compile all components into final SQL"""
-        query_parts = []
+        return " ".join(
+            (
+                components.select.compile(self.dialect).string if components.select else "",
+                self._compile_joins(joins),
+                components.where.compile(self.dialect).string if components.where else "",
+                components.group_by.compile(self.dialect).string if components.group_by else "",
+                components.having.compile(self.dialect).string if components.having else "",
+                components.order.compile(self.dialect).string if components.order else "",
+                components.limit.compile(self.dialect).string if components.limit else "",
+                components.offset.compile(self.dialect).string if components.offset else "",
+            )
+        )
 
-        # SELECT
-        if components.select:
-            query_parts.append(components.select.compile(self.dialect).string)
-
-        # JOINs
-        joins_sql = self._compile_joins(joins)
-        if joins_sql:
-            query_parts.append(joins_sql)
-
-        # WHERE
-        if components.where:
-            query_parts.append(components.where.compile(self.dialect).string)
-
-        # GROUP BY
-        if components.group_by:
-            query_parts.append(components.group_by.compile(self.dialect).string)
-
-        # HAVING
-        if components.having:
-            query_parts.append(components.having.compile(self.dialect).string)
-
-        # ORDER BY
-        if components.order:
-            query_parts.append(components.order.compile(self.dialect).string)
-
-        # LIMIT
-        if components.limit:
-            query_parts.append(components.limit.compile(self.dialect).string)
-
-        # OFFSET
-        if components.offset:
-            query_parts.append(components.offset.compile(self.dialect).string)
-
-        return " ".join(query_parts)
-
-    def _compile_joins(self, joins: set[JoinSelector]) -> Optional[str]:
+    @util.preload_module("ormlambda.sql.clauses")
+    def _compile_joins(self, joins: set[JoinSelector]) -> str:
         """Compile JOIN clauses"""
-        if not joins:
-            return None
 
-        from ormlambda.sql.clauses import JoinSelector
+        if not joins:
+            return ""
+
+        JoinSelector = util.preloaded.sql_clauses.JoinSelector
 
         sorted_joins = JoinSelector.sort_joins_by_alias(joins)
         return " ".join(join.compile(self.dialect).string for join in sorted_joins)
-
-    # =============================================================================
-    # MODERN QUERY BUILDER
-    # =============================================================================
 
 
 class ColumnIterable[T: TableProxy | ColumnProxy]:
@@ -181,105 +117,120 @@ def call_used_column[T, **P](f: Callable[Concatenate[QueryBuilder, IAggregate, P
 
 
 class QueryBuilder(IQuery):
-    compiler: StandardSQLCompiler
-    components: QueryComponents
     used_columns: ColumnIterable[ColumnProxy]
     join_type: JoinType
 
+    __slots__ = (
+        "select",
+        "where",
+        "having",
+        "order",
+        "group_by",
+        "limit",
+        "offset",
+        "joins",
+        "count",
+        "join_type",
+        "used_columns",
+    )
+
     def __init__(self):
-        # Clean component storage
-        self.components = QueryComponents()
+        self.__initialize()
+
+   
+    def __initialize(self) -> None:
+        """Reset all components"""
+        self.select: Optional[Select] = None
+        self.where: Optional[Where] = Where()
+        self.having: Optional[Having] = Having()
+        self.order: Optional[Order] = None
+        self.group_by: Optional[GroupBy] = None
+        self.limit: Optional[Limit] = None
+        self.offset: Optional[Offset] = None
+        self.joins: Optional[set[JoinSelector]] = {}
+        self.count: Optional[Count] = None
+
         self.join_type = JoinType.INNER_JOIN
         self.used_columns = ColumnIterable()
+        return None
 
-    # =============================================================================
-    # CLEAN CLAUSE MANAGEMENT
-    # =============================================================================
-
-    @call_used_column
-    def add_select(self, select: Select) -> QueryBuilder:
-        self.components.select = select
-        return self
+    def clear(self)->None:
+        return self.__initialize()
+    
 
     @call_used_column
-    def add_where(self, where: Where) -> QueryBuilder:
-        if not self.components.where:
-            # we need to do that in order to initialize with our first where clause to control 'restrictive' attribute.
-            # Otherwise, we'd always has the same attribute
-            self.components.where = where
-            return self
+    def add_select(self, select: Select) -> None:
+        self.select = select
+        return None
 
-        comparer = where.comparer
-        self.components.where.add_comparers(comparer)
-        return self
+    def add_where(self, comparer: list[Comparer | ComparerCluster], union: UnionEnum) -> None:
+        for cond in comparer:
+            self.used_columns.extend(cond.used_columns())
 
-    @call_used_column
-    def add_having(self, having: Having) -> QueryBuilder:
-        if not self.components.having:
-            # we need to do that in order to initialize with our first having clause to control 'restrictive' attribute.
-            # Otherwise, we'd always has the same attribute
-            self.components.having = having
-            return self
+        self.where.add_comparer_tuple(comparer, union)
+        return None
 
-        comparer = having.comparer
-        self.components.having.add_comparers(comparer)
-        return self
+    def add_having(self, comparer: list[Comparer | ComparerCluster], union) -> None:
+        for cond in comparer:
+            self.used_columns.extend(cond.used_columns())
+
+        self.having.add_comparer_tuple(comparer, union)
+        return None
 
     @call_used_column
-    def add_order(self, order: Order) -> QueryBuilder:
-        self.components.order = order
-        return self
+    def add_order(self, order: Order) -> None:
+        self.order = order
+        return None
 
     @call_used_column
-    def add_group_by(self, group_by: GroupBy) -> QueryBuilder:
-        self.components.group_by = group_by
-        return self
+    def add_group_by(self, group_by: GroupBy) -> None:
+        self.group_by = group_by
+        return None
 
-    def add_limit(self, limit: Limit) -> QueryBuilder:
-        self.components.limit = limit
-        return self
+    def add_limit(self, limit: Limit) -> None:
+        self.limit = limit
+        return None
 
-    def add_offset(self, offset: Offset) -> QueryBuilder:
-        self.components.offset = offset
-        return self
-
-    @call_used_column
-    def add_join(self, join: JoinSelector) -> QueryBuilder:
-        self.components.joins.add(join)
-        return self
+    def add_offset(self, offset: Offset) -> None:
+        self.offset = offset
+        return None
 
     @call_used_column
-    def add_count(self, count: Count) -> QueryBuilder:
-        self.components.count = count
-        return self
+    def add_join(self, join: JoinSelector) -> None:
+        self.joins.add(join)
+        return None
 
-    def set_join_type(self, join_type: JoinType) -> QueryBuilder:
+    @call_used_column
+    def add_count(self, count: Count) -> None:
+        self.count = count
+        return None
+
+    def set_join_type(self, join_type: JoinType) -> None:
         self.join_type = join_type
-        return self
+        return None
 
-    # =============================================================================
-    # GENERIC CLAUSE ADDITION (for existing code compatibility)
-    # =============================================================================
-
-    def add_statement(self, clause: ClauseElement) -> QueryBuilder:
+   
+    def add_statement(self, clause: ClauseElement) -> None:
         """
         Add any clause element - determines type automatically
 
         This provides a single entry point for all clause types
         while maintaining clean type-specific methods above
         """
-        clause_type = type(clause).__name__
+        clause_type = type(clause)
 
         clause_selector: dict[str, Callable[[ClauseElement], QueryBuilder]] = {
-            "Select": self.add_select,
-            "Where": self.add_where,
-            "Having": self.add_having,
-            "Order": self.add_order,
-            "GroupBy": self.add_group_by,
-            "Limit": self.add_limit,
-            "Offset": self.add_offset,
-            "JoinSelector": self.add_join,
-            "Count": self.add_count,
+            Select: self.add_select,
+            Where: self.add_where,
+            ComparerCluster: self.add_where,
+            Comparer: self.add_where,
+            Having: self.add_having,
+            Order: self.add_order,
+            GroupBy: self.add_group_by,
+            Limit: self.add_limit,
+            Offset: self.add_offset,
+            JoinSelector: self.add_join,
+            Count: self.add_count,
         }
 
         method = clause_selector.get(clause_type, None)
@@ -288,18 +239,11 @@ class QueryBuilder(IQuery):
 
         return method(clause)
 
-    # =============================================================================
-    # QUERY GENERATION
-    # =============================================================================
-
     def query(self, dialect: Optional[Dialect] = None) -> str:
-        # Detect required joins
-        all_joins = self.pop_tables_and_create_joins_from_ForeignKey(dialect)
+        all_joins = self.get_joins(dialect)
+        return StandardSQLCompiler(dialect).compile(self, all_joins)
 
-        # Compile to SQL
-        return StandardSQLCompiler(dialect).compile(self.components, all_joins)
-
-    def pop_tables_and_create_joins_from_ForeignKey(self, dialect) -> set[JoinSelector]:
+    def get_joins(self, dialect) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.
 
         joins: set[JoinSelector] = set()
@@ -315,12 +259,6 @@ class QueryBuilder(IQuery):
 
         sorted_joins = JoinSelector.sort_joins_by_alias(joins)
         return sorted_joins
-
-    def clear(self) -> None:
-        """Clear all components"""
-        self.components.clear()
-        self.used_columns.clear()
-        return None
 
     @property
     def by(self) -> Optional[JoinType]:
