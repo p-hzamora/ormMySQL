@@ -9,11 +9,11 @@ from ormlambda.sql.types import ASTERISK
 
 from .. import default
 from typing import TYPE_CHECKING, Any, Iterable
+from ormlambda.sql.comparer import Comparer, ComparerCluster
 
 if TYPE_CHECKING:
     from test.test_clause_info import ST_Contains
     from ormlambda import JoinSelector
-    from ormlambda.sql.comparer import Comparer
     from ormlambda.sql.column.column import Column
     from mysql import connector
     from ormlambda.dialects.mysql.clauses import ST_AsText
@@ -129,6 +129,12 @@ class MySQLCompiler(compiler.SQLCompiler):
             column.alias = clause_info.alias_clause
         return clause_info.query(self.dialect)
 
+    def visit_comparer_cluster(self, cluster: ComparerCluster) -> str:
+        c1 = cluster.left_comparer.compile(self.dialect).string
+        c2 = cluster.right_comparer.compile(self.dialect).string
+
+        return f"{c1} {cluster.join} {c2}"
+
     def visit_comparer(self, comparer: Comparer, **kwargs) -> str:
         from ormlambda.sql.comparer import CleanValue, Comparer
 
@@ -148,6 +154,49 @@ class MySQLCompiler(compiler.SQLCompiler):
             rcond = CleanValue(rcond, comparer._flags).clean()
 
         return f"{lcond} {comparer.compare} {rcond}"
+
+    def visit_where(self, where: Where) -> str:
+        assert (n := len(where.comparers)) == len(where.restrictive)
+        
+        if not where.comparers:
+            return ""
+
+        cond = []
+
+        for i in range(n):
+            comp = where.comparers[i]
+
+            string = comp.compile(self.dialect).string
+
+            condition = f"({string})" if isinstance(comp, ComparerCluster) else string
+
+            union = f" {where.restrictive[i + 1]} " if i != n - 1 else ""
+
+            condition += union
+            cond.append(condition)
+        return f" WHERE {"".join(cond)}"
+
+    def visit_having(self, having: Having) -> str:
+        assert (n := len(having.comparers)) == len(having.restrictive)
+
+        if not having.comparers:
+            return ""
+
+        cond = []
+
+        for i in range(n):
+            comp = having.comparers[i]
+
+            string = comp.compile(self.dialect).string
+
+            condition = f"({string})" if isinstance(comp, ComparerCluster) else string
+
+            union = f" {having.restrictive[i + 1]} " if i != n - 1 else ""
+
+            condition += union
+            cond.append(condition)
+        return f" HAVING {"".join(cond)}"
+
 
     def visit_join(self, join: JoinSelector) -> str:
         rt = join.rcon.table
@@ -220,20 +269,6 @@ class MySQLCompiler(compiler.SQLCompiler):
             column = count.column
 
         return ClauseInfo.concat_alias_and_column(f"COUNT({column})", count.alias)
-
-    def visit_where(self, where: Where) -> str:
-        from ormlambda.sql.comparer import Comparer
-
-        if not where.comparer:
-            return ""
-        cols = Comparer.join_comparers(list(where.comparer), restrictive=where.restrictive, dialect=self.dialect)
-        return f"WHERE {cols}"
-
-    def visit_having(self, having: Having) -> str:
-        from ormlambda.sql.comparer import Comparer
-
-        cols = Comparer.join_comparers(list(having.comparer), restrictive=having.restrictive, dialect=self.dialect, table=None, literal=True)
-        return f"HAVING {cols}"
 
     def visit_order(self, order: Order, **kw) -> str:
         ORDER = "ORDER BY"
