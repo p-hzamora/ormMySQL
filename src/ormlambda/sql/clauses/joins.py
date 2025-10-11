@@ -34,7 +34,7 @@ class JoinSelector[TLeft: Table, TRight: Table](IJoinSelector[TLeft, TRight], Cl
     def __repr__(self) -> str:
         return f"{IQuery.__name__}: {self.__class__.__name__} ({self.alias})"
 
-    def __init__[LProp, RProp](
+    def __init__(
         self,
         where: Comparer,
         by: JoinType,
