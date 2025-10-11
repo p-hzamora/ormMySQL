@@ -327,7 +327,8 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder.add_statement(deferred_op)
         return self
 
-    def compile(self) -> str:
-        if not self._query:
-            return self._query_builder.query(self._dialect)
-        return self._query
+    def query(self, element: Optional[compileOptions] = None) -> str:
+        if not element:
+            return self._query_builder.query(self._dialect).strip()
+
+        return cast(ClauseElement, getattr(self._query_builder, element)).compile(self.dialect).string.strip()
