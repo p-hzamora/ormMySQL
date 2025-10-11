@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import Concatenate, Iterable, override, Type, TYPE_CHECKING, Any, Callable, Optional
+from typing import Concatenate, Iterable, cast, override, Type, TYPE_CHECKING, Any, Callable, Optional
 
-from ormlambda.sql.types import ASTERISK
+from ormlambda.sql.types import ASTERISK, compileOptions
+
+from ormlambda.sql.elements import ClauseElement
 
 if TYPE_CHECKING:
     from ormlambda.engine.base import Engine
@@ -18,7 +20,7 @@ from ormlambda.statements.interfaces import IStatements
 from ormlambda.statements.base_statement import ClusterResponse
 
 from ormlambda import OrderType, Table
-from ormlambda.common.enums import JoinType
+from ormlambda.common.enums import JoinType, UnionEnum
 from ormlambda.sql.clauses.join import JoinContext, TupleJoinType
 
 from ormlambda.common.global_checker import GlobalChecker
@@ -34,10 +36,12 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
     def wrapper(self: Statements, *args: P.args, **kwargs: P.kwargs) -> T:
         try:
             return f(self, *args, **kwargs)
-        except Exception as err:
-            raise err
+        except Exception:
+            raise 
+        
         finally:
             self._query_builder.clear()
+            self._query = None
 
     return wrapper
 
@@ -69,10 +73,6 @@ class Statements[T: Table](IStatements[T]):
 
     def __repr__(self):
         return f"<Model: {self.__class__.__name__}>"
-
-    @property
-    def query(self) -> str:
-        return self._query
 
     @property
     def model(self) -> Type[T]:
@@ -146,7 +146,7 @@ class Statements[T: Table](IStatements[T]):
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        update = clauses.Update(self._model, self.engine.repository, self._query_builder.components.where, engine=self._engine)
+        update = clauses.Update(self._model, self.engine.repository, self._query_builder.where, engine=self._engine)
         update.update(dicc)
         update.execute()
 
@@ -181,17 +181,19 @@ class Statements[T: Table](IStatements[T]):
     @override
     def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements[T]:
         # FIXME [x]: I've wrapped self._model into tuple to pass it instance attr. Idk if it's correct
+
+        restrictive = UnionEnum.AND if restrictive else UnionEnum.OR
         result = GlobalChecker.resolved_callback_object(self.model, conditions)
 
-        where = clauses.Where(*result, restrictive=restrictive)
-        self._query_builder.add_statement(where)
+        self._query_builder.add_where(result, restrictive)
         return self
 
     @override
     def having(self, conditions: ColumnType, restrictive: bool = True) -> IStatements[T]:
+        restrictive = UnionEnum.AND if restrictive else UnionEnum.OR
         result = GlobalChecker.resolved_callback_object(self.model, conditions)
-        having = clauses.Having(*result, restrictive=restrictive)
-        self._query_builder.add_statement(having)
+
+        self._query_builder.add_having(result, restrictive)
         return self
 
     @override
@@ -275,7 +277,7 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder.add_statement(select)
 
         self._query_builder.by = by
-        self._query: str = self._query_builder.query(self._dialect)
+        self._query: str = self.query()
 
         return ClusterResponse(select, self._engine, flavour, self._query).cluster_data()
 
@@ -328,6 +330,9 @@ class Statements[T: Table](IStatements[T]):
         return self
 
     def query(self, element: Optional[compileOptions] = None) -> str:
+        if self._query:
+            return self._query
+        
         if not element:
             return self._query_builder.query(self._dialect).strip()
 
