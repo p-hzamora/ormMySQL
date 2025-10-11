@@ -11,6 +11,7 @@ from ormlambda import util
 
 
 if tp.TYPE_CHECKING:
+    from ormlambda.sql.types import TypeEngine
     from ormlambda.sql import ForeignKey
     from ormlambda import ColumnProxy
     from ormlambda import Table
@@ -151,8 +152,10 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._column
         return type(self._column)
 
+    @util.preload_module("ormlambda.sql")
     @property
-    def dbtype(self)->tp.Optional[TypeEngine]:
+    def dbtype(self) -> tp.Optional[TypeEngine]:
+        Column = util.preloaded.sql_column.Column
         if self._dtype is not None:
             return self._dtype
 
