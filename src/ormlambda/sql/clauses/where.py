@@ -1,46 +1,42 @@
 from __future__ import annotations
-import typing as tp
-from ormlambda import ColumnProxy
-from ormlambda.sql.comparer import Comparer
+from ormlambda.sql.comparer import ComparerCluster, Comparer
 from ormlambda.sql.elements import ClauseElement
 
-if tp.TYPE_CHECKING:
-    from ormlambda.statements.types import WhereTypes
+from ormlambda.sql.types import UnionType
+from ormlambda.common.enums import UnionEnum
 
 
-class Where[T](ClauseElement):
+class Where(ClauseElement):
     """
     The purpose of this class is to create 'WHERE' condition queries properly.
     """
 
     __visit_name__ = "where"
 
-    def __init__(
-        self,
-        *comparer: WhereTypes,
-        restrictive: bool = True,
-    ) -> None:
-        self.comparer: set[Comparer] = set(comparer)
-        self.restrictive: bool = restrictive
+    def __init__(self):
+        self.comparers: list[ComparerCluster | Comparer] = []
+        self.restrictive: list[UnionType] = []
 
-    def used_columns(self) -> tp.Iterable[ColumnProxy]:
-        res = []
+    def add_comparer_tuple(self, tuple_: list[ComparerCluster | Comparer], union: UnionEnum) -> None:
+        """If recieve a list we should have minimun 2 elemnts otherwise, whe"""
+        n = len(tuple_)
+        if n == 1:
+            tuple_ = tuple_[0]
 
-        for comparer in self.comparer:
-            if isinstance(comparer.left_condition, ColumnProxy):
-                res.append(comparer.left_condition)
+            self.restrictive.append(union)
+            self.comparers.append(tuple_)
+            return None
 
-            if isinstance(comparer.right_condition, ColumnProxy):
-                res.append(comparer.right_condition)
+        cluster = ComparerCluster(tuple_[0], tuple_[1], UnionEnum.AND)
+        for i in range(2, n):
+            el = tuple_[i]
 
-        return res
+            cluster = ComparerCluster(cluster, el, UnionEnum.AND)
 
-    def add_comparers(self, comparers: tp.Iterable[Comparer]) -> None:
-        if not isinstance(comparers, tp.Iterable):
-            comparers = [comparers]
+        self.restrictive.append(union)
+        self.comparers.append(cluster)
+        return None
 
-        for comparer in comparers:
-            self.comparer.add(comparer)
 
 
 __all__ = ["Where"]
