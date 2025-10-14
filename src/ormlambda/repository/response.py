@@ -130,7 +130,8 @@ class Response[TFlavour, *Ts]:
             for i, data in enumerate(row):
                 alias = self._columns[i]
                 clause = self._select[alias]
-                parse_data = self._caster.for_value(data, value_type=clause.dtype).from_database
+                dtype = clause.dtype if hasattr(clause, "dtype") else None
+                parse_data = self._caster.for_value(data, value_type=dtype).from_database
                 new_row.append(parse_data)
             new_row = tuple(new_row)
             if not isinstance(new_row, tuple):
