@@ -4,7 +4,7 @@ import typing as tp
 import re
 
 from ormlambda.sql.types import ASTERISK
-from ormlambda.errors import DuplicatedClauseName
+from ormlambda.errors import DuplicatedClauseNameError
 from .interface import IClauseInfo
 from ormlambda.common import GlobalChecker
 from ormlambda import util
@@ -335,7 +335,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             queries.append(compiled.string)
 
         if raise_alias_duplicated:
-            raise DuplicatedClauseName(tuple(alias for alias, number in all_aliases.items() if number > 1))
+            raise DuplicatedClauseNameError(tuple(alias for alias, number in all_aliases.items() if number > 1))
         return f"{chr} ".join(queries)
 
     @staticmethod
