@@ -29,4 +29,8 @@ class IterableCaster[TType](JsonCaster[TType]):
     @property
     @BaseCaster.return_value_if_exists
     def string_data(self) -> Optional[str]:
-        return str(self.value)
+        value = tuple(self.value) if not isinstance(self.value, tuple) else self.value
+
+        if len(value) == 1:
+            return f"({value[0]})"
+        return str(value)
