@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Literal, Callable, Type
+from typing import TYPE_CHECKING, Literal, Callable, Type, Union
 
 
 if TYPE_CHECKING:
@@ -15,7 +15,10 @@ type ColumnType[TProp] = TProp | ColumnProxy[TProp]
 type AliasType[TProp] = str | Callable[[ColumnProxy[TProp]], str]
 
 # region Comparer Types
-type ComparerType = Literal["=", "!=", "<", "<=", ">", ">=", "in"]
+type ComparerType = Union[
+    Literal["=", "!=", "<", "<=", ">", ">=", "in"],
+    str,
+]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
 type UnionType = Literal["AND", "OR"] | UnionEnum
 type SelectCol = ColumnProxy | IAggregate | Comparer
