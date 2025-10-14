@@ -113,6 +113,34 @@ class Comparer(ClauseElement, IComparer, IAggregate):
         # Customize the behavior of '|'
         return ComparerCluster(self, other, UnionEnum.OR)
 
+    def __add__(self, other: ColumnType):
+        """a + b"""
+        return ComparerCluster(self, other, "+")
+
+    def __sub__(self, other: ColumnType):
+        """a - b"""
+        return ComparerCluster(self, other, "-")
+
+    def __mul__(self, other: ColumnType):
+        """a * b"""
+        return ComparerCluster(self, other, "*")
+
+    def __truediv__(self, other: ColumnType):
+        """a / b"""
+        return ComparerCluster(self, other, "/")
+
+    def __floordiv__(self, other: ColumnType):
+        """a // b"""
+        return ComparerCluster(self, other, "//")
+
+    def __mod__(self, other: ColumnType):
+        """a % b"""
+        return ComparerCluster(self, other, "%")
+
+    def __pow__(self, other: ColumnType):
+        """a ** b"""
+        return ComparerCluster(self, other, "**")
+
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []
 
