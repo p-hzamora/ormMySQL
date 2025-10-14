@@ -7,6 +7,8 @@ import typing as tp
 from ormlambda.sql.types import ConditionType
 from ormlambda.sql.types import UnionType
 from ormlambda.sql.types import ComparerType
+from ormlambda.sql.types import ColumnType
+from ormlambda.sql.types import AliasType
 
 from ormlambda.sql.clause_info import IAggregate
 from ormlambda import ConditionType as ConditionEnum
@@ -47,11 +49,11 @@ class CleanValue:
         return temp_name
 
 
-class IComparer(tp.Protocol):
+class IComparer:
     join: UnionEnum
 
 
-type ClusterType = Comparer | ComparerCluster
+type ClusterType = Comparer | ComparerCluster | ColumnType
 
 
 class ComparerCluster(ClauseElement, IComparer):
@@ -111,7 +113,7 @@ class Comparer(ClauseElement, IComparer, IAggregate):
         return f"{Comparer.__name__}: {self.left_condition} {self._compare} {self.right_condition}"
 
     @property
-    def compare(self) -> UnionType:
+    def compare(self) -> ComparerType:
         return self._compare
 
     def __and__(self, other: Comparer) -> ComparerCluster:
