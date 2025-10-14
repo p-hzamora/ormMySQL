@@ -10,8 +10,9 @@ from ormlambda.sql.clauses import (
     Limit,
     Offset,
     JoinSelector,
-    Count,
 )
+
+from ormlambda.sql.functions import Count
 from ormlambda.sql.comparer import Comparer, ComparerCluster
 
 
@@ -24,14 +25,6 @@ import ormlambda.util as util
 from ormlambda.common.enums import JoinType, UnionEnum
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.common.interfaces import IQuery
-
-# =============================================================================
-# CLEAN QUERY COMPONENTS
-# =============================================================================
-
-# =============================================================================
-# QUERY COMPILER INTERFACE
-# =============================================================================
 
 
 class StandardSQLCompiler:
@@ -137,7 +130,6 @@ class QueryBuilder(IQuery):
     def __init__(self):
         self.__initialize()
 
-   
     def __initialize(self) -> None:
         """Reset all components"""
         self.select: Optional[Select] = None
@@ -154,9 +146,8 @@ class QueryBuilder(IQuery):
         self.used_columns = ColumnIterable()
         return None
 
-    def clear(self)->None:
+    def clear(self) -> None:
         return self.__initialize()
-    
 
     @call_used_column
     def add_select(self, select: Select) -> None:
@@ -209,7 +200,6 @@ class QueryBuilder(IQuery):
         self.join_type = join_type
         return None
 
-   
     def add_statement(self, clause: ClauseElement) -> None:
         """
         Add any clause element - determines type automatically
