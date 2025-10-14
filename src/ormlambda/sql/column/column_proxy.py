@@ -72,6 +72,34 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
     def __ge__(self, other: ColumnType) -> Comparer:
         return self.__comparer_creator(other, ConditionType.GREATER_THAN_OR_EQUAL.value)
 
+    def __add__(self, other: ColumnType):
+        """a + b"""
+        return self.__comparer_creator(other, "+")
+
+    def __sub__(self, other: ColumnType):
+        """a - b"""
+        return self.__comparer_creator(other, "-")
+
+    def __mul__(self, other: ColumnType):
+        """a * b"""
+        return self.__comparer_creator(other, "*")
+
+    def __truediv__(self, other: ColumnType):
+        """a / b"""
+        return self.__comparer_creator(other, "/")
+
+    def __floordiv__(self, other: ColumnType):
+        """a // b"""
+        return self.__comparer_creator(other, "//")
+
+    def __mod__(self, other: ColumnType):
+        """a % b"""
+        return self.__comparer_creator(other, "%")
+
+    def __pow__(self, other: ColumnType):
+        """a ** b"""
+        return self.__comparer_creator(other, "**")
+
     def get_full_chain(self, chr: str = "."):
         alias: list[str] = [self._path.base.__table_name__]
 
