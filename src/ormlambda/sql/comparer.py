@@ -65,8 +65,15 @@ class ComparerCluster(ClauseElement, IComparer):
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []
 
-        res.extend(self.left_comparer.used_columns())
-        res.extend(self.right_comparer.used_columns())
+        if isinstance(self.left_comparer, ColumnProxy):
+            res.append(self.left_comparer)
+        else:
+            res.extend(self.left_comparer.used_columns())
+
+        if isinstance(self.right_comparer, ColumnProxy):
+            res.append(self.right_comparer)
+        else:
+            res.extend(self.right_comparer.used_columns())
 
         return res
 
