@@ -180,11 +180,11 @@ class Statements[T: Table](IStatements[T]):
         alias: AliasType = "count",
     ) -> Optional[int]:
         if selection == ASTERISK:
-            return self.select_one(lambda x: clauses.Count(x, alias), flavour=dict)[alias]
+            return self.select_one(lambda x: func.Count(x, alias), flavour=dict)[alias]
 
         # get first position because 'resolved_callback_object' return an, alway Iterable and we should only pass one column
         res = GlobalChecker.resolved_callback_object(self.model, selection)[0]
-        return self.select_one(lambda x: clauses.Count(res, alias), flavour=dict)[alias]
+        return self.select_one(lambda x: func.Count(res, alias), flavour=dict)[alias]
 
     @override
     def where(self, conditions: WhereTypes[T], restrictive: bool = True) -> IStatements[T]:
