@@ -98,7 +98,7 @@ class Column[TProp](ClauseElement):
         self.is_not_null: bool = is_not_null
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}[{self.dtype.__name__}] => {self.column_name}"
+        return f"{type(self).__name__}[{self.dtype.__name__}] => {self.column_name} {"PK" if self.is_primary_key else ''}"
 
     def __str__(self) -> str:
         return self.table.__table_name__ + "." + self.column_name
