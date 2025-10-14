@@ -88,12 +88,14 @@ class Comparer(ClauseElement, IComparer, IAggregate):
         right_condition: ConditionType,
         compare: ComparerType,
         flags: tp.Optional[tp.Iterable[re.RegexFlag]] = None,
+        alias: tp.Optional[AliasType] = None,
     ) -> None:
         self._compare: ComparerType = compare
         self.left_condition: ConditionType = left_condition
         self.right_condition: ConditionType = right_condition
         self._flags = flags
         self.join: UnionType = UnionEnum.AND
+        self.alias: tp.Optional[str] = alias
 
     @property
     def dtype(self) -> tp.Any: ...
