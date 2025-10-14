@@ -113,44 +113,52 @@ class Statements[T: Table](IStatements[T]):
     @override
     @clear_list
     def insert(self, instances: T | list[T]) -> None:
-        insert = clauses.Insert(self._model, self.engine.repository, self._dialect)
-        insert.insert(instances)
-        insert.execute()
+        insert = clauses.Insert(instances)
+        query = insert.compile(self.dialect).string
+        self.engine.repository.executemany_with_values(query, insert.cleaned_values)
         return None
 
     @override
     @clear_list
     def delete(self, instances: Optional[T | list[T]] = None) -> None:
-        if instances is None:
-            response = self.select()
-            if len(response) == 0:
-                return None
-            # [0] because if we do not select anything, we retrieve all columns of the unic model, stored in tuple[tuple[model]] structure.
-            # We always going to have a tuple of one element
-            return self.delete(response)
+        if instances and not isinstance(instances, Iterable):
+            instances = (instances,)
 
-        delete = clauses.Delete(self._model, self.engine.repository, engine=self._engine)
-        delete.delete(instances)
-        delete.execute()
+        if instances:
+            pks_values = []
+            for instance in instances:
+                pk = instance.get_pk()
+                pks_values.append(instance[pk])
+
+            self.where(lambda x: getattr(x, pk.column_name).contains(pks_values))
+
+        delete = clauses.Delete(self.model, instances)
+        query = delete.compile(self.dialect).string
+
+        query += self._query_builder.where.compile(self.dialect).string
+        self._engine.repository.execute(query)
         # not necessary to call self._query_builder.clear() because select() method already call it
         return None
 
     @override
     @clear_list
     def upsert(self, instances: T | list[T]) -> None:
-        upsert = clauses.Upsert(self._model, self.engine.repository, engine=self._engine)
-        upsert.upsert(instances)
-        upsert.execute()
+        upsert = clauses.Upsert(instances)
+        query = upsert.compile(self.dialect).string
+        self._engine.repository.executemany_with_values(query, upsert.cleaned_values)
         return None
 
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        update = clauses.Update(self._model, self.engine.repository, self._query_builder.where, engine=self._engine)
-        update.update(dicc)
-        update.execute()
+        update = clauses.Update(self.model, dicc)
+        query = update.compile(self.dialect).string
 
-        return None
+        if self._query_builder.where:
+            where_string = self._query_builder.where.compile(self._engine.dialect).string
+
+            query += where_string
+        return self._engine.repository.execute_with_values(query, update.cleaned_values)
 
     @override
     def limit(self, number: int) -> IStatements[T]:
