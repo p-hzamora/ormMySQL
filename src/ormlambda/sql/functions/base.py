@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import ColumnType, AliasType
-from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.comparer import Comparer, ComparerCluster
+from ormlambda.sql.functions.interface import IFunction
 
 
-class AbstractFunction(ClauseElement, IAggregate):
+class AbstractFunction(ClauseElement, IFunction):
     def __init__[TProp](
         self,
         elements: ColumnType[TProp],
