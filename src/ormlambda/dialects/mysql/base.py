@@ -1,6 +1,6 @@
 from __future__ import annotations
 from types import ModuleType
-from ormlambda import ColumnProxy, ForeignKey, TableProxy
+from ormlambda import ColumnProxy, ForeignKey, TableProxy, Table, Column
 from ormlambda.sql import compiler
 from ormlambda.sql.clause_info import ClauseInfo
 from ormlambda.common.errors import NotKeysInIAggregateError
@@ -8,10 +8,11 @@ from ormlambda.sql.types import ASTERISK
 
 
 from .. import default
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any, Iterable, Type
 from ormlambda.sql.comparer import Comparer, ComparerCluster
 
 if TYPE_CHECKING:
+    from ormlambda.sql.types import ColumnType
     from test.test_clause_info import ST_Contains
     from ormlambda import JoinSelector
     from ormlambda.sql.column.column import Column
@@ -242,18 +243,191 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_limit(self, limit: Limit, **kw):
         return f"LIMIT {limit._number}"
 
-    # TODOH []: include the rest of visit methods
-    def visit_insert(self, insert: Insert, **kw) -> str:
-        pass
+    # TODOH [x]: include the rest of visit methods
+    def visit_insert[T, TProp](self, insert: Insert) -> str:
+        def __is_valid[TProp](column: Column[TProp], value: TProp) -> bool:
+            """
+            We want to delete the column from table when it's specified with an 'AUTO_INCREMENT' or 'AUTO GENERATED ALWAYS AS (__) STORED' statement.
+
+            if the column is auto-generated, it means the database creates the value for that column, so we must deleted it.
+            if the column is primary key and auto-increment, we should be able to create an object with specific pk value.
+
+            RETURN
+            -----
+
+            - True  -> Do not delete the column from dict query
+            - False -> Delete the column from dict query
+            """
+
+            is_pk_none_and_auto_increment: bool = all([value is None, column.is_primary_key, column.is_auto_increment])
+
+            if is_pk_none_and_auto_increment or column.is_auto_generated:
+                return False
+            return True
+
+        def __fill_dict_list(list_dict: list[str, TProp], values: list[T]) -> list[Column]:
+            if isinstance(values, Iterable):
+                for x in values:
+                    __fill_dict_list(list_dict, x)
+
+            elif issubclass(values.__class__, Table):
+                new_list = []
+                for prop in type(values).__dict__.values():
+                    if not isinstance(prop, Column):
+                        continue
+
+                    value = getattr(values, prop.column_name)
+                    if __is_valid(prop, value):
+                        new_list.append(prop)
+                list_dict.append(new_list)
+
+            else:
+                raise Exception(f"Tipo de dato'{type(values)}' no esperado")
+            return None
+
+        if not isinstance(insert.values, Iterable):
+            values = (insert.values,)
+        else:
+            values = insert.values
+        valid_cols: list[list[Column]] = []
+        __fill_dict_list(valid_cols, values)
+
+        col_names: list[str] = []
+        wildcards: list[str] = []
+        col_values: list[list[str]] = []
+        for i, cols in enumerate(valid_cols):
+            col_values.append([])
+            CASTER = self.dialect.caster()
+            for col in cols:
+                clean_data = CASTER.for_column(col, insert.values[i])  # .resolve(insert.values[i][col])
+                if i == 0:
+                    col_names.append(col.column_name)
+                    wildcards.append(clean_data.wildcard_to_insert())
+                # COMMENT: avoid MySQLWriteCastBase.resolve when using PLACEHOLDERs
+                col_values[-1].append(clean_data.to_database)
+
+        join_cols = ", ".join(col_names)
+        unknown_rows = f"({', '.join(wildcards)})"  # The number of "%s" must match the dict 'dicc_0' length
+
+        insert.cleaned_values = [tuple(x) for x in col_values]
+        query = f"INSERT INTO {insert.table.__table_name__} {f'({join_cols})'} VALUES {unknown_rows}"
+        return query
 
     def visit_delete(self, delete: Delete, **kw) -> str:
-        pass
+        return f"DELETE FROM {delete.table.__table_name__}"
 
     def visit_upsert(self, upsert: Upsert, **kw) -> str:
-        pass
+        """
+        Generate MySQL UPSERT query using INSERT ... ON DUPLICATE KEY UPDATE.
+
+        Works with both single dictionaries and lists of changes. The function only
+        generates placeholders and column names - actual values are bound separately.
+
+        Parameters
+        ----------
+        upsert : Upsert
+            Upsert object containing table and values information
+
+        Returns
+        -------
+        str
+            SQL query string with placeholders
+
+        Examples
+        --------
+        Generated SQL:
+            INSERT INTO users (id, name, email)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                email = VALUES(email);
+
+        Actual execution with bound values:
+            [(1, 'Pablo', 'pablo@example.com'),
+            (2, 'Marina', 'marina@example.com')]
+
+        Notes
+        -----
+        - Primary key column is excluded from the UPDATE clause
+        - Uses MySQL's VALUES() function to reference inserted values
+        - For batch inserts, all rows must have the same column structure
+        """
+
+        # Generate the INSERT portion of the query
+        query_insert = self.visit_insert(upsert)
+
+        # MySQL uses VALUES() function to reference inserted values in UPDATE clause
+        VALUES_FUNCTION = "VALUES"
+
+        # Validate that we have values to work with
+        if not upsert.values or len(upsert.values) == 0:
+            raise ValueError("Upsert requires at least one value dictionary")
+
+        # Get column information from first value (all rows should have same structure)
+        first_value = upsert.values[0]
+        columns = first_value.get_columns()
+        pk_column = first_value.get_pk().column_name
+
+        # Build UPDATE clause: exclude primary key from updates
+        # Format: column = VALUES(column)
+        # fmt: off
+        update_columns = [
+            f"{col} = {VALUES_FUNCTION}({col})" 
+            for col in columns 
+            if col != pk_column
+        ]
+        # fmt: on
+
+        # Handle edge case: if only PK exists, nothing to update
+        if not update_columns:
+            raise ValueError(f"No columns to update besides primary key '{pk_column}'. " "UPSERT requires at least one non-PK column.")
+
+        update_clause = ", ".join(update_columns)
+
+        return f"{query_insert} ON DUPLICATE KEY UPDATE {update_clause};"
 
     def visit_update(self, update: Update, **kw) -> str:
-        pass
+        class UpdateKeyError(KeyError):
+            def __init__(self, table: Type[Table], key: str | ColumnType, *args):
+                super().__init__(*args)
+                self._table: Type[Table] = table
+                self._key: str | ColumnType = key
+
+            def __str__(self):
+                BASE_MSSG = lambda col: f"The column '{col}' does not belong to the table '{self._table.__table_name__}'"  # noqa: E731
+
+                if isinstance(self._key, Column):
+                    return BASE_MSSG(self._key.column_name) + f"; it belongs to the table '{self._key.table.__table_name__}'. Please check the columns in the query."
+                return BASE_MSSG(self._key) + ". Please check the columns in the query."
+
+        def __is_valid__(col: Column) -> bool:
+            if update.table is not col.table:
+                raise UpdateKeyError(update.table, col)
+            return not col.is_auto_generated
+
+        if not isinstance(update.values, dict):
+            raise TypeError
+
+        col_names: list[Column] = []
+        CASTER = self.dialect.caster()
+        for col, value in update.values.items():
+            if isinstance(col, str):
+                if not hasattr(update.table, col):
+                    raise UpdateKeyError(update.table, col)
+                col = getattr(update.table, col)
+            if not isinstance(col, Column | ColumnProxy):
+                raise ValueError
+
+            if __is_valid__(col):
+                clean_data = CASTER.for_value(value)
+                col_names.append((col.column_name, clean_data.wildcard_to_insert()))
+                update.cleaned_values.append(clean_data.to_database)
+
+        set_query: str = ",".join(["=".join(col_data) for col_data in col_names])
+
+        query = f"UPDATE {update.table.__table_name__} SET {set_query}"
+        update.cleaned_values = tuple(update.cleaned_values)
+        return query
 
     def visit_offset(self, offset: Offset, **kw) -> str:
         return f"OFFSET {offset._number}"
