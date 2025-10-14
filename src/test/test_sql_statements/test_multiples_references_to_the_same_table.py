@@ -8,7 +8,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 
 from pydantic import BaseModel
 from test.config import create_env_engine, create_engine_for_db  # noqa: E402
-from ormlambda.sql.clause_info.clause_info import DuplicatedClauseName
+from ormlambda.sql.clause_info.clause_info import DuplicatedClauseNameError
 from ormlambda import Table, Column, ORM, ForeignKey  # noqa: E402
 from ormlambda.dialects import mysql
 from ormlambda import Alias
@@ -203,7 +203,7 @@ class TestJoinQueries(unittest.TestCase):
         self.assertEqual(res, EXPECTED_RESPONSE)
 
     def test_raise_DuplicatedClauseName_withous_usingalias_when_repeting_columns(self):
-        with self.assertRaises(DuplicatedClauseName) as err:
+        with self.assertRaises(DuplicatedClauseNameError) as err:
             self.model.where(lambda x: x.B3.C1.D2.name == "Developer").first(
                 lambda a: (
                     a.B3.C1.D2.name,
