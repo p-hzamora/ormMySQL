@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Type
 from ormlambda.sql.comparer import Comparer, ComparerCluster
 
 if TYPE_CHECKING:
+    from ormlambda.sql.functions.interface import IFunction
     from ormlambda.sql.types import ColumnType
     from test.test_clause_info import ST_Contains
     from ormlambda import JoinSelector
@@ -71,7 +72,6 @@ if TYPE_CHECKING:
         Update,
         Limit,
         Offset,
-        Count,
         Where,
         Having,
         Order,
@@ -79,10 +79,21 @@ if TYPE_CHECKING:
     )
 
     from ormlambda.sql.functions import (
-        Concat,
         Max,
         Min,
+        Concat,
         Sum,
+        Count,
+        Avg,
+        Abs,
+        Ceil,
+        Floor,
+        Round,
+        Pow,
+        Sqrt,
+        Mod,
+        Rand,
+        Truncate,
     )
 
 
@@ -494,20 +505,55 @@ class MySQLCompiler(compiler.SQLCompiler):
         )
         return clause_info.query(self.dialect)
 
-    def visit_max(self, max: Max, **kw) -> str:
-        attr = {**kw, "alias_clause": None}
-        column = max.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"MAX({column})", max.alias)
+    def visit_max(self, obj: Max, **kw) -> str:
+        return self._compile_aggregate_method("MAX", obj, **kw)
 
-    def visit_min(self, min: Min, **kw) -> str:
-        attr = {**kw, "alias_clause": None}
-        column = min.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"MIN({column})", min.alias)
+    def visit_min(self, obj: Min, **kw) -> str:
+        return self._compile_aggregate_method("MIN", obj, **kw)
 
-    def visit_sum(self, sum: Sum, **kw) -> str:
+    def visit_sum(self, obj: Sum, **kw) -> str:
+        return self._compile_aggregate_method("SUM", obj, **kw)
+
+    def visit_avg(self, obj: Avg, **kw) -> str:
+        return self._compile_aggregate_method("AVG", obj, **kw)
+
+    def visit_abs(self, obj: Abs, **kw) -> str:
+        return self._compile_aggregate_method("ABS", obj, **kw)
+
+    def visit_ceil(self, obj: Ceil, **kw) -> str:
+        return self._compile_aggregate_method("CEIL", obj, **kw)
+
+    def visit_floor(self, obj: Floor, **kw) -> str:
+        return self._compile_aggregate_method("FLOOR", obj, **kw)
+
+    def visit_round(self, obj: Round, **kw) -> str:
+        return self._compile_aggregate_method("ROUND", obj, **kw)
+
+    def visit_pow(self, obj: Pow, **kw) -> str:
         attr = {**kw, "alias_clause": None}
-        column = sum.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"SUM({column})", sum.alias)
+        column = obj.column.compile(self.dialect, **attr).string
+        return ClauseInfo.concat_alias_and_column(f"POW({column}, {obj._exponent})", obj.alias)
+
+    def visit_sqrt(self, obj: Sqrt, **kw) -> str:
+        return self._compile_aggregate_method("SQRT", obj, **kw)
+
+    def visit_mod(self, obj: Mod, **kw) -> str:
+        attr = {**kw, "alias_clause": None}
+        column = obj.column.compile(self.dialect, **attr).string
+        return ClauseInfo.concat_alias_and_column(f"MOD({column}, {obj._divisor})", obj.alias)
+
+    def visit_rand(self, obj: Rand, **kw) -> str:
+        return self._compile_aggregate_method("RAND", obj, **kw)
+
+    def visit_truncate(self, obj: Truncate, **kw) -> str:
+        attr = {**kw, "alias_clause": None}
+        column = obj.column.compile(self.dialect, **attr).string
+        return ClauseInfo.concat_alias_and_column(f"TRUNCATE({column}, {obj._decimal})", obj.alias)
+
+    def _compile_aggregate_method(self, name: str, function: IFunction, **kw) -> str:
+        attr = {**kw, "alias_clause": None}
+        column = function.column.compile(self.dialect, **attr).string
+        return ClauseInfo.concat_alias_and_column(f"{name}({column})", function.alias)
 
     def visit_st_astext(self, st_astext: ST_AsText) -> str:
         # avoid use placeholder when using IAggregate because no make sense.
