@@ -74,6 +74,7 @@ class Select[T: Type[Table]](ClauseElement, IAggregate):
                 return clause
             if isinstance(clause, IAggregate) and key == clause.alias:
                 return clause
+        raise ValueError(f"Key '{key}' doesn't exists in any of SELECT clauses.")
 
 
 __all__ = ["Select"]
