@@ -31,7 +31,7 @@ class ClusterResponse[T, TFlavour]:
     def cluster(self, response_sql: ResponseType) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
         # We'll create a default list of dicts *once* we know how many rows are in _response_sql
 
-        tables: dict[Table, list[ColumnProxy]] = defaultdict(list)
+        tables: dict[Table, Iterable[ColumnProxy]] = defaultdict(list)
         for clause in self._select.columns:
             if isinstance(clause, IAggregate):
                 raise AggregateFunctionError(clause)
