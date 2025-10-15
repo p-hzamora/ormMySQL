@@ -6,11 +6,11 @@ import unittest
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
-from ormlambda.sql.clauses import Count
+from ormlambda import Count
 
 from test.models import D
 from ormlambda.dialects import mysql
-from ormlambda import TableProxy, ColumnProxy
+from ormlambda import TableProxy
 from ormlambda.common import GlobalChecker
 
 DIALECT = mysql.dialect

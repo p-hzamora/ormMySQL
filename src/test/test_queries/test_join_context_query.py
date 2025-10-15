@@ -13,7 +13,6 @@ from test.models import (  # noqa: E402
 
 from ormlambda.sql.clauses.select import Select
 from ormlambda.sql import functions as func
-from ormlambda.sql.clauses import Count
 from ormlambda.dialects import mysql
 
 DIALECT = mysql.dialect
@@ -28,7 +27,7 @@ class TestSelect(unittest.TestCase):
                 d,
                 d.C.B.A.data_a,
                 d.C,
-                Count(D.C.B.A.name_a, alias_table=lambda x: x.dtype, dialect=DIALECT),
+                func.Count(D.C.B.A.name_a, alias_table=lambda x: x.dtype, dialect=DIALECT),
                 func.Max(D.C.B.A.data_a, dialect=DIALECT),
             ),
             dialect=DIALECT,

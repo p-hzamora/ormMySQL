@@ -15,7 +15,7 @@ from test.test_aggregation_functions import (
 
 from test.test_queries import (
     test_ForeignKey_query,
-    # test_group_by,
+    test_group_by,
     test_join_context_query,
     test_join_query,
     test_QueryBuilder,
@@ -38,6 +38,8 @@ from test.test_sql_statements import (
     test_where_statement,
     test_max_statement,
     test_multiples_references_to_the_same_table,
+    test_delete,
+    
 )
 
 import test.test_abstract_model as test_abstract_model
@@ -47,7 +49,7 @@ import test.test_code_first as test_code_first
 import test.test_column as test_column
 import test.test_constructor as test_constructor
 import test.test_depth_first_search as test_depth_first_search
-import test.test_errors as test_errors
+# import test.test_errors as test_errors
 import test.test_mapped_table as test_mapped_table
 import test.test_queries_with_different_datatypes as test_queries_with_different_datatypes
 import test.test_table_class as test_table_class
@@ -55,6 +57,7 @@ import test.test_type_hint as test_type_hint
 import test.test_sql_types as test_sql_types
 import test.test_create_backup as test_create_backup
 import test.test_connection as test_connection
+import test.test_aggregation_functions.test_aggregate as test_aggregate
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
@@ -70,7 +73,7 @@ suite.addTests(
         *loader.loadTestsFromModule(test_count),
         # *loader.loadTestsFromModule(test_max),
         *loader.loadTestsFromModule(test_ForeignKey_query),
-        # # *loader.loadTestsFromModule(test_group_by),
+        *loader.loadTestsFromModule(test_group_by),
         # *loader.loadTestsFromModule(test_join_context_query),
         # *loader.loadTestsFromModule(test_join_query),
         *loader.loadTestsFromModule(test_QueryBuilder),
@@ -108,6 +111,8 @@ suite.addTests(
         *loader.loadTestsFromModule(test_create_backup),
         *loader.loadTestsFromModule(test_connection),
         *loader.loadTestsFromModule(test_multiples_references_to_the_same_table),
+        *loader.loadTestsFromModule(test_delete),
+        *loader.loadTestsFromModule(test_aggregate),
         # endregion
     )
 )

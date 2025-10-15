@@ -22,7 +22,6 @@ from ormlambda.common.errors import UnmatchedLambdaParameterError
 from ormlambda import JoinType  # noqa: E402
 from ormlambda.sql.clauses.select import Select
 from ormlambda.sql import functions as func
-from ormlambda.sql.clauses import Count
 from ormlambda.dialects import mysql
 
 DIALECT = mysql.dialect
@@ -360,7 +359,7 @@ class TestSelect(unittest.TestCase):
                 d.C.B.A.data_a,
                 d.C,
                 func.Concat[D]((D.pk_d, "-", D.C.pk_c, "-", D.C.B.pk_b, "-", D.C.B.A, "-", D.C.B.data), alias_clause="concat_pks", dialect=DIALECT),
-                Count(D.C.B.A.name_a, dialect=DIALECT),
+                func.Count(D.C.B.A.name_a, dialect=DIALECT),
                 func.Max(D.C.B.A.data_a, dialect=DIALECT),
             ),
         )
@@ -378,7 +377,7 @@ class TestSelect(unittest.TestCase):
         self.select_joins_testing(qb, select, joins)
 
     def test_select_with_count(self):
-        selected = SelectMySQL(D, columns=Count(D.C, dialect=DIALECT))
+        selected = SelectMySQL(D, columns=func.Count(D.C, dialect=DIALECT))
         mssg: str = "SELECT COUNT(*) AS `count` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
         qb = QueryBuilder(dialect=DIALECT)
         qb.add_statement(selected)
@@ -389,8 +388,8 @@ class TestSelect(unittest.TestCase):
         selected = SelectMySQL(
             D,
             columns=(
-                Count(D.C, alias_table="c", alias_clause="COUNT~fk", dialect=DIALECT),
-                Count(D, alias_table="d", alias_clause="COUNT~pk", dialect=DIALECT),
+                func.Count(D.C, alias_table="c", alias_clause="COUNT~fk", dialect=DIALECT),
+                func.Count(D, alias_table="d", alias_clause="COUNT~pk", dialect=DIALECT),
             ),
         )
         mssg: str = "SELECT COUNT(`d_fk_c_pk_c`.*) AS `COUNT~fk`, COUNT(`d`.*) AS `COUNT~pk` FROM d AS `d` INNER JOIN c AS `d_fk_c_pk_c` ON `d`.fk_c = `d_fk_c_pk_c`.pk_c"
