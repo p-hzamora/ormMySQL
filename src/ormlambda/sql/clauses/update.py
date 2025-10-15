@@ -5,7 +5,6 @@ from ormlambda import Table
 from ormlambda.sql.elements import ClauseElement
 
 
-
 class Update[T: Type[Table]](ClauseElement):
     __visit_name__ = "update"
 
@@ -16,7 +15,7 @@ class Update[T: Type[Table]](ClauseElement):
 
     def __init__(self, model: T, values) -> None:
         self.values: Iterable[dict[str, Any]] = values if isinstance(values, Iterable) else (values,)
-        self.table:Table = model
+        self.table: Table = model
         self.cleaned_values = []
 
 

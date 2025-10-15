@@ -9,4 +9,4 @@ from .iterable import IterableCaster as IterableCaster
 from .boolean import BooleanCaster as BooleanCaster
 from .date import DateCaster as DateCaster
 from .decimal import DecimalCaster as DecimalCaster
-from .json import JsonCaster as JsonCaster 
+from .json import JsonCaster as JsonCaster

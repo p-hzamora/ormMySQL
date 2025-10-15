@@ -46,7 +46,7 @@ class ComparerAlias(IComparer):
         return self.comparer.join
 
     def compile(self, dialect=None, **kw):
-        return cast(ClauseElement,self.comparer).compile(dialect, **kw)
+        return cast(ClauseElement, self.comparer).compile(dialect, **kw)
 
 
 __all__ = ["Alias"]

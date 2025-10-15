@@ -38,5 +38,4 @@ class Where(ClauseElement):
         return None
 
 
-
 __all__ = ["Where"]

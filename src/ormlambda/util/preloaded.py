@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
     sql_type_api = _sql_type_api
 
+
 class ModuleRegistry:
     """Registry of modules to load in a package init file.
 

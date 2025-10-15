@@ -27,19 +27,4 @@ class MySQLCaster(Caster):
 
     @classmethod
     def CASTER_SELECTOR(cls):
-        return {
-            str: StringCaster,
-            int: IntegerCaster,
-            float: FloatCaster,
-            Point: PointCaster,
-            NoneType: NoneTypeCaster,
-            datetime: DatetimeCaster,
-            date: DatetimeCaster,
-            bytes: BytesCaster,
-            bytearray: BytesCaster,
-            tuple: IterableCaster,
-            list: IterableCaster,
-            bool: BooleanCaster,
-            Decimal: DecimalCaster,
-            dict:JsonCaster
-        }
+        return {str: StringCaster, int: IntegerCaster, float: FloatCaster, Point: PointCaster, NoneType: NoneTypeCaster, datetime: DatetimeCaster, date: DatetimeCaster, bytes: BytesCaster, bytearray: BytesCaster, tuple: IterableCaster, list: IterableCaster, bool: BooleanCaster, Decimal: DecimalCaster, dict: JsonCaster}

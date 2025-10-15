@@ -11,10 +11,8 @@ class IFunction[TProp](abc.ABC):
     column: ColumnType[TProp]
     alias: AliasType[TProp]
 
-
     def __repr__(self):
-            return f"{IFunction.__name__}: {type(self).__name__}"
-    
+        return f"{IFunction.__name__}: {type(self).__name__}"
 
     @abc.abstractmethod
     def used_columns(self) -> Iterable[ColumnProxy]: ...

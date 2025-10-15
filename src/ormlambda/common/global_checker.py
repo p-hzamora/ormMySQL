@@ -29,7 +29,7 @@ class GlobalChecker[T: TableProxy]:
         try:
             table_proxy = TableProxy(table)
 
-            if not callable(lambda_func): 
+            if not callable(lambda_func):
                 raise NotCallableError(lambda_func)
 
             if isinstance(lambda_func, Iterable):

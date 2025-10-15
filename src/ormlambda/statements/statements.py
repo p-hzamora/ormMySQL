@@ -37,8 +37,8 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
         try:
             return f(self, *args, **kwargs)
         except Exception:
-            raise 
-        
+            raise
+
         finally:
             self._query_builder.clear()
             self._query = None
@@ -340,7 +340,7 @@ class Statements[T: Table](IStatements[T]):
     def query(self, element: Optional[compileOptions] = None) -> str:
         if self._query:
             return self._query
-        
+
         if not element:
             return self._query_builder.query(self._dialect).strip()
 

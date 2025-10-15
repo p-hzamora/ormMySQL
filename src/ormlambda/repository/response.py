@@ -69,11 +69,10 @@ class Response[TFlavour, *Ts]:
             nonlocal data
             result = []
             for value in data:
-                if len(value) ==1:
+                if len(value) == 1:
                     result.append(value[0])
                     continue
                 result.append(value)
-
 
             return result
 

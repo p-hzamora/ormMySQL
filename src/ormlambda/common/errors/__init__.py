@@ -42,7 +42,7 @@ class FunctionFunctionError[T](Exception):
         Get the class name of those classes that inherit from 'IFunction' class in order to create a better error message.
         """
 
-        IFunction = util.preloaded.sql_functions.IFunction 
+        IFunction = util.preloaded.sql_functions.IFunction
         res: set[str] = set()
         if not isinstance(clauses, tp.Iterable):
             return clauses.__class__.__name__

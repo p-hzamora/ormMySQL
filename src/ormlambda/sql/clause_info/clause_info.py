@@ -375,7 +375,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def is_table(data: ColumnType | Table | ForeignKey) -> bool:
         Table = util.preloaded.sql_table.Table
         TableProxy = util.preloaded.sql_table.TableProxy
-        
+
         return isinstance(data, type) and issubclass(data, Table | TableProxy)
 
     @util.preload_module("ormlambda.sql")

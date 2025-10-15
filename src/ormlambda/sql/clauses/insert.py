@@ -16,7 +16,7 @@ class Insert[T: Table](ClauseElement):
     def __init__(self, values: T) -> None: ...
 
     def __init__(self, values: T | list[T]) -> None:
-        self.values:Iterable[T] = values if isinstance(values, Iterable) else (values,)
+        self.values: Iterable[T] = values if isinstance(values, Iterable) else (values,)
         self.table = type(self.values[0])
 
         self.cleaned_values = []

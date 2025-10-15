@@ -6,6 +6,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from ormlambda import Table, Column, ForeignKey  # noqa: E402
 from ormlambda import INT, TEXT, DATETIME
 
+
 class A(Table):
     __table_name__ = "a"
     pk_a: Column[INT] = Column(INT(), is_primary_key=True)

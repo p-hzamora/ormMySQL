@@ -30,6 +30,5 @@ class TestGroupBy(unittest.TestCase):
         # fmt: on
 
 
-
 if __name__ == "__main__":
     unittest.main()

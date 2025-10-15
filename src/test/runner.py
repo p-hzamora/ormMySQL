@@ -21,7 +21,7 @@ from test.test_queries import (
     test_QueryBuilder,
     test_select_query,
     test_table_query,
-    test_where_query, 
+    test_where_query,
 )
 
 from test.test_sql_statements import (
@@ -39,7 +39,6 @@ from test.test_sql_statements import (
     test_max_statement,
     test_multiples_references_to_the_same_table,
     test_delete,
-    
 )
 
 import test.test_abstract_model as test_abstract_model
@@ -49,6 +48,7 @@ import test.test_code_first as test_code_first
 import test.test_column as test_column
 import test.test_constructor as test_constructor
 import test.test_depth_first_search as test_depth_first_search
+
 # import test.test_errors as test_errors
 import test.test_mapped_table as test_mapped_table
 import test.test_queries_with_different_datatypes as test_queries_with_different_datatypes

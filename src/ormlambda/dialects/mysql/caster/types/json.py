@@ -2,6 +2,7 @@ from typing import Optional
 from ormlambda.caster import BaseCaster, Caster
 import json
 
+
 class JsonCaster[TType](BaseCaster[dict, TType]):
     def __init__(self, value: dict, type_value: TType):
         super().__init__(value, type_value)

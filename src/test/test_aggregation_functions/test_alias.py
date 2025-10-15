@@ -22,8 +22,6 @@ class TestAlias(unittest.TestCase):
         with self.assertRaises(TypeError):
             Alias(D.data_d)
 
- 
-
     def test_alias_passing_only_table(self) -> None:
         query = "`d`.data_d AS `name_for_column`"
 
