@@ -49,8 +49,9 @@ class CleanValue:
         return temp_name
 
 
-class IComparer:
+class IComparer(IAggregate):
     join: UnionEnum
+    alias: str
 
 
 type ClusterType = Comparer | ComparerCluster | ColumnType
@@ -63,6 +64,7 @@ class ComparerCluster(ClauseElement, IComparer):
         self.left_comparer = comp1
         self.right_comparer = comp2
         self.join = join
+        self.alias = None
 
     def used_columns(self) -> tp.Iterable[ColumnProxy]:
         res = []
@@ -87,8 +89,11 @@ class ComparerCluster(ClauseElement, IComparer):
         # Customize the behavior of '|'
         return ComparerCluster(self, other, UnionEnum.OR)
 
+    def __repr__(self):
+        return f"{ComparerCluster.__name__}: {self.left_comparer.__repr__()} {self.right_comparer.__repr__()}"
 
-class Comparer(ClauseElement, IComparer, IAggregate):
+
+class Comparer(ClauseElement, IComparer):
     __visit_name__ = "comparer"
 
     def __init__(

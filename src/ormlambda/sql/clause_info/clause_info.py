@@ -307,12 +307,21 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         return self._replace_placeholder(alias)
 
+    @util.preload_module("ormlambda.sql.clauses")
     @staticmethod
     def join_clauses(clauses: list[ColumnProxy], chr: str = ",", *, dialect: Dialect, **kw) -> str:
+        IComparer = util.preloaded.sql_comparer.IComparer
+
         raise_alias_duplicated = False
         all_aliases: dict[str, int] = defaultdict(int)
         queries: list[str] = []
         for c in clauses:
+            if isinstance(c, IComparer):
+                comparer = f"({c.compile(dialect, alias_clause=None).string})"
+
+                query = ClauseInfo(None, comparer, alias_clause=c.alias, dialect=dialect).query(dialect)
+                queries.append(query)
+                continue
             # That update control the alias we set by default on select clause
             if "alias_clause" in kw:
                 alias_clause = kw["alias_clause"]

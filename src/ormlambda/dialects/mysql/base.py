@@ -141,9 +141,9 @@ class MySQLCompiler(compiler.SQLCompiler):
             column.alias = clause_info.alias_clause
         return clause_info.query(self.dialect)
 
-    def visit_comparer_cluster(self, cluster: ComparerCluster) -> str:
-        c1 = cluster.left_comparer.compile(self.dialect).string
-        c2 = cluster.right_comparer.compile(self.dialect).string
+    def visit_comparer_cluster(self, cluster: ComparerCluster, **kw) -> str:
+        c1 = cluster.left_comparer.compile(self.dialect, **kw).string
+        c2 = cluster.right_comparer.compile(self.dialect, **kw).string
 
         return f"{c1} {cluster.join} {c2}"
 
@@ -208,7 +208,6 @@ class MySQLCompiler(compiler.SQLCompiler):
             condition += union
             cond.append(condition)
         return f" HAVING {"".join(cond)}"
-
 
     def visit_join(self, join: JoinSelector) -> str:
         rt = join.rcon.table
