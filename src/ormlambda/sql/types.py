@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Literal, Callable, Type, Union
 
 
 if TYPE_CHECKING:
-    from ormlambda.sql.clause_info import IAggregate
+    from ormlambda.sql.functions.interface import IFunction
     from ormlambda import Table
     from ormlambda.sql.comparer import Comparer
     from ormlambda.common.enums import JoinType
@@ -21,7 +21,7 @@ type ComparerType = Union[
 ]
 type ConditionType[TProp] = Comparer | ColumnType[TProp]
 type UnionType = Literal["AND", "OR"] | UnionEnum
-type SelectCol = ColumnProxy | IAggregate | Comparer
+type SelectCol = ColumnProxy | IFunction | Comparer
 type JoinType = JoinType
 # endregion
 

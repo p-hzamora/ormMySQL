@@ -17,6 +17,8 @@ from pydantic import BaseModel
 engine = create_sakila_engine()
 
 5
+
+
 class Response(BaseModel):
     max: int
     min: int
@@ -33,7 +35,7 @@ class Response(BaseModel):
     truncate: int
 
 
-class TestAggregate(unittest.TestCase):
+class TestFunction(unittest.TestCase):
     @parameterized.expand(
         [
             (10, lambda x: func.Max(x.city_id, "response"), 10),

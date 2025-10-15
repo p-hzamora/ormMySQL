@@ -3,18 +3,19 @@ from ormlambda import ColumnProxy
 from ormlambda.sql.elements import ClauseElement
 from typing import Any, Iterable, Optional, Type, TYPE_CHECKING
 
-from ormlambda.sql.clause_info import ClauseInfo, IAggregate
-from ormlambda.sql.types import SelectCol
+from ormlambda.sql.clause_info import ClauseInfo
+from ormlambda.sql.functions.interface import IFunction
 from ormlambda.sql.table import TableProxy
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import AliasType, ColumnType
     from ormlambda import Table
+    from ormlambda.sql.types import SelectCol
 
 type Selectable = ColumnType | TableProxy
 
 
-class Select[T: Type[Table]](ClauseElement, IAggregate):
+class Select[T: Type[Table]](ClauseElement, IFunction):
     __visit_name__ = "select"
 
     def __init__(
@@ -61,7 +62,7 @@ class Select[T: Type[Table]](ClauseElement, IAggregate):
             if isinstance(col, ColumnProxy):
                 res.append(col)
 
-            elif isinstance(col, IAggregate):
+            elif isinstance(col, IFunction):
                 res.extend(col.used_columns())
         return res
 
@@ -72,7 +73,7 @@ class Select[T: Type[Table]](ClauseElement, IAggregate):
         for clause in self.columns:
             if isinstance(clause, ColumnProxy) and key in (clause.column_name, clause.alias, clause.get_full_chain("_")):
                 return clause
-            if isinstance(clause, IAggregate) and key == clause.alias:
+            if isinstance(clause, IFunction) and key == clause.alias:
                 return clause
         raise ValueError(f"Key '{key}' doesn't exists in any of SELECT clauses.")
 

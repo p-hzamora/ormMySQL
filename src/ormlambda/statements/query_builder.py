@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Callable, Generator, Optional, TYPE_CHECKING, Iterable, overload, Concatenate
-from ormlambda.sql.clause_info import IAggregate
 from ormlambda.sql.clauses import (
     Select,
     Where,
@@ -17,6 +16,7 @@ from ormlambda.sql.comparer import Comparer, ComparerCluster
 
 
 if TYPE_CHECKING:
+    from ormlambda.sql.functions.interface import IFunction
     from ormlambda.dialects import Dialect
 
 from ormlambda import ColumnProxy, TableProxy
@@ -101,8 +101,8 @@ class ColumnIterable[T: TableProxy | ColumnProxy]:
         return self.iterable[index]
 
 
-def call_used_column[T, **P](f: Callable[Concatenate[QueryBuilder, IAggregate, P], T]) -> Callable[Concatenate[QueryBuilder, IAggregate, P], T]:
-    def wrapped(self: QueryBuilder, aggregate: IAggregate, *args: P.args, **kwargs: P.kwargs):
+def call_used_column[T, **P](f: Callable[Concatenate[QueryBuilder, IFunction, P], T]) -> Callable[Concatenate[QueryBuilder, IFunction, P], T]:
+    def wrapped(self: QueryBuilder, aggregate: IFunction, *args: P.args, **kwargs: P.kwargs):
         self.used_columns.extend(aggregate.used_columns())
         return f(self, aggregate, *args, **kwargs)
 

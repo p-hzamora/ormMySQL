@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.sql.types import ColumnType, AliasType
 from ormlambda import ColumnProxy, TableProxy
@@ -11,7 +11,7 @@ from ormlambda.common import GlobalChecker
 VALID_CONCAT_TYPES = ColumnProxy | str | TableProxy
 
 
-class Concat[T](ClauseElement, IAggregate):
+class Concat[T](ClauseElement, IFunction):
     __visit_name__ = "concat"
 
     def __init__[TProp](

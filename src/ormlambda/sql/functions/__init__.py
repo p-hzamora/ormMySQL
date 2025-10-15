@@ -1,4 +1,6 @@
-# Aggregate Functions
+from .interface import IFunction as IFunction
+
+# Function Functions
 from .aggregate.max import Max as Max
 from .aggregate.min import Min as Min
 from .aggregate.concat import Concat as Concat

@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import Any, Iterable
 
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 
 from ormlambda.sql.types import ColumnType
 from ormlambda.sql.elements import ClauseElement
 
 
-class GroupBy(ClauseElement, IAggregate):
+class GroupBy(ClauseElement, IFunction):
     __visit_name__ = "group_by"
 
     def __init__(self, *column: ColumnType):

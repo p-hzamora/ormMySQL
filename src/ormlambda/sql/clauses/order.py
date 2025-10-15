@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as tp
 
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 from ormlambda.sql.types import ColumnType
 
 from ormlambda.common.enums import OrderType
@@ -11,7 +11,7 @@ if tp.TYPE_CHECKING:
     from ormlambda import ColumnProxy
 
 
-class Order[TProp](ClauseElement, IAggregate):
+class Order[TProp](ClauseElement, IFunction):
     __visit_name__ = "order"
 
     columns: tuple[ColumnType[TProp], ...]

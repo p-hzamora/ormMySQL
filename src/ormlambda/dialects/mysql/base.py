@@ -3,7 +3,7 @@ from types import ModuleType
 from ormlambda import ColumnProxy, ForeignKey, TableProxy, Table, Column
 from ormlambda.sql import compiler
 from ormlambda.sql.clause_info import ClauseInfo
-from ormlambda.common.errors import NotKeysInIAggregateError
+from ormlambda.common.errors import NotKeysInIFunctionError
 from ormlambda.sql.types import ASTERISK
 
 
@@ -169,7 +169,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
     def visit_where(self, where: Where) -> str:
         assert (n := len(where.comparers)) == len(where.restrictive)
-        
+
         if not where.comparers:
             return ""
 
@@ -555,9 +555,9 @@ class MySQLCompiler(compiler.SQLCompiler):
         return ClauseInfo.concat_alias_and_column(f"{name}({column})", function.alias)
 
     def visit_st_astext(self, st_astext: ST_AsText) -> str:
-        # avoid use placeholder when using IAggregate because no make sense.
+        # avoid use placeholder when using IFunction because no make sense.
         if st_astext.alias and (found := ClauseInfo._keyRegex.findall(st_astext.alias)):
-            raise NotKeysInIAggregateError(found)
+            raise NotKeysInIFunctionError(found)
         return ClauseInfo.concat_alias_and_column(f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string})", st_astext.alias)
 
     def visit_st_contains(self, st_contains: ST_Contains) -> str:

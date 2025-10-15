@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 
 from ormlambda.sql.types import ColumnType
 
@@ -15,7 +15,7 @@ if tp.TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType, TableType
 
 
-class Count[T: Table](ClauseElement, IAggregate):
+class Count[T: Table](ClauseElement, IFunction):
     __visit_name__ = "count"
 
     def __init__[TProp](

@@ -5,11 +5,11 @@ from shapely import Point
 
 from ormlambda import Column
 from ormlambda.sql.types import ColumnType, AliasType
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 from ormlambda.sql.elements import ClauseElement
 
 
-class ST_Contains(ClauseElement, IAggregate):
+class ST_Contains(ClauseElement, IFunction):
     __visit_name__ = "st_contains"
 
     def __init__[TProp: Column](

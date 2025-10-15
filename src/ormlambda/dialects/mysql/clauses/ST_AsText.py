@@ -1,11 +1,11 @@
 from __future__ import annotations
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 from ormlambda.sql.types import ColumnType, AliasType
 
 from ormlambda.sql.elements import ClauseElement
 
 
-class ST_AsText[T, TProp](ClauseElement, IAggregate):
+class ST_AsText[T, TProp](ClauseElement, IFunction):
     """
     https://dev.mysql.com/doc/refman/8.4/en/fetching-spatial-data.html
 

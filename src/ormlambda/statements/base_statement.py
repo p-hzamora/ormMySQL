@@ -5,8 +5,8 @@ from collections import defaultdict
 
 from ormlambda import Table
 
-from ormlambda.common.errors import AggregateFunctionError
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.common.errors import FunctionFunctionError
+from ormlambda import util
 
 
 if TYPE_CHECKING:
@@ -28,13 +28,16 @@ class ClusterResponse[T, TFlavour]:
         self.flavour = flavour
         self.query = query
 
+    @util.preload_module("ormlambda.sql.functions")
     def cluster(self, response_sql: ResponseType) -> tuple[dict[Type[Table], tuple[Table, ...]]]:
         # We'll create a default list of dicts *once* we know how many rows are in _response_sql
 
+        IFunction = util.preloaded.sql_functions.IFunction
+
         tables: dict[Table, Iterable[ColumnProxy]] = defaultdict(list)
         for clause in self._select.columns:
-            if isinstance(clause, IAggregate):
-                raise AggregateFunctionError(clause)
+            if isinstance(clause, IFunction):
+                raise FunctionFunctionError(clause)
 
             tables[clause.table].append(clause)
 

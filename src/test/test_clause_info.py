@@ -16,7 +16,7 @@ from ormlambda.sql.elements import ClauseElement
 
 if TYPE_CHECKING:
     from ormlambda.dialects import Dialect
-from ormlambda.common.errors import NotKeysInIAggregateError
+from ormlambda.common.errors import NotKeysInIFunctionError
 from ormlambda.dialects.mysql.clauses.ST_AsText import ST_AsText
 from ormlambda.dialects.mysql.clauses.ST_Contains import ST_Contains
 from ormlambda.sql.clause_info import ClauseInfo
@@ -112,13 +112,13 @@ class TestClauseInfo(unittest.TestCase):
             (A.pk_a, "pk_a", "INTEGER"),
             (A.name_a, "name_a", "TEXT"),
             (A.data_a, "data_a", "TEXT"),
-            (A.date_a, "date_a", 'DATETIME'),
+            (A.date_a, "date_a", "DATETIME"),
             (A.value, "value", "TEXT"),
         )
     )
     def test_custom_message_placeholder(self, column, string_col: str, result: object):
         def message_placeholder(ci: ClauseInfo):
-            return f"{type(ci.dbtype).__visit_name__}~" +"{column}"
+            return f"{type(ci.dbtype).__visit_name__}~" + "{column}"
 
         ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
         self.assertEqual(ci.query(DIALECT), f"a.{string_col} AS `{result}~{string_col}`")
@@ -258,18 +258,18 @@ class TestClauseInfo(unittest.TestCase):
     def test_all_None(self):
         self.assertEqual(ClauseInfoMySQL(None, None).query(DIALECT), "NULL")
 
-    def test_raise_NotKeysInIAggregateError(self) -> None:
-        with self.assertRaises(NotKeysInIAggregateError) as err:
+    def test_raise_NotKeysInIFunctionError(self) -> None:
+        with self.assertRaises(NotKeysInIFunctionError) as err:
             column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
             ST_AsText(column_proxy, alias="{table}~{column}").compile(DIALECT)
-        mssg: str = "We cannot use placeholders in IAggregate class. You used ['table', 'column']"
+        mssg: str = "We cannot use placeholders in IFunction class. You used ['table', 'column']"
         self.assertEqual(mssg, err.exception.__str__())
 
-    def test_raise_NotKeysInIAggregateError_with_one_placeholder(self) -> None:
-        with self.assertRaises(NotKeysInIAggregateError) as err:
+    def test_raise_NotKeysInIFunctionError_with_one_placeholder(self) -> None:
+        with self.assertRaises(NotKeysInIFunctionError) as err:
             column_proxy = GlobalChecker.resolved_callback_object(A, lambda x: x.data_a)[0]
             ST_AsText(column_proxy, alias="{table}").compile(DIALECT)
-        mssg: str = "We cannot use placeholders in IAggregate class. You used ['table']"
+        mssg: str = "We cannot use placeholders in IFunction class. You used ['table']"
         self.assertEqual(mssg, err.exception.__str__())
 
     def test_pass_fk(self) -> None:

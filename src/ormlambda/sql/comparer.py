@@ -10,7 +10,7 @@ from ormlambda.sql.types import ComparerType
 from ormlambda.sql.types import ColumnType
 from ormlambda.sql.types import AliasType
 
-from ormlambda.sql.clause_info import IAggregate
+from ormlambda.sql.functions.interface import IFunction
 from ormlambda import ConditionType as ConditionEnum
 from ormlambda.sql.elements import ClauseElement
 from ormlambda.common.enums import UnionEnum
@@ -49,9 +49,8 @@ class CleanValue:
         return temp_name
 
 
-class IComparer(IAggregate):
+class IComparer(IFunction):
     join: UnionEnum
-    alias: str
 
 
 type ClusterType = Comparer | ComparerCluster | ColumnType

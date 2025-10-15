@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from ormlambda.sql import sqltypes as _sql_sqltypes
     from ormlambda.sql import clauses as _sql_clauses
     from ormlambda.sql import type_api as _sql_type_api
+    from ormlambda.sql import functions as _sql_functions
 
     sql_column = _sql_column
     sql_table = _sql_table
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
     sql_clause_info = _sql_clause_info
     sql_types = _sql_sqltypes
     sql_clauses = _sql_clauses
+    sql_functions = _sql_functions
 
     sql_type_api = _sql_type_api
 
