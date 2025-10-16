@@ -4,7 +4,7 @@ import typing as tp
 import re
 
 from ormlambda.sql.types import ASTERISK
-from ormlambda.errors import DuplicatedClauseNameError
+from ormlambda.common.errors import DuplicatedClauseNameError
 from .interface import IClauseInfo
 from ormlambda.common import GlobalChecker
 from ormlambda import util

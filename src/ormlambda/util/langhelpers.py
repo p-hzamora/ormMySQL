@@ -2,7 +2,7 @@ import types
 import inspect
 from typing import Literal, Optional, overload, Callable
 from types import ModuleType
-from ormlambda import errors
+from ormlambda.common import errors
 
 
 def _inspect_func_args(fn) -> tuple[list[str], bool]:
