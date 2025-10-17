@@ -1,26 +1,25 @@
 import unittest
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda import Column  # noqa: E402
 from ormlambda import Table  # noqa: E402
 from ormlambda.sql.table import TableMeta  # noqa: E402
-from ormlambda import JSON, INT
+from ormlambda import JSON, INT, AutoIncrement, PrimaryKey
 
 
 class Person(Table):
     __table_name__ = "person"
 
-    pk_id: Optional[int] = Column(int, is_primary_key=True, is_auto_increment=True)
-    name: Column[str] = Column(str)
-    age: Column[int] = Column(int)
-    email: Column[str] = Column(str)
-    phone: Column[str] = Column(str)
-    address: Column[str] = Column(str)
-
+    pk_id: Annotated[None | Column[INT], PrimaryKey(), AutoIncrement()]
+    name: Column[str]
+    age: Column[int]
+    email: Column[str]
+    phone: Column[str]
+    address: Column[str]
 
 P1 = Person(None, "Pablo", 25, "pablo@icloud.com", "6XXXXXXXXX", "C/ Madrid N_1, 3B")
 P2 = Person(None, "Pablo", 25, "pablo@icloud.com", "6XXXXXXXXX", "C/ Madrid N_1, 3B")
@@ -29,7 +28,7 @@ P2 = Person(None, "Pablo", 25, "pablo@icloud.com", "6XXXXXXXXX", "C/ Madrid N_1,
 class JsonTable(Table):
     __table_name__ = "json_table"
 
-    pk: Column[INT] = Column(INT(), is_primary_key=True)
+    pk: Column[INT] = Column(INT, is_primary_key=True)
     roles: Column[JSON] = Column(JSON())
 
 

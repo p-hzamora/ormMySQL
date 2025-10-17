@@ -1,15 +1,12 @@
-from ormlambda import (
-    Column,
-    Table,
-    BaseModel,
-)
+from typing import Annotated
+from ormlambda import Column, Table, BaseModel, PrimaryKey
 
 from ormlambda.repository import IRepositoryBase
 
 
 class TestTable(Table):
     __table_name__ = "__test_table__"
-    Col1: int = Column(int, is_primary_key=True)
+    Col1: Annotated[Column[int], PrimaryKey()]
     Col2: int
     Col3: int
     Col4: int

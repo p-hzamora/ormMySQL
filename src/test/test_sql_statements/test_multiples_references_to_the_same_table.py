@@ -1,6 +1,7 @@
 import unittest
 import sys
 from pathlib import Path
+from typing import Annotated
 
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
@@ -9,7 +10,7 @@ sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "
 from pydantic import BaseModel
 from test.config import create_env_engine, create_engine_for_db  # noqa: E402
 from ormlambda.sql.clause_info.clause_info import DuplicatedClauseNameError
-from ormlambda import Table, Column, ORM, ForeignKey  # noqa: E402
+from ormlambda import Table, Column, ORM, ForeignKey, PrimaryKey, AutoIncrement  # noqa: E402
 from ormlambda.dialects import mysql
 from ormlambda import Alias
 
@@ -22,13 +23,13 @@ DDBBNAME = "__test_ddbb__"
 class D(Table):
     __table_name__ = "D"
 
-    pk_d: Column[int] = Column(int, is_primary_key=True)
+    pk_d: Annotated[Column[int], PrimaryKey(), AutoIncrement()]
     name: Column[str]
 
 
 class C(Table):
     __table_name__ = "C"
-    pk_c: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    pk_c: Annotated[Column[int], PrimaryKey(), AutoIncrement()]
     fk_d1: Column[int]
     fk_d2: Column[int]
     name: Column[str]
@@ -39,7 +40,7 @@ class C(Table):
 
 class B(Table):
     __table_name__ = "B"
-    pk_b: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    pk_b: Annotated[Column[int], PrimaryKey(), AutoIncrement()]
     name: Column[str]
     fk_c1: Column[int]
     fk_c2: Column[int]
@@ -52,7 +53,7 @@ class B(Table):
 
 class A(Table):
     __table_name__ = "A"
-    pk_a: Column[int] = Column(int, is_primary_key=True, is_auto_increment=True)
+    pk_a: Annotated[Column[int], PrimaryKey(), AutoIncrement()]
     data_a: Column[str]
     fk_b1: Column[int]
     fk_b2: Column[int]

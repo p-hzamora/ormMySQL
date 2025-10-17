@@ -102,7 +102,7 @@ class TestClauseInfo(unittest.TestCase):
     )
     def test_passing_callable_and_custom_method(self, column, string_col: str, result: object):
         def message_placeholder(ci: ColumnProxy):
-            return ci.dtype.__name__
+            return ci.dtype.python_type.__name__
 
         ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
         self.assertEqual(ci.query(DIALECT), f"a.{string_col} AS `{result.__name__}`")
@@ -118,7 +118,7 @@ class TestClauseInfo(unittest.TestCase):
     )
     def test_custom_message_placeholder(self, column, string_col: str, result: object):
         def message_placeholder(ci: ClauseInfo):
-            return f"{type(ci.dbtype).__visit_name__}~" + "{column}"
+            return f"{str(ci.dtype)}~" + "{column}"
 
         ci = ClauseInfoMySQL(A, column, alias_clause=message_placeholder)
         self.assertEqual(ci.query(DIALECT), f"a.{string_col} AS `{result}~{string_col}`")

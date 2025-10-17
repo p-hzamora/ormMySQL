@@ -1,13 +1,11 @@
 from ormlambda import (
     Column,
     Table,
-    BaseModel,
     ForeignKey,
 )
 
 from datetime import datetime
 
-from ormlambda.repository import IRepositoryBase
 from .country import Country
 from ormlambda.sql.sqltypes import VARCHAR, INT, DATETIME
 
@@ -21,8 +19,3 @@ class City(Table):
     last_update: Column[datetime] = Column(DATETIME(), check_types=False)
 
     Country = ForeignKey["City", Country](Country, lambda ci, co: ci.country_id == co.country_id)
-
-
-class CityModel(BaseModel[City]):
-    def __new__[TRepo](cls, repository: IRepositoryBase):
-        return super().__new__(cls, City, repository)

@@ -2,24 +2,24 @@ import unittest
 import sys
 from pathlib import Path
 import random
-
+from typing import Annotated
 
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 
 from test.config import create_env_engine, create_engine
 from test.config import DB_PASSWORD, DB_USERNAME
-from ormlambda import Table, Column, ORM
+from ormlambda import Table, Column, ORM, PrimaryKey
 
 DATABASE_NAME = "__ddbb_test__"
 
 
 class TableCount(Table):
     __table_name__ = "table_count"
-    pos: int = Column(int, is_primary_key=True)
-    a: int
-    b: int
-    c: int
+    pos: Annotated[Column[int], PrimaryKey()]
+    a: Column[int]
+    b: Column[int]
+    c: Column[int]
 
 
 class CountTest(unittest.TestCase):

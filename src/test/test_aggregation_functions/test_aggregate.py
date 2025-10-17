@@ -66,7 +66,7 @@ class TestFunction(unittest.TestCase):
         # fmt:on
         self.assertEqual(res.response, response)
 
-    def test_AAoperator(self):
+    def test_operator(self):
         class Response(BaseModel):
             address: int
             city: int
