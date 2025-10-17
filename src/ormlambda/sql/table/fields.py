@@ -1,12 +1,14 @@
 import typing as tp
 from ormlambda.sql import Column
+from ormlambda import util
+
 
 __all__ = ["get_fields"]
 
 MISSING = lambda x: Column(x)  # COMMENT: Very Important to avoid reusing the same variable across different classes.  # noqa: E731
 
 
-class Field[TProp: tp.AnnotatedAny]:
+class Field[TProp: tp.Any]:
     def __init__(self, name: str, type_: tp.Type, default: Column[TProp]) -> None:
         self.name: str = name
         self.type_: tp.Type[TProp] = type_
@@ -44,11 +46,7 @@ def get_fields[T, TProp](cls: tp.Type[T]) -> tp.Iterable[Field]:
     # delete_special_variables(annotations)
     fields = []
     for name, type_ in annotations.items():
-        if hasattr(type_, "__origin__") and type_.__origin__ is Column:  # __origin__ to get type of Generic value
-            field_type = type_.__args__[0]
-        else:
-            # type_ must by Column object
-            field_type: TProp = type_
+        field_type = util.get_type(type_)
 
         default: Column = getattr(cls, name, MISSING(field_type))
         Column.__set_name__(default, cls, name)
