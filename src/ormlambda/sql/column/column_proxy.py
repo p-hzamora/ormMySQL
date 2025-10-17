@@ -7,6 +7,7 @@ from .column import Column
 from ormlambda import ConditionType, JoinType
 from ormlambda.sql.elements import ClauseElement
 from ormlambda import util
+from ormlambda.common.errors import ColumnError
 
 if TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType, ComparerType
@@ -101,6 +102,9 @@ class ColumnProxy[TProp](ColumnTableProxy, Column[TProp], ClauseElement):
         return self.__comparer_creator(other, "**")
 
     def get_full_chain(self, chr: str = "."):
+        if not self.path.base:
+            raise ColumnError(self)
+        
         alias: list[str] = [self._path.base.__table_name__]
 
         n = self.number_table_in_chain()
