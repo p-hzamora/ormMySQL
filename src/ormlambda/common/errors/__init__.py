@@ -6,6 +6,7 @@ from ormlambda import util
 
 if tp.TYPE_CHECKING:
     from ormlambda.sql.clause_info import ClauseInfo
+    from ormlambda.sql import Column
 
 
 class UnmatchedLambdaParameterError(Exception):
@@ -86,3 +87,16 @@ class DuplicatedClauseNameError(Exception):
 
     def __str__(self):
         return f"Some clauses has the same alias. {self.names}\nTry wrapping the clause with the 'Alias' class first or setting 'avoid_duplicates' param as 'True'"
+
+
+class ColumnError(ValueError):
+    def __init__(self, column: Column, *args):
+        super().__init__(*args)
+        self.column = column
+        self.clause: str = ""
+
+    def set_clause(self, value: str) -> None:
+        self.clause = value
+
+    def __str__(self):
+        return f"The column '{self.column.column_name}' does not exist. Check the name you used inside of '{self.clause}' clause."
