@@ -5,8 +5,10 @@ import shapely as shp
 
 # Custom libraries
 from ormlambda.sql.clauses import Alias
+from ormlambda import ColumnProxy
 
 if TYPE_CHECKING:
+    from ormlambda.sql.types import SelectCol
     from ormlambda.sql.clause_info import ClauseInfo
     from ormlambda import Table
     from ormlambda.sql.clauses import Select
@@ -129,7 +131,7 @@ class Response[TFlavour, *Ts]:
             for i, data in enumerate(row):
                 alias = self._columns[i]
                 clause = self._select[alias]
-                dtype = clause.dtype if hasattr(clause, "dtype") else None
+                dtype = self.get_python_type(clause)
                 parse_data = self._caster.for_value(data, value_type=dtype).from_database
                 new_row.append(parse_data)
             new_row = tuple(new_row)
@@ -145,3 +147,12 @@ class Response[TFlavour, *Ts]:
             return False
 
         return clause_info.dtype is shp.Point
+
+    @staticmethod
+    def get_python_type[T](value: SelectCol) -> Type[T]:
+        if isinstance(value, ColumnProxy):
+            return value.dtype.python_type
+
+        if hasattr(value, "dtype"):
+            return value.dtype
+        return None
