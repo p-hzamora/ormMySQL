@@ -146,7 +146,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._dtype
 
         if self.is_column(self._column):
-            return self._column.dtype
+            return self._column.dtype.python_type
 
         if isinstance(self._column, type):
             return self._column

@@ -568,7 +568,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
 class MySQLDDLCompiler(compiler.DDLCompiler):
     def get_column_specification(self, column: Column, **kwargs):
-        colspec = column.column_name + " " + self.dialect.type_compiler_instance.process(column.dbtype)
+        colspec = column.column_name + " " + self.dialect.type_compiler_instance.process(column.dtype)
         default = self.get_column_default_string(column)
         if default is not None:
             colspec += " DEFAULT " + default
