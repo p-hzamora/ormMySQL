@@ -646,6 +646,7 @@ _type_dicc: dict[Any, TypeEngine[Any]] = {
     _python_UUID: UUID(),
     _python_Point: POINT(),
     decimal.Decimal: DECIMAL(),
+    dict: JSON(),
 }
 # enderegion
 
@@ -656,10 +657,24 @@ def resolve_primitive_types[T](value: T) -> TypeEngine[T]:
     if inspect.isclass(value):
         type_ = _type_dicc.get(value, None)
 
-        if type_:
-            return type_
+        if not type_:
+            return try_getting_instance_compare(value)
+
+        return type_
 
     _result_type = _type_dicc.get(type(value), None)
     if not _result_type:
         return NULLTYPE
     return _result_type._resolve_for_literal_value(value)
+
+
+def try_getting_instance_compare[T](value: T) -> TypeEngine:
+    for obj, type in _type_dicc.items():
+        try:
+            if not issubclass(value, obj):
+                continue
+        except Exception:
+            continue
+
+        return type
+    return NULLTYPE
