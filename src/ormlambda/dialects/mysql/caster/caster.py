@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 from ormlambda.caster.caster import Caster
 
 
@@ -42,4 +43,5 @@ class MySQLCaster(Caster):
             bool: BooleanCaster,
             Decimal: DecimalCaster,
             dict: JsonCaster,
+            Union[list | dict]: JsonCaster,
         }
