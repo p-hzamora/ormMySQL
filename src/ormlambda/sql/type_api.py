@@ -30,8 +30,8 @@ class TypeEngine[T: Any](Element, abc.ABC):
 
     @util.preload_module("ormlambda.sql.sqltypes")
     def coerce_compared_value[TType](self, value: TType) -> TypeEngine[TType]:
-        resolve_primitive_types = util.preloaded.sql_types.resolve_primitive_types
-        NULLTYPE = util.preloaded.sql_types.NULLTYPE
+        resolve_primitive_types = util.preloaded.sql_sqltypes.resolve_primitive_types
+        NULLTYPE = util.preloaded.sql_sqltypes.NULLTYPE
 
         _coerced_type = resolve_primitive_types(value)
         if _coerced_type is NULLTYPE:
@@ -40,3 +40,6 @@ class TypeEngine[T: Any](Element, abc.ABC):
 
     def __repr__(self):
         return f"{TypeEngine.__name__}: {super().__repr__()}"
+
+    def __str__(self):
+        return f"{type(self).__name__}"
