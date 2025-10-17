@@ -21,8 +21,9 @@ class TypeEngine[T: Any](Element, abc.ABC):
     _type: ClassVar[T]
 
     @property
-    @abc.abstractmethod
-    def python_type(self) -> T: ...
+    def python_type(self) -> T:
+        # return object
+        return type(None)
 
     def _resolve_for_literal_value(self, value: T) -> TypeEngine[T]:
         return self
