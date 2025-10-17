@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     sql_column_table_proxy = _sql_column_table_proxy
     sql_foreign_key = _sql_foreign_key
     sql_clause_info = _sql_clause_info
-    sql_types = _sql_sqltypes
+    sql_sqltypes = _sql_sqltypes
     sql_clauses = _sql_clauses
     sql_functions = _sql_functions
 
