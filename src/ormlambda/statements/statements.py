@@ -137,10 +137,8 @@ class Statements[T: Table](IStatements[T]):
 
             self.where(lambda x: getattr(x, pk.column_name).contains(pks_values))
 
-        delete = clauses.Delete(self.model, instances)
+        delete = clauses.Delete(self.model,self._query_builder.where, instances)
         query = delete.compile(self.dialect).string
-
-        query += self._query_builder.where.compile(self.dialect).string
         self._engine.repository.execute(query)
         # not necessary to call self._query_builder.clear() because select() method already call it
         return None

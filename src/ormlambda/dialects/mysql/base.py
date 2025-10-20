@@ -327,7 +327,14 @@ class MySQLCompiler(compiler.SQLCompiler):
         return query
 
     def visit_delete(self, delete: Delete, **kw) -> str:
-        return f"DELETE FROM {delete.table.__table_name__}"
+        query = f"DELETE FROM {self.visit_table(delete.table)}"
+
+        if delete.where.comparers:
+            # COMMENT: We need to change the Where.restrictive due to if we use more than one where, we want to use "OR" instead "AND"
+            for x in range(len(delete.where.restrictive)):
+                delete.where.restrictive[x] = "OR"
+            query += delete.where.compile(self.dialect).string
+        return query
 
     def visit_upsert(self, upsert: Upsert, **kw) -> str:
         """
