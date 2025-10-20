@@ -89,4 +89,7 @@ from .sql.column.metadata import CheckTypes as CheckTypes
 from .sql.column.metadata import Default as Default
 from .sql.column.metadata import NotNull as NotNull
 
+from ormlambda.statements.interfaces import IStatements as IStatements
+from ormlambda.engine import Engine as Engine
+
 _util.import_prefix("ormlambda")
