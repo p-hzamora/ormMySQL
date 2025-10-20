@@ -170,7 +170,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         return f"{lcond} {comparer.compare} {rcond}"
 
-    def visit_where(self, where: Where) -> str:
+    def visit_where(self, where: Where, **kw) -> str:
         assert (n := len(where.comparers)) == len(where.restrictive)
 
         if not where.comparers:
@@ -181,7 +181,7 @@ class MySQLCompiler(compiler.SQLCompiler):
         for i in range(n):
             comp = where.comparers[i]
 
-            string = comp.compile(self.dialect).string
+            string = comp.compile(self.dialect, **kw).string
 
             condition = f"({string})" if isinstance(comp, ComparerCluster) else string
 
