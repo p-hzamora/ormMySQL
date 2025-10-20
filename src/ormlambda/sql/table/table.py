@@ -4,6 +4,7 @@ import json
 
 from ormlambda.sql.ddl import CreateTable, DropTable
 from ormlambda import util
+from ormlambda.common import DOT
 
 if TYPE_CHECKING:
     from ormlambda.sql import Column
@@ -13,8 +14,20 @@ if TYPE_CHECKING:
 from .table_constructor import __init_constructor__
 
 
+def get_db_table_names(table_name: str) -> tuple[Optional[str], str]:
+    """
+    If '.' in string means that '__table_name__' var contains both the database and table names
+    these components need to be handled separately
+    """
+
+    if DOT in table_name:
+        return table_name.split(DOT)
+
+    return None, table_name
+
+
 class TableMeta(type):
-    def __new__[T](cls: "Table", name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
+    def __new__[T](cls: Table, name: str, bases: tuple, dct: dict[str, Any]) -> Type[T]:
         """
         That's the class we use to recreate the table's metadata.
         It's useful because we can dynamically create the __init__ method just by using the type hints of the variables we want to use as column names.
@@ -28,6 +41,11 @@ class TableMeta(type):
         if cls_object.__table_name__ is Ellipsis:
             raise Exception(f"class variable '__table_name__' must be declared in '{cls_object.__name__}' class")
 
+        if cls_object.__db_name__ is Ellipsis:
+            db_name, tbl_name = get_db_table_names(cls_object.__table_name__)
+
+            cls_object.__db_name__ = db_name
+            cls_object.__table_name__ = tbl_name
         if not isinstance(cls_object.__table_name__, str):
             raise Exception(f"class variable '__table_name__' of '{cls_object.__name__}' class must be 'str'")
 
@@ -66,6 +84,7 @@ class Table(metaclass=TableMeta):
     """
 
     __table_name__: str = ...
+    __db_name__: str = ...
 
     def __str__(self) -> str:
         params = self.to_dict()

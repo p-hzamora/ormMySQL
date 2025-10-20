@@ -6,7 +6,7 @@ import re
 from ormlambda.sql.types import ASTERISK
 from ormlambda.common.errors import DuplicatedClauseNameError
 from .interface import IClauseInfo
-from ormlambda.common import GlobalChecker
+from ormlambda.common import GlobalChecker, DOT
 from ormlambda import util
 
 
@@ -185,13 +185,27 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         # When passing the Table itself without 'column'
         if self.table and not self._column:
             if not self._alias_table:
-                return self.table.__table_name__
+                return self.join_db_and_table(self.table)
+
             alias_table = self.alias_table
             return self.concat_alias_and_column(self.table.__table_name__, alias_table)
 
         if self._return_all_columns():
             return self._get_all_columns(dialect)
         return self._join_table_and_column(self._column, dialect)
+
+    @classmethod
+    def join_db_and_table(cls, table: Table, table_name: tp.Optional[str] = None) -> str:
+        table_name = table.__table_name__ if not table_name else table_name
+
+        db = table.__db_name__ if table.__db_name__ else None
+        wrapped_table = cls.wrapped_with_quotes(table_name)
+
+        if db:
+            wrapped_db = cls.wrapped_with_quotes(db)
+            return f"{wrapped_db}{DOT}{wrapped_table}"
+
+        return wrapped_table
 
     @util.preload_module("ormlambda.sql")
     def _join_table_and_column[TProp](self, column: ColumnType[TProp], dialect: Dialect) -> str:
@@ -200,15 +214,16 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         caster = dialect.caster()
 
         if self.alias_table:
-            table = self.wrapped_with_quotes(self.alias_table)
+            table = self.join_db_and_table(column.table, self.alias_table)
         elif isinstance(column, ColumnProxy):
-            table = self.wrapped_with_quotes(column.get_table_chain())
+            table_name: str = column.get_table_chain()
+            table = self.join_db_and_table(column.table, table_name)
         else:
             table = self.table.__table_name__
 
         column: str = self._column_resolver(column)
 
-        table_column = f"{table}.{column}"
+        table_column = f"{table}{DOT}{column}"
 
         dtype = str if self.is_table(self.dtype) else self.dtype
         wrapped_column = caster.for_value(table_column, dtype).wildcard_to_select(table_column)
