@@ -101,6 +101,9 @@ class MySQLCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
 
+    def visit_table(self, table: Table):
+        return ClauseInfo(table=table, dialect=self.dialect).query(dialect=self.dialect)
+
     def visit_table_proxy(self, table: TableProxy, **kw) -> str:
         param = {
             "table": None,
