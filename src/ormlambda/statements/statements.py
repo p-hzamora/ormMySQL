@@ -154,13 +154,8 @@ class Statements[T: Table](IStatements[T]):
     @override
     @clear_list
     def update(self, dicc: dict[str, Any] | list[dict[str, Any]]) -> None:
-        update = clauses.Update(self.model, dicc)
+        update = clauses.Update(self.model, self._query_builder.where, dicc)
         query = update.compile(self.dialect).string
-
-        if self._query_builder.where:
-            where_string = self._query_builder.where.compile(self._engine.dialect).string
-
-            query += where_string
         return self._engine.repository.execute_with_values(query, update.cleaned_values)
 
     @override
