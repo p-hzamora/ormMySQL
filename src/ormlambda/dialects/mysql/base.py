@@ -323,7 +323,7 @@ class MySQLCompiler(compiler.SQLCompiler):
         unknown_rows = f"({', '.join(wildcards)})"  # The number of "%s" must match the dict 'dicc_0' length
 
         insert.cleaned_values = [tuple(x) for x in col_values]
-        query = f"INSERT INTO {insert.table.__table_name__} {f'({join_cols})'} VALUES {unknown_rows}"
+        query = f"INSERT INTO {self.visit_table(insert.table)} {f'({join_cols})'} VALUES {unknown_rows}"
         return query
 
     def visit_delete(self, delete: Delete, **kw) -> str:
