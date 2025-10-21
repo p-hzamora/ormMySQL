@@ -284,7 +284,9 @@ class Statements[T: Table](IStatements[T]):
         query: str = self.query()
         
         if only_query:
-            return query
+            return self.query(sep="\n")
+
+        query = self.query()
         return ClusterResponse(select, self._engine, flavour, query).cluster_data()
 
     @override
@@ -335,8 +337,8 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder.add_statement(deferred_op)
         return self
 
-    def query(self, element: Optional[compileOptions] = None) -> str:
+    def query(self, element: Optional[compileOptions] = None, sep: str = " ") -> str:
         if not element:
-            return self._query_builder.query(self._dialect).strip()
+            return self._query_builder.query(sep, self._dialect).strip()
 
         return cast(ClauseElement, getattr(self._query_builder, element)).compile(self.dialect).string.strip()

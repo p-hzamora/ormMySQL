@@ -33,32 +33,36 @@ class StandardSQLCompiler:
     def __init__(self, dialect: Dialect):
         self.dialect = dialect
 
-    def compile(self, components: QueryBuilder, joins: set[JoinSelector]) -> str:
+    def compile(self, components: QueryBuilder, joins: set[JoinSelector], sep: str = " ") -> str:
         """Compile all components into final SQL"""
-        return " ".join(
-            (
-                components.select.compile(self.dialect).string if components.select else "",
-                self._compile_joins(joins),
-                components.where.compile(self.dialect).string if components.where else "",
-                components.group_by.compile(self.dialect).string if components.group_by else "",
-                components.having.compile(self.dialect).string if components.having else "",
-                components.order.compile(self.dialect).string if components.order else "",
-                components.limit.compile(self.dialect).string if components.limit else "",
-                components.offset.compile(self.dialect).string if components.offset else "",
-            )
-        )
+        query = []
+
+        if components.select:
+            query.append(components.select.compile(self.dialect, sep=sep).string)
+        if joins:
+            query.append(self._compile_joins(joins, sep=sep))
+        if components.where.comparers:
+            query.append(components.where.compile(self.dialect, sep=sep).string)
+        if components.group_by:
+            query.append(components.group_by.compile(self.dialect).string)
+        if components.having.comparers:
+            query.append(components.having.compile(self.dialect, sep=sep).string)
+        if components.order:
+            query.append(components.order.compile(self.dialect).string)
+        if components.limit:
+            query.append(components.limit.compile(self.dialect).string)
+        if components.offset:
+            query.append(components.offset.compile(self.dialect).string)
+
+        return sep.join(query)
 
     @util.preload_module("ormlambda.sql.clauses")
-    def _compile_joins(self, joins: set[JoinSelector]) -> str:
+    def _compile_joins(self, joins: set[JoinSelector], sep: str = " ") -> str:
         """Compile JOIN clauses"""
-
-        if not joins:
-            return ""
-
         JoinSelector = util.preloaded.sql_clauses.JoinSelector
 
         sorted_joins = JoinSelector.sort_joins_by_alias(joins)
-        return " ".join(join.compile(self.dialect).string for join in sorted_joins)
+        return sep.join(join.compile(self.dialect).string for join in sorted_joins)
 
 
 class ColumnIterable[T: TableProxy | ColumnProxy]:
@@ -229,9 +233,9 @@ class QueryBuilder(IQuery):
 
         return method(clause)
 
-    def query(self, dialect: Optional[Dialect] = None) -> str:
+    def query(self, chr: str = " ", dialect: Optional[Dialect] = None) -> str:
         all_joins = self.get_joins(dialect)
-        return StandardSQLCompiler(dialect).compile(self, all_joins)
+        return StandardSQLCompiler(dialect).compile(self, all_joins, sep=chr)
 
     def get_joins(self, dialect) -> set[JoinSelector]:
         # When we applied filters in any table that we wont select any column, we need to add manually all neccessary joins to achieve positive result.

@@ -170,7 +170,7 @@ class MySQLCompiler(compiler.SQLCompiler):
 
         return f"{lcond} {comparer.compare} {rcond}"
 
-    def visit_where(self, where: Where, **kw) -> str:
+    def visit_where(self, where: Where, sep: str = " ", **kw) -> str:
         assert (n := len(where.comparers)) == len(where.restrictive)
 
         if not where.comparers:
@@ -185,13 +185,13 @@ class MySQLCompiler(compiler.SQLCompiler):
 
             condition = f"({string})" if isinstance(comp, ComparerCluster) else string
 
-            union = f" {where.restrictive[i + 1]} " if i != n - 1 else ""
+            union = f" {where.restrictive[i + 1]}{sep}" if i != n - 1 else ""
 
             condition += union
             cond.append(condition)
-        return f" WHERE {"".join(cond)}"
+        return f"WHERE{sep}{''.join(cond)}"
 
-    def visit_having(self, having: Having) -> str:
+    def visit_having(self, having: Having, sep: str = " ", **kw) -> str:
         assert (n := len(having.comparers)) == len(having.restrictive)
 
         if not having.comparers:
@@ -202,15 +202,15 @@ class MySQLCompiler(compiler.SQLCompiler):
         for i in range(n):
             comp = having.comparers[i]
 
-            string = comp.compile(self.dialect).string
+            string = comp.compile(self.dialect, **kw).string
 
             condition = f"({string})" if isinstance(comp, ComparerCluster) else string
 
-            union = f" {having.restrictive[i + 1]} " if i != n - 1 else ""
+            union = f" {having.restrictive[i + 1]}{sep}" if i != n - 1 else ""
 
             condition += union
             cond.append(condition)
-        return f" HAVING {"".join(cond)}"
+        return f"HAVING{sep}{''.join(cond)}"
 
     def visit_join(self, join: JoinSelector) -> str:
         rt = join.rcon.table
@@ -229,7 +229,7 @@ class MySQLCompiler(compiler.SQLCompiler):
         ]
         return " ".join([x for x in list_ if x is not None])
 
-    def visit_select(self, select: Select):
+    def visit_select(self, select: Select, sep: str = " ", **kw):
         params = {}
 
         # COMMENT: when passing alias into 'select' method, we gonna replace the current aliases of columns with the generic one.
@@ -239,15 +239,15 @@ class MySQLCompiler(compiler.SQLCompiler):
         elif select.alias:
             params["alias_clause"] = select.alias
 
-        columns = ClauseInfo.join_clauses(select.columns, ",", dialect=self.dialect, **params)
+        columns = ClauseInfo.join_clauses(select.columns, sep, dialect=self.dialect, **params)
+
         from_ = ClauseInfo(
             select._table,
             None,
-            alias_table=select._alias_table,
             dialect=self.dialect,
         ).query(self.dialect)
 
-        return f"SELECT {columns} FROM {from_}"
+        return f"SELECT{sep}{columns}{sep}FROM {from_}"
 
     def visit_group_by(self, groupby: GroupBy):
         column = ", ".join(x.compile(self.dialect, alias_clause=None).string for x in groupby.column)
@@ -333,7 +333,7 @@ class MySQLCompiler(compiler.SQLCompiler):
             # COMMENT: We need to change the Where.restrictive due to if we use more than one where, we want to use "OR" instead "AND"
             for x in range(len(delete.where.restrictive)):
                 delete.where.restrictive[x] = "OR"
-            query += delete.where.compile(self.dialect).string
+            query += " " + delete.where.compile(self.dialect).string
         return query
 
     def visit_upsert(self, upsert: Upsert, **kw) -> str:
@@ -450,7 +450,7 @@ class MySQLCompiler(compiler.SQLCompiler):
         if update.where.comparers:
             where_string = update.where.compile(self.dialect).string
 
-            query += where_string
+            query += " " + where_string
         update.cleaned_values = tuple(update.cleaned_values)
         return query
 

@@ -124,7 +124,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     @property
     def alias_table(self) -> tp.Optional[str]:
         alias = self._alias_table
+
         return self._alias_resolver(alias)
+
 
     # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
     @alias_table.setter
@@ -328,7 +330,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @util.preload_module("ormlambda.sql.clauses")
     @staticmethod
-    def join_clauses(clauses: list[ColumnProxy], chr: str = ",", *, dialect: Dialect, **kw) -> str:
+    def join_clauses(clauses: list[ColumnProxy], chr: str = " ", *, dialect: Dialect, **kw) -> str:
         IComparer = util.preloaded.sql_comparer.IComparer
 
         raise_alias_duplicated = False
@@ -364,7 +366,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
         if raise_alias_duplicated:
             raise DuplicatedClauseNameError(tuple(alias for alias, number in all_aliases.items() if number > 1))
-        return f"{chr} ".join(queries)
+        return f",{chr}".join(queries)
 
     @staticmethod
     def wrapped_with_quotes(
