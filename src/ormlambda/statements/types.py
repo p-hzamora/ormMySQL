@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ormlambda.sql.types import ColumnType
     from ormlambda.common.enums import OrderType
 
-type OrderTypes = Literal["ASC", "DESC"] | OrderType | Iterable[OrderType]
+type OrderTypes = Literal["ASC", "DESC"] | OrderType | Iterable[OrderTypes]
 
 
 type Tuple[*T] = tuple[tuple[*T], ...]
