@@ -180,3 +180,17 @@ class Table(metaclass=TableMeta):
         ForeignKey = util.preloaded.sql_foreign_key.ForeignKey
 
         return {key: value for key, value in cls.__dict__.items() if isinstance(value, ForeignKey)}
+
+    @classmethod
+    def copy(cls, **attrs: Any) -> Type["Table"]:
+        """Create a new Table class with modified class attributes (e.g., __table_name__)."""
+        new_table = type.__new__(
+            type(cls),
+            cls.__table_name__,
+            (cls,),
+            {},
+        )
+
+        for key, value in attrs.items():
+            setattr(new_table, key, value)
+        return new_table

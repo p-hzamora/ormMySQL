@@ -101,8 +101,7 @@ class Statements[T: Table](IStatements[T]):
                     char = f"_{counter}"
                 name += char
 
-                new_model = self._model
-                new_model.__table_name__ = name
+                new_model = self._model.copy(__table_name__=name)
                 return new_model.create_table(self.dialect)
 
         query = self.model.create_table(self.dialect)
