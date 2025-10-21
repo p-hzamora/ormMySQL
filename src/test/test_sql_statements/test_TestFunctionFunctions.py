@@ -109,24 +109,6 @@ def test_max_function(tmodel: IStatements[_TestTable]) -> None:
     assert select[0] == dicc
 
 
-def test_max_function(tmodel: IStatements[_TestTable]) -> None:
-    select = tmodel.select(
-        lambda x: (
-            Max(x.Col1, alias="max_with_alias"),
-            Min(x.Col1, alias="min_with_alias"),
-            Sum(x.Col1, alias="sum_with_alias"),
-        ),
-        flavour=dict,
-    )
-
-    dicc = {
-        "max_with_alias": 10,
-        "min_with_alias": 1,
-        "sum_with_alias": Decimal("55"),  # FIXME [ ]: I don't know why return 'Decimal' instead 'int'
-    }
-    assert select[0] == dicc
-
-
 def test_min_function(tmodel: IStatements[_TestTable]) -> None:
     select = tmodel.select_one(
         lambda x: Min(x.Col1, alias="min_with_alias"),
@@ -146,7 +128,14 @@ def test_sum_function(tmodel: IStatements[_TestTable]) -> None:
 
 def test_in_statement(amodel: IStatements[Address]):
     filter_by = (1, 2, 3, 4, 5, 6, 7, 8, 9)
-    select = amodel.where(lambda x: x.address_id.contains(filter_by)).select(lambda x: x.address_id, flavour=tuple)
+    # fmt: off
+    select = (
+        amodel
+        .order(lambda x: x.address_id, 'ASC')
+        .where(lambda x: x.address_id.contains(filter_by))
+        .select(lambda x: x.address_id, flavour=tuple)
+    )
+    # fmt: on
     assert select == filter_by
 
 
