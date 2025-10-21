@@ -134,7 +134,7 @@ class Statements[T: Table](IStatements[T]):
 
             self.where(lambda x: getattr(x, pk.column_name).contains(pks_values))
 
-        delete = clauses.Delete(self.model,self._query_builder.where, instances)
+        delete = clauses.Delete(self.model, self._query_builder.where, instances)
         query = delete.compile(self.dialect).string
         self._engine.repository.execute(query)
         # not necessary to call self._query_builder.clear() because select() method already call it
@@ -256,7 +256,7 @@ class Statements[T: Table](IStatements[T]):
         by: JoinType = JoinType.INNER_JOIN,
         alias: Optional[AliasType[T]] = None,
         avoid_duplicates: bool = False,
-        only_query:bool=False,
+        only_query: bool = False,
         **kwargs,
     ):
         if selector is None:
@@ -266,6 +266,7 @@ class Statements[T: Table](IStatements[T]):
                 flavour=flavour,
                 by=by,
                 avoid_duplicates=avoid_duplicates,
+                only_query=only_query,
                 **kwargs,
             )
             return result
@@ -281,8 +282,7 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder.add_statement(select)
 
         self._query_builder.by = by
-        query: str = self.query()
-        
+
         if only_query:
             return self.query(sep="\n")
 
