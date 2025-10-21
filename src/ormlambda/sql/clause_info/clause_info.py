@@ -46,6 +46,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def __init__(self, table: TableType[T], preserve_context: tp.Optional[bool] = ...): ...
     @tp.overload
     def __init__[TProp](self, table: TableType[T], dtype: tp.Optional[TProp] = ...): ...
+    @tp.overload
+    def __init__(self, table: TableType[T], literal: bool = ...): ...
 
     @tp.overload
     def __init__(self, dialect: Dialect, *args, **kwargs): ...
@@ -195,10 +197,11 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._join_table_and_column(self._column, dialect)
 
     @classmethod
-    def join_db_and_table(cls, table: Table, table_name: tp.Optional[str] = None) -> str:
-        table_name = table.__table_name__ if not table_name else table_name
+    def join_db_and_table(cls, table: str| Table, table_name: tp.Optional[str] = None) -> str:
+        table_name = table.__table_name__ if (not table_name and hasattr(table,"__table_name__")) else table_name
 
-        db = table.__db_name__ if table.__db_name__ else None
+        db = table.__db_name__ if hasattr(table,"__db_name__") else None
+
         wrapped_table = cls.wrapped_with_quotes(table_name)
 
         if db:
@@ -214,7 +217,8 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         caster = dialect.caster()
 
         if self.alias_table:
-            table = self.join_db_and_table(column.table, self.alias_table)
+            col = column.table if hasattr(column, "table") else column
+            table = self.join_db_and_table(col, self.alias_table)
         elif isinstance(column, ColumnProxy):
             table_name: str = column.get_table_chain()
             table = self.join_db_and_table(column.table, table_name)
