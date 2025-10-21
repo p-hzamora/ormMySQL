@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from test.models import Address  # noqa: F401
+from test.models import Address
 from ormlambda import IStatements
 
 import re
