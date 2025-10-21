@@ -35,3 +35,5 @@ DATABASE_URL = os.getenv("DATABASE_URL", None)
 
 if DATABASE_URL is None:
     DATABASE_URL = f"{DB_PREFIX}{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}"
+
+ENV = os.getenv("ENV", "prod")

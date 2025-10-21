@@ -3,7 +3,7 @@ from typing import Callable
 import pytest
 import subprocess
 from ormlambda.engine import Engine
-from test.env import DATABASE_URL, DB_PREFIX, TEST_DIR
+from test.env import DATABASE_URL, DB_PREFIX, TEST_DIR, ENV
 
 from ormlambda import create_engine, URL, make_url, IStatements, ORM
 from test.models import Address
@@ -35,6 +35,10 @@ config_dict = {
 
 @pytest.fixture(scope="session", autouse=True)
 def create_mysql_sakila_db(engine_no_db: Engine):
+    if ENV == "prod":
+        yield
+        return
+
     SAKILA = "sakila"
     if not engine_no_db.schema_exists(SAKILA):
         # Get the path to the SQL file
