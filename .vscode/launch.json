@@ -15,5 +15,18 @@
             "justMyCode": true,
             "cwd": "${workspaceFolder}"
         },
+
+        {
+            "name": "Run All Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-q"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
     ]
 }
