@@ -1,36 +1,25 @@
-import sys
-from pathlib import Path
-import unittest
+import pytest
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-
-from ormlambda import ORM, Max
-from test.models import Address, City, Country  # noqa: E402
-from test.config import create_sakila_engine
+from ormlambda import ORM, Max, IStatements
+from test.models import Address  # noqa: E402
 
 
-db = create_sakila_engine()
-
-AddressModel = ORM(Address, db)
-CountryModel = ORM(Country, db)
-CityModel = ORM(City, db)
+@pytest.fixture
+def amodel(sakila_engine) -> IStatements[Address]:  # noqa: F811
+    return ORM(Address, sakila_engine)
 
 
-class TestMax(unittest.TestCase):
-    def test_max_using_select_one(self):
-        max = AddressModel.select_one(lambda x: Max(x.address_id), flavour=dict)["max"]
-        self.assertEqual(max, 605)
-
-    def test_max_using_max(self):
-        max = AddressModel.max(lambda x: x.address_id)
-        self.assertEqual(max, 605)
-
-    def test_max_using_where_condition(self):
-        MAX_VALUE = 300
-        result = AddressModel.where(lambda x: x.address_id <= MAX_VALUE).max(lambda x: x.address_id)
-        self.assertEqual(result, MAX_VALUE)
+def test_max_using_select_one(amodel: IStatements[Address]):
+    max = amodel.select_one(lambda x: Max(x.address_id), flavour=dict)["max"]
+    assert max == 605
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_max_using_max(amodel: IStatements[Address]):
+    max = amodel.max(lambda x: x.address_id)
+    assert max == 605
+
+
+def test_max_using_where_condition(amodel: IStatements[Address]):
+    MAX_VALUE = 300
+    result = amodel.where(lambda x: x.address_id <= MAX_VALUE).max(lambda x: x.address_id)
+    assert result == MAX_VALUE

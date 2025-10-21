@@ -1,56 +1,46 @@
-import unittest
-import sys
-from pathlib import Path
+import pytest
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-
-from test.config import create_sakila_engine  # noqa: E402
+from test.conftest import sakila_engine  # noqa: E402
 from ormlambda.dialects import mysql
 from test.models import Address, City, Country
-from ormlambda import ORM
+from ormlambda import ORM, IStatements
+from ormlambda.engine import Engine
 
 DIALECT = mysql.dialect
 
 
-engine = create_sakila_engine()
+@pytest.fixture
+def model(sakila_engine: Engine) -> IStatements[Address]:
+    return ORM(Address, sakila_engine)
 
 
-class TestSelectTest(unittest.TestCase):
-    def test_select_all(self):
-        model = ORM(Address, engine)
+def test_select_all(model: IStatements[Address]):
+    res1 = model.select()
+    res2 = model.select(lambda x: x)
+    res3 = model.select(lambda x: (x,))
 
-        res1 = model.select()
-        res2 = model.select(lambda x: x)
-        res3 = model.select(lambda x: (x,))
-
-        self.assertIsInstance(res1, tuple)
-        self.assertIsInstance(res1[0], Address)
-        self.assertEqual(res1, res2)
-        self.assertEqual(res2, res3)
-
-    def test_select_all_different_tables(self):
-        model = ORM(Address, engine)
-
-        res1 = model.select(
-            lambda x: (
-                x,
-                x.City,
-                x.City.Country,
-            ),
-            avoid_duplicates=True,
-        )
-
-        self.assertIsInstance(res1, tuple)
-        self.assertIsInstance(res1[0][0], Address)
-        self.assertIsInstance(res1[0][1], City)
-        self.assertIsInstance(res1[0][2], Country)
-
-        for a, ci, co in res1:
-            self.assertEqual(a.city_id, ci.city_id)
-            self.assertEqual(ci.country_id, co.country_id)
+    assert isinstance(res1, tuple)
+    assert isinstance(res1[0], Address)
+    assert res1 == res2
+    assert res2 == res3
 
 
-if __name__ == "__main__":
-    unittest.main(failfast=True)
+def test_select_all_different_tables(model: IStatements[Address]):
+    res1 = model.select(
+        lambda x: (
+            x,
+            x.City,
+            x.City.Country,
+        ),
+        avoid_duplicates=True,
+    )
+
+    assert isinstance(res1, tuple)
+    assert isinstance(res1[0][0], Address)
+    assert isinstance(res1[0][1], City)
+    assert isinstance(res1[0][2], Country)
+
+    for a, ci, co in res1:
+        assert a.city_id == ci.city_id
+        assert ci.country_id == co.country_id

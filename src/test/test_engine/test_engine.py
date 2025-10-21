@@ -1,34 +1,12 @@
 from __future__ import annotations
-import sys
-from pathlib import Path
-import unittest
+from ormlambda.engine import create_engine, Engine
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-from ormlambda.engine import create_engine
-from ormlambda import ORM
-from ormlambda.dialects import mysql
+from test.env import DB_PASSWORD, DB_USERNAME
 
 
-from test.models import Address
+def test_create_engine() -> None:
+    url_connection = f"mysql://{DB_USERNAME}:{DB_PASSWORD}@localhost:3306/sakila?pool_size=3"
+    db = create_engine(url_connection)
 
-
-class TestEngine(unittest.TestCase):
-    def test_create_engine(self) -> None:
-        url_connection = "mysql://root:1500@localhost:3306/sakila?pool_size=3"
-        db = create_engine(url_connection)
-
-        Address.create_table(mysql.dialect())
-
-        # ORM(Address, db).select(
-        #     lambda x: (
-        #         x.address,
-        #         x.City.city,
-        #         x.City.Country.country,
-        #     ),
-        # )
-
-
-if __name__ == "__main__":
-    unittest.main()
+    assert isinstance(db, Engine)

@@ -1,50 +1,56 @@
-# Standard libraries
-# Third party libraries
-import unittest
-import sys
-from pathlib import Path
-
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+import pytest
 
 
 # Custom libraries
-from test.config import create_env_engine, create_engine_for_db  # noqa: E402
 from test.models import Country  # noqa: E402
-from ormlambda import ORM
+from ormlambda import ORM, IStatements
+from ormlambda.engine import Engine
 
 DB_NAME = "__test_ddbb__"
 
 
-class Test_my_sql(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.engine = create_env_engine()
-        cls.engine.create_schema(DB_NAME, "replace")
-
-        cls.ddbb = cls.engine.repository
-
-        cls.engine = create_engine_for_db(DB_NAME)
-        cls.country_model = ORM(Country, cls.engine)
-
-    def tearDown(self) -> None:
-        self.engine.drop_schema(DB_NAME, True)
-
-    # FIXME [ ]: refactor to fix and include this method
-    def test_create_table_code_first_passing_folder(self):
-        return
-        self.ddbb.create_tables_code_first("src/test/models")
-
-    # FIXME [ ]: refactor to fix and include this method
-    def test_create_table_code_first_passing_file(self):
-        return
-        self.ddbb.create_tables_code_first("src/test/models/models_in_the_same_file/all_models_in_one_file.py")
-
-    def test_create_table(self):
-        if self.country_model.table_exists():
-            self.country_model.drop_table()
-
-        self.country_model.create_table()
+@pytest.fixture(scope="module",autouse=True)
+def create_and_drop_schema(engine_no_db: Engine):
+    """Create test schema, yield, then drop it"""
+    engine_no_db.create_schema(DB_NAME, "replace")
+    yield
+    engine_no_db.drop_schema(DB_NAME, if_exists=True)
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.fixture(scope="module")
+def engine(create_engine_for_db):
+    """Engine connected to test database"""
+    return create_engine_for_db(DB_NAME)
+
+
+@pytest.fixture(scope="module")
+def repository(base_engine: Engine):
+    """Database repository for code-first operations"""
+    return base_engine.repository
+
+
+@pytest.fixture(scope="module")
+def country_model(engine) -> IStatements[Country]:
+    """ORM model for Country table"""
+    return ORM(Country, engine)
+
+
+def test_create_table(country_model: IStatements[Country]):
+    """Test creating a table"""
+    if country_model.table_exists():
+        country_model.drop_table()
+
+    country_model.create_table()
+    assert country_model.table_exists()
+
+
+@pytest.mark.skip(reason="FIXME: refactor to fix and include this method")
+def test_create_table_code_first_passing_folder(repository):
+    """Test creating tables from folder"""
+    repository.create_tables_code_first("src/test/models")
+
+
+@pytest.mark.skip(reason="FIXME: refactor to fix and include this method")
+def test_create_table_code_first_passing_file(repository):
+    """Test creating tables from file"""
+    repository.create_tables_code_first("src/test/models/models_in_the_same_file/all_models_in_one_file.py")

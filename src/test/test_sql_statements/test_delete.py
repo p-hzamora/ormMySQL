@@ -1,78 +1,105 @@
-from __future__ import annotations
-import unittest
-import sys
-from pathlib import Path
+from typing import Generator
+import pytest
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
+from test.models import _TestTable
+from ormlambda import ORM, IStatements
+from ormlambda.engine import Engine
+
+DDBB = "__test_ddbb__"
 
 
-from ormlambda import ORM
-from test.models import (
-    TestTable,
-)  # noqa: E402
+@pytest.fixture(scope="module", autouse=True)
+def create_db(engine_no_db: Engine):  # noqa: F811
+    engine_no_db.create_schema(DDBB, "replace")
+    yield
+    engine_no_db.drop_schema(DDBB)
 
 
-from test.config import create_env_engine, create_engine_for_db
+@pytest.fixture(scope="function")
+def tmodel(create_engine_for_db) -> Generator[IStatements[_TestTable], None, None]:  # noqa: F811
+    model = ORM(_TestTable, create_engine_for_db(DDBB))
+    model.create_table()
+    yield model
+    model.drop_table()
 
 
-DDBBNAME = "__test_ddbb__"
-TABLETEST = TestTable.__table_name__
-
-
-def create_instance_of_TestTable(number: int) -> list[TestTable]:
+def create_instance_of_TestTable(number: int) -> list[_TestTable]:
     if number <= 0:
         number = 1
-    return [TestTable(*[x] * len(TestTable.__annotations__)) for x in range(1, number + 1)]
+    return [_TestTable(*[x] * len(_TestTable.__annotations__)) for x in range(1, number + 1)]
 
 
-class TestDelete(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.ddbb = create_env_engine()
+def test_delete_one_element(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(5)
+    tmodel.insert(instance)
 
-        cls.ddbb.create_schema(DDBBNAME, "replace")
-        cls.ddbb = create_engine_for_db(DDBBNAME)
-        cls.tmodel = ORM(TestTable, cls.ddbb)
-        cls.tmodel.create_table("replace")
+    result = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert result == (1, 2, 3, 4, 5)
 
-    def tearDown(self) -> None:
-        self.tmodel.delete()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.ddbb.drop_schema(DDBBNAME)
-
-    def test_delete(self):
-        instance = create_instance_of_TestTable(5)
-        self.tmodel.insert(instance)
-
-        self.tmodel.where(lambda x: x.Col1 == 2).delete()
-        select_all = self.tmodel.select(lambda x: x.Col1, flavour=tuple)
-        self.assertTupleEqual((1, 3, 4, 5), select_all)
-
-    def test_delete_passing_instance(self):
-        instance = create_instance_of_TestTable(5)
-        self.tmodel.insert(instance)
-
-        self.tmodel.delete(TestTable(2))
-        select_all = self.tmodel.select(lambda x: x.Col1, flavour=tuple)
-        self.assertTupleEqual((1, 3, 4, 5), select_all)
-
-    def test_delete_passing_list_of_instance(self):
-        instance = create_instance_of_TestTable(5)
-        self.tmodel.insert(instance)
-
-        self.tmodel.delete(
-            [
-                TestTable(2),
-                TestTable(3),
-                TestTable(4),
-            ]
-        )
-        select_all = self.tmodel.select(lambda x: x.Col1, flavour=tuple)
-        self.assertTupleEqual((1, 5), select_all)
+    tmodel.where(lambda x: x.Col1 == 3).delete()
+    result = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert result == (1, 2, 4, 5)
 
 
-if __name__ == "__main__":
-    unittest.main(failfast=True)
+def test_delete_a_couple_of_elements(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(5)
+    tmodel.insert(instance)
+
+    result = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert result == (1, 2, 3, 4, 5)
+
+    # fmt:off
+    (
+        tmodel
+        .where(lambda x: x.Col1 == 2)
+        .where(lambda x: x.Col1 == 3)
+        .where(lambda x: x.Col1 == 4)
+        .delete()
+    )
+    # fmt:on
+    result = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert result == (1, 5)
+
+
+def test_delete(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(5)
+    tmodel.insert(instance)
+
+    tmodel.where(lambda x: x.Col1 == 2).delete()
+    select_all = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert (1, 3, 4, 5) == select_all
+
+
+def test_delete_passing_instance(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(5)
+    tmodel.insert(instance)
+
+    tmodel.delete(_TestTable(2))
+    select_all = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert (1, 3, 4, 5) == select_all
+
+
+def test_delete_passing_list_of_instance(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(5)
+    tmodel.insert(instance)
+
+    tmodel.delete(
+        [
+            _TestTable(2),
+            _TestTable(3),
+            _TestTable(4),
+        ]
+    )
+    select_all = tmodel.select(lambda x: x.Col1, flavour=tuple)
+    assert (1, 5) == select_all
+
+
+def test_delete_all(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(5)
+    tmodel.insert(instance)
+
+    assert tmodel.count() == 5
+
+    tmodel.delete()
+    assert tmodel.count() == 0

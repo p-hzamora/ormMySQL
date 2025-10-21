@@ -1,12 +1,6 @@
-import sys
-from pathlib import Path
 from ormlambda.common.global_checker import GlobalChecker
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-
-from test.config import create_env_engine  # noqa: E402
 from ormlambda import Table, Column, ForeignKey  # noqa: E402
 from ormlambda.dialects import mysql
 
@@ -58,9 +52,6 @@ class A(Table):
     B1 = ForeignKey["A", B](B, lambda self, b: self.fk_b1 == b.pk_b)
     B2 = ForeignKey["A", B](B, lambda self, b: self.fk_b2 == b.pk_b)
     B3 = ForeignKey["A", B](B, lambda self, b: self.fk_b3 == b.pk_b)
-
-
-engine = create_env_engine()
 
 
 resolved_proxy = GlobalChecker[A].resolved_callback_object(

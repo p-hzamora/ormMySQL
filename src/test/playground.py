@@ -9,13 +9,11 @@ import base64
 sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from pydantic import BaseModel
-from test.config import create_sakila_engine
-from ormlambda import ORM, Column
+from ormlambda import ORM, Column, create_engine
 from test.models import Address
+from test.env import DATABASE_URL
 
-
-engine = create_sakila_engine()
-
+engine = create_engine(DATABASE_URL)
 type DataType = dict[str, Any]
 
 

@@ -1,10 +1,3 @@
-import sys
-from pathlib import Path
-import unittest
-
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-from test.config import create_engine_for_db
 from test.models import (  # noqa: E402
     City,
     Country,
@@ -12,23 +5,16 @@ from test.models import (  # noqa: E402
 
 from ormlambda import ORM
 
-engine = create_engine_for_db("sakila")
 
+def test_constructor(sakila_engine):
+    city = ORM(City, sakila_engine)
+    country = ORM(Country, sakila_engine)
 
-class TestAbstractSQLStatements(unittest.TestCase):
-    def test_constructor(self):
-        city = ORM(City, engine)
-        country = ORM(Country, engine)
+    rusult_ci = city.select(flavour=set)
+    result_co = country.select(flavour=set)
 
-        rusult_ci = city.select(flavour=set)
-        result_co = country.select(flavour=set)
+    assert isinstance(rusult_ci, tuple)
+    assert isinstance(rusult_ci[0], set)
 
-        self.assertIsInstance(rusult_ci, tuple)
-        self.assertIsInstance(rusult_ci[0], set)
-
-        self.assertIsInstance(result_co, tuple)
-        self.assertIsInstance(result_co[0], set)
-
-
-if __name__ == "__main__":
-    unittest.main()
+    assert isinstance(result_co, tuple)
+    assert isinstance(result_co[0], set)

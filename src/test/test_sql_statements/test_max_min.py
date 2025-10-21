@@ -1,82 +1,75 @@
 from __future__ import annotations
-import unittest
-import sys
-from pathlib import Path
+import pytest
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-
-from test.config import create_sakila_engine  # noqa: E402
 from test.models import Address  # noqa: F401
 from ormlambda import ORM
 from pydantic import BaseModel
-from ormlambda import Min, Max
+from ormlambda import Min, Max, IStatements
 
 
-class MaxMinTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.ddbb = create_sakila_engine()
-        cls.tmodel = ORM(Address, cls.ddbb)
+@pytest.fixture
+def amodel(sakila_engine) -> IStatements[Address]:  # noqa: F811
+    return ORM(Address, sakila_engine)
 
-    def test_max_and_min(self):
-        # fmt: off
-        res = (
-            self.tmodel
-            .where(lambda x: (
-                x.address_id <= 200,
-                x.address_id >= 100))
-            .first(lambda x: (
-                Max(x.address_id),
-                Min(x.address_id),
-                ),
-                flavour=dict,
-            )
+
+def test_max_and_min(amodel: IStatements[Address]) -> None:
+    # fmt: off
+    res = (
+        amodel
+        .where(lambda x: (
+            x.address_id <= 200,
+            x.address_id >= 100))
+        .first(lambda x: (
+            Max(x.address_id),
+            Min(x.address_id),
+            ),
+            flavour=dict,
         )
-        # fmt: on
+    )
+    # fmt: on
 
-        self.assertEqual(res["max"], 200)
-        self.assertEqual(res["min"], 100)
+    assert res["max"] == 200
+    assert res["min"] == 100
 
-    def test_max_min_with_aliases(self):
-        class MaxMinResponse(BaseModel):
-            addressIdMax: int
-            addressIdMin: int
 
-        # fmt: off
-        res = (
-            self.tmodel
-            .where(lambda x: (x.address_id <= 200, x.address_id >= 100))
-            .first(lambda x: (
-                Max(x.address_id, "addressIdMax"),
-                Min(x.address_id, "addressIdMin"),
-                ),
-                flavour=MaxMinResponse,
-            )
+def test_max_min_with_aliases(amodel: IStatements[Address]) -> None:
+    class MaxMinResponse(BaseModel):
+        addressIdMax: int
+        addressIdMin: int
+
+    # fmt: off
+    res = (
+        amodel
+        .where(lambda x: (x.address_id <= 200, x.address_id >= 100))
+        .first(lambda x: (
+            Max(x.address_id, "addressIdMax"),
+            Min(x.address_id, "addressIdMin"),
+            ),
+            flavour=MaxMinResponse,
         )
-        # fmt: off
-        self.assertEqual(res.addressIdMax, 200)
-        self.assertEqual(res.addressIdMin, 100)
-
-    def test_max_with_lambda(self):
-        res1 = self.tmodel.groupby(lambda x: x.address_id).max(lambda x: x.address_id)
-        res2 = self.tmodel.groupby(lambda x: x.address_id).max(lambda x: x.address_id)
-
-        self.assertEqual(res1, res2)
-
-    def test_min_with_lambda(self):
-        res1 = self.tmodel.groupby(lambda x: x.address_id).min(lambda x: x.address_id)
-        res2 = self.tmodel.groupby(lambda x: x.address_id).min(lambda x: x.address_id)
-
-        self.assertEqual(res1, res2)
-
-    def test_sum_with_lambda(self):
-        res1 = self.tmodel.groupby(lambda x: x.address_id).sum(lambda x: x.address_id)
-        res2 = self.tmodel.groupby(lambda x: x.address_id).sum(lambda x: x.address_id)
-
-        self.assertEqual(res1, res2)
+    )
+    # fmt: off
+    assert res.addressIdMax==200
+    assert res.addressIdMin==100
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_max_with_lambda(amodel: IStatements[Address]) -> None:
+    res1 = amodel.groupby(lambda x: x.address_id).max(lambda x: x.address_id)
+    res2 = amodel.groupby(lambda x: x.address_id).max(lambda x: x.address_id)
+
+    assert res1 == res2
+
+
+def test_min_with_lambda(amodel: IStatements[Address]) -> None:
+    res1 = amodel.groupby(lambda x: x.address_id).min(lambda x: x.address_id)
+    res2 = amodel.groupby(lambda x: x.address_id).min(lambda x: x.address_id)
+
+    assert res1 == res2
+
+
+def test_sum_with_lambda(amodel: IStatements[Address]) -> None:
+    res1 = amodel.groupby(lambda x: x.address_id).sum(lambda x: x.address_id)
+    res2 = amodel.groupby(lambda x: x.address_id).sum(lambda x: x.address_id)
+
+    assert res1 == res2

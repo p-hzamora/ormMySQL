@@ -1,26 +1,21 @@
-import sys
-from pathlib import Path
+
+import pytest
 from types import NoneType
-import unittest
 from datetime import datetime
 from shapely import Point
-from parameterized import parameterized
 from typing import Any, NamedTuple, Type
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
 
 from ormlambda.caster import Caster
 from ormlambda import Column, Table
-from test.config import create_env_engine
 from ormlambda.dialects import mysql
 
 
 DIALECT = mysql.dialect
-engine = create_env_engine()
 
 
-class TestValues(Table):
+class ValueTest(Table):
     __table_name__ = "test_values"
     data_str: Column[str]
     data_int: Column[int]
@@ -30,7 +25,7 @@ class TestValues(Table):
     data_datetime: Column[datetime]
 
 
-table_obj = TestValues(
+table_obj = ValueTest(
     data_str="value",
     data_int=20,
     data_float=20.001,
@@ -40,7 +35,7 @@ table_obj = TestValues(
 )
 
 
-class TestResultCast[TProp, TType](NamedTuple):
+class ResultCastTest[TProp, TType](NamedTuple):
     wildcard_to_select: str
     wildcard_to_where: str
     wildcard_to_insert: str
@@ -51,7 +46,7 @@ class TestResultCast[TProp, TType](NamedTuple):
     type_to_cast: TType
 
 
-RESULT_FOR_str = TestResultCast(
+RESULT_FOR_str = ResultCastTest(
     wildcard_to_select=Caster.PLACEHOLDER,
     wildcard_to_where=Caster.PLACEHOLDER,
     wildcard_to_insert=Caster.PLACEHOLDER,
@@ -61,7 +56,7 @@ RESULT_FOR_str = TestResultCast(
     value_type=str,
     type_to_cast=str,
 )
-RESULT_FOR_int = TestResultCast(
+RESULT_FOR_int = ResultCastTest(
     wildcard_to_select=Caster.PLACEHOLDER,
     wildcard_to_where=Caster.PLACEHOLDER,
     wildcard_to_insert=Caster.PLACEHOLDER,
@@ -71,7 +66,7 @@ RESULT_FOR_int = TestResultCast(
     value_type=int,
     type_to_cast=int,
 )
-RESULT_FOR_float = TestResultCast(
+RESULT_FOR_float = ResultCastTest(
     wildcard_to_select=Caster.PLACEHOLDER,
     wildcard_to_where=Caster.PLACEHOLDER,
     wildcard_to_insert=Caster.PLACEHOLDER,
@@ -81,7 +76,7 @@ RESULT_FOR_float = TestResultCast(
     value_type=float,
     type_to_cast=float,
 )
-RESULT_FOR_Point = TestResultCast(
+RESULT_FOR_Point = ResultCastTest(
     wildcard_to_select=f"ST_AsText({Caster.PLACEHOLDER})",
     wildcard_to_where=f"ST_AsText({Caster.PLACEHOLDER})",
     wildcard_to_insert=f"ST_GeomFromText({Caster.PLACEHOLDER})",
@@ -91,7 +86,7 @@ RESULT_FOR_Point = TestResultCast(
     value_type=Point,
     type_to_cast=Point,
 )
-RESULT_FOR_NoneType = TestResultCast(
+RESULT_FOR_NoneType = ResultCastTest(
     wildcard_to_select=Caster.PLACEHOLDER,
     wildcard_to_where=Caster.PLACEHOLDER,
     wildcard_to_insert=Caster.PLACEHOLDER,
@@ -101,7 +96,7 @@ RESULT_FOR_NoneType = TestResultCast(
     value_type=NoneType,
     type_to_cast=NoneType,
 )
-RESULT_FOR_datetime = TestResultCast(
+RESULT_FOR_datetime = ResultCastTest(
     wildcard_to_select=Caster.PLACEHOLDER,
     wildcard_to_where=Caster.PLACEHOLDER,
     wildcard_to_insert=Caster.PLACEHOLDER,
@@ -113,51 +108,49 @@ RESULT_FOR_datetime = TestResultCast(
 )
 
 
-class TestResolverType(unittest.TestCase):
-    @parameterized.expand(
-        [
-            (TestValues.data_Point, table_obj, RESULT_FOR_Point),
-            (TestValues.data_str, table_obj, RESULT_FOR_str),
-            (TestValues.data_int, table_obj, RESULT_FOR_int),
-            (TestValues.data_float, table_obj, RESULT_FOR_float),
-            (TestValues.data_NoneType, table_obj, RESULT_FOR_NoneType),
-            (TestValues.data_datetime, table_obj, RESULT_FOR_datetime),
-        ]
-    )
-    def test_for_column_with_column_obj[TProp](self, column: Column[TProp], table_obj: TestValues, result: TestResultCast) -> None:
-        caster = DIALECT().caster()
-        casted_data = caster.for_column(column, table_obj)
-        self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
-        self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)
-        self.assertEqual(casted_data.wildcard_to_insert(), result.wildcard_to_insert)
-        self.assertEqual(casted_data.to_database, result.to_database)
-        self.assertEqual(casted_data.from_database, result.from_database)
-        self.assertEqual(casted_data.value, result.value)
-        self.assertEqual(casted_data.value_type, result.value_type)
-        self.assertEqual(casted_data.type_to_cast, result.type_to_cast)
-
-    @parameterized.expand(
-        [
-            (table_obj.data_str, RESULT_FOR_str),
-            (table_obj.data_int, RESULT_FOR_int),
-            (table_obj.data_float, RESULT_FOR_float),
-            (table_obj.data_Point, RESULT_FOR_Point),
-            (table_obj.data_NoneType, RESULT_FOR_NoneType),
-            (table_obj.data_datetime, RESULT_FOR_datetime),
-        ]
-    )
-    def test_for_value[TProp](self, value: TProp, result: TestResultCast) -> None:
-        caster = DIALECT().caster()
-        casted_data = caster.for_value(value)
-        self.assertEqual(casted_data.wildcard_to_select(), result.wildcard_to_select)
-        self.assertEqual(casted_data.wildcard_to_where(), result.wildcard_to_where)
-        self.assertEqual(casted_data.wildcard_to_insert(), result.wildcard_to_insert)
-        self.assertEqual(casted_data.to_database, result.to_database)
-        self.assertEqual(casted_data.from_database, result.from_database)
-        self.assertEqual(casted_data.value, result.value)
-        self.assertEqual(casted_data.value_type, result.value_type)
-        self.assertEqual(casted_data.type_to_cast, result.type_to_cast)
+@pytest.mark.parametrize(
+    "column,table_obj,result",
+    [
+        (ValueTest.data_Point, table_obj, RESULT_FOR_Point),
+        (ValueTest.data_str, table_obj, RESULT_FOR_str),
+        (ValueTest.data_int, table_obj, RESULT_FOR_int),
+        (ValueTest.data_float, table_obj, RESULT_FOR_float),
+        (ValueTest.data_NoneType, table_obj, RESULT_FOR_NoneType),
+        (ValueTest.data_datetime, table_obj, RESULT_FOR_datetime),
+    ],
+)
+def test_for_column_with_column_obj[TProp](column: Column[TProp], table_obj: ValueTest, result: ResultCastTest) -> None:
+    caster = DIALECT().caster()
+    casted_data = caster.for_column(column, table_obj)
+    assert casted_data.wildcard_to_select() == result.wildcard_to_select
+    assert casted_data.wildcard_to_where() == result.wildcard_to_where
+    assert casted_data.wildcard_to_insert() == result.wildcard_to_insert
+    assert casted_data.to_database == result.to_database
+    assert casted_data.from_database == result.from_database
+    assert casted_data.value == result.value
+    assert casted_data.value_type == result.value_type
+    assert casted_data.type_to_cast == result.type_to_cast
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize(
+    "value,result",
+    [
+        (table_obj.data_str, RESULT_FOR_str),
+        (table_obj.data_int, RESULT_FOR_int),
+        (table_obj.data_float, RESULT_FOR_float),
+        (table_obj.data_Point, RESULT_FOR_Point),
+        (table_obj.data_NoneType, RESULT_FOR_NoneType),
+        (table_obj.data_datetime, RESULT_FOR_datetime),
+    ],
+)
+def test_for_value[TProp](value: TProp, result: ResultCastTest) -> None:
+    caster = DIALECT().caster()
+    casted_data = caster.for_value(value)
+    assert casted_data.wildcard_to_select() == result.wildcard_to_select
+    assert casted_data.wildcard_to_where() == result.wildcard_to_where
+    assert casted_data.wildcard_to_insert() == result.wildcard_to_insert
+    assert casted_data.to_database == result.to_database
+    assert casted_data.from_database == result.from_database
+    assert casted_data.value == result.value
+    assert casted_data.value_type == result.value_type
+    assert casted_data.type_to_cast == result.type_to_cast

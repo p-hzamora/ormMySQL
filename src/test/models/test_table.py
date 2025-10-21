@@ -1,38 +1,31 @@
 from typing import Annotated
-from ormlambda import Column, Table, BaseModel, PrimaryKey
-
-from ormlambda.repository import IRepositoryBase
+from ormlambda import Column, Table, PrimaryKey
 
 
-class TestTable(Table):
-    __table_name__ = "__test_table__"
+class _TestTable(Table):
+    __table_name__ = "__test_ddbb__.__test_table__"
     Col1: Annotated[Column[int], PrimaryKey()]
-    Col2: int
-    Col3: int
-    Col4: int
-    Col5: int
-    Col6: int
-    Col7: int
-    Col8: int
-    Col9: int
-    Col10: int
-    Col11: int
-    Col12: int
-    Col13: int
-    Col14: int
-    Col15: int
-    Col16: int
-    Col17: int
-    Col18: int
-    Col19: int
-    Col20: int
-    Col21: int
-    Col22: int
-    Col23: int
-    Col24: int
-    Col25: int
-
-
-class TestTableModel(BaseModel[TestTable]):
-    def __new__(cls, repository: IRepositoryBase) -> IRepositoryBase:
-        return super().__new__(cls, TestTable, repository)
+    Col2: Column[int]
+    Col3: Column[int]
+    Col4: Column[int]
+    Col5: Column[int]
+    Col6: Column[int]
+    Col7: Column[int]
+    Col8: Column[int]
+    Col9: Column[int]
+    Col10: Column[int]
+    Col11: Column[int]
+    Col12: Column[int]
+    Col13: Column[int]
+    Col14: Column[int]
+    Col15: Column[int]
+    Col16: Column[int]
+    Col17: Column[int]
+    Col18: Column[int]
+    Col19: Column[int]
+    Col20: Column[int]
+    Col21: Column[int]
+    Col22: Column[int]
+    Col23: Column[int]
+    Col24: Column[int]
+    Col25: Column[int]

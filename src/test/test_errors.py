@@ -1,59 +1,52 @@
 from __future__ import annotations
-import unittest
-import sys
-from pathlib import Path
+from typing import Callable
+import pytest
 
 
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-from test.config import create_env_engine, create_engine_for_db  # noqa: E402
-from ormlambda import ORM  # noqa: E402
+from ormlambda import ORM
+from ormlambda import Engine
+from ormlambda import IStatements
 from ormlambda.common.errors import UnmatchedLambdaParameterError
 
-from test.models import (
-    TableType,
-)  # noqa: E402
+from test.models import TableType
 
 
-DDBBNAME = "__test_ddbb__"
+DB_NAME = "__test_ddbb__"
 
 MSSG_ERROR: str = "Unmatched number of parameters in lambda function with the number of tables: Expected 1 parameters but found ('x', 'y', 'z')."
 
 
 # DEPRECATED
-class TestWorkingWithDifferentTypes(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.ddbb = create_env_engine()
+@pytest.fixture
+def setUp(engine_no_db: Engine, create_engine_for_db: Callable[[str], Engine]):
+    engine_no_db.create_schema(DB_NAME, "replace")
+    engine = create_engine_for_db(DB_NAME)
 
-    def setUp(self) -> None:
-        self.ddbb.create_schema(DDBBNAME, "replace")
-        self.ddbb = create_engine_for_db(DDBBNAME)
-        self.model = ORM(TableType, self.ddbb)
-        self.model.create_table("replace")
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.ddbb.drop_schema(DDBBNAME)
-
-    def test_UnmatchedLambdaParameterError_in_where(self):
-        with self.assertRaises(UnmatchedLambdaParameterError) as err:
-            self.model.where(lambda x, y, z: x.points == 2).select_one(lambda x: x.points, flavour=tuple)
-
-        self.assertEqual(MSSG_ERROR, err.exception.__str__())
-
-    def test_UnmatchedLambdaParameterError_in_select_one(self):
-        with self.assertRaises(UnmatchedLambdaParameterError) as err:
-            self.model.select_one(lambda x, y, z: x.points, flavour=tuple)
-
-        self.assertEqual(MSSG_ERROR, err.exception.__str__())
-
-    def test_UnmatchedLambdaParameterError_in_select(self):
-        with self.assertRaises(UnmatchedLambdaParameterError) as err:
-            self.model.select(lambda x, y, z: x.points, flavour=tuple)
-
-        self.assertEqual(MSSG_ERROR, err.exception.__str__())
+    model = ORM(TableType, engine)
+    model.create_table("replace")
+    yield model
+    engine.drop_schema(DB_NAME)
 
 
-if __name__ == "__main__":
-    unittest.main(failfast=True)
+@pytest.mark.skip("Depricated")
+def test_UnmatchedLambdaParameterError_in_where(model: IStatements[TableType]):
+    with pytest.raises(UnmatchedLambdaParameterError) as err:
+        model.where(lambda x, y, z: x.points == 2).select_one(lambda x: x.points, flavour=tuple)
+
+    assert MSSG_ERROR == str(err.value)
+
+
+@pytest.mark.skip("Depricated")
+def test_UnmatchedLambdaParameterError_in_select_one(model: IStatements[TableType]):
+    with pytest.raises(UnmatchedLambdaParameterError) as err:
+        model.select_one(lambda x, y, z: x.points, flavour=tuple)
+
+    assert MSSG_ERROR == str(err.value)
+
+
+@pytest.mark.skip("Depricated")
+def test_UnmatchedLambdaParameterError_in_select(model: IStatements[TableType]):
+    with pytest.raises(UnmatchedLambdaParameterError) as err:
+        model.select(lambda x, y, z: x.points, flavour=tuple)
+
+    assert MSSG_ERROR == str(err.value)

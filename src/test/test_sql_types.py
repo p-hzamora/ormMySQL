@@ -1,13 +1,7 @@
-import sys
-from pathlib import Path
-import unittest
-from parameterized import parameterized
-
-
-sys.path.insert(0, [str(x.parent) for x in Path(__file__).parents if x.name == "test"].pop())
-
-from ormlambda import Column, Table, create_engine, ORM
+from typing import Generator
+from ormlambda import Column, Table, Engine, ORM
 from ormlambda.sql.type_api import TypeEngine
+import pytest
 from ormlambda.dialects.mysql import (
     CHAR,
     TEXT,
@@ -35,42 +29,6 @@ timestamp_type = TIMESTAMP(timezone=True, fsp=6)
 bool_type = BOOLEAN
 
 
-def url_creator(db: str = ""):
-    return f"mysql://root:1500@localhost:3306{f'/{db}' if db else ''}?pool_size=3"
-
-
-def create_engine_for_db(db: str = ""):
-    URL = url_creator(db)
-    return create_engine(URL)
-
-
-class TestDataType(unittest.TestCase):
-    @classmethod
-    def tearDownClass(cls):
-        TEST_DB = "__test_create_schema__"
-        engine = create_engine_for_db(TEST_DB)
-        engine.drop_schema(TEST_DB)
-
-    @parameterized.expand(
-        [
-            (int_type, "INTEGER"),
-            (string_type, "VARCHAR(100)"),
-            (char_type, "CHAR(10)"),
-            (text_type, "TEXT"),
-            (datetime_type, "DATETIME"),
-            (timestamp_type, "TIMESTAMP(6)"),
-            (bool_type, "BOOL"),
-        ]
-    )
-    def test_types_mysql(self, type_: TypeEngine, result: str) -> None:
-        engine = create_engine_for_db()
-        TEST_DB = "__test_create_schema__"
-
-        engine.create_schema(TEST_DB, "replace")
-        engine_test_db = create_engine_for_db(TEST_DB)
-        self.assertEqual(engine_test_db.dialect.type_compiler_instance.process(type_), result)
-
-
 type ColumnCustom[T] = Column[T]
 
 
@@ -87,15 +45,33 @@ class TableType(Table):
     decimals: Column[DECIMAL] = Column(DECIMAL(precision=5, scale=2))
 
 
-class TestTypes(unittest.TestCase):
-    def test_create_table(self):
-        engine = create_engine_for_db()
-        TEST_DB = "__test_create_schema__"
+@pytest.fixture(autouse=True)
+def engine(engine_no_db, create_engine_for_db) -> Generator[Engine, None, None]:
+    TEST_DB = "__test_create_schema__"
 
-        engine.create_schema(TEST_DB)
-        engine_test_db = create_engine_for_db(TEST_DB)
-        ORM(TableType, engine_test_db).create_table("replace")
+    engine_no_db.create_schema(TEST_DB, "replace")
+
+    engine: Engine = create_engine_for_db(TEST_DB)
+
+    yield engine
+    engine.drop_schema(TEST_DB)
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize(
+    "type_,result",
+    [
+        (int_type, "INTEGER"),
+        (string_type, "VARCHAR(100)"),
+        (char_type, "CHAR(10)"),
+        (text_type, "TEXT"),
+        (datetime_type, "DATETIME"),
+        (timestamp_type, "TIMESTAMP(6)"),
+        (bool_type, "BOOL"),
+    ],
+)
+def test_types_mysql(engine: Engine, type_: TypeEngine, result: str) -> None:
+    assert engine.dialect.type_compiler_instance.process(type_) == result
+
+
+def test_create_table(engine):
+    ORM(TableType, engine).create_table("replace")
