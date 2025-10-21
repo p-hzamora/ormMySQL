@@ -67,3 +67,25 @@ def test_update_Col2(tmodel: IStatements[_TestTable]):
     assert result[2] == theorical_result != instance[2]
     assert result[3] == instance[3]
     assert result[4] == instance[4]
+
+
+def test_update_table_with_database_prefix(tmodel: IStatements[_TestTable]):
+    instance = create_instance_of_TestTable(10)
+    tmodel.insert(instance)
+
+    tmodel.where(lambda x: x.Col5 == 5).update(
+        {
+            _TestTable.Col5: 500,
+            _TestTable.Col4: 400,
+            _TestTable.Col3: 300,
+        }
+    )
+
+    res = tmodel.where(lambda x: x.Col1 == 5).first()
+    assert res != instance[4]
+
+    instance[4].Col5 = 500
+    instance[4].Col4 = 400
+    instance[4].Col3 = 300
+    
+    assert res == instance[4]
