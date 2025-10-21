@@ -258,6 +258,7 @@ class Statements[T: Table](IStatements[T]):
         by: JoinType = JoinType.INNER_JOIN,
         alias: Optional[AliasType[T]] = None,
         avoid_duplicates: bool = False,
+        only_query:bool=False,
         **kwargs,
     ):
         if selector is None:
@@ -282,9 +283,11 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder.add_statement(select)
 
         self._query_builder.by = by
-        self._query: str = self.query()
-
-        return ClusterResponse(select, self._engine, flavour, self._query).cluster_data()
+        query: str = self.query()
+        
+        if only_query:
+            return query
+        return ClusterResponse(select, self._engine, flavour, query).cluster_data()
 
     @override
     def select_one[TValue, TFlavour, *Ts](
