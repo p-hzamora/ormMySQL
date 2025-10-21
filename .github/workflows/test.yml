@@ -54,4 +54,4 @@ jobs:
 
     # Step 6: Run the tests using Poetry
     - name: Run tests
-      run: pytest -q
+      run: poetry run pytest -q
