@@ -54,4 +54,4 @@ jobs:
 
     # Step 6: Run the tests using Poetry
     - name: Run tests
-      run: poetry run python ./src/test/runner.py
+      run: pytest -q
