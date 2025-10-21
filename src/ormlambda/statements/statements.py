@@ -46,7 +46,6 @@ def clear_list[T, **P](f: Callable[Concatenate[Statements, P], T]) -> Callable[P
             raise
         finally:
             self._query_builder.clear()
-            self._query = None
 
     return wrapper
 
@@ -56,7 +55,6 @@ class Statements[T: Table](IStatements[T]):
         self._query_builder = QueryBuilder()
         self._engine = engine
         self._dialect = engine.dialect
-        self._query: Optional[str] = None
         self._model: T = model[0] if isinstance(model, Iterable) else model
 
         if not issubclass(self._model, Table):
@@ -338,9 +336,6 @@ class Statements[T: Table](IStatements[T]):
         return self
 
     def query(self, element: Optional[compileOptions] = None) -> str:
-        if self._query:
-            return self._query
-
         if not element:
             return self._query_builder.query(self._dialect).strip()
 
