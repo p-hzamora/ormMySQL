@@ -1,24 +1,6 @@
-[tool.ruff]
-line-length = 320
-
-[tool.pytest.ini_options]
-testpaths = ["src/test"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "-v",                    # verbose output
-    "--strict-markers",      # error on unknown markers
-    "--tb=short",           # shorter traceback format
-]
-
-markers = [
-    "slow: Slow test (deselect with '-m \"not slow\"')",
-]
-
 [tool.poetry]
 name = "ormlambda"
-version = "4.4.0"
+version = "4.4.4"
 description = "ORM designed to interact with the database (currently with MySQL) using lambda functions and nested functions"
 authors = ["p-hzamora <p.hzamora@icloud.com>"]
 readme = "README.md"
@@ -38,7 +20,25 @@ pydantic = "^2.11.1"
 sqlserver = "^0.0.17.1"
 pytest = "^8.4.2"
 
+[tool.ruff]
+line-length = 320
+
+[tool.pytest.ini_options]
+testpaths = ["src/test"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",                    # verbose output
+    "--strict-markers",      # error on unknown markers
+    "--tb=short",           # shorter traceback format
+]
+
+markers = [
+    "slow: Slow test (deselect with '-m \"not slow\"')",
+]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
