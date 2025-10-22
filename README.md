@@ -63,7 +63,7 @@ db = create_engine('mysql://root:1234@localhost:3306/sakila')
 
 AddressModel = ORM(Address, db)
 
-result = AddressModel.where(Address.City.Country.country.regex(r"^[aA]")).select(
+result = AddressModel.where(lambda x: x.City.Country.country.regex(r"^[aA]")).select(
     lambda address: (
         address,
         address.City,
@@ -91,7 +91,7 @@ result = AddressModel.where(
 Additionally, we can filter by others tables. For example, we can return all addresses for each city where `country_id` = 87 (Spain)
 
 ```python
-result = AddressModel.where(Address.City.Country.country_id  == 87).select()
+result = AddressModel.where(lambda x: x.City.Country.country_id  == 87).select()
 ```
 
 We can also return `Address`, `City` or `Country` if needed.
