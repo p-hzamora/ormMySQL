@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 from .elements import ClauseElement
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class BaseDDLElement(ClauseElement):
 
 
 class CreateDropTable:
-    def __init__(self, element: Table):
+    def __init__(self, element: Type[Table]):
         self.element = element
         self.columns = [CreateColumn(c) for c in element.get_columns()]
 
