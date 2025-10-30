@@ -4,7 +4,7 @@ import typing as tp
 import re
 
 from ormlambda.sql.types import ASTERISK
-from ormlambda.common.errors import DuplicatedClauseNameError
+from ormlambda.common.errors import DuplicatedClauseNameError, ReplacePlaceholderError
 from .interface import IClauseInfo
 from ormlambda.common import GlobalChecker, DOT
 from ormlambda import util
@@ -17,16 +17,6 @@ if tp.TYPE_CHECKING:
     from ormlambda import Table
     from ormlambda.sql.types import TableType, ColumnType, AliasType
     from ormlambda.dialects import Dialect
-
-
-class ReplacePlaceholderError(ValueError):
-    def __init__(self, placeholder: str, attribute: str, *args):
-        super().__init__(*args)
-        self.placeholder: str = placeholder
-        self.attr: str = attribute
-
-    def __str__(self):
-        return "You cannot use {" + self.placeholder + "} placeholder without using '" + self.attr + "' attribute"
 
 
 class ClauseInfo[T: Table](IClauseInfo[T]):

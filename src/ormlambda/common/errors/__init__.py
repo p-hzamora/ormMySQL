@@ -9,6 +9,16 @@ if tp.TYPE_CHECKING:
     from ormlambda.sql import Column
 
 
+class ReplacePlaceholderError(ValueError):
+    def __init__(self, placeholder: str, attribute: str, *args):
+        super().__init__(*args)
+        self.placeholder: str = placeholder
+        self.attr: str = attribute
+
+    def __str__(self):
+        return "You cannot use {" + self.placeholder + "} placeholder without using '" + self.attr + "' attribute"
+
+
 class UnmatchedLambdaParameterError(Exception):
     def __init__(self, expected_params: int, function: tp.Callable[..., tp.Any], *args: object) -> None:
         super().__init__(*args)
