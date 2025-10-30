@@ -175,6 +175,9 @@ class String(TypeEngine[str]):
             return _STRING
         return _UNICODE
 
+    def __repr__(self):
+        return super().__repr__() + f"({self.length})"
+
 
 class Text(String):
     """Unbounded length text type."""
