@@ -11,15 +11,6 @@ from .. import default
 from typing import TYPE_CHECKING, Any, Iterable, Type
 from ormlambda.sql.comparer import Comparer, ComparerCluster
 
-if TYPE_CHECKING:
-    from ormlambda.sql.functions.interface import IFunction
-    from ormlambda.sql.types import ColumnType
-    from test.test_clause_info import ST_Contains
-    from ormlambda import JoinSelector
-    from ormlambda.sql.column.column import Column
-    from mysql import connector
-    from ormlambda.dialects.mysql.clauses import ST_AsText
-
 from .types import (
     _NumericType,
     _NumericCommonType,
@@ -64,6 +55,14 @@ from .repository import MySQLRepository
 
 
 if TYPE_CHECKING:
+    from ormlambda.sql.functions.interface import IFunction
+    from ormlambda.sql.types import ColumnType
+    from test.test_clause_info import ST_Contains
+    from ormlambda import JoinSelector
+    from ormlambda.sql.column.column import Column
+    from mysql import connector
+    from ormlambda.dialects.mysql.clauses import ST_AsText
+
     from ormlambda.sql.clauses import (
         Select,
         Insert,
@@ -100,9 +99,6 @@ if TYPE_CHECKING:
 class MySQLCompiler(compiler.SQLCompiler):
     render_table_with_column_in_update_from = True
     """Overridden from base SQLCompiler value"""
-
-    def visit_table(self, table: Table):
-        return ClauseInfo(table=table, dialect=self.dialect).query(dialect=self.dialect)
 
     def visit_table_proxy(self, table: TableProxy, **kw) -> str:
         param = {
