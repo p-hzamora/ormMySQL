@@ -106,10 +106,10 @@ class MySQLCompiler(compiler.SQLCompiler):
 
     def visit_table_proxy(self, table: TableProxy, **kw) -> str:
         param = {
-            "table": None,
-            "column": table._table_class.__table_name__,
-            "dialect": self.dialect,
+            "table": table._table_class,
+            "column": None,
             "alias_clause": alias if (alias := table.get_table_chain()) else None,
+            "dialect": self.dialect,
             **kw,
         }
         return ClauseInfo(**param).query(dialect=self.dialect)
