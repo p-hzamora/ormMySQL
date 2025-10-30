@@ -132,7 +132,7 @@ class MySQLCompiler(compiler.SQLCompiler):
         params = {
             "table": column.table,
             "column": column,
-            "alias_table": alias_table if alias_table else "{table}",
+            "alias_table": alias_table,
             "alias_clause": column.alias or "{column}",
             "dtype": column._column.dtype,
             "dialect": self.dialect,
