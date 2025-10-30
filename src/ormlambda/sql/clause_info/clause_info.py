@@ -33,11 +33,11 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     @tp.overload
     def __init__(self, table: TableType[T], keep_asterisk: tp.Optional[bool] = ...): ...
     @tp.overload
-    def __init__(self, table: TableType[T], preserve_context: tp.Optional[bool] = ...): ...
-    @tp.overload
     def __init__[TProp](self, table: TableType[T], dtype: tp.Optional[TProp] = ...): ...
     @tp.overload
     def __init__(self, table: TableType[T], literal: bool = ...): ...
+    @tp.overload
+    def __init__(self, table: TableType[T], first_apperance: bool = ...): ...
 
     @tp.overload
     def __init__(self, dialect: Dialect, *args, **kwargs): ...
@@ -49,9 +49,9 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         alias_table: tp.Optional[AliasType[ColumnProxy]] = None,
         alias_clause: tp.Optional[AliasType[ColumnProxy]] = None,
         keep_asterisk: bool = False,
-        preserve_context: bool = False,
         dtype: tp.Optional[TProp] = None,
         literal: bool = False,
+        first_apperance: bool = False,
         *,
         dialect: Dialect,
         **kw,
@@ -65,21 +65,22 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         self._alias_table: tp.Optional[AliasType[ColumnProxy]] = alias_table
         self._alias_clause: tp.Optional[AliasType[ColumnProxy]] = alias_clause
         self._keep_asterisk: bool = keep_asterisk
-        self._preserve_context: bool = preserve_context
         self._dtype = dtype
         self._literal = literal
+        self._first_apperance = first_apperance
 
         self._dialect: Dialect = dialect
 
         self._placeholderValues: dict[str, tp.Callable[[TProp], str]] = {
             "column": self.replace_column_placeholder,
             "table": self.replace_table_placeholder,
+            "db": self.replace_db_placeholder,
         }
 
         super().__init__(**kw)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}: query -> {self.query(self._dialect)}"
+        return f"{type(self).__name__}: {self.table}->{self.column}"
 
     def replace_column_placeholder[TProp](self, column: ColumnType[TProp]) -> str:
         if not column:
@@ -87,15 +88,35 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return self._column_resolver(column)
 
     def replace_table_placeholder[TProp](self, _: ColumnType[TProp]) -> str:
-        if not self.table:
+        if not self._table:
             raise ReplacePlaceholderError("table", "table")
-        return self.table.__table_name__
 
+        # We need to return the name itself without database because we're using it to replace {table} not {db}
+        return self._table.__table_name__
+
+    def replace_db_placeholder[TProp](self, _: ColumnType[TProp]) -> str:
+        if not self._table:
+            raise ReplacePlaceholderError("db", "table")
+
+        # We need to return the name itself without database because we're using it to replace {table} not {db}
+        return self._table.__db_name__
+
+    @util.preload_module("ormlambda.sql")
     @property
-    def table(self) -> TableType[T]:
+    def table(self) -> str:
+        if not self._first_apperance and self.alias_table:
+            return self.wrapped_with_quotes(self.alias_table)
+
+        ForeignKey = util.preloaded.sql_foreign_key.ForeignKey
         if self.is_foreign_key(self._table):
-            return self._table.tright
-        return self._table
+            table = tp.cast(ForeignKey, self._table).tright
+        else:
+            table = self._table
+
+        if not table:
+            return None
+
+        return table.__table_name__ if not table.__db_name__ else self.join_db_and_table(table)
 
     @table.setter
     def table(self, value: TableType[T]) -> None:
@@ -103,25 +124,33 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
 
     @property
     def alias_clause(self) -> tp.Optional[str]:
-        alias = self._alias_clause
-        return self._alias_resolver(alias)
+        """
+        It must be conditioned by the column. If no columns is set and an alias_clause is specified, the alias will not be applied.
+        """
+        if not self.column:
+            return None
+        return self._alias_resolver(self._alias_clause)
 
-    # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
     @alias_clause.setter
     def alias_clause(self, value: str) -> str:
         self._alias_clause = value
 
     @property
     def alias_table(self) -> tp.Optional[str]:
-        alias = self._alias_table
+        return self._alias_resolver(self._alias_table)
 
-        return self._alias_resolver(alias)
-
-
-    # TODOL [ ]: if we using this setter, we don't update the _context with the new value. Study if it's necessary
     @alias_table.setter
     def alias_table(self, value: str) -> str:
         self._alias_table = value
+
+    def _alias_resolver(self, alias: AliasType[ColumnProxy]) -> tp.Optional[str]:
+        if alias is None:
+            return None
+
+        if callable(alias):
+            return self._alias_resolver(alias(self._column))
+
+        return self._replace_placeholder(alias)
 
     def replaced_alias(self, value: str) -> tp.Optional[str]:
         return value
@@ -154,7 +183,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             return self._dtype
 
         if isinstance(self._column, Column):
-            return self._column.dbtype
+            return self._column.dtype
 
         if isinstance(self._column, type):
             return self._column
@@ -166,36 +195,40 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def compile(self, dialect: Dialect, **kwargs) -> str:
         return self._create_query(dialect, **kwargs)
 
-    def _create_query(self, dialect: Dialect, **kwargs) -> str:
+    def _create_query(self, dialect: Dialect) -> str:
         # when passing some value that is not a column name
-        if not self.table and not self._alias_clause:
-            return self.column
 
-        if not self.table and self._alias_clause:
-            # it means that we are passing an object with alias. We should delete '' around the object
-            alias_clause = self.alias_clause
-            return self.concat_alias_and_column(self._column, alias_clause)
+        table = self.table
+        column = self.column
 
-        # When passing the Table itself without 'column'
-        if self.table and not self._column:
-            if not self._alias_table:
-                return self.join_db_and_table(self.table)
-
-            alias_table = self.alias_table
-            return self.concat_alias_and_column(self.table.__table_name__, alias_table)
+        if self._first_apperance:
+            return self.concat_clause_with_his_alias(table, self.alias_table)
 
         if self._return_all_columns():
             return self._get_all_columns(dialect)
-        return self._join_table_and_column(self._column, dialect)
+
+        if not table:
+            return column
+
+        if not column:
+            if self.alias_clause:
+                return self.concat_clause_with_his_alias(table, self.alias_clause)
+            return table
+
+        clause = f"{table}{DOT}{column}"
+
+        caster = dialect.caster()
+
+        dtype = str if self.is_table(self.dtype) else self.dtype
+        wrapped_clause = caster.for_value(clause, dtype).wildcard_to_select(clause)
+        return self.concat_clause_with_his_alias(wrapped_clause, self.alias_clause)
 
     @classmethod
-    def join_db_and_table(cls, table: str| Table, table_name: tp.Optional[str] = None) -> str:
-        table_name = table.__table_name__ if (not table_name and hasattr(table,"__table_name__")) else table_name
+    def join_db_and_table(cls, table: Table) -> str:
+        db = table.__db_name__
+        tbl = table.__table_name__
 
-        db = table.__db_name__ if hasattr(table,"__db_name__") else None
-
-        wrapped_table = cls.wrapped_with_quotes(table_name)
-
+        wrapped_table = cls.wrapped_with_quotes(tbl)
         if db:
             wrapped_db = cls.wrapped_with_quotes(db)
             return f"{wrapped_db}{DOT}{wrapped_table}"
@@ -206,24 +239,24 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def _join_table_and_column[TProp](self, column: ColumnType[TProp], dialect: Dialect) -> str:
         ColumnProxy = util.preloaded.sql_column.ColumnProxy
 
-        caster = dialect.caster()
+        # Avoid adding 'database name' when we have alias_table
 
-        if self.alias_table:
-            col = column.table if hasattr(column, "table") else column
-            table = self.join_db_and_table(col, self.alias_table)
-        elif isinstance(column, ColumnProxy):
+        if isinstance(column, ColumnProxy):
             table_name: str = column.get_table_chain()
-            table = self.join_db_and_table(column.table, table_name)
+
+            self.alias_table = table_name
         else:
-            table = self.table.__table_name__
+            table = self.table
 
         column: str = self._column_resolver(column)
 
         table_column = f"{table}{DOT}{column}"
 
+        caster = dialect.caster()
+
         dtype = str if self.is_table(self.dtype) else self.dtype
         wrapped_column = caster.for_value(table_column, dtype).wildcard_to_select(table_column)
-        return self.concat_alias_and_column(wrapped_column, self.alias_clause)
+        return self.concat_clause_with_his_alias(wrapped_column, self.alias_clause)
 
     def _return_all_columns(self) -> bool:
         if self._keep_asterisk:
@@ -241,7 +274,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
     def _get_all_columns(self, dialect: Dialect) -> str:
         def ClauseCreator(column: str) -> ClauseInfo:
             return ClauseInfo(
-                table=self.table,
+                table=self._table,
                 column=column,
                 alias_table=self._alias_table,
                 alias_clause=self._alias_clause,
@@ -252,12 +285,14 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         if self._alias_table and self._alias_clause:  # We'll add an "*" when we are certain that we have included 'alias_clause' attr
             return self._join_table_and_column(ASTERISK, dialect)
 
-        columns: list[ClauseInfo] = [ClauseCreator(column).query(dialect) for column in self.table.get_columns()]
+        columns: list[ClauseInfo] = [ClauseCreator(column).query(dialect) for column in self._table.get_columns()]
 
         return ", ".join(columns)
 
-    # FIXME [x]: Study how to deacoplate from mysql database
     def _column_resolver[TProp](self, column: ColumnType[TProp]) -> str:
+        if not column:
+            return None
+
         if isinstance(column, ClauseInfo):
             return column.query(self._dialect)
 
@@ -303,20 +338,11 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
         return func(self._column)
 
     @classmethod
-    def concat_alias_and_column(cls, column: str, alias_clause: tp.Optional[str] = None) -> str:
+    def concat_clause_with_his_alias(cls, clause: str, alias_clause: tp.Optional[str] = None) -> str:
         if alias_clause is None:
-            return column
-        alias = f"{column} AS {cls.wrapped_with_quotes(alias_clause)}"
+            return clause
+        alias = f"{clause} AS {cls.wrapped_with_quotes(alias_clause)}"
         return alias
-
-    def _alias_resolver(self, alias: AliasType[ColumnProxy]) -> tp.Optional[str]:
-        if alias is None:
-            return None
-
-        if callable(alias):
-            return self._alias_resolver(alias(self._column))
-
-        return self._replace_placeholder(alias)
 
     @util.preload_module("ormlambda.sql.clauses")
     @staticmethod
@@ -330,7 +356,7 @@ class ClauseInfo[T: Table](IClauseInfo[T]):
             if isinstance(c, IComparer):
                 comparer = f"({c.compile(dialect, alias_clause=None).string})"
 
-                query = ClauseInfo(None, comparer, alias_clause=c.alias, dialect=dialect).query(dialect)
+                query = ClauseInfo(None, comparer, dialect=dialect, literal=True).query(dialect) + " AS " + ClauseInfo.wrapped_with_quotes(c.alias)
                 queries.append(query)
                 continue
             # That update control the alias we set by default on select clause
