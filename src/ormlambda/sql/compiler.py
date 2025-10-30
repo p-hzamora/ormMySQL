@@ -13,8 +13,10 @@ from ormlambda.sql.sqltypes import resolve_primitive_types
 
 from .visitors import Visitor
 from ormlambda.sql.type_api import TypeEngine
+from ormlambda.sql.clause_info import ClauseInfo
 
 if TYPE_CHECKING:
+    from ormlambda import Table
     from ormlambda import Column
     from .visitors import Element
     from .elements import ClauseElement
@@ -141,6 +143,9 @@ class TypeCompiler(Visitor):
 class SQLCompiler(Compiled):
     is_sql = True
 
+    def visit_table(self, table: Table):
+        return ClauseInfo(table=table, dialect=self.dialect).query(dialect=self.dialect)
+
 
 class DDLCompiler(Compiled):
     is_ddl = True
@@ -210,7 +215,7 @@ class DDLCompiler(Compiled):
             foreign_keys_string.append(fk.compile(self.dialect, orig_table=tablecls).string)
         table_options = " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 
-        sql = f"CREATE TABLE {tablecls.__table_name__} (\n\t"
+        sql = f"CREATE TABLE {SQLCompiler.visit_table(self,tablecls)} (\n\t"
         sql += ",\n\t".join(column_sql)
         sql += "\n\t" if not foreign_keys else ",\n\t"
         sql += ",\n\t".join(foreign_keys_string)
