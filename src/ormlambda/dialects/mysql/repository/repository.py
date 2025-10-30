@@ -187,8 +187,6 @@ class MySQLRepository(BaseRepository[MySQLConnectionPool]):
     @override
     def table_exists(self, name: str) -> bool:
         with self.get_connection() as cnx:
-            if not cnx.database:
-                raise Exception("No database selected")
             with cnx.cursor(buffered=True) as cursor:
                 cursor.execute(f"SHOW TABLES LIKE {Caster.PLACEHOLDER};", (name,))
             res = cursor.fetchmany(1)
