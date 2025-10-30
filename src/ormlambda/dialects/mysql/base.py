@@ -216,9 +216,9 @@ class MySQLCompiler(compiler.SQLCompiler):
         rt = join.rcon.table
         rtable = TableProxy(table_class=rt, path=join.rcon.path)
 
-        from_clause = rtable.compile(self.dialect, alias_clause=join.alias).string
+        from_clause = rtable.compile(self.dialect, alias_table=join.alias, first_apperance=True).string
         left_table_clause = join.lcon.compile(self.dialect, alias_clause=None).string
-        right_table_clause = join.rcon.compile(self.dialect, alias_table=join.alias, alias_clause=None).string
+        right_table_clause = join.rcon.compile(self.dialect, alias_clause=None).string
         list_ = [
             join._by.value,  # inner join
             from_clause,
