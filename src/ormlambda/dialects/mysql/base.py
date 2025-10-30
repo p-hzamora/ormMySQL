@@ -242,9 +242,11 @@ class MySQLCompiler(compiler.SQLCompiler):
         columns = ClauseInfo.join_clauses(select.columns, sep, dialect=self.dialect, **params)
 
         from_ = ClauseInfo(
-            select._table,
-            None,
+            table=select._table,
+            column=None,
+            alias_table="{table}",
             dialect=self.dialect,
+            first_apperance=True,
         ).query(self.dialect)
 
         return f"SELECT{sep}{columns}{sep}FROM {from_}"
