@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ormlambda"
-version = "4.4.4"
+version = "4.4.14"
 description = "ORM designed to interact with the database (currently with MySQL) using lambda functions and nested functions"
 authors = ["p-hzamora <p.hzamora@icloud.com>"]
 readme = "README.md"
