@@ -41,7 +41,7 @@ class TableMeta(type):
         if cls_object.__table_name__ is Ellipsis:
             raise Exception(f"class variable '__table_name__' must be declared in '{cls_object.__name__}' class")
 
-        if cls_object.__db_name__ is Ellipsis:
+        if cls_object.__db_name__ is None:
             db_name, tbl_name = get_db_table_names(cls_object.__table_name__)
 
             cls_object.__db_name__ = db_name
@@ -84,7 +84,7 @@ class Table(metaclass=TableMeta):
     """
 
     __table_name__: str = ...
-    __db_name__: str = ...
+    __db_name__: Optional[str] = None
 
     def __str__(self) -> str:
         params = self.to_dict()
