@@ -78,7 +78,7 @@ def create_tables(engine_no_db: Engine, create_engine_for_db: Callable[[str], En
 
 
 @pytest.fixture(scope="module")
-def engine(create_engine_for_db:Callable[[str],Engine]) -> Engine:
+def engine(create_engine_for_db: Callable[[str], Engine]) -> Engine:
     return create_engine_for_db(DDBBNAME)
 
 

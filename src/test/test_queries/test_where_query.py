@@ -187,7 +187,7 @@ def test_condition_with_and_and_or():
 def test_condition_with_ST_Contains(engine_no_db):
     string = ORM(TableType, engine_no_db).where(lambda x: x.points.contains(Point(5, -5))).query("where")
     mssg: str = "WHRE ST_Contains(ST_AsText(`table_type`.points), ST_AsText(%s))"
-    assert string== mssg
+    assert string == mssg
 
 
 def test_retrieve_string_from_class_property_using_variable():

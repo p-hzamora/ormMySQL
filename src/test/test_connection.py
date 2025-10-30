@@ -2,7 +2,9 @@ import pytest
 from ormlambda import create_engine
 from test.env import ENV
 
-@pytest.mark.skipif(ENV == 'prod',reason='only run in dev')
+
+
+@pytest.mark.skipif(ENV == "prod", reason="We cannot run this test when github actions is running")
 def test_connection_default():
     engine = create_engine("mysql://root:1500@localhost:3306?")
 
@@ -12,7 +14,8 @@ def test_connection_default():
     assert engine.repository.database is None
 
 
-@pytest.mark.skipif(ENV == 'prod',reason='only run in dev')
+
+@pytest.mark.skipif(ENV == "prod", reason="We cannot run this test when github actions is running")
 def test_connection_():
     engine = create_engine("mysql://root:1500@localhost:3306/sakila?pool_size=20")
 

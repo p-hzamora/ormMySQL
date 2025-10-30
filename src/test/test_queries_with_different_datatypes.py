@@ -110,7 +110,7 @@ def test_update_different_types(model: IStatements[TableType]):
     assert select == instance_after_update
 
 
-def test_that_all_flavours_returns_the_same_data[T](model:IStatements[TableType]):
+def test_that_all_flavours_returns_the_same_data[T](model: IStatements[TableType]):
     """
     This method ensures that all casters are working as expected using different flavours tags
     - flavour=dict

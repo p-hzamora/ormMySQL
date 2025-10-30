@@ -9,7 +9,7 @@ from ormlambda.engine import Engine
 DB_NAME = "__test_ddbb__"
 
 
-@pytest.fixture(scope="module",autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def create_and_drop_schema(engine_no_db: Engine):
     """Create test schema, yield, then drop it"""
     engine_no_db.create_schema(DB_NAME, "replace")
