@@ -163,7 +163,7 @@ class String(TypeEngine[str]):
         length: Optional[int] = None,
         collation: Optional[str] = None,
     ):
-        self.length = length if isinstance(length, int) else 255
+        self.length = length
         self.collation = collation
 
     @property
