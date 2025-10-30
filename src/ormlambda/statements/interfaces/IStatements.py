@@ -209,13 +209,15 @@ class IStatements[T: Table](Element):
     # endregion
     # region select
     @overload
-    def select(self, selector: Optional[Callable[[T], tuple]] = ..., *, only_query: bool = ...) -> str: ...
+    def select(self) -> tuple[T, ...]: ...
     @overload
     def select[T1](self, selector: Callable[[T], T1 | tuple[T1]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> tuple[T1, ...]: ...
     @overload
     def select[*T1](self, selector: Callable[[T], tuple[*T1]], *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> Tuple[*T1]: ...
     @overload
     def select(self, *, by: JoinType = ..., alias: Optional[AliasType[ColumnType]] = ..., avoid_duplicates: bool = ...) -> Tuple[T]: ...
+    @overload
+    def select(self, selector: Optional[Callable[[T], tuple]] = ..., *, only_query: bool = ...) -> str: ...
 
     # region deal with flavours
     @overload
@@ -242,6 +244,8 @@ class IStatements[T: Table](Element):
 
     # endregion
     # region select_one
+    @overload
+    def select_one(self) -> T: ...
     @overload
     def select_one(self, selector: Optional[Callable[[T], Any]] = ..., *, only_query: bool = ...) -> str: ...
     @overload
@@ -272,6 +276,8 @@ class IStatements[T: Table](Element):
     # endregion
 
     # region first
+    @overload
+    def first(self) -> T: ...
     @overload
     def first(self, selector: Optional[Callable[[T], Any]] = ..., *, only_query: bool = ...) -> str: ...
     @overload
