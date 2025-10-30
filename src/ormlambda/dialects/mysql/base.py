@@ -469,7 +469,7 @@ class MySQLCompiler(compiler.SQLCompiler):
         else:
             column = count.column
 
-        return ClauseInfo.concat_alias_and_column(f"COUNT({column})", count.alias)
+        return ClauseInfo.concat_clause_with_his_alias(f"COUNT({column})", count.alias)
 
     def visit_order(self, order: Order, **kw) -> str:
         ORDER = "ORDER BY"
@@ -548,7 +548,7 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_pow(self, obj: Pow, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = obj.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"POW({column}, {obj._exponent})", obj.alias)
+        return ClauseInfo.concat_clause_with_his_alias(f"POW({column}, {obj._exponent})", obj.alias)
 
     def visit_sqrt(self, obj: Sqrt, **kw) -> str:
         return self._compile_aggregate_method("SQRT", obj, **kw)
@@ -556,7 +556,7 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_mod(self, obj: Mod, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = obj.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"MOD({column}, {obj._divisor})", obj.alias)
+        return ClauseInfo.concat_clause_with_his_alias(f"MOD({column}, {obj._divisor})", obj.alias)
 
     def visit_rand(self, obj: Rand, **kw) -> str:
         return self._compile_aggregate_method("RAND", obj, **kw)
@@ -564,22 +564,24 @@ class MySQLCompiler(compiler.SQLCompiler):
     def visit_truncate(self, obj: Truncate, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = obj.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"TRUNCATE({column}, {obj._decimal})", obj.alias)
+        return ClauseInfo.concat_clause_with_his_alias(f"TRUNCATE({column}, {obj._decimal})", obj.alias)
 
     def _compile_aggregate_method(self, name: str, function: IFunction, **kw) -> str:
         attr = {**kw, "alias_clause": None}
         column = function.column.compile(self.dialect, **attr).string
-        return ClauseInfo.concat_alias_and_column(f"{name}({column})", function.alias)
+        return ClauseInfo.concat_clause_with_his_alias(f"{name}({column})", function.alias)
 
     def visit_st_astext(self, st_astext: ST_AsText) -> str:
         # avoid use placeholder when using IFunction because no make sense.
         if st_astext.alias and (found := ClauseInfo._keyRegex.findall(st_astext.alias)):
             raise NotKeysInIFunctionError(found)
-        return ClauseInfo.concat_alias_and_column(f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string})", st_astext.alias)
+        return ClauseInfo.concat_clause_with_his_alias(f"ST_AsText({st_astext.column.compile(self.dialect, alias_clause=None).string})", st_astext.alias)
 
     def visit_st_contains(self, st_contains: ST_Contains) -> str:
+        # FIXME [ ]: It's not working as expected. Should be something like
+        # ST_Contains(`table_type`.points, ST_GeomFromText(%s))
         attr1 = st_contains.column.compile(self.dialect, alias_clause=None).string
-        attr2 = ClauseInfo(None, st_contains.point, dialect=self.dialect).query(self.dialect, alias_clause=None)
+        attr2 = ClauseInfo(None, st_contains.point, dialect=self.dialect).query(self.dialect)
         return f"ST_Contains({attr1}, {attr2})"
 
 
