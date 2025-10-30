@@ -604,7 +604,8 @@ class MySQLDDLCompiler(compiler.DDLCompiler):
         compare = fk.resolved_function()
         lcon = compare.left_condition
         rcon = compare.right_condition
-        return f"FOREIGN KEY ({lcon.column_name}) REFERENCES {rcon.table.__table_name__}({rcon.column_name})"
+        rdb = f"{ClauseInfo.wrapped_with_quotes(db)}." if (db := compare.right_condition.table.__db_name__) else ""
+        return f"FOREIGN KEY ({lcon.column_name}) REFERENCES {rdb}{rcon.table.__table_name__}({rcon.column_name})"
 
 
 class MySQLTypeCompiler(compiler.GenericTypeCompiler):
