@@ -516,10 +516,10 @@ class MySQLCompiler(compiler.SQLCompiler):
         clause_info = ClauseInfo(
             table=None,
             column=f"CONCAT({', '.join(columns)})",
-            alias_clause=concat.alias,
             dialect=self.dialect,
+            literal=True
         )
-        return clause_info.query(self.dialect)
+        return f"{clause_info.query(self.dialect)} AS {ClauseInfo.wrapped_with_quotes(concat.alias)}" 
 
     def visit_max(self, obj: Max, **kw) -> str:
         return self._compile_aggregate_method("MAX", obj, **kw)
